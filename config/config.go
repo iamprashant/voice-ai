@@ -28,6 +28,7 @@ type AppConfig struct {
 	WorkflowHost    string `mapstructure:"workflow_host" validate:"required"`
 	WebhookHost     string `mapstructure:"webhook_host" validate:"required"`
 	WebHost         string `mapstructure:"web_host" validate:"required"`
+	DocumentHost    string `mapstructure:"document_host" validate:"required"`
 	ExperimentHost  string `mapstructure:"experiment_host" validate:"required"`
 
 	AssetStoreConfig configs.AssetStoreConfig `mapstructure:"asset_store" validate:"required"`

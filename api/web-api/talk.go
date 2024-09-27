@@ -28,6 +28,11 @@ type webTalkGRPCApi struct {
 	webTalkApi
 }
 
+// MessageFeedback implements lexatic_backend.TalkServiceServer.
+func (*webTalkGRPCApi) MessageFeedback(context.Context, *web_api.MessageFeedbackRequest) (*web_api.MessageFeedbackResponse, error) {
+	panic("unimplemented")
+}
+
 // AssistantTalk implements lexatic_backend.TalkServiceServer.
 func (*webTalkGRPCApi) AssistantTalk(web_api.TalkService_AssistantTalkServer) error {
 	panic("unimplemented")

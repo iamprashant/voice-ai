@@ -15,6 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	healthCheckApi "github.com/lexatic/web-backend/api/health-check-api"
+	web_routers "github.com/lexatic/web-backend/api/routers"
 	webApi "github.com/lexatic/web-backend/api/web-api"
 	config "github.com/lexatic/web-backend/config"
 	internal_project_service "github.com/lexatic/web-backend/internal/services/project"
@@ -242,6 +243,7 @@ func (g *AppRunner) AllRouters() {
 	g.KnowledgeApiRoute()
 	g.AssistantApiRoute()
 	g.KnowledgeConnectApiRoute()
+	web_routers.DocumentApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis)
 
 }
 
