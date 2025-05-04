@@ -1,14 +1,13 @@
 module github.com/lexatic/web-backend
 
-go 1.21
-
-toolchain go1.21.0
+go 1.23.0
 
 require (
 	github.com/aws/aws-sdk-go v1.47.4
 	github.com/flosch/pongo2/v6 v6.0.0
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.8.1
+	github.com/go-gorm/caches/v4 v4.0.5
 	github.com/go-playground/validator/v10 v10.11.1
 	github.com/go-resty/resty/v2 v2.13.1
 	github.com/golang-jwt/jwt/v5 v5.2.1
