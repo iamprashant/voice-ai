@@ -52,6 +52,8 @@ type ProjectCredential struct {
 	Status         string `json:"status" gorm:"type:string;size:50;not null;default:active"`
 	CreatedBy      uint64 `json:"createdBy" gorm:"type:bigint;size:200;not null"`
 	UpdatedBy      uint64 `json:"updatedBy" gorm:"type:bigint;size:200;not null"`
+
+	CreatedUser UserAuth `json:"createdUser" gorm:"foreignKey:CreatedBy"`
 }
 
 type OAuthExternalConnect struct {

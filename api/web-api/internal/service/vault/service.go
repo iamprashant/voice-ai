@@ -97,7 +97,7 @@ func (vS *vaultService) Delete(ctx context.Context, auth types.Principle, vaultI
 	return vlt, nil
 }
 
-func (vS *vaultService) GetAllOrganizationCredential(ctx context.Context, auth types.Principle, criterias []*web_api.Criteria, paginate *web_api.Paginate) (int64, *[]internal_entity.Vault, error) {
+func (vS *vaultService) GetAllOrganizationCredential(ctx context.Context, auth types.SimplePrinciple, criterias []*web_api.Criteria, paginate *web_api.Paginate) (int64, *[]internal_entity.Vault, error) {
 	db := vS.postgres.DB(ctx)
 	var vaults []internal_entity.Vault
 	var cnt int64

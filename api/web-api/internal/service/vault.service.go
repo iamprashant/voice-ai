@@ -30,7 +30,7 @@ type VaultService interface {
 	//
 
 	Delete(ctx context.Context, auth types.Principle, vaultId uint64) (*internal_entity.Vault, error)
-	GetAllOrganizationCredential(ctx context.Context, auth types.Principle, criterias []*web_api.Criteria, paginate *web_api.Paginate) (int64, *[]internal_entity.Vault, error)
+	GetAllOrganizationCredential(ctx context.Context, auth types.SimplePrinciple, criterias []*web_api.Criteria, paginate *web_api.Paginate) (int64, *[]internal_entity.Vault, error)
 	GetProviderCredential(ctx context.Context, auth types.SimplePrinciple, providerId uint64) (*internal_entity.Vault, error)
 	CreateRapidaProviderCredential(ctx context.Context, organizationId uint64) (*internal_entity.Vault, error)
 	GetToolCredential(ctx context.Context,

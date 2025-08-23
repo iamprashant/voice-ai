@@ -2,7 +2,6 @@ package web_handler
 
 import (
 	"context"
-	"errors"
 
 	internal_connect "github.com/lexatic/web-backend/api/web-api/internal/connect"
 	internal_connects "github.com/lexatic/web-backend/api/web-api/internal/connect"
@@ -73,26 +72,27 @@ func (wVault *webVaultGRPCApi) CreateProviderCredential(ctx context.Context, irR
 	}
 	// first verify the credentials if not verified then return to user and say its not good credentials
 
-	verified, err := wVault.integrationClient.VerifyCredential(ctx, iAuth,
-		irRequest.GetProviderName(),
-		&web_api.Credential{
-			Id:    1,
-			Value: irRequest.GetCredential(),
-		})
+	// verified, err := wVault.integrationClient.VerifyCredential(ctx, iAuth,
+	// 	irRequest.GetProviderName(),
+	// 	&web_api.Credential{
+	// 		Id:    1,
+	// 		Value: irRequest.GetCredential(),
+	// 	})
 
-	if err != nil {
-		wVault.logger.Errorf("verification of the credentials failed with err %v", err)
-		return utils.ErrorWithCode[web_api.CreateProviderCredentialResponse](200,
-			err,
-			"Unable to verify the credentials, please check the credential and try again.")
-	}
+	// if err != nil {
+	// 	wVault.logger.Errorf("verification of the credentials failed with err %v", err)
+	// 	return utils.ErrorWithCode[web_api.CreateProviderCredentialResponse](200,
+	// 		err,
+	// 		"Unable to verify the credentials, please check the credential and try again.")
+	// }
 
-	if !verified.GetSuccess() {
-		wVault.logger.Errorf("verification for the key is not valid with error %+v", verified)
-		return utils.ErrorWithCode[web_api.CreateProviderCredentialResponse](200,
-			errors.New("unable to verify credentials"),
-			"Unable to verify the credentials, please check the credential and try again.")
-	}
+	// if !verified.GetSuccess() {
+	// 	wVault.logger.Errorf("verification for the key is not valid with error %+v", verified)
+	// 	return utils.ErrorWithCode[web_api.CreateProviderCredentialResponse](200,
+	// 		errors.New("unable to verify credentials"),
+	// 		"Unable to verify the credentials, please check the credential and try again.")
+	// }
+	//  @todo later will make verified and not verified credentials
 	vlt, err := wVault.vaultService.CreateOrganizationProviderCredential(ctx, iAuth, irRequest.GetProviderId(), irRequest.GetName(), irRequest.GetCredential().AsMap())
 	if err != nil {
 		wVault.logger.Errorf("vaultService.Create from grpc with err %v", err)
@@ -133,7 +133,7 @@ func (wVault *webVaultGRPCApi) DeleteProviderCredential(c context.Context, irReq
 }
 
 func (wVault *webVaultGRPCApi) GetAllOrganizationCredential(c context.Context, irRequest *web_api.GetAllOrganizationCredentialRequest) (*web_api.GetAllOrganizationCredentialResponse, error) {
-	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(c)
+	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(c)
 	if !isAuthenticated {
 		wVault.logger.Errorf("GetAllOrganizationCredential from grpc with unauthenticated request")
 		return utils.AuthenticateError[web_api.GetAllOrganizationCredentialResponse]()
@@ -168,7 +168,7 @@ this is not good idea as these apis are opened to public
 */
 func (wVault *webVaultGRPCApi) GetProviderCredential(ctx context.Context, request *web_api.GetProviderCredentialRequest) (*web_api.GetProviderCredentialResponse, error) {
 	wVault.logger.Debugf("GetProviderCredential from grpc with requestPayload %v, %v", request, ctx)
-	iAuth, isAuthenticated := types.GetClaimPrincipleGRPC[*types.ServiceScope](ctx)
+	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(ctx)
 	if !isAuthenticated {
 		wVault.logger.Errorf("GetAllProviderCredential from grpc with unauthenticated request")
 		return utils.AuthenticateError[web_api.GetProviderCredentialResponse]()
@@ -198,7 +198,6 @@ func (wVault *webVaultGRPCApi) CreateToolCredential(
 		wVault.logger.Errorf("CreateToolCredentialRequest from grpc with unauthenticated request")
 		return utils.AuthenticateError[web_api.CreateToolCredentialResponse]()
 	}
-	// first verify the credentials if not verified then return to user and say its not good credentials
 
 	vlt, err := wVault.vaultService.CreateOrganizationToolCredential(ctx,
 		iAuth,
@@ -221,7 +220,7 @@ func (wVault *webVaultGRPCApi) CreateToolCredential(
 
 func (wVault *webVaultGRPCApi) GetOauth2VaultCredential(ctx context.Context, request *web_api.GetOauth2VaultCredentialRequest) (*web_api.GetOauth2VaultCredentialResponse, error) {
 	wVault.logger.Debugf("GetOauth2VaultCredential from grpc with requestPayload %v, %v", request, ctx)
-	iAuth, isAuthenticated := types.GetClaimPrincipleGRPC[*types.ServiceScope](ctx)
+	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(ctx)
 	if !isAuthenticated {
 		wVault.logger.Errorf("GetAllProviderCredential from grpc with unauthenticated request")
 		return utils.AuthenticateError[web_api.GetOauth2VaultCredentialResponse]()
