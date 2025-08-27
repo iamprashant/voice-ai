@@ -11,6 +11,7 @@ import (
 	gorm_models "github.com/lexatic/web-backend/pkg/models/gorm"
 	gorm_types "github.com/lexatic/web-backend/pkg/models/gorm/types"
 	"github.com/lexatic/web-backend/pkg/types"
+	type_enums "github.com/lexatic/web-backend/pkg/types/enums"
 	web_api "github.com/lexatic/web-backend/protos/lexatic-backend"
 	"gorm.io/gorm/clause"
 )
@@ -136,6 +137,24 @@ func (vS *vaultService) GetAllOrganizationCredential(ctx context.Context, auth t
 	return cnt, &vaults, nil
 }
 
+func (vS *vaultService) Get(ctx context.Context, auth types.SimplePrinciple, providerId uint64, id uint64) (*internal_entity.Vault, error) {
+	db := vS.postgres.DB(ctx)
+	var vault internal_entity.Vault
+	tx := db.Where("id = ? AND status = ? AND vault_type = ? AND vault_type_id = ? AND vault_level = ? AND vault_level_id = ?",
+		id,
+		type_enums.RECORD_ACTIVE.String(),
+		string(gorm_types.VAULT_TYPE_PROVIDER),
+		providerId,
+		string(gorm_types.VAULT_LEVEL_ORGANIZATION),
+		*auth.GetCurrentOrganizationId(),
+	).Last(&vault)
+	if tx.Error != nil {
+		vS.logger.Errorf("get credential error  %v", tx.Error)
+		return nil, tx.Error
+	}
+	return &vault, nil
+}
+
 // gorm_types.VAULT_TYPE_PROVIDER,
 // rapidaProviderId,
 func (vS *vaultService) GetProviderCredential(ctx context.Context,
@@ -145,7 +164,7 @@ func (vS *vaultService) GetProviderCredential(ctx context.Context,
 	var vault internal_entity.Vault
 
 	tx := db.Where("status = ? and vault_type = ? and vault_type_id = ? and vault_level = ? and vault_level_id = ?",
-		"active",
+		type_enums.RECORD_ACTIVE.String(),
 		string(gorm_types.VAULT_TYPE_PROVIDER),
 		providerId,
 		string(gorm_types.VAULT_LEVEL_ORGANIZATION),
@@ -165,7 +184,7 @@ func (vS *vaultService) GetToolCredential(ctx context.Context,
 	var vault internal_entity.Vault
 
 	tx := db.Where("status = ? and vault_type = ? and vault_type_id = ? and vault_level = ? and vault_level_id = ?",
-		"active",
+		type_enums.RECORD_ACTIVE.String(),
 		string(gorm_types.VAULT_TYPE_TOOL),
 		toolId,
 		string(gorm_types.VAULT_LEVEL_ORGANIZATION),
@@ -185,7 +204,7 @@ func (vS *vaultService) GetUserToolCredential(ctx context.Context,
 	var vault internal_entity.Vault
 
 	tx := db.Where("status = ? and vault_type = ? and vault_type_id = ? and vault_level = ? and vault_level_id = ?",
-		"active",
+		type_enums.RECORD_ACTIVE.String(),
 		string(gorm_types.VAULT_TYPE_TOOL),
 		toolId,
 		string(gorm_types.VAULT_LEVEL_USER),
