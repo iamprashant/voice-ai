@@ -163,3 +163,7 @@ func (aP *authPrinciple) GetCurrentToken() string {
 	}
 	return ""
 }
+
+func (ap *authPrinciple) Type() string {
+	return "user"
+}
