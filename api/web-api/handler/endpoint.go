@@ -223,7 +223,7 @@ func (endpointGRPCApi *webEndpointGRPCApi) ForkEndpoint(ctx context.Context, iRe
 
 func (endpoint *webEndpointGRPCApi) GetEndpointLog(c context.Context, iRequest *web_api.GetEndpointLogRequest) (*web_api.GetEndpointLogResponse, error) {
 	endpoint.logger.Debugf("GetEndpoint from grpc with requestPayload %v, %v", iRequest, c)
-	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(c)
+	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(c)
 	if !isAuthenticated {
 		endpoint.logger.Errorf("unauthenticated request for get actvities")
 		return nil, errors.New("unauthenticated request")

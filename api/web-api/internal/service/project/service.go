@@ -46,6 +46,7 @@ func (p *projectService) Claim(ctx context.Context, claimToken string) (*types.P
 		return nil, tx.Error
 	}
 	p.logger.Debugf("Benchmarking: projectAuthenticator.Claim time taken %v and value %+v", time.Since(start), prjScope)
+	prjScope.CurrentToken = claimToken
 	return &types.PlainClaimPrinciple[*types.ProjectScope]{
 		Info: prjScope,
 	}, nil
