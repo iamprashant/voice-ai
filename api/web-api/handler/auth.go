@@ -504,7 +504,6 @@ func (wAuthApi *webAuthGRPCApi) Authorize(c context.Context, irRequest *web_api.
 }
 
 func (wAuthApi *webAuthGRPCApi) ScopeAuthorize(c context.Context, irRequest *web_api.ScopeAuthorizeRequest) (*web_api.ScopedAuthenticationResponse, error) {
-	wAuthApi.logger.Debugf("Authorize from grpc with requestPayload %v, %v", irRequest, c)
 	if irRequest.GetScope() == "project" {
 		iAuth, isAuthenticated := types.GetScopePrincipleGRPC[*types.ProjectScope](c)
 		if !isAuthenticated {
