@@ -77,7 +77,7 @@ func (assistant *webAssistantGRPCApi) GetAllConversationMessage(c context.Contex
 		_assistant)
 }
 
-// GetAllAssistantMessage implements lexatic_backend.AssistantServiceServer.
+// GetAllAssistantMessage implements web_api.AssistantServiceServer.
 func (assistant *webAssistantGRPCApi) GetAllAssistantMessage(c context.Context, iRequest *web_api.GetAllAssistantMessageRequest) (*web_api.GetAllAssistantMessageResponse, error) {
 	assistant.logger.Debugf("GetAllAssistantMessage from grpc with requestPayload %v, %v", iRequest, c)
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(c)
@@ -113,12 +113,6 @@ func (assistant *webAssistantGRPCApi) GetAllMessage(c context.Context, iRequest 
 		_assistant)
 }
 
-// CreateAssistantKnowledgeConfiguration implements lexatic_backend.AssistantServiceServer.
-
-//
-//
-//
-
 func (assistant *webAssistantGRPCApi) GetAssistant(c context.Context, iRequest *web_api.GetAssistantRequest) (*web_api.GetAssistantResponse, error) {
 	assistant.logger.Debugf("GetAssistant from grpc with requestPayload %v, %v", iRequest, c)
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(c)
@@ -134,11 +128,27 @@ func (assistant *webAssistantGRPCApi) GetAssistant(c context.Context, iRequest *
 	}
 
 	if _assistant.GetSuccess() {
-		if _assistant.GetData().GetAssistantProviderModel() != nil {
-			data := _assistant.GetData().GetAssistantProviderModel()
-			data.CreatedUser = assistant.GetUser(c, iAuth, _assistant.GetData().GetAssistantProviderModel().GetCreatedBy())
-			_assistant.GetData().AssistantProviderModel = data
+		providerModel := _assistant.GetData().GetAssistantProviderModel()
+		if providerModel != nil {
+			user := assistant.GetUser(c, iAuth, providerModel.GetCreatedBy())
+			providerModel.CreatedUser = user
+			_assistant.GetData().AssistantProviderModel = providerModel
 		}
+
+		agentKit := _assistant.GetData().GetAssistantProviderAgentkit()
+		if agentKit != nil {
+			user := assistant.GetUser(c, iAuth, agentKit.GetCreatedBy())
+			agentKit.CreatedUser = user
+			_assistant.GetData().AssistantProviderAgentkit = agentKit
+		}
+
+		websocket := _assistant.GetData().GetAssistantProviderWebsocket()
+		if websocket != nil {
+			user := assistant.GetUser(c, iAuth, websocket.GetCreatedBy())
+			websocket.CreatedUser = user
+			_assistant.GetData().AssistantProviderWebsocket = websocket
+		}
+
 	}
 	return _assistant, nil
 }
@@ -163,9 +173,26 @@ func (assistant *webAssistantGRPCApi) GetAllAssistant(c context.Context, iReques
 			"Unable to get your assistant, please try again in sometime.")
 	}
 
-	for _, _ep := range _assistant {
-		if _ep.GetAssistantProviderModel() != nil {
-			_ep.AssistantProviderModel.CreatedUser = assistant.GetUser(c, iAuth, _ep.AssistantProviderModel.GetCreatedBy())
+	for _, ast := range _assistant {
+		providerModel := ast.GetAssistantProviderModel()
+		if providerModel != nil {
+			user := assistant.GetUser(c, iAuth, providerModel.GetCreatedBy())
+			providerModel.CreatedUser = user
+			ast.AssistantProviderModel = providerModel
+		}
+
+		agentKit := ast.GetAssistantProviderAgentkit()
+		if agentKit != nil {
+			user := assistant.GetUser(c, iAuth, agentKit.GetCreatedBy())
+			agentKit.CreatedUser = user
+			ast.AssistantProviderAgentkit = agentKit
+		}
+
+		websocket := ast.GetAssistantProviderWebsocket()
+		if websocket != nil {
+			user := assistant.GetUser(c, iAuth, websocket.GetCreatedBy())
+			websocket.CreatedUser = user
+			ast.AssistantProviderWebsocket = websocket
 		}
 	}
 	return utils.PaginatedSuccess[web_api.GetAllAssistantResponse, []*web_api.Assistant](
@@ -183,26 +210,45 @@ func (assistant *webAssistantGRPCApi) CreateAssistant(c context.Context, iReques
 	return assistant.assistantClient.CreateAssistant(c, iAuth, iRequest)
 }
 
-func (assistantGRPCApi *webAssistantGRPCApi) GetAllAssistantProviderModel(ctx context.Context, iRequest *web_api.GetAllAssistantProviderModelRequest) (*web_api.GetAllAssistantProviderModelResponse, error) {
+func (assistantGRPCApi *webAssistantGRPCApi) GetAllAssistantProvider(ctx context.Context, iRequest *web_api.GetAllAssistantProviderRequest) (*web_api.GetAllAssistantProviderResponse, error) {
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
 		assistantGRPCApi.logger.Errorf("unauthenticated request for get actvities")
 		return nil, errors.New("unauthenticated request")
 	}
 
-	_page, _assistant, err := assistantGRPCApi.assistantClient.GetAllAssistantProviderModel(ctx, iAuth, iRequest.GetAssistantId(), iRequest.GetCriterias(), iRequest.GetPaginate())
+	_page, _assistantProviders, err := assistantGRPCApi.assistantClient.GetAllAssistantProvider(ctx, iAuth, iRequest.GetAssistantId(), iRequest.GetCriterias(), iRequest.GetPaginate())
 	if err != nil {
-		return utils.Error[web_api.GetAllAssistantProviderModelResponse](
+		return utils.Error[web_api.GetAllAssistantProviderResponse](
 			err,
 			"Unable to get your assistant provider models, please try again in sometime.")
 	}
 
-	for _, _ep := range _assistant {
-		_ep.CreatedUser = assistantGRPCApi.GetUser(ctx, iAuth, _ep.GetCreatedBy())
+	for _, ast := range _assistantProviders {
+		if ast.GetAssistantProvider() != nil {
+			switch assistantProvider := ast.GetAssistantProvider().(type) {
+			case *web_api.GetAllAssistantProviderResponse_AssistantProvider_AssistantProviderAgentkit:
+				user := assistantGRPCApi.GetUser(ctx, iAuth, assistantProvider.AssistantProviderAgentkit.GetCreatedBy())
+				assistantProvider.AssistantProviderAgentkit.CreatedUser = user
+				ast.AssistantProvider = assistantProvider
+			case *web_api.GetAllAssistantProviderResponse_AssistantProvider_AssistantProviderModel:
+				user := assistantGRPCApi.GetUser(ctx, iAuth, assistantProvider.AssistantProviderModel.GetCreatedBy())
+				assistantProvider.AssistantProviderModel.CreatedUser = user
+				ast.AssistantProvider = assistantProvider
+			case *web_api.GetAllAssistantProviderResponse_AssistantProvider_AssistantProviderWebsocket:
+				user := assistantGRPCApi.GetUser(ctx, iAuth, assistantProvider.AssistantProviderWebsocket.GetCreatedBy())
+				assistantProvider.AssistantProviderWebsocket.CreatedUser = user
+				ast.AssistantProvider = assistantProvider
+			}
+		}
 	}
-	return utils.PaginatedSuccess[web_api.GetAllAssistantProviderModelResponse, []*web_api.AssistantProviderModel](
-		_page.GetTotalItem(), _page.GetCurrentPage(),
-		_assistant)
+	return &web_api.GetAllAssistantProviderResponse{
+		Code:      200,
+		Success:   true,
+		Paginated: _page,
+		Data:      _assistantProviders,
+	}, nil
+
 }
 
 func (assistantGRPCApi *webAssistantGRPCApi) UpdateAssistantVersion(ctx context.Context, iRequest *web_api.UpdateAssistantVersionRequest) (*web_api.GetAssistantResponse, error) {
@@ -211,19 +257,22 @@ func (assistantGRPCApi *webAssistantGRPCApi) UpdateAssistantVersion(ctx context.
 		assistantGRPCApi.logger.Errorf("unauthenticated request for get actvities")
 		return nil, errors.New("unauthenticated request")
 	}
-	return assistantGRPCApi.assistantClient.UpdateAssistantVersion(ctx, iAuth, iRequest.GetAssistantId(), iRequest.GetAssistantProviderModelId())
+	return assistantGRPCApi.assistantClient.UpdateAssistantVersion(
+		ctx,
+		iAuth,
+		iRequest.GetAssistantId(), iRequest.GetAssistantProviderId())
 }
 
-func (assistantGRPCApi *webAssistantGRPCApi) CreateAssistantProviderModel(ctx context.Context, iRequest *web_api.CreateAssistantProviderModelRequest) (*web_api.GetAssistantProviderModelResponse, error) {
+func (assistantGRPCApi *webAssistantGRPCApi) CreateAssistantProvider(ctx context.Context, iRequest *web_api.CreateAssistantProviderRequest) (*web_api.GetAssistantProviderResponse, error) {
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
 		assistantGRPCApi.logger.Errorf("unauthenticated request to create assistant provider model")
 		return nil, errors.New("unauthenticated request")
 	}
-	return assistantGRPCApi.assistantClient.CreateAssistantProviderModel(ctx, iAuth, iRequest)
+	return assistantGRPCApi.assistantClient.CreateAssistantProvider(ctx, iAuth, iRequest)
 }
 
-// CreateAssistantTag implements lexatic_backend.AssistantServiceServer.
+// CreateAssistantTag implements web_api.AssistantServiceServer.
 func (assistantGRPCApi *webAssistantGRPCApi) CreateAssistantTag(ctx context.Context, iRequest *web_api.CreateAssistantTagRequest) (*web_api.GetAssistantResponse, error) {
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
@@ -242,7 +291,7 @@ func (assistantGRPCApi *webAssistantGRPCApi) UpdateAssistantDetail(ctx context.C
 	return assistantGRPCApi.assistantClient.UpdateAssistantDetail(ctx, iAuth, iRequest)
 }
 
-// CreateAssistantWebhook implements lexatic_backend.AssistantServiceServer.
+// CreateAssistantWebhook implements web_api.AssistantServiceServer.
 func (assistantGRPCApi *webAssistantGRPCApi) CreateAssistantWebhook(ctx context.Context, iRequest *web_api.CreateAssistantWebhookRequest) (*web_api.GetAssistantWebhookResponse, error) {
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
@@ -273,7 +322,7 @@ func (assistantGRPCApi *webAssistantGRPCApi) DeleteAssistantWebhook(ctx context.
 
 }
 
-// GetAllAssistantWebhook implements lexatic_backend.AssistantServiceServer.
+// GetAllAssistantWebhook implements web_api.AssistantServiceServer.
 func (assistantGRPCApi *webAssistantGRPCApi) GetAllAssistantWebhook(ctx context.Context, iRequest *web_api.GetAllAssistantWebhookRequest) (*web_api.GetAllAssistantWebhookResponse, error) {
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
@@ -293,7 +342,7 @@ func (assistantGRPCApi *webAssistantGRPCApi) GetAllAssistantWebhook(ctx context.
 		tls)
 }
 
-// GetAllAssistantWebhookLog implements lexatic_backend.AssistantServiceServer.
+// GetAllAssistantWebhookLog implements web_api.AssistantServiceServer.
 func (assistantGRPCApi *webAssistantGRPCApi) GetAllAssistantWebhookLog(ctx context.Context, iRequest *web_api.GetAllAssistantWebhookLogRequest) (*web_api.GetAllAssistantWebhookLogResponse, error) {
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
@@ -327,7 +376,7 @@ func (assistantGRPCApi *webAssistantGRPCApi) GetAssistantWebhookLog(ctx context.
 	return assistantGRPCApi.assistantClient.GetAssistantWebhookLog(ctx, iAuth, iRequest)
 }
 
-// GetAssistantWebhook implements lexatic_backend.AssistantServiceServer.
+// GetAssistantWebhook implements web_api.AssistantServiceServer.
 func (assistantGRPCApi *webAssistantGRPCApi) GetAssistantWebhook(ctx context.Context, iRequest *web_api.GetAssistantWebhookRequest) (*web_api.GetAssistantWebhookResponse, error) {
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
@@ -338,7 +387,7 @@ func (assistantGRPCApi *webAssistantGRPCApi) GetAssistantWebhook(ctx context.Con
 	return assistantGRPCApi.assistantClient.GetAssistantWebhook(ctx, iAuth, iRequest)
 }
 
-// GetAssistantWebhook implements lexatic_backend.AssistantServiceServer.
+// GetAssistantWebhook implements web_api.AssistantServiceServer.
 func (assistantGRPCApi *webAssistantGRPCApi) GetAssistantConversation(ctx context.Context, iRequest *web_api.GetAssistantConversationRequest) (*web_api.GetAssistantConversationResponse, error) {
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
@@ -359,7 +408,7 @@ func (assistantGRPCApi *webAssistantGRPCApi) DeleteAssistant(ctx context.Context
 
 }
 
-// CreateAssistantWebhook implements lexatic_backend.AssistantServiceServer.
+// CreateAssistantWebhook implements web_api.AssistantServiceServer.
 func (assistantGRPCApi *webAssistantGRPCApi) CreateAssistantKnowledge(ctx context.Context, iRequest *web_api.CreateAssistantKnowledgeRequest) (*web_api.GetAssistantKnowledgeResponse, error) {
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
@@ -558,4 +607,13 @@ func (assistantGRPCApi *webAssistantGRPCApi) GetAllAssistantToolLog(ctx context.
 		return nil, errors.New("unauthenticated request")
 	}
 	return assistantGRPCApi.assistantClient.GetAllAssistantToolLog(ctx, iAuth, iRequest)
+}
+
+func (assistantGRPCApi *webAssistantGRPCApi) GetAllAssistantTelemetry(ctx context.Context, iRequest *web_api.GetAllAssistantTelemetryRequest) (*web_api.GetAllAssistantTelemetryResponse, error) {
+	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
+	if !isAuthenticated {
+		assistantGRPCApi.logger.Errorf("unauthenticated request to GetAllAssistantTelemetry")
+		return nil, errors.New("unauthenticated request")
+	}
+	return assistantGRPCApi.assistantClient.GetAllAssistantTelemetry(ctx, iAuth, iRequest)
 }
