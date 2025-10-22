@@ -1,4 +1,4 @@
-module github.com/lexatic/web-backend
+module github.com/rapidaai
 
 go 1.23.0
 

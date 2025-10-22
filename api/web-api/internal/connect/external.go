@@ -9,12 +9,12 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/google/uuid"
-	internal_entity "github.com/lexatic/web-backend/api/web-api/internal/entity"
-	"github.com/lexatic/web-backend/config"
-	"github.com/lexatic/web-backend/pkg/commons"
-	"github.com/lexatic/web-backend/pkg/connectors"
-	gorm_types "github.com/lexatic/web-backend/pkg/models/gorm/types"
-	"github.com/lexatic/web-backend/pkg/types"
+	internal_entity "github.com/rapidaai/api/web-api/internal/entity"
+	"github.com/rapidaai/config"
+	"github.com/rapidaai/pkg/commons"
+	"github.com/rapidaai/pkg/connectors"
+	gorm_types "github.com/rapidaai/pkg/models/gorm/types"
+	"github.com/rapidaai/pkg/types"
 	"golang.org/x/oauth2"
 )
 

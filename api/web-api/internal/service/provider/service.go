@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	internal_entity "github.com/lexatic/web-backend/api/web-api/internal/entity"
-	internal_service "github.com/lexatic/web-backend/api/web-api/internal/service"
-	"github.com/lexatic/web-backend/pkg/commons"
-	"github.com/lexatic/web-backend/pkg/connectors"
-	type_enums "github.com/lexatic/web-backend/pkg/types/enums"
-	web_api "github.com/lexatic/web-backend/protos/lexatic-backend"
+	internal_entity "github.com/rapidaai/api/web-api/internal/entity"
+	internal_service "github.com/rapidaai/api/web-api/internal/service"
+	"github.com/rapidaai/pkg/commons"
+	"github.com/rapidaai/pkg/connectors"
+	type_enums "github.com/rapidaai/pkg/types/enums"
+	web_api "github.com/rapidaai/protos"
 )
 
 type providerService struct {

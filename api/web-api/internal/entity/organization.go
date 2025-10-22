@@ -1,8 +1,8 @@
 package internal_entity
 
 import (
-	gorm_model "github.com/lexatic/web-backend/pkg/models/gorm"
-	gorm_types "github.com/lexatic/web-backend/pkg/models/gorm/types"
+	gorm_model "github.com/rapidaai/pkg/models/gorm"
+	gorm_types "github.com/rapidaai/pkg/models/gorm/types"
 )
 
 type Organization struct {

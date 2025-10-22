@@ -3,7 +3,7 @@ env:
   parameter-store:
     DEPLOY_KEY: "DEPLOY_KEY"
   variables:
-    GO_PROJECT_MODULE: "github.com/lexatic/web-backend/protos/lexatic-backend"
+    GO_PROJECT_MODULE: "github.com/rapidaai/protos"
     OUT_DIR: "/protos/lexatic-backend/"
 phases:
   install:

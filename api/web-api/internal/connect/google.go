@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/lexatic/web-backend/config"
-	"github.com/lexatic/web-backend/pkg/commons"
-	"github.com/lexatic/web-backend/pkg/connectors"
+	"github.com/rapidaai/config"
+	"github.com/rapidaai/pkg/commons"
+	"github.com/rapidaai/pkg/connectors"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/drive/v2"

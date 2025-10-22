@@ -5,14 +5,14 @@ import (
 	"errors"
 	"strconv"
 
-	endpoint_client "github.com/lexatic/web-backend/pkg/clients/endpoint"
-	"github.com/lexatic/web-backend/pkg/utils"
-	web_api "github.com/lexatic/web-backend/protos/lexatic-backend"
+	endpoint_client "github.com/rapidaai/pkg/clients/endpoint"
+	"github.com/rapidaai/pkg/utils"
+	web_api "github.com/rapidaai/protos"
 
-	config "github.com/lexatic/web-backend/config"
-	commons "github.com/lexatic/web-backend/pkg/commons"
-	"github.com/lexatic/web-backend/pkg/connectors"
-	"github.com/lexatic/web-backend/pkg/types"
+	config "github.com/rapidaai/config"
+	commons "github.com/rapidaai/pkg/commons"
+	"github.com/rapidaai/pkg/connectors"
+	"github.com/rapidaai/pkg/types"
 )
 
 type webEndpointApi struct {

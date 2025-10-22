@@ -7,16 +7,16 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	internal_connects "github.com/lexatic/web-backend/api/web-api/internal/connect"
-	internal_services "github.com/lexatic/web-backend/api/web-api/internal/service"
-	internal_vault_service "github.com/lexatic/web-backend/api/web-api/internal/service/vault"
-	config "github.com/lexatic/web-backend/config"
-	commons "github.com/lexatic/web-backend/pkg/commons"
-	"github.com/lexatic/web-backend/pkg/connectors"
-	gorm_types "github.com/lexatic/web-backend/pkg/models/gorm/types"
-	"github.com/lexatic/web-backend/pkg/types"
-	"github.com/lexatic/web-backend/pkg/utils"
-	web_api "github.com/lexatic/web-backend/protos/lexatic-backend"
+	internal_connects "github.com/rapidaai/api/web-api/internal/connect"
+	internal_services "github.com/rapidaai/api/web-api/internal/service"
+	internal_vault_service "github.com/rapidaai/api/web-api/internal/service/vault"
+	config "github.com/rapidaai/config"
+	commons "github.com/rapidaai/pkg/commons"
+	"github.com/rapidaai/pkg/connectors"
+	gorm_types "github.com/rapidaai/pkg/models/gorm/types"
+	"github.com/rapidaai/pkg/types"
+	"github.com/rapidaai/pkg/utils"
+	web_api "github.com/rapidaai/protos"
 )
 
 type webConnectApi struct {

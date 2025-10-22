@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/lexatic/web-backend/pkg/configs"
+	"github.com/rapidaai/pkg/configs"
 	"github.com/spf13/viper"
 )
 

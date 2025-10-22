@@ -50,6 +50,6 @@ migrateup:
 
 migratedown:
 	migrate -path sql/migration -database "postgresql://trifacta:secret@localhost:5432/lexatic?sslmode=disable" -verbose down
-# protoc -Iprotos --go_opt=module=github.com/lexatic/web-backend/protos/lexatic-backend --go_out=./protos/lexatic-backend/ --go-grpc_opt=module=github.com/lexatic/web-backend/protos/lexatic-backend --go-grpc_out=require_unimplemented_servers=false:./protos/lexatic-backend/ protos/lexatic-backend/*.proto
+# protoc -Iprotos --go_opt=module="github.com/rapidaai/protos" --go_out=./protos/lexatic-backend/ --go-grpc_opt=module="github.com/rapidaai/protos" --go-grpc_out=require_unimplemented_servers=false:./protos/lexatic-backend/ protos/lexatic-backend/*.proto
 
 # --go-grpc_out=require_unimplemented_servers=false:.

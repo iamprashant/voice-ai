@@ -3,9 +3,9 @@ package internal_user_service
 import (
 	"errors"
 
-	internal_entity "github.com/lexatic/web-backend/api/web-api/internal/entity"
-	"github.com/lexatic/web-backend/pkg/types"
-	"github.com/lexatic/web-backend/pkg/utils"
+	internal_entity "github.com/rapidaai/api/web-api/internal/entity"
+	"github.com/rapidaai/pkg/types"
+	"github.com/rapidaai/pkg/utils"
 )
 
 type authPrinciple struct {

@@ -3,7 +3,7 @@ package internal_entity
 import (
 	"time"
 
-	gorm_model "github.com/lexatic/web-backend/pkg/models/gorm"
+	gorm_model "github.com/rapidaai/pkg/models/gorm"
 )
 
 type UserAuth struct {

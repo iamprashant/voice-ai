@@ -3,13 +3,13 @@ package internal_organization_service
 import (
 	"context"
 
-	internal_entity "github.com/lexatic/web-backend/api/web-api/internal/entity"
-	internal_services "github.com/lexatic/web-backend/api/web-api/internal/service"
-	"github.com/lexatic/web-backend/pkg/commons"
-	"github.com/lexatic/web-backend/pkg/connectors"
-	gorm_models "github.com/lexatic/web-backend/pkg/models/gorm"
-	"github.com/lexatic/web-backend/pkg/types"
-	type_enums "github.com/lexatic/web-backend/pkg/types/enums"
+	internal_entity "github.com/rapidaai/api/web-api/internal/entity"
+	internal_services "github.com/rapidaai/api/web-api/internal/service"
+	"github.com/rapidaai/pkg/commons"
+	"github.com/rapidaai/pkg/connectors"
+	gorm_models "github.com/rapidaai/pkg/models/gorm"
+	"github.com/rapidaai/pkg/types"
+	type_enums "github.com/rapidaai/pkg/types/enums"
 )
 
 func NewOrganizationService(logger commons.Logger, postgres connectors.PostgresConnector) internal_services.OrganizationService {
