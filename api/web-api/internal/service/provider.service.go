@@ -3,8 +3,8 @@ package internal_service
 import (
 	"context"
 
-	internal_entity "github.com/lexatic/web-backend/api/web-api/internal/entity"
-	provider_api "github.com/lexatic/web-backend/protos/lexatic-backend"
+	internal_entity "github.com/rapidaai/api/web-api/internal/entity"
+	provider_api "github.com/rapidaai/protos"
 )
 
 type ProviderService interface {

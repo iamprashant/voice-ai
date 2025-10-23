@@ -1,11 +1,11 @@
 package web_authenticators
 
 import (
-	internal_project_service "github.com/lexatic/web-backend/api/web-api/internal/service/project"
-	internal_user_service "github.com/lexatic/web-backend/api/web-api/internal/service/user"
-	"github.com/lexatic/web-backend/pkg/commons"
-	"github.com/lexatic/web-backend/pkg/connectors"
-	"github.com/lexatic/web-backend/pkg/types"
+	internal_project_service "github.com/rapidaai/api/web-api/internal/service/project"
+	internal_user_service "github.com/rapidaai/api/web-api/internal/service/user"
+	"github.com/rapidaai/pkg/commons"
+	"github.com/rapidaai/pkg/connectors"
+	"github.com/rapidaai/pkg/types"
 )
 
 func GetUserAuthenticator(logger commons.Logger, postgres connectors.PostgresConnector) types.Authenticator {

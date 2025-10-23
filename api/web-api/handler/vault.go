@@ -3,17 +3,17 @@ package web_handler
 import (
 	"context"
 
-	internal_connect "github.com/lexatic/web-backend/api/web-api/internal/connect"
-	internal_connects "github.com/lexatic/web-backend/api/web-api/internal/connect"
-	internal_service "github.com/lexatic/web-backend/api/web-api/internal/service"
-	internal_vault_service "github.com/lexatic/web-backend/api/web-api/internal/service/vault"
-	config "github.com/lexatic/web-backend/config"
-	integration_client "github.com/lexatic/web-backend/pkg/clients/integration"
-	commons "github.com/lexatic/web-backend/pkg/commons"
-	"github.com/lexatic/web-backend/pkg/connectors"
-	"github.com/lexatic/web-backend/pkg/types"
-	"github.com/lexatic/web-backend/pkg/utils"
-	web_api "github.com/lexatic/web-backend/protos/lexatic-backend"
+	internal_connect "github.com/rapidaai/api/web-api/internal/connect"
+	internal_connects "github.com/rapidaai/api/web-api/internal/connect"
+	internal_service "github.com/rapidaai/api/web-api/internal/service"
+	internal_vault_service "github.com/rapidaai/api/web-api/internal/service/vault"
+	config "github.com/rapidaai/config"
+	integration_client "github.com/rapidaai/pkg/clients/integration"
+	commons "github.com/rapidaai/pkg/commons"
+	"github.com/rapidaai/pkg/connectors"
+	"github.com/rapidaai/pkg/types"
+	"github.com/rapidaai/pkg/utils"
+	web_api "github.com/rapidaai/protos"
 )
 
 type webVaultApi struct {

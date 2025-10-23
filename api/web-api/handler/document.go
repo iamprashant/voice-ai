@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 
-	"github.com/lexatic/web-backend/config"
-	document_client "github.com/lexatic/web-backend/pkg/clients/document"
-	"github.com/lexatic/web-backend/pkg/commons"
-	"github.com/lexatic/web-backend/pkg/connectors"
-	"github.com/lexatic/web-backend/pkg/types"
-	"github.com/lexatic/web-backend/pkg/utils"
-	knowledge_api "github.com/lexatic/web-backend/protos/lexatic-backend"
+	"github.com/rapidaai/config"
+	document_client "github.com/rapidaai/pkg/clients/document"
+	"github.com/rapidaai/pkg/commons"
+	"github.com/rapidaai/pkg/connectors"
+	"github.com/rapidaai/pkg/types"
+	"github.com/rapidaai/pkg/utils"
+	knowledge_api "github.com/rapidaai/protos"
 )
 
 type indexerApi struct {

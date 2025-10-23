@@ -5,22 +5,22 @@ import (
 	"errors"
 	"strings"
 
-	internal_entity "github.com/lexatic/web-backend/api/web-api/internal/entity"
+	internal_entity "github.com/rapidaai/api/web-api/internal/entity"
 
-	internal_organization_service "github.com/lexatic/web-backend/api/web-api/internal/service/organization"
-	internal_user_service "github.com/lexatic/web-backend/api/web-api/internal/service/user"
-	integration_client "github.com/lexatic/web-backend/pkg/clients/integration"
-	type_enums "github.com/lexatic/web-backend/pkg/types/enums"
-	"github.com/lexatic/web-backend/pkg/utils"
+	internal_organization_service "github.com/rapidaai/api/web-api/internal/service/organization"
+	internal_user_service "github.com/rapidaai/api/web-api/internal/service/user"
+	integration_client "github.com/rapidaai/pkg/clients/integration"
+	type_enums "github.com/rapidaai/pkg/types/enums"
+	"github.com/rapidaai/pkg/utils"
 
-	internal_service "github.com/lexatic/web-backend/api/web-api/internal/service"
-	internal_project_service "github.com/lexatic/web-backend/api/web-api/internal/service/project"
-	config "github.com/lexatic/web-backend/config"
-	"github.com/lexatic/web-backend/pkg/ciphers"
-	commons "github.com/lexatic/web-backend/pkg/commons"
-	"github.com/lexatic/web-backend/pkg/connectors"
-	"github.com/lexatic/web-backend/pkg/types"
-	web_api "github.com/lexatic/web-backend/protos/lexatic-backend"
+	internal_service "github.com/rapidaai/api/web-api/internal/service"
+	internal_project_service "github.com/rapidaai/api/web-api/internal/service/project"
+	config "github.com/rapidaai/config"
+	"github.com/rapidaai/pkg/ciphers"
+	commons "github.com/rapidaai/pkg/commons"
+	"github.com/rapidaai/pkg/connectors"
+	"github.com/rapidaai/pkg/types"
+	web_api "github.com/rapidaai/protos"
 )
 
 type webProjectApi struct {

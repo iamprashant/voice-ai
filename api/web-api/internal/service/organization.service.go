@@ -3,8 +3,8 @@ package internal_service
 import (
 	"context"
 
-	internal_entity "github.com/lexatic/web-backend/api/web-api/internal/entity"
-	"github.com/lexatic/web-backend/pkg/types"
+	internal_entity "github.com/rapidaai/api/web-api/internal/entity"
+	"github.com/rapidaai/pkg/types"
 )
 
 type OrganizationService interface {

@@ -3,10 +3,10 @@ package internal_service
 import (
 	"context"
 
-	internal_entity "github.com/lexatic/web-backend/api/web-api/internal/entity"
-	"github.com/lexatic/web-backend/pkg/types"
-	type_enums "github.com/lexatic/web-backend/pkg/types/enums"
-	web_api "github.com/lexatic/web-backend/protos/lexatic-backend"
+	internal_entity "github.com/rapidaai/api/web-api/internal/entity"
+	"github.com/rapidaai/pkg/types"
+	type_enums "github.com/rapidaai/pkg/types/enums"
+	web_api "github.com/rapidaai/protos"
 )
 
 type UserService interface {

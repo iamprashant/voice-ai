@@ -2,9 +2,9 @@ package health_check_api
 
 import (
 	"github.com/gin-gonic/gin"
-	config "github.com/lexatic/web-backend/config"
-	commons "github.com/lexatic/web-backend/pkg/commons"
-	connectors "github.com/lexatic/web-backend/pkg/connectors"
+	config "github.com/rapidaai/config"
+	commons "github.com/rapidaai/pkg/commons"
+	connectors "github.com/rapidaai/pkg/connectors"
 )
 
 type healthCheckApi struct {

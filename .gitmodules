@@ -4,3 +4,6 @@
 [submodule "pkg"]
 	path = pkg
 	url = git@github.com:rapidaai/go-service-sdk.git
+[submodule "protos/artifacts"]
+	path = protos/artifacts
+	url = git@github.com:rapidaai/internal-bridge.git
