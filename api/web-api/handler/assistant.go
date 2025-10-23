@@ -260,7 +260,7 @@ func (assistantGRPCApi *webAssistantGRPCApi) UpdateAssistantVersion(ctx context.
 	return assistantGRPCApi.assistantClient.UpdateAssistantVersion(
 		ctx,
 		iAuth,
-		iRequest.GetAssistantId(), iRequest.GetAssistantProviderId())
+		iRequest)
 }
 
 func (assistantGRPCApi *webAssistantGRPCApi) CreateAssistantProvider(ctx context.Context, iRequest *web_api.CreateAssistantProviderRequest) (*web_api.GetAssistantProviderResponse, error) {
