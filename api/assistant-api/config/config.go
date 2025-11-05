@@ -25,7 +25,7 @@ type AssistantConfig struct {
 func InitConfig() (*viper.Viper, error) {
 	vConfig := viper.NewWithOptions(viper.KeyDelimiter("__"))
 
-	vConfig.AddConfigPath(".env/")
+	vConfig.AddConfigPath("./env/")
 	vConfig.SetConfigName(".assistant.env")
 	path := os.Getenv("ENV_PATH")
 	if path != "" {

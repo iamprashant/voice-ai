@@ -1,4 +1,4 @@
-package workflow_routers
+package assistant_router
 
 import (
 	knowledgeApi "github.com/rapidaai/api/assistant-api/api/knowledge"

@@ -1,4 +1,4 @@
-package workflow_routers
+package assistant_router
 
 import (
 	"github.com/gin-gonic/gin"

@@ -14,9 +14,10 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
-	"github.com/rapidaai/api/endpoint-api/config"
-	router "github.com/rapidaai/api/endpoint-api/router"
-	authenticators "github.com/rapidaai/pkg/authenticators"
+
+	"github.com/rapidaai/api/assistant-api/config"
+	router "github.com/rapidaai/api/assistant-api/router"
+	"github.com/rapidaai/pkg/authenticators"
 	web_client "github.com/rapidaai/pkg/clients/web"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
@@ -30,7 +31,7 @@ import (
 type AppRunner struct {
 	E          *gin.Engine
 	S          *grpc.Server
-	Cfg        *config.EndpointConfig
+	Cfg        *config.AssistantConfig
 	Logger     commons.Logger
 	Postgres   connectors.PostgresConnector
 	Redis      connectors.RedisConnector
@@ -100,6 +101,7 @@ func main() {
 		grpc.MaxRecvMsgSize(commons.MaxRecvMsgSize), // 10 MB
 		grpc.MaxSendMsgSize(commons.MaxSendMsgSize), // 10 MB
 	)
+
 	err = appRunner.Init(ctx)
 
 	if err != nil {
@@ -109,7 +111,7 @@ func main() {
 	// add all middleware depends on configurations
 	appRunner.AllMiddlewares()
 
-	// all routers add all handlers which required to resolve the service request
+	// all router add all handlers which required to resolve the service request
 	appRunner.AllRouters()
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", appRunner.Cfg.Host, appRunner.Cfg.Port))
 	if err != nil {
@@ -118,16 +120,24 @@ func main() {
 	}
 
 	defer appRunner.Close(ctx)
-	cmuxListener := cmux.New(listener)
 
-	// if application json
+	cmuxListener := cmux.New(listener)
 	http2GRPCFilteredListener := cmuxListener.Match(cmux.HTTP2())
 	grpcFilteredListener := cmuxListener.Match(
-		cmux.HTTP1HeaderField("Content-type", "application/grpc-web+proto"),
+		cmux.HTTP1HeaderField("content-type", "application/grpc-web+proto"),
+		cmux.HTTP1HeaderField("sec-websocket-protocol", "grpc-websockets"),
 		cmux.HTTP1HeaderField("x-grpc-web", "1"))
 	rpcFilteredListener := cmuxListener.Match(cmux.Any())
-
 	group, ctx := errgroup.WithContext(ctx)
+
+	// here is grpc
+	group.Go(func() error {
+		err = appRunner.S.Serve(http2GRPCFilteredListener)
+		if err != nil {
+			appRunner.Logger.Errorf("Failed to start grpc server err: %v", err)
+		}
+		return err
+	})
 	group.Go(func() error {
 		err = appRunner.E.RunListener(rpcFilteredListener)
 		if err != nil {
@@ -137,7 +147,14 @@ func main() {
 	})
 	group.Go(func() error {
 		//
-		wrappedServer := grpcweb.WrapServer(appRunner.S, grpcweb.WithOriginFunc(func(origin string) bool { return true }))
+		wrappedServer := grpcweb.WrapServer(appRunner.S,
+			grpcweb.WithWebsockets(true),
+			grpcweb.WithWebsocketOriginFunc(func(req *http.Request) bool {
+				return true
+			}),
+			grpcweb.WithWebsocketPingInterval(45*time.Second),
+			grpcweb.WithWebsocketsMessageReadLimit(100*1024*1024),
+		)
 		handler := func(resp http.ResponseWriter, req *http.Request) {
 			wrappedServer.ServeHTTP(resp, req)
 		}
@@ -145,7 +162,6 @@ func main() {
 		httpServer := http.Server{
 			Handler: http.HandlerFunc(handler),
 		}
-		//
 		err = httpServer.Serve(grpcFilteredListener)
 		if err != nil {
 			appRunner.Logger.Errorf("Failed to start grpc server err: %v", err)
@@ -154,13 +170,6 @@ func main() {
 
 	})
 
-	group.Go(func() error {
-		err = appRunner.S.Serve(http2GRPCFilteredListener)
-		if err != nil {
-			appRunner.Logger.Errorf("Failed to start grpc server err: %v", err)
-		}
-		return err
-	})
 	//serve now
 	err = cmuxListener.Serve()
 	if err != nil {
@@ -190,7 +199,7 @@ func (g *AppRunner) AllConnectors() {
 	g.Postgres = connectors.NewPostgresConnector(&g.Cfg.PostgresConfig, g.Logger)
 	g.Redis = connectors.NewRedisConnector(&g.Cfg.RedisConfig, g.Logger)
 	g.Opensearch = connectors.NewOpenSearchConnector(&g.Cfg.OpenSearchConfig, g.Logger)
-
+	// g.Weaviate = vdb_connectors.NewWeaviateConnector(&g.Cfg.WeaviateConfig, g.Logger)
 }
 
 // initialize the config of application using viper and return loaded appconfig to be used in
@@ -225,6 +234,7 @@ func (app *AppRunner) Init(ctx context.Context) error {
 		app.Logger.Error("error while connecting to postgres.", err)
 		return err
 	}
+
 	err = app.Redis.Connect(ctx)
 	if err != nil {
 		app.Logger.Error("error while connecting to redis.", err)
@@ -236,6 +246,7 @@ func (app *AppRunner) Init(ctx context.Context) error {
 		app.Logger.Error("error while connecting to opensearch.", err)
 		return err
 	}
+
 	app.Closeable = append(app.Closeable, app.Opensearch.Disconnect)
 	app.Closeable = append(app.Closeable, app.Postgres.Disconnect)
 	app.Closeable = append(app.Closeable, app.Redis.Disconnect)
@@ -257,35 +268,49 @@ func (app *AppRunner) Close(ctx context.Context) {
 
 // all router initialize
 func (g *AppRunner) AllRouters() {
+	router.AssistantApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis, g.Opensearch)
 	router.HealthCheckRoutes(g.Cfg, g.E, g.Logger, g.Postgres)
-	router.EndpointReaderApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis, g.Opensearch)
-	router.InvokeApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis, g.Opensearch)
+	router.KnowledgeApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis, g.Opensearch)
+	router.DocumentApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis, g.Opensearch)
+	router.AssistantConversationApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis, g.Opensearch)
+	router.AssistantDeploymentApiRoute(g.Cfg, g.S, g.Logger, g.Postgres)
 
-} // all router initialize
+	// rpc call handle by gin handler
+	router.TalkCallbackApiRoute(g.Cfg, g.E, g.Logger, g.Postgres, g.Redis, g.Opensearch)
+	router.ConversationApiRoute(g.Cfg, g.E, g.Logger, g.Postgres, g.Redis, g.Opensearch)
+
+}
 
 // all middleware
 func (g *AppRunner) AllMiddlewares() {
-	g.LoggerMiddleware()
 	g.RecoveryMiddleware()
 	g.CorsMiddleware()
 	g.RequestLoggerMiddleware()
-}
-
-// Logger middleware
-func (g *AppRunner) LoggerMiddleware() {
-	aLogger := commons.NewApplicationLoggerWithOptions(
-		commons.Level(g.Cfg.LogLevel),
-		commons.Name(g.Cfg.Name),
-	)
-	aLogger.InitLogger()
-	aLogger.Info("Added Logger middleware to the application.")
-	g.Logger = aLogger
+	g.AuthenticationMiddleware()
 }
 
 // Recovery middleware
 func (g *AppRunner) RecoveryMiddleware() {
 	g.Logger.Info("Added Default Recovery middleware to the application.")
 	g.E.Use(gin.Recovery())
+}
+
+func (g *AppRunner) AuthenticationMiddleware() {
+	g.Logger.Info("Adding request middleware to the application.")
+	g.E.Use(middlewares.NewAuthenticationMiddleware(
+		authenticators.NewUserAuthenticator(&g.Cfg.AppConfig,
+			g.Logger,
+			web_client.NewAuthenticator(&g.Cfg.AppConfig, g.Logger, g.Redis)),
+		g.Logger,
+	))
+	g.E.Use(middlewares.NewProjectAuthenticatorMiddleware(
+		authenticators.NewProjectAuthenticator(
+			&g.Cfg.AppConfig,
+			g.Logger,
+			web_client.NewAuthenticator(&g.Cfg.AppConfig, g.Logger, g.Redis),
+		),
+		g.Logger,
+	))
 }
 
 func (g *AppRunner) CorsMiddleware() {
@@ -300,7 +325,9 @@ func (g *AppRunner) CorsMiddleware() {
 	}))
 }
 
+// Logger Middleware
 func (g *AppRunner) RequestLoggerMiddleware() {
-	g.Logger.Info("Adding request middleware to the applicaiton.")
+	g.Logger.Info("Adding request middleware to the application.")
 	g.E.Use(middlewares.NewRequestLoggerMiddleware(g.Cfg.Name, g.Logger))
+
 }
