@@ -1,22 +1,22 @@
-package web_handler
+package web_api
 
 import (
 	"context"
 
+	config "github.com/rapidaai/api/web-api/config"
 	internal_service "github.com/rapidaai/api/web-api/internal/service"
 	internal_organization_service "github.com/rapidaai/api/web-api/internal/service/organization"
 	internal_provider_service "github.com/rapidaai/api/web-api/internal/service/provider"
 	internal_user_service "github.com/rapidaai/api/web-api/internal/service/user"
-	config "github.com/rapidaai/config"
 	commons "github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
-	web_api "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 type WebApi struct {
-	cfg             *config.AppConfig
+	cfg             *config.WebAppConfig
 	logger          commons.Logger
 	postgres        connectors.PostgresConnector
 	redis           connectors.RedisConnector
@@ -25,7 +25,7 @@ type WebApi struct {
 	orgService      internal_service.OrganizationService
 }
 
-func NewWebApi(cfg *config.AppConfig, logger commons.Logger, postgres connectors.PostgresConnector, redis connectors.RedisConnector) WebApi {
+func NewWebApi(cfg *config.WebAppConfig, logger commons.Logger, postgres connectors.PostgresConnector, redis connectors.RedisConnector) WebApi {
 	return WebApi{
 		cfg: cfg, logger: logger, postgres: postgres, redis: redis,
 		userService:     internal_user_service.NewUserService(logger, postgres),
@@ -34,13 +34,13 @@ func NewWebApi(cfg *config.AppConfig, logger commons.Logger, postgres connectors
 	}
 }
 
-func (w *WebApi) GetUser(c context.Context, auth types.SimplePrinciple, userId uint64) *web_api.User {
+func (w *WebApi) GetUser(c context.Context, auth types.SimplePrinciple, userId uint64) *protos.User {
 	usr, err := w.userService.GetUser(c, userId)
 	if err != nil {
 		w.logger.Errorf("unable to get user form the database %+v", err)
 		return nil
 	}
-	ot := &web_api.User{}
+	ot := &protos.User{}
 	err = utils.Cast(usr, ot)
 	if err != nil {
 		w.logger.Errorf("unable to cast project to proto object %v", err)
@@ -48,13 +48,13 @@ func (w *WebApi) GetUser(c context.Context, auth types.SimplePrinciple, userId u
 	return ot
 }
 
-func (w *WebApi) GetOrganization(c context.Context, auth types.SimplePrinciple, orgId uint64) *web_api.Organization {
+func (w *WebApi) GetOrganization(c context.Context, auth types.SimplePrinciple, orgId uint64) *protos.Organization {
 	org, err := w.orgService.Get(c, orgId)
 	if err != nil {
 		w.logger.Errorf("unable to get organization form the database %+v", err)
 		return nil
 	}
-	ot := &web_api.Organization{}
+	ot := &protos.Organization{}
 	err = utils.Cast(org, ot)
 	if err != nil {
 		w.logger.Errorf("unable to cast project to proto object %v", err)

@@ -1,4 +1,4 @@
-package web_handler
+package web_proxy_api
 
 import (
 	"context"
@@ -6,16 +6,17 @@ import (
 
 	assistant_client "github.com/rapidaai/pkg/clients/workflow"
 	"github.com/rapidaai/pkg/types"
-	web_api "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 
-	config "github.com/rapidaai/config"
+	web_api "github.com/rapidaai/api/web-api/api"
+	config "github.com/rapidaai/api/web-api/config"
 	commons "github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 )
 
 type webAssistantDeploymentApi struct {
-	WebApi
-	cfg             *config.AppConfig
+	web_api.WebApi
+	cfg             *config.WebAppConfig
 	logger          commons.Logger
 	postgres        connectors.PostgresConnector
 	redis           connectors.RedisConnector
@@ -27,7 +28,7 @@ type webAssistantDeploymentGRPCApi struct {
 }
 
 // GetAssistantApiDeployment implements lexatic_backend.AssistantDeploymentServiceServer.
-func (w *webAssistantDeploymentGRPCApi) GetAssistantApiDeployment(c context.Context, iRequest *web_api.GetAssistantDeploymentRequest) (*web_api.GetAssistantApiDeploymentResponse, error) {
+func (w *webAssistantDeploymentGRPCApi) GetAssistantApiDeployment(c context.Context, iRequest *protos.GetAssistantDeploymentRequest) (*protos.GetAssistantApiDeploymentResponse, error) {
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(c)
 	if !isAuthenticated {
 		return nil, errors.New("unauthenticated request")
@@ -36,7 +37,7 @@ func (w *webAssistantDeploymentGRPCApi) GetAssistantApiDeployment(c context.Cont
 }
 
 // GetAssistantDebuggerDeployment implements lexatic_backend.AssistantDeploymentServiceServer.
-func (w *webAssistantDeploymentGRPCApi) GetAssistantDebuggerDeployment(c context.Context, iRequest *web_api.GetAssistantDeploymentRequest) (*web_api.GetAssistantDebuggerDeploymentResponse, error) {
+func (w *webAssistantDeploymentGRPCApi) GetAssistantDebuggerDeployment(c context.Context, iRequest *protos.GetAssistantDeploymentRequest) (*protos.GetAssistantDebuggerDeploymentResponse, error) {
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(c)
 	if !isAuthenticated {
 		return nil, errors.New("unauthenticated request")
@@ -45,7 +46,7 @@ func (w *webAssistantDeploymentGRPCApi) GetAssistantDebuggerDeployment(c context
 }
 
 // GetAssistantPhoneDeployment implements lexatic_backend.AssistantDeploymentServiceServer.
-func (w *webAssistantDeploymentGRPCApi) GetAssistantPhoneDeployment(c context.Context, iRequest *web_api.GetAssistantDeploymentRequest) (*web_api.GetAssistantPhoneDeploymentResponse, error) {
+func (w *webAssistantDeploymentGRPCApi) GetAssistantPhoneDeployment(c context.Context, iRequest *protos.GetAssistantDeploymentRequest) (*protos.GetAssistantPhoneDeploymentResponse, error) {
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(c)
 	if !isAuthenticated {
 		return nil, errors.New("unauthenticated request")
@@ -54,7 +55,7 @@ func (w *webAssistantDeploymentGRPCApi) GetAssistantPhoneDeployment(c context.Co
 }
 
 // GetAssistantWebpluginDeployment implements lexatic_backend.AssistantDeploymentServiceServer.
-func (w *webAssistantDeploymentGRPCApi) GetAssistantWebpluginDeployment(c context.Context, iRequest *web_api.GetAssistantDeploymentRequest) (*web_api.GetAssistantWebpluginDeploymentResponse, error) {
+func (w *webAssistantDeploymentGRPCApi) GetAssistantWebpluginDeployment(c context.Context, iRequest *protos.GetAssistantDeploymentRequest) (*protos.GetAssistantWebpluginDeploymentResponse, error) {
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(c)
 	if !isAuthenticated {
 		return nil, errors.New("unauthenticated request")
@@ -63,7 +64,7 @@ func (w *webAssistantDeploymentGRPCApi) GetAssistantWebpluginDeployment(c contex
 }
 
 // GetAssistantWhatsappDeployment implements lexatic_backend.AssistantDeploymentServiceServer.
-func (w *webAssistantDeploymentGRPCApi) GetAssistantWhatsappDeployment(c context.Context, iRequest *web_api.GetAssistantDeploymentRequest) (*web_api.GetAssistantWhatsappDeploymentResponse, error) {
+func (w *webAssistantDeploymentGRPCApi) GetAssistantWhatsappDeployment(c context.Context, iRequest *protos.GetAssistantDeploymentRequest) (*protos.GetAssistantWhatsappDeploymentResponse, error) {
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(c)
 	if !isAuthenticated {
 		return nil, errors.New("unauthenticated request")
@@ -71,7 +72,7 @@ func (w *webAssistantDeploymentGRPCApi) GetAssistantWhatsappDeployment(c context
 	return w.assistantClient.GetAssistantWhatsappDeployment(c, iAuth, iRequest)
 }
 
-func (w *webAssistantDeploymentGRPCApi) CreateAssistantApiDeployment(c context.Context, iRequest *web_api.CreateAssistantDeploymentRequest) (*web_api.GetAssistantApiDeploymentResponse, error) {
+func (w *webAssistantDeploymentGRPCApi) CreateAssistantApiDeployment(c context.Context, iRequest *protos.CreateAssistantDeploymentRequest) (*protos.GetAssistantApiDeploymentResponse, error) {
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(c)
 	if !isAuthenticated {
 		return nil, errors.New("unauthenticated request")
@@ -80,7 +81,7 @@ func (w *webAssistantDeploymentGRPCApi) CreateAssistantApiDeployment(c context.C
 }
 
 // CreateAssistantDebuggerDeployment implements lexatic_backend.AssistantDeploymentServiceServer.
-func (w *webAssistantDeploymentGRPCApi) CreateAssistantDebuggerDeployment(c context.Context, iRequest *web_api.CreateAssistantDeploymentRequest) (*web_api.GetAssistantDebuggerDeploymentResponse, error) {
+func (w *webAssistantDeploymentGRPCApi) CreateAssistantDebuggerDeployment(c context.Context, iRequest *protos.CreateAssistantDeploymentRequest) (*protos.GetAssistantDebuggerDeploymentResponse, error) {
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(c)
 	if !isAuthenticated {
 		return nil, errors.New("unauthenticated request")
@@ -89,7 +90,7 @@ func (w *webAssistantDeploymentGRPCApi) CreateAssistantDebuggerDeployment(c cont
 }
 
 // CreateAssistantPhoneDeployment implements lexatic_backend.AssistantDeploymentServiceServer.
-func (w *webAssistantDeploymentGRPCApi) CreateAssistantPhoneDeployment(c context.Context, iRequest *web_api.CreateAssistantDeploymentRequest) (*web_api.GetAssistantPhoneDeploymentResponse, error) {
+func (w *webAssistantDeploymentGRPCApi) CreateAssistantPhoneDeployment(c context.Context, iRequest *protos.CreateAssistantDeploymentRequest) (*protos.GetAssistantPhoneDeploymentResponse, error) {
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(c)
 	if !isAuthenticated {
 		return nil, errors.New("unauthenticated request")
@@ -98,7 +99,7 @@ func (w *webAssistantDeploymentGRPCApi) CreateAssistantPhoneDeployment(c context
 }
 
 // CreateAssistantWebpluginDeployment implements lexatic_backend.AssistantDeploymentServiceServer.
-func (w *webAssistantDeploymentGRPCApi) CreateAssistantWebpluginDeployment(c context.Context, iRequest *web_api.CreateAssistantDeploymentRequest) (*web_api.GetAssistantWebpluginDeploymentResponse, error) {
+func (w *webAssistantDeploymentGRPCApi) CreateAssistantWebpluginDeployment(c context.Context, iRequest *protos.CreateAssistantDeploymentRequest) (*protos.GetAssistantWebpluginDeploymentResponse, error) {
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(c)
 	if !isAuthenticated {
 		return nil, errors.New("unauthenticated request")
@@ -107,7 +108,7 @@ func (w *webAssistantDeploymentGRPCApi) CreateAssistantWebpluginDeployment(c con
 }
 
 // CreateAssistantWhatsappDeployment implements lexatic_backend.AssistantDeploymentServiceServer.
-func (w *webAssistantDeploymentGRPCApi) CreateAssistantWhatsappDeployment(c context.Context, iRequest *web_api.CreateAssistantDeploymentRequest) (*web_api.GetAssistantWhatsappDeploymentResponse, error) {
+func (w *webAssistantDeploymentGRPCApi) CreateAssistantWhatsappDeployment(c context.Context, iRequest *protos.CreateAssistantDeploymentRequest) (*protos.GetAssistantWhatsappDeploymentResponse, error) {
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(c)
 	if !isAuthenticated {
 		return nil, errors.New("unauthenticated request")
@@ -116,15 +117,15 @@ func (w *webAssistantDeploymentGRPCApi) CreateAssistantWhatsappDeployment(c cont
 }
 
 // G
-func NewAssistantDeploymentGRPCApi(config *config.AppConfig, logger commons.Logger, postgres connectors.PostgresConnector, redis connectors.RedisConnector) web_api.AssistantDeploymentServiceServer {
+func NewAssistantDeploymentGRPCApi(config *config.WebAppConfig, logger commons.Logger, postgres connectors.PostgresConnector, redis connectors.RedisConnector) protos.AssistantDeploymentServiceServer {
 	return &webAssistantDeploymentGRPCApi{
 		webAssistantDeploymentApi{
-			WebApi:          NewWebApi(config, logger, postgres, redis),
+			WebApi:          web_api.NewWebApi(config, logger, postgres, redis),
 			cfg:             config,
 			logger:          logger,
 			postgres:        postgres,
 			redis:           redis,
-			assistantClient: assistant_client.NewAssistantServiceClientGRPC(config, logger, redis),
+			assistantClient: assistant_client.NewAssistantServiceClientGRPC(&config.AppConfig, logger, redis),
 		},
 	}
 }

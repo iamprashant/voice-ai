@@ -1,4 +1,4 @@
-package web_handler
+package web_api
 
 import (
 	"context"
@@ -15,19 +15,19 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/gin-gonic/gin"
+	config "github.com/rapidaai/api/web-api/config"
 	internal_user_service "github.com/rapidaai/api/web-api/internal/service/user"
-	config "github.com/rapidaai/config"
 	integration_client "github.com/rapidaai/pkg/clients/integration"
 	commons "github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
-	web_api "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 type webAuthApi struct {
-	cfg                 *config.AppConfig
+	cfg                 *config.WebAppConfig
 	logger              commons.Logger
 	postgres            connectors.PostgresConnector
 	userService         internal_services.UserService
@@ -51,14 +51,14 @@ var (
 	GOOGLE_STATE = "google"
 )
 
-func NewAuthRPC(config *config.AppConfig, oauthCfg *config.OAuthConfig, logger commons.Logger, postgres connectors.PostgresConnector) *webAuthRPCApi {
+func NewAuthRPC(config *config.WebAppConfig, oauthCfg *config.OAuthConfig, logger commons.Logger, postgres connectors.PostgresConnector) *webAuthRPCApi {
 	return &webAuthRPCApi{
 		webAuthApi{
 			cfg:             config,
 			logger:          logger,
 			postgres:        postgres,
 			userService:     internal_user_service.NewUserService(logger, postgres),
-			sendgridClient:  integration_client.NewSendgridServiceClientGRPC(config, logger),
+			sendgridClient:  integration_client.NewSendgridServiceClientGRPC(&config.AppConfig, logger),
 			githubConnect:   internal_connects.NewGithubAuthenticationConnect(config, oauthCfg, logger, postgres),
 			linkedinConnect: internal_connects.NewLinkedinAuthenticationConnect(config, oauthCfg, logger, postgres),
 			googleConnect:   internal_connects.NewGoogleAuthenticationConnect(config, oauthCfg, logger, postgres),
@@ -66,7 +66,7 @@ func NewAuthRPC(config *config.AppConfig, oauthCfg *config.OAuthConfig, logger c
 	}
 }
 
-func NewAuthGRPC(config *config.AppConfig, oauthCfg *config.OAuthConfig, logger commons.Logger, postgres connectors.PostgresConnector) web_api.AuthenticationServiceServer {
+func NewAuthGRPC(config *config.WebAppConfig, oauthCfg *config.OAuthConfig, logger commons.Logger, postgres connectors.PostgresConnector) protos.AuthenticationServiceServer {
 	return &webAuthGRPCApi{
 		webAuthApi{
 			cfg:                 config,
@@ -75,7 +75,7 @@ func NewAuthGRPC(config *config.AppConfig, oauthCfg *config.OAuthConfig, logger 
 			userService:         internal_user_service.NewUserService(logger, postgres),
 			organizationService: internal_organization_service.NewOrganizationService(logger, postgres),
 			projectService:      internal_project_service.NewProjectService(logger, postgres),
-			sendgridClient:      integration_client.NewSendgridServiceClientGRPC(config, logger),
+			sendgridClient:      integration_client.NewSendgridServiceClientGRPC(&config.AppConfig, logger),
 			githubConnect:       internal_connects.NewGithubAuthenticationConnect(config, oauthCfg, logger, postgres),
 			linkedinConnect:     internal_connects.NewLinkedinAuthenticationConnect(config, oauthCfg, logger, postgres),
 			googleConnect:       internal_connects.NewGoogleAuthenticationConnect(config, oauthCfg, logger, postgres),
@@ -226,17 +226,17 @@ func (webAuthApi *webAuthRPCApi) RegisterUser(c *gin.Context) {
 
 	signin -> request to authenticate with valid email and password
 */
-func (wAuthApi *webAuthGRPCApi) Authenticate(c context.Context, irRequest *web_api.AuthenticateRequest) (*web_api.AuthenticateResponse, error) {
+func (wAuthApi *webAuthGRPCApi) Authenticate(c context.Context, irRequest *protos.AuthenticateRequest) (*protos.AuthenticateResponse, error) {
 	wAuthApi.logger.Debugf("Authenticate from grpc with requestPayload %v, %v", irRequest, c)
 
 	aUser, err := wAuthApi.userService.Authenticate(c, irRequest.Email, irRequest.Password)
 	if err != nil {
 		wAuthApi.logger.Errorf("unable to process authentication %v", err)
 		wAuthApi.logger.Debugf("authentication request failed for user %s", irRequest.Email)
-		return &web_api.AuthenticateResponse{
+		return &protos.AuthenticateResponse{
 			Code:    401,
 			Success: false,
-			Error: &web_api.AuthenticationError{
+			Error: &protos.AuthenticationError{
 				ErrorCode:    401,
 				ErrorMessage: err.Error(),
 				HumanMessage: "Please provide valid credentials to signin into account.",
@@ -249,25 +249,25 @@ func (wAuthApi *webAuthGRPCApi) Authenticate(c context.Context, irRequest *web_a
 	*/
 	if aUser.GetUserInfo().Status != string(type_enums.RECORD_ACTIVE) {
 		wAuthApi.logger.Errorf("unable to process authentication because of status of the user status %v", aUser.GetUserInfo().Status)
-		return &web_api.AuthenticateResponse{
+		return &protos.AuthenticateResponse{
 			Code:    401,
 			Success: false,
-			Error: &web_api.AuthenticationError{
+			Error: &protos.AuthenticationError{
 				ErrorCode:    400,
 				ErrorMessage: "illegal user status",
 				HumanMessage: "Your account is not activated yet. please activate before signin.",
 			}}, nil
 	}
-	auth := &web_api.Authentication{}
+	auth := &protos.Authentication{}
 	utils.Cast(aUser.PlainAuthPrinciple(), auth)
-	return &web_api.AuthenticateResponse{Code: 200, Success: true, Data: auth}, nil
+	return &protos.AuthenticateResponse{Code: 200, Success: true, Data: auth}, nil
 }
 
 /*
 Register or activate a user to authenticate into the rapida platform
 will be streamlining the code for better managing and expalining later
 */
-func (wAuthApi *webAuthGRPCApi) RegisterUser(c context.Context, irRequest *web_api.RegisterUserRequest) (*web_api.AuthenticateResponse, error) {
+func (wAuthApi *webAuthGRPCApi) RegisterUser(c context.Context, irRequest *protos.RegisterUserRequest) (*protos.AuthenticateResponse, error) {
 	wAuthApi.logger.Debugf("RegisterUser from grpc with requestPayload %v, %v", irRequest, c)
 	cUser, err := wAuthApi.userService.Get(c, irRequest.Email)
 	source := "direct"
@@ -275,10 +275,10 @@ func (wAuthApi *webAuthGRPCApi) RegisterUser(c context.Context, irRequest *web_a
 		aUser, err := wAuthApi.userService.Create(c, irRequest.Name, irRequest.Email, irRequest.Password, type_enums.RECORD_ACTIVE, &source)
 		if err != nil {
 			wAuthApi.logger.Errorf("creation user failed with err %v", err)
-			return &web_api.AuthenticateResponse{
+			return &protos.AuthenticateResponse{
 				Code:    400,
 				Success: false,
-				Error: &web_api.AuthenticationError{
+				Error: &protos.AuthenticationError{
 					ErrorCode:    400,
 					ErrorMessage: err.Error(),
 					HumanMessage: "Unable to create an account, please check and try again.",
@@ -290,27 +290,27 @@ func (wAuthApi *webAuthGRPCApi) RegisterUser(c context.Context, irRequest *web_a
 		}
 
 		// this is temp as we don't allow user to register
-		return &web_api.AuthenticateResponse{
+		return &protos.AuthenticateResponse{
 			Code:    401,
 			Success: false,
-			Error: &web_api.AuthenticationError{
+			Error: &protos.AuthenticationError{
 				ErrorCode:    400,
 				ErrorMessage: "illegal user status",
 				HumanMessage: "Thank you for registering! Your account is currently in the waitlist. We'll be reaching out to you soon to get started. Stay tuned!",
 			}}, nil
 
-		// auth := &web_api.Authentication{}
+		// auth := &protos.Authentication{}
 		// utils.Cast(aUser.PlainAuthPrinciple(), auth)
-		// return &web_api.AuthenticateResponse{Code: 200, Success: true, Data: auth}, nil
+		// return &protos.AuthenticateResponse{Code: 200, Success: true, Data: auth}, nil
 	}
 
 	// already have an active account
 	if cUser.Status == type_enums.RECORD_ACTIVE {
 		wAuthApi.logger.Errorf("user is already having account and trying to signup")
-		return &web_api.AuthenticateResponse{
+		return &protos.AuthenticateResponse{
 			Code:    401,
 			Success: false,
-			Error: &web_api.AuthenticationError{
+			Error: &protos.AuthenticationError{
 				ErrorCode:    400,
 				ErrorMessage: "illegal user status",
 				HumanMessage: "Your email is already associated with an existing account, try signin.",
@@ -322,10 +322,10 @@ func (wAuthApi *webAuthGRPCApi) RegisterUser(c context.Context, irRequest *web_a
 		_, err := wAuthApi.userService.UpdatePassword(c, cUser.Id, irRequest.Password)
 		if err != nil {
 			wAuthApi.logger.Errorf("Error while updaing password for user %v", err)
-			return &web_api.AuthenticateResponse{
+			return &protos.AuthenticateResponse{
 				Code:    401,
 				Success: false,
-				Error: &web_api.AuthenticationError{
+				Error: &protos.AuthenticationError{
 					ErrorCode:    400,
 					ErrorMessage: err.Error(),
 					HumanMessage: "Unable to activate your account, please try again later.",
@@ -334,10 +334,10 @@ func (wAuthApi *webAuthGRPCApi) RegisterUser(c context.Context, irRequest *web_a
 		// activate org
 		if err = wAuthApi.userService.ActivateAllOrganizationRole(c, cUser.Id); err != nil {
 			wAuthApi.logger.Errorf("Error while registering user %v", err)
-			return &web_api.AuthenticateResponse{
+			return &protos.AuthenticateResponse{
 				Code:    401,
 				Success: false,
-				Error: &web_api.AuthenticationError{
+				Error: &protos.AuthenticationError{
 					ErrorCode:    400,
 					ErrorMessage: err.Error(),
 					HumanMessage: "Unable to activate your account, please try again later.",
@@ -346,10 +346,10 @@ func (wAuthApi *webAuthGRPCApi) RegisterUser(c context.Context, irRequest *web_a
 		// activate project
 		if err := wAuthApi.userService.ActivateAllProjectRoles(c, cUser.Id); err != nil {
 			wAuthApi.logger.Errorf("Error while registering user %v", err)
-			return &web_api.AuthenticateResponse{
+			return &protos.AuthenticateResponse{
 				Code:    401,
 				Success: false,
-				Error: &web_api.AuthenticationError{
+				Error: &protos.AuthenticationError{
 					ErrorCode:    400,
 					ErrorMessage: err.Error(),
 					HumanMessage: "Unable to activate your account, please try again later.",
@@ -360,50 +360,50 @@ func (wAuthApi *webAuthGRPCApi) RegisterUser(c context.Context, irRequest *web_a
 		aUser, err := wAuthApi.userService.Activate(c, cUser.Id, irRequest.Name, nil)
 		if err != nil {
 			wAuthApi.logger.Errorf("Error while registering user %v", err)
-			return &web_api.AuthenticateResponse{
+			return &protos.AuthenticateResponse{
 				Code:    401,
 				Success: false,
-				Error: &web_api.AuthenticationError{
+				Error: &protos.AuthenticationError{
 					ErrorCode:    400,
 					ErrorMessage: err.Error(),
 					HumanMessage: "Unable to activate your account, please try again later.",
 				}}, nil
 		}
 
-		auth := &web_api.Authentication{}
+		auth := &protos.Authentication{}
 		err = utils.Cast(aUser.PlainAuthPrinciple(), auth)
 		if err != nil {
 			wAuthApi.logger.Errorf("Error while unmarshelling user error %v", err)
-			return &web_api.AuthenticateResponse{
+			return &protos.AuthenticateResponse{
 				Code:    401,
 				Success: false,
-				Error: &web_api.AuthenticationError{
+				Error: &protos.AuthenticationError{
 					ErrorCode:    400,
 					ErrorMessage: err.Error(),
 					HumanMessage: "Unable to activate your account, please try again later.",
 				}}, nil
 
 		}
-		return &web_api.AuthenticateResponse{Code: 200, Success: true, Data: auth}, nil
+		return &protos.AuthenticateResponse{Code: 200, Success: true, Data: auth}, nil
 	}
 
-	return &web_api.AuthenticateResponse{Code: 400, Success: false, Error: &web_api.AuthenticationError{
+	return &protos.AuthenticateResponse{Code: 400, Success: false, Error: &protos.AuthenticationError{
 		ErrorCode:    400,
 		ErrorMessage: "illegal state of data",
 		HumanMessage: "We are facing issue with account creation, please try again in sometime",
 	}}, err
 }
 
-func (wAuthApi *webAuthGRPCApi) ForgotPassword(c context.Context, irRequest *web_api.ForgotPasswordRequest) (*web_api.ForgotPasswordResponse, error) {
+func (wAuthApi *webAuthGRPCApi) ForgotPassword(c context.Context, irRequest *protos.ForgotPasswordRequest) (*protos.ForgotPasswordResponse, error) {
 	wAuthApi.logger.Debugf("ForgotPassword from grpc with requestPayload %v, %v", irRequest.String(), c)
 
 	aUser, err := wAuthApi.userService.Get(c, irRequest.GetEmail())
 	if err != nil {
 		wAuthApi.logger.Errorf("getting email for forgot password for user %v failed %v", irRequest.GetEmail(), err)
-		return &web_api.ForgotPasswordResponse{
+		return &protos.ForgotPasswordResponse{
 			Code:    400,
 			Success: false,
-			Error: &web_api.AuthenticationError{
+			Error: &protos.AuthenticationError{
 				ErrorCode:    400,
 				ErrorMessage: err.Error(),
 				HumanMessage: "Your email is not associated with rapida.ai account, please check and try again",
@@ -412,10 +412,10 @@ func (wAuthApi *webAuthGRPCApi) ForgotPassword(c context.Context, irRequest *web
 
 	if aUser.Status != type_enums.RECORD_ACTIVE {
 		wAuthApi.logger.Errorf("user is changing password for not activated user  %v", aUser.Email)
-		return &web_api.ForgotPasswordResponse{
+		return &protos.ForgotPasswordResponse{
 			Code:    401,
 			Success: false,
-			Error: &web_api.AuthenticationError{
+			Error: &protos.AuthenticationError{
 				ErrorCode:    400,
 				ErrorMessage: "illegal user status",
 				HumanMessage: "Your account is not activated yet. please activate before signin.",
@@ -425,10 +425,10 @@ func (wAuthApi *webAuthGRPCApi) ForgotPassword(c context.Context, irRequest *web
 	token, err := wAuthApi.userService.CreatePasswordToken(c, aUser.Id)
 	if err != nil {
 		wAuthApi.logger.Errorf("unable to create password token for user %v failed %v", irRequest.GetEmail(), err)
-		return &web_api.ForgotPasswordResponse{
+		return &protos.ForgotPasswordResponse{
 			Code:    400,
 			Success: false,
-			Error: &web_api.AuthenticationError{
+			Error: &protos.AuthenticationError{
 				ErrorCode:    400,
 				ErrorMessage: err.Error(),
 				HumanMessage: "Unable to create reset password token, please try again in sometime.",
@@ -444,24 +444,24 @@ func (wAuthApi *webAuthGRPCApi) ForgotPassword(c context.Context, irRequest *web
 		wAuthApi.logger.Errorf("sending forgot password email failed with err %v", err)
 	}
 
-	return &web_api.ForgotPasswordResponse{
+	return &protos.ForgotPasswordResponse{
 		Code:    200,
 		Success: true,
 	}, nil
 
 }
 
-func (wAuthApi *webAuthGRPCApi) CreatePassword(c context.Context, irRequest *web_api.CreatePasswordRequest) (*web_api.CreatePasswordResponse, error) {
+func (wAuthApi *webAuthGRPCApi) CreatePassword(c context.Context, irRequest *protos.CreatePasswordRequest) (*protos.CreatePasswordResponse, error) {
 	wAuthApi.logger.Debugf("ChangePassword from grpc with requestPayload %v, %v", irRequest, c)
 	// CreateToken(ctx context.Context, userId uint64) (*internal_entities.UserAuthToken, error)
 	// wAuthApi.userService.Get(c, irRe)
 	token, err := wAuthApi.userService.GetToken(c, "password-token", irRequest.GetToken())
 	if err != nil {
 		wAuthApi.logger.Errorf("unable to verify password token for user %v failed %v", irRequest.GetToken(), err)
-		return &web_api.CreatePasswordResponse{
+		return &protos.CreatePasswordResponse{
 			Code:    400,
 			Success: false,
-			Error: &web_api.AuthenticationError{
+			Error: &protos.AuthenticationError{
 				ErrorCode:    400,
 				ErrorMessage: err.Error(),
 				HumanMessage: "Unable to verify reset password token, please try again in sometime.",
@@ -471,23 +471,23 @@ func (wAuthApi *webAuthGRPCApi) CreatePassword(c context.Context, irRequest *web
 	_, err = wAuthApi.userService.UpdatePassword(c, token.UserAuthId, irRequest.Password)
 	if err != nil {
 		wAuthApi.logger.Errorf("unable to change password for user failed %v", err)
-		return &web_api.CreatePasswordResponse{
+		return &protos.CreatePasswordResponse{
 			Code:    400,
 			Success: false,
-			Error: &web_api.AuthenticationError{
+			Error: &protos.AuthenticationError{
 				ErrorCode:    400,
 				ErrorMessage: err.Error(),
 				HumanMessage: "Unable to create reset password token, please try again in sometime.",
 			}}, nil
 	}
-	return &web_api.CreatePasswordResponse{
+	return &protos.CreatePasswordResponse{
 		Code:    200,
 		Success: true,
 	}, nil
 
 }
 
-func (wAuthApi *webAuthGRPCApi) Authorize(c context.Context, irRequest *web_api.AuthorizeRequest) (*web_api.AuthenticateResponse, error) {
+func (wAuthApi *webAuthGRPCApi) Authorize(c context.Context, irRequest *protos.AuthorizeRequest) (*protos.AuthenticateResponse, error) {
 	wAuthApi.logger.Debugf("Authorize from grpc with requestPayload %v, %v", irRequest, c)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(c)
 	if !isAuthenticated {
@@ -498,46 +498,46 @@ func (wAuthApi *webAuthGRPCApi) Authorize(c context.Context, irRequest *web_api.
 		wAuthApi.logger.Errorf("unable to authorize the user %v", err)
 		return nil, err
 	}
-	auth := &web_api.Authentication{}
+	auth := &protos.Authentication{}
 	utils.Cast(aUser.PlainAuthPrinciple(), auth)
-	return &web_api.AuthenticateResponse{Code: 200, Success: true, Data: auth}, nil
+	return &protos.AuthenticateResponse{Code: 200, Success: true, Data: auth}, nil
 }
 
-func (wAuthApi *webAuthGRPCApi) ScopeAuthorize(c context.Context, irRequest *web_api.ScopeAuthorizeRequest) (*web_api.ScopedAuthenticationResponse, error) {
+func (wAuthApi *webAuthGRPCApi) ScopeAuthorize(c context.Context, irRequest *protos.ScopeAuthorizeRequest) (*protos.ScopedAuthenticationResponse, error) {
 	if irRequest.GetScope() == "project" {
 		iAuth, isAuthenticated := types.GetScopePrincipleGRPC[*types.ProjectScope](c)
 		if !isAuthenticated {
 			return nil, errors.New("unauthenticated request")
 		}
-		auth := &web_api.ScopedAuthentication{}
+		auth := &protos.ScopedAuthentication{}
 		utils.Cast(iAuth, auth)
-		return &web_api.ScopedAuthenticationResponse{Code: 200, Success: true, Data: auth}, nil
+		return &protos.ScopedAuthenticationResponse{Code: 200, Success: true, Data: auth}, nil
 	}
 
 	iAuth, isAuthenticated := types.GetScopePrincipleGRPC[*types.OrganizationScope](c)
 	if !isAuthenticated {
 		return nil, errors.New("unauthenticated request")
 	}
-	auth := &web_api.ScopedAuthentication{}
+	auth := &protos.ScopedAuthentication{}
 	utils.Cast(iAuth, auth)
-	return &web_api.ScopedAuthenticationResponse{Code: 200, Success: true, Data: auth}, nil
+	return &protos.ScopedAuthenticationResponse{Code: 200, Success: true, Data: auth}, nil
 
 }
 
-func (wAuthApi *webAuthApi) VerifyToken(c context.Context, irRequest *web_api.VerifyTokenRequest) (*web_api.VerifyTokenResponse, error) {
+func (wAuthApi *webAuthApi) VerifyToken(c context.Context, irRequest *protos.VerifyTokenRequest) (*protos.VerifyTokenResponse, error) {
 	wAuthApi.logger.Debugf("VerifyToken from grpc with requestPayload %v, %v", irRequest, c)
 	token, err := wAuthApi.userService.GetToken(c, irRequest.GetTokenType(), irRequest.GetToken())
 	if err != nil {
 		return nil, err
 	}
 
-	aToken := &web_api.Token{}
+	aToken := &protos.Token{}
 	utils.Cast(token, aToken)
-	return &web_api.VerifyTokenResponse{Code: 200, Success: true, Data: aToken}, nil
+	return &protos.VerifyTokenResponse{Code: 200, Success: true, Data: aToken}, nil
 
 }
 
-func (wAuthApi *webAuthApi) GetUser(c context.Context, irRequest *web_api.GetUserRequest) (*web_api.GetUserResponse, error) {
+func (wAuthApi *webAuthApi) GetUser(c context.Context, irRequest *protos.GetUserRequest) (*protos.GetUserResponse, error) {
 	wAuthApi.logger.Debugf("GetUser from grpc with requestPayload %v, %v", irRequest, c)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(c)
 	if !isAuthenticated {
@@ -549,13 +549,13 @@ func (wAuthApi *webAuthApi) GetUser(c context.Context, irRequest *web_api.GetUse
 		return nil, err
 	}
 
-	aUser := &web_api.User{}
+	aUser := &protos.User{}
 	utils.Cast(user, aUser)
-	return &web_api.GetUserResponse{Code: 200, Success: true, Data: aUser}, nil
+	return &protos.GetUserResponse{Code: 200, Success: true, Data: aUser}, nil
 
 }
 
-func (wAuthApi *webAuthApi) UpdateUser(c context.Context, irRequest *web_api.UpdateUserRequest) (*web_api.UpdateUserResponse, error) {
+func (wAuthApi *webAuthApi) UpdateUser(c context.Context, irRequest *protos.UpdateUserRequest) (*protos.UpdateUserResponse, error) {
 	wAuthApi.logger.Debugf("UpdateUser from grpc with requestPayload %v, %v", irRequest, c)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(c)
 	if !isAuthenticated {
@@ -571,9 +571,9 @@ func (wAuthApi *webAuthApi) UpdateUser(c context.Context, irRequest *web_api.Upd
 		return nil, err
 	}
 
-	aUser := &web_api.User{}
+	aUser := &protos.User{}
 	utils.Cast(user, aUser)
-	return &web_api.UpdateUserResponse{Code: 200, Success: true, Data: aUser}, nil
+	return &protos.UpdateUserResponse{Code: 200, Success: true, Data: aUser}, nil
 }
 
 /**
@@ -582,15 +582,15 @@ Oauth implimentation block that will help us quickly login and sign up in our sy
 **/
 
 // common way to create social user
-func (wAuthApi *webAuthApi) RegisterSocialUser(c context.Context, inf *internal_connects.OpenID) (*web_api.AuthenticateResponse, error) {
+func (wAuthApi *webAuthApi) RegisterSocialUser(c context.Context, inf *internal_connects.OpenID) (*protos.AuthenticateResponse, error) {
 	cUser, err := wAuthApi.userService.Get(c, inf.Email)
 	if err != nil {
 		aUser, err := wAuthApi.userService.Create(c, inf.Name, inf.Email, inf.Token, "waitlist", &inf.Source)
 		if err != nil {
-			return &web_api.AuthenticateResponse{
+			return &protos.AuthenticateResponse{
 				Code:    400,
 				Success: false,
-				Error: &web_api.AuthenticationError{
+				Error: &protos.AuthenticationError{
 					ErrorCode:    400,
 					ErrorMessage: err.Error(),
 					HumanMessage: "Unable to create the user, please try again in sometime.",
@@ -602,10 +602,10 @@ func (wAuthApi *webAuthApi) RegisterSocialUser(c context.Context, inf *internal_
 		_, err = wAuthApi.userService.CreateSocial(c, aUser.GetUserInfo().Id, inf.Id, inf.Token, inf.Source, inf.Verified)
 		if err != nil {
 			wAuthApi.logger.Debugf("failed to persist the user social information %v", err)
-			return &web_api.AuthenticateResponse{
+			return &protos.AuthenticateResponse{
 				Code:    400,
 				Success: false,
-				Error: &web_api.AuthenticationError{
+				Error: &protos.AuthenticationError{
 					ErrorCode:    400,
 					ErrorMessage: err.Error(),
 					HumanMessage: "Unable to create the user, please try again in sometime.",
@@ -618,25 +618,25 @@ func (wAuthApi *webAuthApi) RegisterSocialUser(c context.Context, inf *internal_
 		}
 
 		// this is temprory as we don;t allow user to singup
-		return &web_api.AuthenticateResponse{
+		return &protos.AuthenticateResponse{
 			Code:    401,
 			Success: false,
-			Error: &web_api.AuthenticationError{
+			Error: &protos.AuthenticationError{
 				ErrorCode:    400,
 				ErrorMessage: "illegal user status",
 				HumanMessage: "Thank you for registering! Your account is currently in the waitlist. We'll be reaching out to you soon to get started. Stay tuned!",
 			}}, nil
 
-		// auth := &web_api.Authentication{}
+		// auth := &protos.Authentication{}
 		// utils.Cast(aUser.PlainAuthPrinciple(), auth)
-		// return &web_api.AuthenticateResponse{Code: 200, Success: true, Data: auth}, nil
+		// return &protos.AuthenticateResponse{Code: 200, Success: true, Data: auth}, nil
 	}
 
 	if cUser.Status == "waitlist" {
-		return &web_api.AuthenticateResponse{
+		return &protos.AuthenticateResponse{
 			Code:    401,
 			Success: false,
-			Error: &web_api.AuthenticationError{
+			Error: &protos.AuthenticationError{
 				ErrorCode:    400,
 				ErrorMessage: "illegal user status",
 				HumanMessage: "Thank you for registering! Your account is currently in the waitlist. We'll be reaching out to you soon to get started. Stay tuned!",
@@ -650,10 +650,10 @@ func (wAuthApi *webAuthApi) RegisterSocialUser(c context.Context, inf *internal_
 		// activate org
 		if err = wAuthApi.userService.ActivateAllOrganizationRole(c, cUser.Id); err != nil {
 			wAuthApi.logger.Errorf("Error while registering user %v", err)
-			return &web_api.AuthenticateResponse{
+			return &protos.AuthenticateResponse{
 				Code:    401,
 				Success: false,
-				Error: &web_api.AuthenticationError{
+				Error: &protos.AuthenticationError{
 					ErrorCode:    400,
 					ErrorMessage: err.Error(),
 					HumanMessage: "Unable to activate your account, please try again later.",
@@ -662,10 +662,10 @@ func (wAuthApi *webAuthApi) RegisterSocialUser(c context.Context, inf *internal_
 		// activate project
 		if err := wAuthApi.userService.ActivateAllProjectRoles(c, cUser.Id); err != nil {
 			wAuthApi.logger.Errorf("Error while registering user %v", err)
-			return &web_api.AuthenticateResponse{
+			return &protos.AuthenticateResponse{
 				Code:    401,
 				Success: false,
-				Error: &web_api.AuthenticationError{
+				Error: &protos.AuthenticationError{
 					ErrorCode:    400,
 					ErrorMessage: err.Error(),
 					HumanMessage: "Unable to activate your account, please try again later.",
@@ -675,10 +675,10 @@ func (wAuthApi *webAuthApi) RegisterSocialUser(c context.Context, inf *internal_
 		aUser, err := wAuthApi.userService.Activate(c, cUser.Id, inf.Name, &inf.Source)
 		if err != nil {
 			wAuthApi.logger.Debugf("failed to activate the user")
-			return &web_api.AuthenticateResponse{
+			return &protos.AuthenticateResponse{
 				Code:    400,
 				Success: false,
-				Error: &web_api.AuthenticationError{
+				Error: &protos.AuthenticationError{
 					ErrorCode:    400,
 					ErrorMessage: err.Error(),
 					HumanMessage: "Failed to activate the user, please check with your organization admin.",
@@ -688,19 +688,19 @@ func (wAuthApi *webAuthApi) RegisterSocialUser(c context.Context, inf *internal_
 		_, err = wAuthApi.userService.CreateSocial(c, aUser.GetUserInfo().Id, inf.Id, inf.Token, inf.Source, inf.Verified)
 		if err != nil {
 			wAuthApi.logger.Debugf("failed to persist the user social information")
-			return &web_api.AuthenticateResponse{
+			return &protos.AuthenticateResponse{
 				Code:    400,
 				Success: false,
-				Error: &web_api.AuthenticationError{
+				Error: &protos.AuthenticationError{
 					ErrorCode:    400,
 					ErrorMessage: err.Error(),
 					HumanMessage: "Failed to activate the user, please check with your organization admin.",
 				}}, nil
 		}
 
-		auth := &web_api.Authentication{}
+		auth := &protos.Authentication{}
 		utils.Cast(aUser.PlainAuthPrinciple(), auth)
-		return &web_api.AuthenticateResponse{Code: 200, Success: true, Data: auth}, nil
+		return &protos.AuthenticateResponse{Code: 200, Success: true, Data: auth}, nil
 	}
 
 	// it might be social login
@@ -710,10 +710,10 @@ func (wAuthApi *webAuthApi) RegisterSocialUser(c context.Context, inf *internal_
 		if err != nil {
 			_, err = wAuthApi.userService.CreateSocial(c, cUser.Id, inf.Id, inf.Token, inf.Source, inf.Verified)
 			if err != nil {
-				return &web_api.AuthenticateResponse{
+				return &protos.AuthenticateResponse{
 					Code:    400,
 					Success: false,
-					Error: &web_api.AuthenticationError{
+					Error: &protos.AuthenticationError{
 						ErrorCode:    400,
 						ErrorMessage: err.Error(),
 						HumanMessage: "Unable to persist the social informaiton, please try again later.",
@@ -725,9 +725,9 @@ func (wAuthApi *webAuthApi) RegisterSocialUser(c context.Context, inf *internal_
 			wAuthApi.logger.Debugf("failed to get auth principle %v", err)
 			return nil, err
 		}
-		auth := &web_api.Authentication{}
+		auth := &protos.Authentication{}
 		utils.Cast(aUser.PlainAuthPrinciple(), auth)
-		return &web_api.AuthenticateResponse{Code: 200, Success: true, Data: auth}, nil
+		return &protos.AuthenticateResponse{Code: 200, Success: true, Data: auth}, nil
 	}
 
 	return nil, errors.New("you are already registered, please use the existing method to signin")
@@ -745,7 +745,7 @@ func (wAuthApi *webAuthRPCApi) Github(c *gin.Context) {
 	return
 }
 
-func (wAuthApi *webAuthGRPCApi) Github(c context.Context, irRequest *web_api.SocialAuthenticationRequest) (*web_api.AuthenticateResponse, error) {
+func (wAuthApi *webAuthGRPCApi) Github(c context.Context, irRequest *protos.SocialAuthenticationRequest) (*protos.AuthenticateResponse, error) {
 	inf, err := wAuthApi.githubConnect.GithubUserInfo(c, irRequest.State, irRequest.Code)
 	wAuthApi.logger.Debugf("github authenticator respose %v", inf)
 	if err != nil {
@@ -761,7 +761,7 @@ func (wAuthApi *webAuthRPCApi) Linkedin(c *gin.Context) {
 	c.Redirect(http.StatusTemporaryRedirect, url)
 	return
 }
-func (wAuthApi *webAuthGRPCApi) Linkedin(c context.Context, irRequest *web_api.SocialAuthenticationRequest) (*web_api.AuthenticateResponse, error) {
+func (wAuthApi *webAuthGRPCApi) Linkedin(c context.Context, irRequest *protos.SocialAuthenticationRequest) (*protos.AuthenticateResponse, error) {
 	inf, err := wAuthApi.linkedinConnect.LinkedinUserInfo(c, irRequest.State, irRequest.Code)
 	wAuthApi.logger.Debugf("linkedin authenticator respose %v", inf)
 	if err != nil {
@@ -778,7 +778,7 @@ func (wAuthApi *webAuthRPCApi) Google(c *gin.Context) {
 	c.Redirect(http.StatusTemporaryRedirect, url)
 	return
 }
-func (wAuthApi *webAuthGRPCApi) Google(c context.Context, irRequest *web_api.SocialAuthenticationRequest) (*web_api.AuthenticateResponse, error) {
+func (wAuthApi *webAuthGRPCApi) Google(c context.Context, irRequest *protos.SocialAuthenticationRequest) (*protos.AuthenticateResponse, error) {
 	if GOOGLE_STATE != irRequest.State {
 		wAuthApi.logger.Errorf("illegal oauth request as auth state is not matching %s %s", GOOGLE_STATE, irRequest.State)
 		return nil, fmt.Errorf("invalid oauth state")
@@ -793,7 +793,7 @@ func (wAuthApi *webAuthGRPCApi) Google(c context.Context, irRequest *web_api.Soc
 
 }
 
-func (wAuthApi *webAuthGRPCApi) GetAllUser(c context.Context, irRequest *web_api.GetAllUserRequest) (*web_api.GetAllUserResponse, error) {
+func (wAuthApi *webAuthGRPCApi) GetAllUser(c context.Context, irRequest *protos.GetAllUserRequest) (*protos.GetAllUserResponse, error) {
 	wAuthApi.logger.Debugf("GetUsers from grpc with requestPayload %v, %v", irRequest, c)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(c)
 	if !isAuthenticated {
@@ -807,19 +807,19 @@ func (wAuthApi *webAuthGRPCApi) GetAllUser(c context.Context, irRequest *web_api
 	)
 	if err != nil {
 		wAuthApi.logger.Errorf("getUsers from grpc with requestPayload %v, %v", irRequest, c)
-		return &web_api.GetAllUserResponse{
+		return &protos.GetAllUserResponse{
 			Code:    400,
 			Success: false,
-			Error: &web_api.Error{
+			Error: &protos.Error{
 				ErrorCode:    400,
 				ErrorMessage: err.Error(),
 				HumanMessage: "Unable to get all the users for the organization, please try again in sometime.",
 			}}, nil
 	}
 
-	out := make([]*web_api.User, len(*allMembers))
+	out := make([]*protos.User, len(*allMembers))
 	for ix, member := range *allMembers {
-		out[ix] = &web_api.User{
+		out[ix] = &protos.User{
 			Name:        member.Member.Name,
 			Id:          member.Member.Id,
 			Email:       member.Member.Email,
@@ -828,11 +828,11 @@ func (wAuthApi *webAuthGRPCApi) GetAllUser(c context.Context, irRequest *web_api
 			CreatedDate: timestamppb.New(time.Time(member.Member.CreatedDate)),
 		}
 	}
-	return &web_api.GetAllUserResponse{
+	return &protos.GetAllUserResponse{
 		Code:    200,
 		Success: true,
 		Data:    out,
-		Paginated: &web_api.Paginated{
+		Paginated: &protos.Paginated{
 			TotalItem:   uint32(cnt),
 			CurrentPage: irRequest.GetPaginate().GetPage(),
 		},

@@ -1,4 +1,4 @@
-package web_handler
+package web_api
 
 import (
 	"context"
@@ -13,18 +13,18 @@ import (
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
 
+	config "github.com/rapidaai/api/web-api/config"
 	internal_service "github.com/rapidaai/api/web-api/internal/service"
 	internal_project_service "github.com/rapidaai/api/web-api/internal/service/project"
-	config "github.com/rapidaai/config"
 	"github.com/rapidaai/pkg/ciphers"
 	commons "github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	"github.com/rapidaai/pkg/types"
-	web_api "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 type webProjectApi struct {
-	cfg                 *config.AppConfig
+	cfg                 *config.WebAppConfig
 	logger              commons.Logger
 	redis               connectors.RedisConnector
 	postgres            connectors.PostgresConnector
@@ -42,7 +42,7 @@ type webProjectGRPCApi struct {
 	webProjectApi
 }
 
-func NewProjectRPC(config *config.AppConfig, logger commons.Logger, postgres connectors.PostgresConnector, redis connectors.RedisConnector) *webProjectRPCApi {
+func NewProjectRPC(config *config.WebAppConfig, logger commons.Logger, postgres connectors.PostgresConnector, redis connectors.RedisConnector) *webProjectRPCApi {
 	return &webProjectRPCApi{
 		webProjectApi{
 			cfg:            config,
@@ -50,12 +50,12 @@ func NewProjectRPC(config *config.AppConfig, logger commons.Logger, postgres con
 			postgres:       postgres,
 			redis:          redis,
 			projectService: internal_project_service.NewProjectService(logger, postgres),
-			sendgridClient: integration_client.NewSendgridServiceClientGRPC(config, logger),
+			sendgridClient: integration_client.NewSendgridServiceClientGRPC(&config.AppConfig, logger),
 		},
 	}
 }
 
-func NewProjectGRPC(config *config.AppConfig, logger commons.Logger, postgres connectors.PostgresConnector, redis connectors.RedisConnector) web_api.ProjectServiceServer {
+func NewProjectGRPC(config *config.WebAppConfig, logger commons.Logger, postgres connectors.PostgresConnector, redis connectors.RedisConnector) protos.ProjectServiceServer {
 	return &webProjectGRPCApi{
 		webProjectApi{
 			cfg:                 config,
@@ -64,13 +64,13 @@ func NewProjectGRPC(config *config.AppConfig, logger commons.Logger, postgres co
 			redis:               redis,
 			projectService:      internal_project_service.NewProjectService(logger, postgres),
 			userService:         internal_user_service.NewUserService(logger, postgres),
-			sendgridClient:      integration_client.NewSendgridServiceClientGRPC(config, logger),
+			sendgridClient:      integration_client.NewSendgridServiceClientGRPC(&config.AppConfig, logger),
 			organizationService: internal_organization_service.NewOrganizationService(logger, postgres),
 		},
 	}
 }
 
-func (wProjectApi *webProjectGRPCApi) CreateProject(ctx context.Context, irRequest *web_api.CreateProjectRequest) (*web_api.CreateProjectResponse, error) {
+func (wProjectApi *webProjectGRPCApi) CreateProject(ctx context.Context, irRequest *protos.CreateProjectRequest) (*protos.CreateProjectResponse, error) {
 	wProjectApi.logger.Debugf("CreateProject from grpc with requestPayload %v, %v", irRequest, ctx)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
@@ -80,7 +80,7 @@ func (wProjectApi *webProjectGRPCApi) CreateProject(ctx context.Context, irReque
 	currentOrgRole := iAuth.GetOrganizationRole()
 	if currentOrgRole == nil {
 		wProjectApi.logger.Errorf("current org is not null, you can't create multiple organization at same time.")
-		return utils.Error[web_api.CreateProjectResponse](
+		return utils.Error[protos.CreateProjectResponse](
 			errors.New("you cannot create a project when you are not part of any organization"),
 			"Please create organization before creating a project.")
 	}
@@ -88,7 +88,7 @@ func (wProjectApi *webProjectGRPCApi) CreateProject(ctx context.Context, irReque
 	prj, err := wProjectApi.projectService.Create(ctx, iAuth, iAuth.GetOrganizationRole().OrganizationId, irRequest.GetProjectName(), irRequest.GetProjectDescription())
 	if err != nil {
 		wProjectApi.logger.Errorf("projectService.Create from grpc with err %v", err)
-		return utils.Error[web_api.CreateProjectResponse](
+		return utils.Error[protos.CreateProjectResponse](
 			err,
 			"Unable to create project for your organization, please try again in sometime")
 	}
@@ -96,21 +96,21 @@ func (wProjectApi *webProjectGRPCApi) CreateProject(ctx context.Context, irReque
 	_, err = wProjectApi.userService.CreateProjectRole(ctx, iAuth, iAuth.GetUserInfo().Id, "admin", prj.Id, type_enums.RECORD_ACTIVE)
 	if err != nil {
 		wProjectApi.logger.Errorf("userService.CreateProjectRole from grpc with err %v", err)
-		return utils.Error[web_api.CreateProjectResponse](
+		return utils.Error[protos.CreateProjectResponse](
 			err, "Unable to create project role for you, please try again in sometime")
 	}
-	ot := &web_api.Project{}
+	ot := &protos.Project{}
 	err = utils.Cast(prj, ot)
 	if err != nil {
 		wProjectApi.logger.Errorf("unable to cast project to proto object %v", err)
 	}
-	return utils.Success[web_api.CreateProjectResponse, *web_api.Project](ot)
+	return utils.Success[protos.CreateProjectResponse, *protos.Project](ot)
 }
 
 /*
 update project request
 */
-func (wProjectApi *webProjectGRPCApi) UpdateProject(ctx context.Context, irRequest *web_api.UpdateProjectRequest) (*web_api.UpdateProjectResponse, error) {
+func (wProjectApi *webProjectGRPCApi) UpdateProject(ctx context.Context, irRequest *protos.UpdateProjectRequest) (*protos.UpdateProjectResponse, error) {
 	wProjectApi.logger.Debugf("UpdateProject from grpc with requestPayload %v, %v", irRequest, ctx)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
@@ -121,7 +121,7 @@ func (wProjectApi *webProjectGRPCApi) UpdateProject(ctx context.Context, irReque
 	currentOrgRole := iAuth.GetOrganizationRole()
 	if currentOrgRole == nil {
 		wProjectApi.logger.Errorf("current org is not null, you can't create multiple organization at same time.")
-		return utils.Error[web_api.UpdateProjectResponse](
+		return utils.Error[protos.UpdateProjectResponse](
 			errors.New("you cannot update a project when you are not part of any organization"),
 			"Please create organization before updating a project.")
 
@@ -130,20 +130,20 @@ func (wProjectApi *webProjectGRPCApi) UpdateProject(ctx context.Context, irReque
 	prj, err := wProjectApi.projectService.Update(ctx, iAuth, irRequest.GetProjectId(), irRequest.ProjectName, irRequest.ProjectDescription)
 	if err != nil {
 		wProjectApi.logger.Errorf("projectService.Update from grpc with err %v", err)
-		return utils.Error[web_api.UpdateProjectResponse](err,
+		return utils.Error[protos.UpdateProjectResponse](err,
 			"Unable to update the project, please try again in sometime.")
 	}
 
-	ot := &web_api.Project{}
+	ot := &protos.Project{}
 	err = utils.Cast(prj, ot)
 	if err != nil {
 		wProjectApi.logger.Errorf("unable to cast project to proto object %v", err)
 	}
 
-	return utils.Success[web_api.UpdateProjectResponse, *web_api.Project](ot)
+	return utils.Success[protos.UpdateProjectResponse, *protos.Project](ot)
 
 }
-func (wProjectApi *webProjectGRPCApi) GetAllProject(ctx context.Context, irRequest *web_api.GetAllProjectRequest) (*web_api.GetAllProjectResponse, error) {
+func (wProjectApi *webProjectGRPCApi) GetAllProject(ctx context.Context, irRequest *protos.GetAllProjectRequest) (*protos.GetAllProjectResponse, error) {
 	wProjectApi.logger.Debugf("GetAllProject from grpc with requestPayload %v, %v", irRequest, ctx)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
@@ -154,7 +154,7 @@ func (wProjectApi *webProjectGRPCApi) GetAllProject(ctx context.Context, irReque
 	currentOrgRole := iAuth.GetOrganizationRole()
 	if currentOrgRole == nil {
 		wProjectApi.logger.Errorf("current org is not null, you can't create multiple organization at same time.")
-		return utils.Error[web_api.GetAllProjectResponse](
+		return utils.Error[protos.GetAllProjectResponse](
 			errors.New("you are not part of any active organization"),
 			"Please create organization and try again.",
 		)
@@ -164,14 +164,14 @@ func (wProjectApi *webProjectGRPCApi) GetAllProject(ctx context.Context, irReque
 		currentOrgRole.OrganizationId, irRequest.GetCriterias(), irRequest.GetPaginate())
 	if err != nil {
 		wProjectApi.logger.Errorf("projectService.GetAll from grpc with err %v", err)
-		return utils.Error[web_api.GetAllProjectResponse](
+		return utils.Error[protos.GetAllProjectResponse](
 			err,
 			"Unable to get the projects, please try again in sometime.",
 		)
 
 	}
 
-	out := []*web_api.Project{}
+	out := []*protos.Project{}
 	err = utils.Cast(prjs, &out)
 	if err != nil {
 		wProjectApi.logger.Errorf("unable to cast project to proto object %v", err)
@@ -184,7 +184,7 @@ func (wProjectApi *webProjectGRPCApi) GetAllProject(ctx context.Context, irReque
 			continue
 		}
 		for _, upr := range *_m {
-			prj.Members = append(prj.Members, &web_api.User{
+			prj.Members = append(prj.Members, &protos.User{
 				Role:  upr.Role,
 				Id:    upr.UserAuthId,
 				Name:  upr.Member.Name,
@@ -193,10 +193,10 @@ func (wProjectApi *webProjectGRPCApi) GetAllProject(ctx context.Context, irReque
 		}
 
 	}
-	return utils.PaginatedSuccess[web_api.GetAllProjectResponse, []*web_api.Project](uint32(cnt), irRequest.GetPaginate().GetPage(), out)
+	return utils.PaginatedSuccess[protos.GetAllProjectResponse, []*protos.Project](uint32(cnt), irRequest.GetPaginate().GetPage(), out)
 }
 
-func (wProjectApi *webProjectGRPCApi) GetProject(ctx context.Context, irRequest *web_api.GetProjectRequest) (*web_api.GetProjectResponse, error) {
+func (wProjectApi *webProjectGRPCApi) GetProject(ctx context.Context, irRequest *protos.GetProjectRequest) (*protos.GetProjectResponse, error) {
 	wProjectApi.logger.Debugf("GetProject from grpc with requestPayload %v, %v", irRequest, ctx)
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(ctx)
 	if !isAuthenticated {
@@ -205,7 +205,7 @@ func (wProjectApi *webProjectGRPCApi) GetProject(ctx context.Context, irRequest 
 	}
 
 	if irRequest.GetProjectId() == 0 {
-		return utils.Error[web_api.GetProjectResponse](
+		return utils.Error[protos.GetProjectResponse](
 			errors.New("projectid is not getting passed"),
 			"Please select the project to see the details.",
 		)
@@ -215,13 +215,13 @@ func (wProjectApi *webProjectGRPCApi) GetProject(ctx context.Context, irRequest 
 	prj, err := wProjectApi.projectService.Get(ctx, iAuth, irRequest.GetProjectId())
 	if err != nil {
 		wProjectApi.logger.Errorf("projectService.Get from grpc with err %v", err)
-		return utils.Error[web_api.GetProjectResponse](
+		return utils.Error[protos.GetProjectResponse](
 			err,
 			"Please select the project to see the details.",
 		)
 	}
 
-	ot := &web_api.Project{}
+	ot := &protos.Project{}
 	utils.Cast(prj, ot)
 	var projectMemebers *[]internal_entity.UserProjectRole
 	projectMemebers, err = wProjectApi.userService.GetAllActiveProjectMember(ctx, prj.Id)
@@ -230,9 +230,9 @@ func (wProjectApi *webProjectGRPCApi) GetProject(ctx context.Context, irRequest 
 		return nil, err
 	}
 
-	projectMembers := make([]*web_api.User, len(*projectMemebers))
+	projectMembers := make([]*protos.User, len(*projectMemebers))
 	for idx, upr := range *projectMemebers {
-		projectMembers[idx] = &web_api.User{
+		projectMembers[idx] = &protos.User{
 			Role:  upr.Role,
 			Id:    upr.UserAuthId,
 			Name:  upr.Member.Name,
@@ -241,11 +241,11 @@ func (wProjectApi *webProjectGRPCApi) GetProject(ctx context.Context, irRequest 
 	}
 
 	ot.Members = projectMembers
-	return utils.Success[web_api.GetProjectResponse, *web_api.Project](ot)
+	return utils.Success[protos.GetProjectResponse, *protos.Project](ot)
 
 }
 
-func (wProjectApi *webProjectGRPCApi) AddUserToProject(ctx context.Context, auth types.Principle, email string, userId uint64, status type_enums.RecordState, role string, projectIds []uint64) (*web_api.AddUsersToProjectResponse, error) {
+func (wProjectApi *webProjectGRPCApi) AddUserToProject(ctx context.Context, auth types.Principle, email string, userId uint64, status type_enums.RecordState, role string, projectIds []uint64) (*protos.AddUsersToProjectResponse, error) {
 	projectNames := make([]string, len(projectIds))
 	projectOut := make([]*internal_entity.Project, len(projectIds))
 
@@ -266,16 +266,16 @@ func (wProjectApi *webProjectGRPCApi) AddUserToProject(ctx context.Context, auth
 		wProjectApi.logger.Errorf("error while sending invite email %v", err)
 	}
 
-	out := []*web_api.Project{}
+	out := []*protos.Project{}
 	err = utils.Cast(projectOut, &out)
 	if err != nil {
 		wProjectApi.logger.Errorf("unable to cast project credential to proto object %v", err)
 	}
-	return utils.Success[web_api.AddUsersToProjectResponse, []*web_api.Project](out)
+	return utils.Success[protos.AddUsersToProjectResponse, []*protos.Project](out)
 
 }
 
-func (wProjectApi *webProjectGRPCApi) AddUsersToProject(ctx context.Context, irRequest *web_api.AddUsersToProjectRequest) (*web_api.AddUsersToProjectResponse, error) {
+func (wProjectApi *webProjectGRPCApi) AddUsersToProject(ctx context.Context, irRequest *protos.AddUsersToProjectRequest) (*protos.AddUsersToProjectResponse, error) {
 	wProjectApi.logger.Debugf("AddUsersToProject from grpc with requestPayload %v, %v", irRequest, ctx)
 	auth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
@@ -290,7 +290,7 @@ func (wProjectApi *webProjectGRPCApi) AddUsersToProject(ctx context.Context, irR
 		username := irRequest.GetEmail()
 		parts := strings.Split(irRequest.GetEmail(), "@")
 		if len(parts) != 2 {
-			return utils.Error[web_api.AddUsersToProjectResponse](
+			return utils.Error[protos.AddUsersToProjectResponse](
 				err,
 				"The provided email is not valid, please check the email and retry.",
 			)
@@ -299,7 +299,7 @@ func (wProjectApi *webProjectGRPCApi) AddUsersToProject(ctx context.Context, irR
 		eUser, err := wProjectApi.userService.Create(ctx, username, irRequest.GetEmail(), ciphers.RandomHash("rpd_"), "invited", &source)
 		if err != nil {
 			wProjectApi.logger.Errorf("unable to create user for invite err %v", err)
-			return utils.Error[web_api.AddUsersToProjectResponse](
+			return utils.Error[protos.AddUsersToProjectResponse](
 				err,
 				"Unable to create user for invite err.",
 			)
@@ -308,7 +308,7 @@ func (wProjectApi *webProjectGRPCApi) AddUsersToProject(ctx context.Context, irR
 		_, err = wProjectApi.userService.CreateOrganizationRole(ctx, auth, irRequest.GetRole(), eUser.GetUserInfo().Id, auth.GetOrganizationRole().OrganizationId, "invited")
 		if err != nil {
 			wProjectApi.logger.Errorf("unable to create organization role err %v", err)
-			return utils.Error[web_api.AddUsersToProjectResponse](
+			return utils.Error[protos.AddUsersToProjectResponse](
 				err,
 				"Unable to create organization role user for invite err.",
 			)
@@ -318,7 +318,7 @@ func (wProjectApi *webProjectGRPCApi) AddUsersToProject(ctx context.Context, irR
 		org, err := wProjectApi.userService.GetOrganizationRole(ctx, eUser.Id)
 		if err == nil {
 			if org.GetOrganizationId() != auth.GetOrganizationRole().OrganizationId {
-				return utils.Error[web_api.AddUsersToProjectResponse](
+				return utils.Error[protos.AddUsersToProjectResponse](
 					err,
 					"User is already part of the another organizations, please contact us.",
 				)
@@ -328,7 +328,7 @@ func (wProjectApi *webProjectGRPCApi) AddUsersToProject(ctx context.Context, irR
 		_, err = wProjectApi.userService.CreateOrganizationRole(ctx, auth, irRequest.GetRole(), eUser.Id, auth.GetOrganizationRole().OrganizationId, eUser.Status)
 		if err != nil {
 			wProjectApi.logger.Errorf("unable to create organization role err %v", err)
-			return utils.Error[web_api.AddUsersToProjectResponse](
+			return utils.Error[protos.AddUsersToProjectResponse](
 				err,
 				"Unable to create organization role user for invite err.",
 			)
@@ -341,7 +341,7 @@ func (wProjectApi *webProjectGRPCApi) AddUsersToProject(ctx context.Context, irR
 This api will be for future
 if you are reading one of the example that you waste time writing code
 */
-func (wProjectApi *webProjectGRPCApi) ArchiveProject(c context.Context, irRequest *web_api.ArchiveProjectRequest) (*web_api.ArchiveProjectResponse, error) {
+func (wProjectApi *webProjectGRPCApi) ArchiveProject(c context.Context, irRequest *protos.ArchiveProjectRequest) (*protos.ArchiveProjectResponse, error) {
 	wProjectApi.logger.Debugf("ArchiveProjectRequest from grpc with requestPayload %v, %v", irRequest, c)
 	auth, isAuthenticated := types.GetAuthPrincipleGPRC(c)
 	if !isAuthenticated {
@@ -354,10 +354,10 @@ func (wProjectApi *webProjectGRPCApi) ArchiveProject(c context.Context, irReques
 		return nil, err
 	}
 
-	return utils.Success[web_api.ArchiveProjectResponse, uint64](irRequest.Id)
+	return utils.Success[protos.ArchiveProjectResponse, uint64](irRequest.Id)
 }
 
-func (wProjectApi *webProjectGRPCApi) CreateProjectCredential(c context.Context, irRequest *web_api.CreateProjectCredentialRequest) (*web_api.CreateProjectCredentialResponse, error) {
+func (wProjectApi *webProjectGRPCApi) CreateProjectCredential(c context.Context, irRequest *protos.CreateProjectCredentialRequest) (*protos.CreateProjectCredentialResponse, error) {
 	auth, isAuthenticated := types.GetAuthPrincipleGPRC(c)
 	if !isAuthenticated {
 		wProjectApi.logger.Errorf("CreateProjectCredential from grpc with unauthenticated request")
@@ -367,24 +367,24 @@ func (wProjectApi *webProjectGRPCApi) CreateProjectCredential(c context.Context,
 	// name, key string, projectId, organizationId uint64
 	pc, err := wProjectApi.projectService.CreateCredential(c, auth, irRequest.GetName(), irRequest.GetProjectId(), auth.GetOrganizationRole().OrganizationId)
 	if err != nil {
-		return utils.Error[web_api.CreateProjectCredentialResponse](
+		return utils.Error[protos.CreateProjectCredentialResponse](
 			err,
 			"Unable to create the project credential, please try again in sometime.",
 		)
 
 	}
 
-	out := &web_api.ProjectCredential{}
+	out := &protos.ProjectCredential{}
 	err = utils.Cast(pc, &out)
 	if err != nil {
 		wProjectApi.logger.Errorf("unable to cast project credential to proto object %v", err)
 	}
 
-	return utils.Success[web_api.CreateProjectCredentialResponse, *web_api.ProjectCredential](out)
+	return utils.Success[protos.CreateProjectCredentialResponse, *protos.ProjectCredential](out)
 
 }
 
-func (wProjectApi *webProjectGRPCApi) GetAllProjectCredential(c context.Context, irRequest *web_api.GetAllProjectCredentialRequest) (*web_api.GetAllProjectCredentialResponse, error) {
+func (wProjectApi *webProjectGRPCApi) GetAllProjectCredential(c context.Context, irRequest *protos.GetAllProjectCredentialRequest) (*protos.GetAllProjectCredentialResponse, error) {
 	auth, isAuthenticated := types.GetAuthPrincipleGPRC(c)
 	if !isAuthenticated {
 		wProjectApi.logger.Errorf("CreateProjectCredential from grpc with unauthenticated request")
@@ -399,20 +399,20 @@ func (wProjectApi *webProjectGRPCApi) GetAllProjectCredential(c context.Context,
 			auth.GetOrganizationRole().OrganizationId,
 			irRequest.GetCriterias(), irRequest.GetPaginate())
 	if err != nil {
-		return utils.Error[web_api.GetAllProjectCredentialResponse](
+		return utils.Error[protos.GetAllProjectCredentialResponse](
 			err,
 			"Unable to get all the project credentials, please try again in sometime.",
 		)
 
 	}
 
-	out := []*web_api.ProjectCredential{}
+	out := []*protos.ProjectCredential{}
 	err = utils.Cast(allProjectCredential, &out)
 	if err != nil {
 		wProjectApi.logger.Errorf("unable to cast project credential to proto object %v", err)
 	}
 
-	return utils.PaginatedSuccess[web_api.GetAllProjectCredentialResponse, []*web_api.ProjectCredential](
+	return utils.PaginatedSuccess[protos.GetAllProjectCredentialResponse, []*protos.ProjectCredential](
 		uint32(cnt),
 		irRequest.GetPaginate().GetPage(),
 		out)

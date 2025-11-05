@@ -1,50 +1,51 @@
-package web_handler
+package web_proxy_api
 
 import (
 	"context"
 	"errors"
 
 	endpoint_client "github.com/rapidaai/pkg/clients/endpoint"
-	web_api "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 
-	config "github.com/rapidaai/config"
+	web_api "github.com/rapidaai/api/web-api/api"
+	config "github.com/rapidaai/api/web-api/config"
 	commons "github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	"github.com/rapidaai/pkg/types"
 )
 
 type webInvokeGRPCApi struct {
-	WebApi
-	cfg                 *config.AppConfig
+	web_api.WebApi
+	cfg                 *config.WebAppConfig
 	logger              commons.Logger
 	postgres            connectors.PostgresConnector
 	redis               connectors.RedisConnector
 	deployServiceClient endpoint_client.DeploymentServiceClient
 }
 
-func NewInvokeGRPC(config *config.AppConfig, logger commons.Logger, postgres connectors.PostgresConnector, redis connectors.RedisConnector) web_api.DeploymentServer {
+func NewInvokeGRPC(config *config.WebAppConfig, logger commons.Logger, postgres connectors.PostgresConnector, redis connectors.RedisConnector) protos.DeploymentServer {
 	return &webInvokeGRPCApi{
-		WebApi:              NewWebApi(config, logger, postgres, redis),
+		WebApi:              web_api.NewWebApi(config, logger, postgres, redis),
 		cfg:                 config,
 		logger:              logger,
 		postgres:            postgres,
 		redis:               redis,
-		deployServiceClient: endpoint_client.NewDeploymentServiceClientGRPC(config, logger, redis),
+		deployServiceClient: endpoint_client.NewDeploymentServiceClientGRPC(&config.AppConfig, logger, redis),
 	}
 
 }
 
 // Probe implements lexatic_backend.DeploymentServer.
-func (*webInvokeGRPCApi) Probe(context.Context, *web_api.ProbeRequest) (*web_api.ProbeResponse, error) {
+func (*webInvokeGRPCApi) Probe(context.Context, *protos.ProbeRequest) (*protos.ProbeResponse, error) {
 	panic("unimplemented")
 }
 
 // Update implements lexatic_backend.DeploymentServer.
-func (*webInvokeGRPCApi) Update(context.Context, *web_api.UpdateRequest) (*web_api.UpdateResponse, error) {
+func (*webInvokeGRPCApi) Update(context.Context, *protos.UpdateRequest) (*protos.UpdateResponse, error) {
 	panic("unimplemented")
 }
 
-func (endpointGRPCApi *webInvokeGRPCApi) Invoke(ctx context.Context, iRequest *web_api.InvokeRequest) (*web_api.InvokeResponse, error) {
+func (endpointGRPCApi *webInvokeGRPCApi) Invoke(ctx context.Context, iRequest *protos.InvokeRequest) (*protos.InvokeResponse, error) {
 	endpointGRPCApi.logger.Debugf("invoking endpoint with context %v", ctx)
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(ctx)
 	if !isAuthenticated {

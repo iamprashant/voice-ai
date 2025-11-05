@@ -1,4 +1,4 @@
-package web_handler
+package web_api
 
 import (
 	"context"
@@ -7,20 +7,20 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	config "github.com/rapidaai/api/web-api/config"
 	internal_connects "github.com/rapidaai/api/web-api/internal/connect"
 	internal_services "github.com/rapidaai/api/web-api/internal/service"
 	internal_vault_service "github.com/rapidaai/api/web-api/internal/service/vault"
-	config "github.com/rapidaai/config"
 	commons "github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	gorm_types "github.com/rapidaai/pkg/models/gorm/types"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
-	web_api "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 type webConnectApi struct {
-	cfg      *config.AppConfig
+	cfg      *config.WebAppConfig
 	logger   commons.Logger
 	postgres connectors.PostgresConnector
 	// code
@@ -83,16 +83,16 @@ const (
 	CRM_HUBSPOT string = "crm/hubspot"
 )
 
-func (wConnectApi *webConnectGRPCApi) GeneralConnect(ctx context.Context, kcr *web_api.GeneralConnectRequest) (*web_api.GeneralConnectResponse, error) {
+func (wConnectApi *webConnectGRPCApi) GeneralConnect(ctx context.Context, kcr *protos.GeneralConnectRequest) (*protos.GeneralConnectResponse, error) {
 	auth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
 		wConnectApi.logger.Errorf("unauthenticated request to fork endpoint")
-		return utils.AuthenticateError[web_api.GeneralConnectResponse]()
+		return utils.AuthenticateError[protos.GeneralConnectResponse]()
 	}
 	decodedState, err := wConnectApi.googleDriveConnect.DecodeState(ctx, auth, kcr.State)
 	if err != nil {
 		wConnectApi.logger.Errorf("illegal state for oauth %v", err)
-		return utils.Error[web_api.GeneralConnectResponse](err, "illegal state for oauth")
+		return utils.Error[protos.GeneralConnectResponse](err, "illegal state for oauth")
 	}
 
 	var tokenInfo internal_connects.ExternalConnectToken
@@ -101,11 +101,11 @@ func (wConnectApi *webConnectGRPCApi) GeneralConnect(ctx context.Context, kcr *w
 		tokenInfo, err = wConnectApi.hubspotConnect.Token(ctx, kcr.Code)
 		if err != nil {
 			wConnectApi.logger.Errorf("illegal while getting token %v", err)
-			return utils.Error[web_api.GeneralConnectResponse](err, "illegal state for getting oauth2 token ")
+			return utils.Error[protos.GeneralConnectResponse](err, "illegal state for getting oauth2 token ")
 		}
 
 	default:
-		return utils.Error[web_api.GeneralConnectResponse](err, "Unknown connector request.")
+		return utils.Error[protos.GeneralConnectResponse](err, "Unknown connector request.")
 
 	}
 
@@ -124,19 +124,19 @@ func (wConnectApi *webConnectGRPCApi) GeneralConnect(ctx context.Context, kcr *w
 		_, err := wConnectApi.vaultService.CreateOrganizationToolCredential(
 			ctx, auth, decodedState.ToolId, "connected-org-tool", credential)
 		if err != nil {
-			return utils.Error[web_api.GeneralConnectResponse](err, "Unable to store the generated token")
+			return utils.Error[protos.GeneralConnectResponse](err, "Unable to store the generated token")
 		}
 	}
 	if decodedState.Linker == gorm_types.VAULT_LEVEL_USER {
 		_, err := wConnectApi.vaultService.CreateUserToolCredential(
 			ctx, auth, decodedState.ToolId, "connected-user-tool", credential)
 		if err != nil {
-			return utils.Error[web_api.GeneralConnectResponse](err, "Unable to store the generated token")
+			return utils.Error[protos.GeneralConnectResponse](err, "Unable to store the generated token")
 		}
 
 	}
 	// decodedState.Linker
-	return &web_api.GeneralConnectResponse{
+	return &protos.GeneralConnectResponse{
 		Success:    true,
 		Code:       200,
 		ToolId:     decodedState.ToolId,
@@ -145,16 +145,16 @@ func (wConnectApi *webConnectGRPCApi) GeneralConnect(ctx context.Context, kcr *w
 }
 
 // KnowledgeConnect implements lexatic_backend.ConnectServiceServer.
-func (wConnectApi *webConnectGRPCApi) KnowledgeConnect(ctx context.Context, kcr *web_api.KnowledgeConnectRequest) (*web_api.KnowledgeConnectResponse, error) {
+func (wConnectApi *webConnectGRPCApi) KnowledgeConnect(ctx context.Context, kcr *protos.KnowledgeConnectRequest) (*protos.KnowledgeConnectResponse, error) {
 	auth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
 		wConnectApi.logger.Errorf("unauthenticated request to fork endpoint")
-		return utils.AuthenticateError[web_api.KnowledgeConnectResponse]()
+		return utils.AuthenticateError[protos.KnowledgeConnectResponse]()
 	}
 	decodedState, err := wConnectApi.googleDriveConnect.DecodeState(ctx, auth, kcr.State)
 	if err != nil {
 		wConnectApi.logger.Errorf("illegal state for oauth %v", err)
-		return utils.Error[web_api.KnowledgeConnectResponse](err, "illegal state for oauth")
+		return utils.Error[protos.KnowledgeConnectResponse](err, "illegal state for oauth")
 	}
 
 	var tokenInfo internal_connects.ExternalConnectToken
@@ -163,53 +163,53 @@ func (wConnectApi *webConnectGRPCApi) KnowledgeConnect(ctx context.Context, kcr 
 		tokenInfo, err = wConnectApi.googleDriveConnect.Token(ctx, kcr.Code)
 		if err != nil {
 			wConnectApi.logger.Errorf("illegal while getting token %v", err)
-			return utils.Error[web_api.KnowledgeConnectResponse](err, "illegal state for getting oauth2 token ")
+			return utils.Error[protos.KnowledgeConnectResponse](err, "illegal state for getting oauth2 token ")
 		}
 
 	case KN_NOTION:
 		tokenInfo, err = wConnectApi.notionConnect.Token(ctx, kcr.Code)
 		if err != nil {
 			wConnectApi.logger.Errorf("illegal while getting token %v", err)
-			return utils.Error[web_api.KnowledgeConnectResponse](err, "illegal state for getting oauth2 token ")
+			return utils.Error[protos.KnowledgeConnectResponse](err, "illegal state for getting oauth2 token ")
 		}
 
 	case KN_CONFLUENCE:
 		tokenInfo, err = wConnectApi.confluenceConnect.Token(ctx, kcr.Code)
 		if err != nil {
 			wConnectApi.logger.Errorf("illegal while getting token %v", err)
-			return utils.Error[web_api.KnowledgeConnectResponse](err, "illegal state for getting oauth2 token ")
+			return utils.Error[protos.KnowledgeConnectResponse](err, "illegal state for getting oauth2 token ")
 		}
 
 	case KN_SHARE_POINT:
 		tokenInfo, err = wConnectApi.microsoftSharepointConnect.Token(ctx, kcr.Code, kcr.State)
 		if err != nil {
 			wConnectApi.logger.Errorf("illegal while getting token %v", err)
-			return utils.Error[web_api.KnowledgeConnectResponse](err, "illegal state for getting oauth2 token ")
+			return utils.Error[protos.KnowledgeConnectResponse](err, "illegal state for getting oauth2 token ")
 		}
 
 	case KN_ONE_DRIVE:
 		tokenInfo, err = wConnectApi.microsoftOnedriveConnect.Token(ctx, kcr.Code, kcr.State)
 		if err != nil {
 			wConnectApi.logger.Errorf("illegal while getting token %v", err)
-			return utils.Error[web_api.KnowledgeConnectResponse](err, "illegal state for getting oauth2 token ")
+			return utils.Error[protos.KnowledgeConnectResponse](err, "illegal state for getting oauth2 token ")
 		}
 
 	case KN_GITHUB_CODE:
 		tokenInfo, err = wConnectApi.githubCodeConnect.Token(ctx, kcr.Code)
 		if err != nil {
 			wConnectApi.logger.Errorf("illegal while getting token %v", err)
-			return utils.Error[web_api.KnowledgeConnectResponse](err, "illegal state for getting oauth2 token ")
+			return utils.Error[protos.KnowledgeConnectResponse](err, "illegal state for getting oauth2 token ")
 		}
 
 	case KN_GITLAB_CODE:
 		tokenInfo, err = wConnectApi.gitlabCodeConnect.Token(ctx, kcr.Code)
 		if err != nil {
 			wConnectApi.logger.Errorf("illegal while getting token %v", err)
-			return utils.Error[web_api.KnowledgeConnectResponse](err, "illegal state for getting oauth2 token ")
+			return utils.Error[protos.KnowledgeConnectResponse](err, "illegal state for getting oauth2 token ")
 		}
 
 	default:
-		return utils.Error[web_api.KnowledgeConnectResponse](errors.New("unsupported"), "Unknown connector request.")
+		return utils.Error[protos.KnowledgeConnectResponse](errors.New("unsupported"), "Unknown connector request.")
 
 	}
 
@@ -228,19 +228,19 @@ func (wConnectApi *webConnectGRPCApi) KnowledgeConnect(ctx context.Context, kcr 
 		_, err := wConnectApi.vaultService.CreateOrganizationToolCredential(
 			ctx, auth, decodedState.ToolId, "connected-org-tool", credential)
 		if err != nil {
-			return utils.Error[web_api.KnowledgeConnectResponse](err, "Unable to store the generated token")
+			return utils.Error[protos.KnowledgeConnectResponse](err, "Unable to store the generated token")
 		}
 	}
 	if decodedState.Linker == gorm_types.VAULT_LEVEL_USER {
 		_, err := wConnectApi.vaultService.CreateUserToolCredential(
 			ctx, auth, decodedState.ToolId, "connected-user-tool", credential)
 		if err != nil {
-			return utils.Error[web_api.KnowledgeConnectResponse](err, "Unable to store the generated token")
+			return utils.Error[protos.KnowledgeConnectResponse](err, "Unable to store the generated token")
 		}
 
 	}
 	// decodedState.Linker
-	return &web_api.KnowledgeConnectResponse{
+	return &protos.KnowledgeConnectResponse{
 		Success:    true,
 		Code:       200,
 		ToolId:     decodedState.ToolId,
@@ -249,16 +249,16 @@ func (wConnectApi *webConnectGRPCApi) KnowledgeConnect(ctx context.Context, kcr 
 }
 
 // ActionConnect implements lexatic_backend.ConnectServiceServer.
-func (wConnectApi *webConnectGRPCApi) ActionConnect(ctx context.Context, acr *web_api.ActionConnectRequest) (*web_api.ActionConnectResponse, error) {
+func (wConnectApi *webConnectGRPCApi) ActionConnect(ctx context.Context, acr *protos.ActionConnectRequest) (*protos.ActionConnectResponse, error) {
 	auth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
 		wConnectApi.logger.Errorf("unauthenticated request to fork endpoint")
-		return utils.AuthenticateError[web_api.ActionConnectResponse]()
+		return utils.AuthenticateError[protos.ActionConnectResponse]()
 	}
 	decodedState, err := wConnectApi.googleDriveConnect.DecodeState(ctx, auth, acr.State)
 	if err != nil {
 		wConnectApi.logger.Errorf("illegal state for oauth %v", err)
-		return utils.Error[web_api.ActionConnectResponse](err, "illegal state for oauth")
+		return utils.Error[protos.ActionConnectResponse](err, "illegal state for oauth")
 	}
 
 	var tokenInfo internal_connects.ExternalConnectToken
@@ -267,31 +267,31 @@ func (wConnectApi *webConnectGRPCApi) ActionConnect(ctx context.Context, acr *we
 		tokenInfo, err = wConnectApi.googleDriveConnect.Token(ctx, acr.Code)
 		if err != nil {
 			wConnectApi.logger.Errorf("illegal while getting token %v", err)
-			return utils.Error[web_api.ActionConnectResponse](err, "illegal state for getting oauth2 token ")
+			return utils.Error[protos.ActionConnectResponse](err, "illegal state for getting oauth2 token ")
 		}
 
 	case AN_GOOGLE_GMAIL:
 		tokenInfo, err = wConnectApi.gmailConnect.Token(ctx, acr.Code)
 		if err != nil {
 			wConnectApi.logger.Errorf("illegal while getting token %v", err)
-			return utils.Error[web_api.ActionConnectResponse](err, "illegal state for getting oauth2 token ")
+			return utils.Error[protos.ActionConnectResponse](err, "illegal state for getting oauth2 token ")
 		}
 
 	case AN_SLACK:
 		tokenInfo, err = wConnectApi.gmailConnect.Token(ctx, acr.Code)
 		if err != nil {
 			wConnectApi.logger.Errorf("illegal while getting token %v", err)
-			return utils.Error[web_api.ActionConnectResponse](err, "illegal state for getting oauth2 token ")
+			return utils.Error[protos.ActionConnectResponse](err, "illegal state for getting oauth2 token ")
 		}
 
 	case AN_JIRA:
 		tokenInfo, err = wConnectApi.jiraConnect.Token(ctx, acr.Code)
 		if err != nil {
 			wConnectApi.logger.Errorf("illegal while getting token %v", err)
-			return utils.Error[web_api.ActionConnectResponse](err, "illegal state for getting oauth2 token ")
+			return utils.Error[protos.ActionConnectResponse](err, "illegal state for getting oauth2 token ")
 		}
 	default:
-		return utils.Error[web_api.ActionConnectResponse](err, "Unknown connector request.")
+		return utils.Error[protos.ActionConnectResponse](err, "Unknown connector request.")
 
 	}
 
@@ -310,19 +310,19 @@ func (wConnectApi *webConnectGRPCApi) ActionConnect(ctx context.Context, acr *we
 		_, err := wConnectApi.vaultService.CreateOrganizationToolCredential(
 			ctx, auth, decodedState.ToolId, "connected-org-tool", credential)
 		if err != nil {
-			return utils.Error[web_api.ActionConnectResponse](err, "Unable to store the generated token")
+			return utils.Error[protos.ActionConnectResponse](err, "Unable to store the generated token")
 		}
 	}
 	if decodedState.Linker == gorm_types.VAULT_LEVEL_USER {
 		_, err := wConnectApi.vaultService.CreateUserToolCredential(
 			ctx, auth, decodedState.ToolId, "connected-user-tool", credential)
 		if err != nil {
-			return utils.Error[web_api.ActionConnectResponse](err, "Unable to store the generated token")
+			return utils.Error[protos.ActionConnectResponse](err, "Unable to store the generated token")
 		}
 
 	}
 	// decodedState.Linker
-	return &web_api.ActionConnectResponse{
+	return &protos.ActionConnectResponse{
 		Success:    true,
 		Code:       200,
 		ToolId:     decodedState.ToolId,
@@ -330,7 +330,7 @@ func (wConnectApi *webConnectGRPCApi) ActionConnect(ctx context.Context, acr *we
 	}, nil
 }
 
-func NewConnectRPC(config *config.AppConfig, oauthCfg *config.OAuthConfig, logger commons.Logger, postgres connectors.PostgresConnector) *webConnectRPCApi {
+func NewConnectRPC(config *config.WebAppConfig, oauthCfg *config.OAuthConfig, logger commons.Logger, postgres connectors.PostgresConnector) *webConnectRPCApi {
 	return &webConnectRPCApi{
 		webConnectApi{
 			cfg:                config,
@@ -356,9 +356,9 @@ func NewConnectRPC(config *config.AppConfig, oauthCfg *config.OAuthConfig, logge
 	}
 }
 
-func NewConnectGRPC(config *config.AppConfig,
+func NewConnectGRPC(config *config.WebAppConfig,
 	oauthCfg *config.OAuthConfig,
-	logger commons.Logger, postgres connectors.PostgresConnector) web_api.ConnectServiceServer {
+	logger commons.Logger, postgres connectors.PostgresConnector) protos.ConnectServiceServer {
 	return &webConnectGRPCApi{
 		webConnectApi{
 			cfg:                config,
@@ -564,13 +564,13 @@ func (connectApi *webConnectRPCApi) SlackActionConnect(c *gin.Context) {
 }
 
 func (connectApi *webConnectGRPCApi) GetConnectorFiles(ctx context.Context,
-	r *web_api.GetConnectorFilesRequest) (*web_api.GetConnectorFilesResponse, error) {
+	r *protos.GetConnectorFilesRequest) (*protos.GetConnectorFilesResponse, error) {
 	//
 	// toolId uint64, q *string, pageToken *string
 	auth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
 		connectApi.logger.Errorf("unauthenticated request to fork endpoint")
-		return utils.AuthenticateError[web_api.GetConnectorFilesResponse]()
+		return utils.AuthenticateError[protos.GetConnectorFilesResponse]()
 	}
 
 	// need to modify
@@ -578,12 +578,12 @@ func (connectApi *webConnectGRPCApi) GetConnectorFiles(ctx context.Context,
 		ctx, auth, r.GetToolId())
 	if err != nil {
 		connectApi.logger.Errorf("unable to get tool credentials %v", err)
-		return utils.Error[web_api.GetConnectorFilesResponse](err, "Unable to get tool credential to get list of files.")
+		return utils.Error[protos.GetConnectorFilesResponse](err, "Unable to get tool credential to get list of files.")
 	}
 	token, connect, err := connectApi.googleDriveConnect.ToToken(crd.Value)
 	if err != nil {
 		connectApi.logger.Errorf("unable to get tool credentials %v", err)
-		return utils.Error[web_api.GetConnectorFilesResponse](err, "Unable to get tool credential to get list of files.")
+		return utils.Error[protos.GetConnectorFilesResponse](err, "Unable to get tool credential to get list of files.")
 	}
 
 	repeatArgs := make(map[string]string)
@@ -604,46 +604,46 @@ func (connectApi *webConnectGRPCApi) GetConnectorFiles(ctx context.Context,
 		fls, err := connectApi.googleDriveConnect.GoogleDriveFiles(ctx, token, q, pageToken)
 		if err != nil {
 			connectApi.logger.Errorf("unable to get tool credentials %v", err)
-			return utils.Error[web_api.GetConnectorFilesResponse](err, "Unable to get files ")
+			return utils.Error[protos.GetConnectorFilesResponse](err, "Unable to get files ")
 		}
 
-		return utils.Success[web_api.GetConnectorFilesResponse](fls.Items)
+		return utils.Success[protos.GetConnectorFilesResponse](fls.Items)
 	case KN_CONFLUENCE:
 		fls, err := connectApi.confluenceConnect.ConfluencePages(ctx, token, q, pageToken)
 		if err != nil {
 			connectApi.logger.Errorf("unable to get tool credentials %v", err)
-			return utils.Error[web_api.GetConnectorFilesResponse](err, "Unable to get files ")
+			return utils.Error[protos.GetConnectorFilesResponse](err, "Unable to get files ")
 		}
-		return utils.Success[web_api.GetConnectorFilesResponse](fls.Items)
+		return utils.Success[protos.GetConnectorFilesResponse](fls.Items)
 	case KN_NOTION:
 		fls, err := connectApi.notionConnect.NotionPages(ctx, token, q, pageToken)
 		if err != nil {
 			connectApi.logger.Errorf("unable to get tool credentials %v", err)
-			return utils.Error[web_api.GetConnectorFilesResponse](err, "Unable to get files ")
+			return utils.Error[protos.GetConnectorFilesResponse](err, "Unable to get files ")
 		}
-		return utils.Success[web_api.GetConnectorFilesResponse](fls.Results)
+		return utils.Success[protos.GetConnectorFilesResponse](fls.Results)
 	case KN_ONE_DRIVE:
 		fls, err := connectApi.microsoftOnedriveConnect.OneDriveFiles(ctx, token, q, pageToken)
 		if err != nil {
 			connectApi.logger.Errorf("unable to get tool credentials %v", err)
-			return utils.Error[web_api.GetConnectorFilesResponse](err, "Unable to get files ")
+			return utils.Error[protos.GetConnectorFilesResponse](err, "Unable to get files ")
 		}
-		return utils.Success[web_api.GetConnectorFilesResponse](fls.Value)
+		return utils.Success[protos.GetConnectorFilesResponse](fls.Value)
 	case KN_SHARE_POINT:
 		fls, err := connectApi.microsoftSharepointConnect.SharePointFiles(ctx, token, q, pageToken)
 		if err != nil {
 			connectApi.logger.Errorf("unable to get tool credentials %v", err)
-			return utils.Error[web_api.GetConnectorFilesResponse](err, "Unable to get files ")
+			return utils.Error[protos.GetConnectorFilesResponse](err, "Unable to get files ")
 		}
-		return utils.Success[web_api.GetConnectorFilesResponse](fls.Value)
+		return utils.Success[protos.GetConnectorFilesResponse](fls.Value)
 	case KN_GITHUB_CODE:
 		fls, err := connectApi.githubCodeConnect.Repositories(ctx, token, q, pageToken)
 		if err != nil {
 			connectApi.logger.Errorf("unable to get tool credentials %v", err)
-			return utils.Error[web_api.GetConnectorFilesResponse](err, "Unable to get files ")
+			return utils.Error[protos.GetConnectorFilesResponse](err, "Unable to get files ")
 		}
-		return utils.Success[web_api.GetConnectorFilesResponse](fls)
+		return utils.Success[protos.GetConnectorFilesResponse](fls)
 	default:
-		return utils.AuthenticateError[web_api.GetConnectorFilesResponse]()
+		return utils.AuthenticateError[protos.GetConnectorFilesResponse]()
 	}
 }

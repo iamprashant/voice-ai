@@ -1,4 +1,4 @@
-package web_handler
+package web_api
 
 import (
 	"context"
@@ -8,14 +8,14 @@ import (
 	internal_lead_service "github.com/rapidaai/api/web-api/internal/service/lead"
 	protos "github.com/rapidaai/protos"
 
-	config "github.com/rapidaai/config"
+	config "github.com/rapidaai/api/web-api/config"
 	commons "github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 )
 
 type webLeadApi struct {
 	WebApi
-	cfg         *config.AppConfig
+	cfg         *config.WebAppConfig
 	logger      commons.Logger
 	postgres    connectors.PostgresConnector
 	redis       connectors.RedisConnector
@@ -26,7 +26,7 @@ type webLeadGRPCApi struct {
 	webLeadApi
 }
 
-func NewLeadGRPC(config *config.AppConfig, logger commons.Logger, postgres connectors.PostgresConnector, redis connectors.RedisConnector) protos.LeadGeneratorServiceServer {
+func NewLeadGRPC(config *config.WebAppConfig, logger commons.Logger, postgres connectors.PostgresConnector, redis connectors.RedisConnector) protos.LeadGeneratorServiceServer {
 	return &webLeadGRPCApi{
 		webLeadApi{
 			WebApi:      NewWebApi(config, logger, postgres, redis),

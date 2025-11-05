@@ -14,15 +14,17 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
+	endpointApi "github.com/rapidaai/api/endpoint-api"
 	healthCheckApi "github.com/rapidaai/api/health-check-api"
-	web_authenticators "github.com/rapidaai/api/web-api/auth"
-	webApi "github.com/rapidaai/api/web-api/handler"
+	invokerApi "github.com/rapidaai/api/invoker-api"
 	config "github.com/rapidaai/config"
 	"github.com/rapidaai/pkg/authenticators"
+	web_client "github.com/rapidaai/pkg/clients/web"
 	commons "github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	middlewares "github.com/rapidaai/pkg/middlewares"
-	web_api "github.com/rapidaai/protos"
+	endpoint_api "github.com/rapidaai/protos"
+	invoker_api "github.com/rapidaai/protos"
 	"github.com/soheilhy/cmux"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -30,13 +32,14 @@ import (
 
 // wrapper for gin engine
 type AppRunner struct {
-	E         *gin.Engine
-	S         *grpc.Server
-	Cfg       *config.WebAppConfig
-	Logger    commons.Logger
-	Postgres  connectors.PostgresConnector
-	Redis     connectors.RedisConnector
-	Closeable []func(context.Context) error
+	E          *gin.Engine
+	S          *grpc.Server
+	Cfg        *config.AppConfig
+	Logger     commons.Logger
+	Postgres   connectors.PostgresConnector
+	Redis      connectors.RedisConnector
+	Opensearch connectors.OpenSearchConnector
+	Closeable  []func(context.Context) error
 }
 
 func main() {
@@ -58,28 +61,49 @@ func main() {
 	appRunner.S = grpc.NewServer(
 		grpc.ChainStreamInterceptor(
 			middlewares.NewRequestLoggerStreamServerMiddleware(appRunner.Cfg.Name, appRunner.Logger),
+			middlewares.NewServiceAuthenticatorStreamServerMiddleware(
+				authenticators.NewServiceAuthenticator(appRunner.Cfg, appRunner.Logger, appRunner.Postgres),
+				appRunner.Logger,
+			),
 			middlewares.NewAuthenticationStreamServerMiddleware(
-				web_authenticators.GetUserAuthenticator(appRunner.Logger, appRunner.Postgres),
-				appRunner.Logger),
-			middlewares.NewProjectAuthenticatorStreamServerMiddleware(web_authenticators.GetProjectAuthenticator(appRunner.Logger, appRunner.Postgres),
-				appRunner.Logger),
+				authenticators.NewUserAuthenticator(appRunner.Cfg,
+					appRunner.Logger,
+					web_client.NewAuthenticator(appRunner.Cfg, appRunner.Logger, appRunner.Redis)),
+				appRunner.Logger,
+			),
+			middlewares.NewProjectAuthenticatorStreamServerMiddleware(
+				authenticators.NewProjectAuthenticator(appRunner.Cfg, appRunner.Logger,
+					web_client.NewAuthenticator(appRunner.Cfg, appRunner.Logger, appRunner.Redis)),
+				appRunner.Logger,
+			),
+			middlewares.NewClientInformationStreamServerMiddleware(
+				appRunner.Logger,
+			),
 		),
 		grpc.ChainUnaryInterceptor(
 			middlewares.NewRequestLoggerUnaryServerMiddleware(appRunner.Cfg.Name, appRunner.Logger),
-			middlewares.NewAuthenticationUnaryServerMiddleware(web_authenticators.GetUserAuthenticator(appRunner.Logger, appRunner.Postgres), appRunner.Logger),
 			middlewares.NewProjectAuthenticatorUnaryServerMiddleware(
-				web_authenticators.GetProjectAuthenticator(appRunner.Logger, appRunner.Postgres),
+				authenticators.NewProjectAuthenticator(appRunner.Cfg, appRunner.Logger,
+					web_client.NewAuthenticator(appRunner.Cfg, appRunner.Logger, appRunner.Redis)),
+				appRunner.Logger,
+			),
+			middlewares.NewAuthenticationUnaryServerMiddleware(
+				authenticators.NewUserAuthenticator(appRunner.Cfg,
+					appRunner.Logger,
+					web_client.NewAuthenticator(appRunner.Cfg, appRunner.Logger, appRunner.Redis)),
 				appRunner.Logger,
 			),
 			middlewares.NewServiceAuthenticatorUnaryServerMiddleware(
-				authenticators.NewServiceAuthenticator(&appRunner.Cfg.AppConfig, appRunner.Logger, appRunner.Postgres),
+				authenticators.NewServiceAuthenticator(appRunner.Cfg, appRunner.Logger, appRunner.Postgres),
+				appRunner.Logger,
+			),
+			middlewares.NewClientInformationUnaryServerMiddleware(
 				appRunner.Logger,
 			),
 		),
 		grpc.MaxRecvMsgSize(commons.MaxRecvMsgSize), // 10 MB
 		grpc.MaxSendMsgSize(commons.MaxSendMsgSize), // 10 MB
 	)
-
 	err = appRunner.Init(ctx)
 
 	if err != nil {
@@ -103,11 +127,9 @@ func main() {
 	// if application json
 	http2GRPCFilteredListener := cmuxListener.Match(cmux.HTTP2())
 	grpcFilteredListener := cmuxListener.Match(
-		cmux.HTTP1HeaderField("content-type", "application/grpc-web+proto"),
+		cmux.HTTP1HeaderField("Content-type", "application/grpc-web+proto"),
 		cmux.HTTP1HeaderField("x-grpc-web", "1"))
 	rpcFilteredListener := cmuxListener.Match(cmux.Any())
-	// rpcFilteredListener := cmuxListener.Match(cmux.HTTP2())
-	// grpcFilteredListener := cmuxListener.Match(cmux.Any())
 
 	group, ctx := errgroup.WithContext(ctx)
 	group.Go(func() error {
@@ -169,10 +191,10 @@ func (app *AppRunner) Logging() {
 }
 
 func (g *AppRunner) AllConnectors() {
-	postgres := connectors.NewPostgresConnector(&g.Cfg.PostgresConfig, g.Logger)
-	redis := connectors.NewRedisConnector(&g.Cfg.RedisConfig, g.Logger)
-	g.Postgres = postgres
-	g.Redis = redis
+	g.Postgres = connectors.NewPostgresConnector(&g.Cfg.PostgresConfig, g.Logger)
+	g.Redis = connectors.NewRedisConnector(&g.Cfg.RedisConfig, g.Logger)
+	g.Opensearch = connectors.NewOpenSearchConnector(&g.Cfg.OpenSearchConfig, g.Logger)
+
 }
 
 // initialize the config of application using viper and return loaded appconfig to be used in
@@ -212,6 +234,13 @@ func (app *AppRunner) Init(ctx context.Context) error {
 		app.Logger.Error("error while connecting to redis.", err)
 		return err
 	}
+
+	err = app.Opensearch.Connect(ctx)
+	if err != nil {
+		app.Logger.Error("error while connecting to opensearch.", err)
+		return err
+	}
+	app.Closeable = append(app.Closeable, app.Opensearch.Disconnect)
 	app.Closeable = append(app.Closeable, app.Postgres.Disconnect)
 	app.Closeable = append(app.Closeable, app.Redis.Disconnect)
 	return nil
@@ -233,20 +262,8 @@ func (app *AppRunner) Close(ctx context.Context) {
 // all router initialize
 func (g *AppRunner) AllRouters() {
 	g.HealthCheckRoutes()
-	g.AuthApiRoutes()
-	g.OauthApiRoute()
-	g.VaultApiRoute()
-	g.OrganizationApiRoute()
-	g.ProjectApiRoute()
-	g.ActivityApiRoute()
-	g.EndpointApiRoute()
+	g.EndpointReaderApiRoute()
 	g.InvokeApiRoute()
-	g.KnowledgeApiRoute()
-	g.AssistantApiRoute()
-	g.DocumentApiRoute()
-	g.ProviderApiRoute()
-	g.KnowledgeConnectApiRoute()
-	g.LeadApiRoute()
 
 }
 
@@ -256,104 +273,14 @@ func (g *AppRunner) AllMiddlewares() {
 	g.RecoveryMiddleware()
 	g.CorsMiddleware()
 	g.RequestLoggerMiddleware()
-	g.E.Use(middlewares.NewAuthenticationMiddleware(web_authenticators.GetUserAuthenticator(g.Logger, g.Postgres), g.Logger))
 }
 
-func (g *AppRunner) AuthApiRoutes() {
-	apiv1 := g.E.Group("/v1")
-	{
-		apiv1.POST("/auth/authenticate/", webApi.NewAuthRPC(&g.Cfg.AppConfig, &g.Cfg.OAuthConfig, g.Logger, g.Postgres).Authenticate)
-		apiv1.POST("/auth/register-user/", webApi.NewAuthRPC(&g.Cfg.AppConfig, &g.Cfg.OAuthConfig, g.Logger, g.Postgres).RegisterUser)
-
-	}
-	web_api.RegisterAuthenticationServiceServer(g.S, webApi.NewAuthGRPC(&g.Cfg.AppConfig, &g.Cfg.OAuthConfig, g.Logger, g.Postgres))
-
-}
-
-func (g *AppRunner) OauthApiRoute() {
-	apiOauth := g.E.Group("/oauth")
-	auth := webApi.NewAuthRPC(&g.Cfg.AppConfig, &g.Cfg.OAuthConfig, g.Logger, g.Postgres)
-	{
-		apiOauth.GET("/google/", auth.Google)
-		apiOauth.GET("/linkedin/", auth.Linkedin)
-		apiOauth.GET("/github/", auth.Github)
-	}
-}
-
-func (g *AppRunner) VaultApiRoute() {
-	web_api.RegisterVaultServiceServer(g.S, webApi.NewVaultGRPC(&g.Cfg.AppConfig, &g.Cfg.OAuthConfig, g.Logger, g.Postgres, g.Redis))
+func (g *AppRunner) EndpointReaderApiRoute() {
+	endpoint_api.RegisterEndpointServiceServer(g.S, endpointApi.NewEndpointGRPCApi(g.Cfg, g.Logger, g.Postgres, g.Redis, g.Opensearch))
 }
 
 func (g *AppRunner) InvokeApiRoute() {
-	web_api.RegisterDeploymentServer(g.S, webApi.NewInvokeGRPC(&g.Cfg.AppConfig, g.Logger, g.Postgres, g.Redis))
-}
-
-func (g *AppRunner) OrganizationApiRoute() {
-	web_api.RegisterOrganizationServiceServer(g.S, webApi.NewOrganizationGRPC(&g.Cfg.AppConfig, g.Logger, g.Postgres, g.Redis))
-}
-
-func (g *AppRunner) ProjectApiRoute() {
-	web_api.RegisterProjectServiceServer(g.S, webApi.NewProjectGRPC(&g.Cfg.AppConfig, g.Logger, g.Postgres, g.Redis))
-}
-
-func (g *AppRunner) ActivityApiRoute() {
-	web_api.RegisterAuditLoggingServiceServer(g.S, webApi.NewActivityGRPC(&g.Cfg.AppConfig, g.Logger, g.Postgres, g.Redis))
-}
-
-func (g *AppRunner) EndpointApiRoute() {
-	web_api.RegisterEndpointServiceServer(g.S, webApi.NewEndpointGRPC(&g.Cfg.AppConfig, g.Logger, g.Postgres, g.Redis))
-}
-
-func (g *AppRunner) KnowledgeApiRoute() {
-	web_api.RegisterKnowledgeServiceServer(g.S, webApi.NewKnowledgeGRPC(&g.Cfg.AppConfig, g.Logger, g.Postgres, g.Redis))
-}
-func (g *AppRunner) AssistantApiRoute() {
-	web_api.RegisterAssistantServiceServer(g.S, webApi.NewAssistantGRPC(&g.Cfg.AppConfig, g.Logger, g.Postgres, g.Redis))
-	web_api.RegisterAssistantDeploymentServiceServer(g.S, webApi.NewAssistantDeploymentGRPCApi(&g.Cfg.AppConfig, g.Logger, g.Postgres, g.Redis))
-}
-
-func (g *AppRunner) DocumentApiRoute() {
-	web_api.RegisterDocumentServiceServer(g.S, webApi.NewDocumentGRPCApi(&g.Cfg.AppConfig, g.Logger, g.Postgres, g.Redis))
-}
-
-func (g *AppRunner) ProviderApiRoute() {
-	web_api.RegisterProviderServiceServer(g.S, webApi.NewProviderGRPC(&g.Cfg.AppConfig, g.Logger, g.Postgres, g.Redis))
-}
-
-func (g *AppRunner) LeadApiRoute() {
-	web_api.RegisterLeadGeneratorServiceServer(g.S, webApi.NewLeadGRPC(&g.Cfg.AppConfig, g.Logger, g.Postgres, g.Redis))
-}
-
-func (g *AppRunner) KnowledgeConnectApiRoute() {
-	web_api.RegisterConnectServiceServer(g.S, webApi.NewConnectGRPC(&g.Cfg.AppConfig, &g.Cfg.OAuthConfig, g.Logger, g.Postgres))
-	g.Logger.Info("Internal HealthCheckRoutes and Connectors added to engine.")
-	apiv1 := g.E.Group("/connect-knowledge")
-	connectApi := webApi.NewConnectRPC(&g.Cfg.AppConfig, &g.Cfg.OAuthConfig, g.Logger, g.Postgres)
-	{
-		// working
-		apiv1.GET("/notion/", connectApi.NotionConnect)
-
-		apiv1.GET("/confluence/", connectApi.ConfluenceConnect)
-		apiv1.GET("/google-drive/", connectApi.GoogleDriveConnect)
-		//
-		apiv1.GET("/github/", connectApi.GithubCodeConnect)
-		apiv1.GET("/gitlab/", connectApi.GitlabCodeConnect)
-
-		apiv1.GET("/microsoft-onedrive/", connectApi.MicrosoftOnedriveConnect)
-		apiv1.GET("/sharepoint/", connectApi.MicrosoftSharepointConnect)
-	}
-
-	actionApiv1 := g.E.Group("/connect-action")
-	{
-		actionApiv1.GET("/gmail/", connectApi.GmailActionConnect)
-		actionApiv1.GET("/jira/", connectApi.JiraActionConnect)
-		actionApiv1.GET("/slack/", connectApi.SlackActionConnect)
-	}
-
-	crmConnectApiv1 := g.E.Group("/connect-crm")
-	{
-		crmConnectApiv1.GET("/hubspot/", connectApi.HubspotCRMConnect)
-	}
+	invoker_api.RegisterDeploymentServer(g.S, invokerApi.NewInvokerGRPCApi(g.Cfg, g.Logger, g.Postgres, g.Redis, g.Opensearch))
 }
 
 func (g *AppRunner) HealthCheckRoutes() {
@@ -395,7 +322,6 @@ func (g *AppRunner) CorsMiddleware() {
 	}))
 }
 
-// Logger Middleware
 func (g *AppRunner) RequestLoggerMiddleware() {
 	g.Logger.Info("Adding request middleware to the applicaiton.")
 	g.E.Use(middlewares.NewRequestLoggerMiddleware(g.Cfg.Name, g.Logger))

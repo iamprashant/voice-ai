@@ -1,4 +1,4 @@
-package web_handler
+package web_proxy_api
 
 import (
 	"context"
@@ -7,17 +7,18 @@ import (
 
 	endpoint_client "github.com/rapidaai/pkg/clients/endpoint"
 	"github.com/rapidaai/pkg/utils"
-	web_api "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 
-	config "github.com/rapidaai/config"
+	web_api "github.com/rapidaai/api/web-api/api"
+	config "github.com/rapidaai/api/web-api/config"
 	commons "github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	"github.com/rapidaai/pkg/types"
 )
 
 type webEndpointApi struct {
-	WebApi
-	cfg               *config.AppConfig
+	web_api.WebApi
+	cfg               *config.WebAppConfig
 	logger            commons.Logger
 	postgres          connectors.PostgresConnector
 	redis             connectors.RedisConnector
@@ -29,21 +30,21 @@ type webEndpointGRPCApi struct {
 	webEndpointApi
 }
 
-func NewEndpointGRPC(config *config.AppConfig, logger commons.Logger, postgres connectors.PostgresConnector, redis connectors.RedisConnector) web_api.EndpointServiceServer {
+func NewEndpointGRPC(config *config.WebAppConfig, logger commons.Logger, postgres connectors.PostgresConnector, redis connectors.RedisConnector) protos.EndpointServiceServer {
 	return &webEndpointGRPCApi{
 		webEndpointApi{
-			WebApi:            NewWebApi(config, logger, postgres, redis),
+			WebApi:            web_api.NewWebApi(config, logger, postgres, redis),
 			cfg:               config,
 			logger:            logger,
 			postgres:          postgres,
 			redis:             redis,
-			endpointClient:    endpoint_client.NewEndpointServiceClientGRPC(config, logger, redis),
-			marketplaceClient: endpoint_client.NewMarketplaceServiceClientGRPC(config, logger, redis),
+			endpointClient:    endpoint_client.NewEndpointServiceClientGRPC(&config.AppConfig, logger, redis),
+			marketplaceClient: endpoint_client.NewMarketplaceServiceClientGRPC(&config.AppConfig, logger, redis),
 		},
 	}
 }
 
-func (endpoint *webEndpointGRPCApi) GetEndpoint(c context.Context, iRequest *web_api.GetEndpointRequest) (*web_api.GetEndpointResponse, error) {
+func (endpoint *webEndpointGRPCApi) GetEndpoint(c context.Context, iRequest *protos.GetEndpointRequest) (*protos.GetEndpointResponse, error) {
 	endpoint.logger.Debugf("GetEndpoint from grpc with requestPayload %v, %v", iRequest, c)
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(c)
 	if !isAuthenticated {
@@ -52,19 +53,19 @@ func (endpoint *webEndpointGRPCApi) GetEndpoint(c context.Context, iRequest *web
 	}
 	_endpoint, err := endpoint.endpointClient.GetEndpoint(c, iAuth, iRequest)
 	if err != nil {
-		return utils.Error[web_api.GetEndpointResponse](
+		return utils.Error[protos.GetEndpointResponse](
 			err,
 			"Unable to get your endpoint, please try again in sometime.")
 	}
 
-	return utils.Success[web_api.GetEndpointResponse, *web_api.Endpoint](_endpoint)
+	return utils.Success[protos.GetEndpointResponse, *protos.Endpoint](_endpoint)
 
 }
 
 /*
  */
 
-func (endpoint *webEndpointGRPCApi) GetAllDeployment(c context.Context, iRequest *web_api.GetAllDeploymentRequest) (*web_api.GetAllDeploymentResponse, error) {
+func (endpoint *webEndpointGRPCApi) GetAllDeployment(c context.Context, iRequest *protos.GetAllDeploymentRequest) (*protos.GetAllDeploymentResponse, error) {
 	endpoint.logger.Debugf("GetAllEndpoint from grpc with requestPayload %v, %v", iRequest, c)
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(c)
 	if !isAuthenticated {
@@ -74,7 +75,7 @@ func (endpoint *webEndpointGRPCApi) GetAllDeployment(c context.Context, iRequest
 
 	_page, _deployments, err := endpoint.marketplaceClient.GetAllDeployment(c, iAuth, iRequest.GetCriterias(), iRequest.GetPaginate())
 	if err != nil {
-		return utils.Error[web_api.GetAllDeploymentResponse](
+		return utils.Error[protos.GetAllDeploymentResponse](
 			err,
 			"Unable to get deployments, please try again in sometime.")
 	}
@@ -83,14 +84,14 @@ func (endpoint *webEndpointGRPCApi) GetAllDeployment(c context.Context, iRequest
 		orgId, _ := strconv.ParseUint(_ep.GetOrganizationId(), 10, 64)
 		_ep.Organization = endpoint.GetOrganization(c, iAuth, orgId)
 	}
-	return utils.PaginatedSuccess[web_api.GetAllDeploymentResponse, []*web_api.SearchableDeployment](
+	return utils.PaginatedSuccess[protos.GetAllDeploymentResponse, []*protos.SearchableDeployment](
 		_page.GetTotalItem(), _page.GetCurrentPage(),
 		_deployments)
 }
 
 /*
  */
-func (endpoint *webEndpointGRPCApi) GetAllEndpoint(c context.Context, iRequest *web_api.GetAllEndpointRequest) (*web_api.GetAllEndpointResponse, error) {
+func (endpoint *webEndpointGRPCApi) GetAllEndpoint(c context.Context, iRequest *protos.GetAllEndpointRequest) (*protos.GetAllEndpointResponse, error) {
 	endpoint.logger.Debugf("GetAllEndpoint from grpc with requestPayload %v, %v", iRequest, c)
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(c)
 	if !isAuthenticated {
@@ -100,7 +101,7 @@ func (endpoint *webEndpointGRPCApi) GetAllEndpoint(c context.Context, iRequest *
 
 	_page, _endpoint, err := endpoint.endpointClient.GetAllEndpoint(c, iAuth, iRequest.GetCriterias(), iRequest.GetPaginate())
 	if err != nil {
-		return utils.Error[web_api.GetAllEndpointResponse](
+		return utils.Error[protos.GetAllEndpointResponse](
 			err,
 			"Unable to get your endpoint, please try again in sometime.")
 	}
@@ -110,12 +111,12 @@ func (endpoint *webEndpointGRPCApi) GetAllEndpoint(c context.Context, iRequest *
 			_ep.EndpointProviderModel.CreatedUser = endpoint.GetUser(c, iAuth, _ep.EndpointProviderModel.GetCreatedBy())
 		}
 	}
-	return utils.PaginatedSuccess[web_api.GetAllEndpointResponse, []*web_api.Endpoint](
+	return utils.PaginatedSuccess[protos.GetAllEndpointResponse, []*protos.Endpoint](
 		_page.GetTotalItem(), _page.GetCurrentPage(),
 		_endpoint)
 }
 
-func (endpoint *webEndpointGRPCApi) CreateEndpoint(c context.Context, iRequest *web_api.CreateEndpointRequest) (*web_api.CreateEndpointResponse, error) {
+func (endpoint *webEndpointGRPCApi) CreateEndpoint(c context.Context, iRequest *protos.CreateEndpointRequest) (*protos.CreateEndpointResponse, error) {
 	endpoint.logger.Debugf("Create endpoint from grpc with requestPayload %v, %v", iRequest, c)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(c)
 	if !isAuthenticated {
@@ -125,7 +126,7 @@ func (endpoint *webEndpointGRPCApi) CreateEndpoint(c context.Context, iRequest *
 	return endpoint.endpointClient.CreateEndpoint(c, iAuth, iRequest)
 }
 
-func (endpointGRPCApi *webEndpointGRPCApi) GetAllEndpointProviderModel(ctx context.Context, iRequest *web_api.GetAllEndpointProviderModelRequest) (*web_api.GetAllEndpointProviderModelResponse, error) {
+func (endpointGRPCApi *webEndpointGRPCApi) GetAllEndpointProviderModel(ctx context.Context, iRequest *protos.GetAllEndpointProviderModelRequest) (*protos.GetAllEndpointProviderModelResponse, error) {
 	endpointGRPCApi.logger.Debugf("Create endpoint from grpc with requestPayload %v, %v", iRequest, ctx)
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(ctx)
 	if !isAuthenticated {
@@ -135,7 +136,7 @@ func (endpointGRPCApi *webEndpointGRPCApi) GetAllEndpointProviderModel(ctx conte
 
 	_page, _endpoints, err := endpointGRPCApi.endpointClient.GetAllEndpointProviderModel(ctx, iAuth, iRequest.GetEndpointId(), iRequest.GetCriterias(), iRequest.GetPaginate())
 	if err != nil {
-		return utils.Error[web_api.GetAllEndpointProviderModelResponse](
+		return utils.Error[protos.GetAllEndpointProviderModelResponse](
 			err,
 			"Unable to get your endpoint provider models, please try again in sometime.")
 	}
@@ -143,12 +144,12 @@ func (endpointGRPCApi *webEndpointGRPCApi) GetAllEndpointProviderModel(ctx conte
 	for _, _ep := range _endpoints {
 		_ep.CreatedUser = endpointGRPCApi.GetUser(ctx, iAuth, _ep.GetCreatedBy())
 	}
-	return utils.PaginatedSuccess[web_api.GetAllEndpointProviderModelResponse, []*web_api.EndpointProviderModel](
+	return utils.PaginatedSuccess[protos.GetAllEndpointProviderModelResponse, []*protos.EndpointProviderModel](
 		_page.GetTotalItem(), _page.GetCurrentPage(),
 		_endpoints)
 }
 
-func (endpointGRPCApi *webEndpointGRPCApi) UpdateEndpointVersion(ctx context.Context, iRequest *web_api.UpdateEndpointVersionRequest) (*web_api.UpdateEndpointVersionResponse, error) {
+func (endpointGRPCApi *webEndpointGRPCApi) UpdateEndpointVersion(ctx context.Context, iRequest *protos.UpdateEndpointVersionRequest) (*protos.UpdateEndpointVersionResponse, error) {
 	endpointGRPCApi.logger.Debugf("Update endpoint from grpc with requestPayload %v, %v", iRequest, ctx)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
@@ -158,7 +159,7 @@ func (endpointGRPCApi *webEndpointGRPCApi) UpdateEndpointVersion(ctx context.Con
 	return endpointGRPCApi.endpointClient.UpdateEndpointVersion(ctx, iAuth, iRequest.GetEndpointId(), iRequest.GetEndpointProviderModelId())
 }
 
-func (endpointGRPCApi *webEndpointGRPCApi) CreateEndpointProviderModel(ctx context.Context, iRequest *web_api.CreateEndpointProviderModelRequest) (*web_api.CreateEndpointProviderModelResponse, error) {
+func (endpointGRPCApi *webEndpointGRPCApi) CreateEndpointProviderModel(ctx context.Context, iRequest *protos.CreateEndpointProviderModelRequest) (*protos.CreateEndpointProviderModelResponse, error) {
 	endpointGRPCApi.logger.Debugf("Create endpoint provider model request %v, %v", iRequest, ctx)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
@@ -169,7 +170,7 @@ func (endpointGRPCApi *webEndpointGRPCApi) CreateEndpointProviderModel(ctx conte
 }
 
 // CreateEndpointCacheConfiguration implements lexatic_backend.EndpointServiceServer.
-func (endpointGRPCApi *webEndpointGRPCApi) CreateEndpointCacheConfiguration(ctx context.Context, iRequest *web_api.CreateEndpointCacheConfigurationRequest) (*web_api.CreateEndpointCacheConfigurationResponse, error) {
+func (endpointGRPCApi *webEndpointGRPCApi) CreateEndpointCacheConfiguration(ctx context.Context, iRequest *protos.CreateEndpointCacheConfigurationRequest) (*protos.CreateEndpointCacheConfigurationResponse, error) {
 	endpointGRPCApi.logger.Debugf("Create endpoint provider model request %v, %v", iRequest, ctx)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
@@ -180,7 +181,7 @@ func (endpointGRPCApi *webEndpointGRPCApi) CreateEndpointCacheConfiguration(ctx 
 }
 
 // CreateEndpointRetryConfiguration implements lexatic_backend.EndpointServiceServer.
-func (endpointGRPCApi *webEndpointGRPCApi) CreateEndpointRetryConfiguration(ctx context.Context, iRequest *web_api.CreateEndpointRetryConfigurationRequest) (*web_api.CreateEndpointRetryConfigurationResponse, error) {
+func (endpointGRPCApi *webEndpointGRPCApi) CreateEndpointRetryConfiguration(ctx context.Context, iRequest *protos.CreateEndpointRetryConfigurationRequest) (*protos.CreateEndpointRetryConfigurationResponse, error) {
 	endpointGRPCApi.logger.Debugf("Create endpoint provider model request %v, %v", iRequest, ctx)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
@@ -191,7 +192,7 @@ func (endpointGRPCApi *webEndpointGRPCApi) CreateEndpointRetryConfiguration(ctx 
 }
 
 // CreateEndpointTag implements lexatic_backend.EndpointServiceServer.
-func (endpointGRPCApi *webEndpointGRPCApi) CreateEndpointTag(ctx context.Context, iRequest *web_api.CreateEndpointTagRequest) (*web_api.GetEndpointResponse, error) {
+func (endpointGRPCApi *webEndpointGRPCApi) CreateEndpointTag(ctx context.Context, iRequest *protos.CreateEndpointTagRequest) (*protos.GetEndpointResponse, error) {
 	endpointGRPCApi.logger.Debugf("Create endpoint provider model request %v, %v", iRequest, ctx)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
@@ -200,7 +201,7 @@ func (endpointGRPCApi *webEndpointGRPCApi) CreateEndpointTag(ctx context.Context
 	}
 	return endpointGRPCApi.endpointClient.CreateEndpointTag(ctx, iAuth, iRequest)
 }
-func (endpointGRPCApi *webEndpointGRPCApi) UpdateEndpointDetail(ctx context.Context, iRequest *web_api.UpdateEndpointDetailRequest) (*web_api.GetEndpointResponse, error) {
+func (endpointGRPCApi *webEndpointGRPCApi) UpdateEndpointDetail(ctx context.Context, iRequest *protos.UpdateEndpointDetailRequest) (*protos.GetEndpointResponse, error) {
 	endpointGRPCApi.logger.Debugf("update endpoint details request %v, %v", iRequest, ctx)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
@@ -211,7 +212,7 @@ func (endpointGRPCApi *webEndpointGRPCApi) UpdateEndpointDetail(ctx context.Cont
 }
 
 // ForkEndpoint implements lexatic_backend.EndpointServiceServer.
-func (endpointGRPCApi *webEndpointGRPCApi) ForkEndpoint(ctx context.Context, iRequest *web_api.ForkEndpointRequest) (*web_api.BaseResponse, error) {
+func (endpointGRPCApi *webEndpointGRPCApi) ForkEndpoint(ctx context.Context, iRequest *protos.ForkEndpointRequest) (*protos.BaseResponse, error) {
 	endpointGRPCApi.logger.Debugf("Create endpoint provider model request %v, %v", iRequest, ctx)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
@@ -221,7 +222,7 @@ func (endpointGRPCApi *webEndpointGRPCApi) ForkEndpoint(ctx context.Context, iRe
 	return endpointGRPCApi.endpointClient.ForkEndpoint(ctx, iAuth, iRequest)
 }
 
-func (endpoint *webEndpointGRPCApi) GetEndpointLog(c context.Context, iRequest *web_api.GetEndpointLogRequest) (*web_api.GetEndpointLogResponse, error) {
+func (endpoint *webEndpointGRPCApi) GetEndpointLog(c context.Context, iRequest *protos.GetEndpointLogRequest) (*protos.GetEndpointLogResponse, error) {
 	endpoint.logger.Debugf("GetEndpoint from grpc with requestPayload %v, %v", iRequest, c)
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(c)
 	if !isAuthenticated {
@@ -234,7 +235,7 @@ func (endpoint *webEndpointGRPCApi) GetEndpointLog(c context.Context, iRequest *
 /*
  */
 
-func (endpoint *webEndpointGRPCApi) GetAllEndpointLog(c context.Context, iRequest *web_api.GetAllEndpointLogRequest) (*web_api.GetAllEndpointLogResponse, error) {
+func (endpoint *webEndpointGRPCApi) GetAllEndpointLog(c context.Context, iRequest *protos.GetAllEndpointLogRequest) (*protos.GetAllEndpointLogResponse, error) {
 	endpoint.logger.Debugf("GetAllEndpoint from grpc with requestPayload %v, %v", iRequest, c)
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(c)
 	if !isAuthenticated {
@@ -244,11 +245,11 @@ func (endpoint *webEndpointGRPCApi) GetAllEndpointLog(c context.Context, iReques
 
 	_page, _deployments, err := endpoint.endpointClient.GetAllEndpointLog(c, iAuth, iRequest.GetEndpointId(), iRequest.GetCriterias(), iRequest.GetPaginate())
 	if err != nil {
-		return utils.Error[web_api.GetAllEndpointLogResponse](
+		return utils.Error[protos.GetAllEndpointLogResponse](
 			err,
 			"Unable to get deployments, please try again in sometime.")
 	}
-	return utils.PaginatedSuccess[web_api.GetAllEndpointLogResponse, []*web_api.EndpointLog](
+	return utils.PaginatedSuccess[protos.GetAllEndpointLogResponse, []*protos.EndpointLog](
 		_page.GetTotalItem(), _page.GetCurrentPage(),
 		_deployments)
 }

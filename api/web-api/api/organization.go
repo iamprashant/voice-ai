@@ -1,4 +1,4 @@
-package web_handler
+package web_api
 
 import (
 	"context"
@@ -7,21 +7,21 @@ import (
 	internal_project_service "github.com/rapidaai/api/web-api/internal/service/project"
 
 	"github.com/gin-gonic/gin"
+	config "github.com/rapidaai/api/web-api/config"
 	internal_service "github.com/rapidaai/api/web-api/internal/service"
 	internal_organization_service "github.com/rapidaai/api/web-api/internal/service/organization"
 	internal_user_service "github.com/rapidaai/api/web-api/internal/service/user"
 	internal_vault_service "github.com/rapidaai/api/web-api/internal/service/vault"
-	config "github.com/rapidaai/config"
 	commons "github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
-	web_api "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 type webOrganizationApi struct {
-	cfg                 *config.AppConfig
+	cfg                 *config.WebAppConfig
 	logger              commons.Logger
 	postgres            connectors.PostgresConnector
 	redis               connectors.RedisConnector
@@ -39,7 +39,7 @@ type webOrganizationGRPCApi struct {
 	webOrganizationApi
 }
 
-func NewOrganizationRPC(config *config.AppConfig, logger commons.Logger,
+func NewOrganizationRPC(config *config.WebAppConfig, logger commons.Logger,
 	postgres connectors.PostgresConnector,
 	redis connectors.RedisConnector,
 ) *webOrganizationRPCApi {
@@ -55,9 +55,9 @@ func NewOrganizationRPC(config *config.AppConfig, logger commons.Logger,
 	}
 }
 
-func NewOrganizationGRPC(config *config.AppConfig, logger commons.Logger,
+func NewOrganizationGRPC(config *config.WebAppConfig, logger commons.Logger,
 	postgres connectors.PostgresConnector,
-	redis connectors.RedisConnector) web_api.OrganizationServiceServer {
+	redis connectors.RedisConnector) protos.OrganizationServiceServer {
 	return &webOrganizationGRPCApi{
 		webOrganizationApi{
 			cfg:                 config,
@@ -121,7 +121,7 @@ func (orgR *webOrganizationRPCApi) CreateOrganization(c *gin.Context) {
 /*
 For creation of organization and
 */
-func (orgG *webOrganizationGRPCApi) CreateOrganization(c context.Context, irRequest *web_api.CreateOrganizationRequest) (*web_api.CreateOrganizationResponse, error) {
+func (orgG *webOrganizationGRPCApi) CreateOrganization(c context.Context, irRequest *protos.CreateOrganizationRequest) (*protos.CreateOrganizationResponse, error) {
 	orgG.logger.Debugf("CreateOrganization from grpc with requestPayload %v, %v", irRequest, c)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(c)
 	if !isAuthenticated {
@@ -133,10 +133,10 @@ func (orgG *webOrganizationGRPCApi) CreateOrganization(c context.Context, irRequ
 	currentOrg := iAuth.GetOrganizationRole()
 	if currentOrg != nil {
 		orgG.logger.Errorf("current org is not null, you can't create multiple organization at same time.")
-		return &web_api.CreateOrganizationResponse{
+		return &protos.CreateOrganizationResponse{
 			Code:    400,
 			Success: false,
-			Error: &web_api.OrganizationError{
+			Error: &protos.OrganizationError{
 				ErrorCode:    400,
 				ErrorMessage: "Alerady part of another organization, you can't be part of multiple organization.",
 				HumanMessage: "You are already part of an active organization.",
@@ -147,10 +147,10 @@ func (orgG *webOrganizationGRPCApi) CreateOrganization(c context.Context, irRequ
 	aOrg, err := orgG.organizationService.Create(c, iAuth, irRequest.OrganizationName, irRequest.OrganizationSize, irRequest.OrganizationIndustry)
 	if err != nil {
 		orgG.logger.Errorf("CreateOrganization from grpc with erro %v", err)
-		return &web_api.CreateOrganizationResponse{
+		return &protos.CreateOrganizationResponse{
 			Code:    400,
 			Success: false,
-			Error: &web_api.OrganizationError{
+			Error: &protos.OrganizationError{
 				ErrorCode:    400,
 				ErrorMessage: err.Error(),
 				HumanMessage: "Unable to create organization, please try again.",
@@ -161,10 +161,10 @@ func (orgG *webOrganizationGRPCApi) CreateOrganization(c context.Context, irRequ
 	aRole, err := orgG.userService.CreateOrganizationRole(c, iAuth, "owner", iAuth.GetUserInfo().Id, aOrg.Id, type_enums.RECORD_ACTIVE)
 	if err != nil {
 		orgG.logger.Errorf("CreateOrganizationRole from grpc with erro %v", err)
-		return &web_api.CreateOrganizationResponse{
+		return &protos.CreateOrganizationResponse{
 			Code:    400,
 			Success: false,
-			Error: &web_api.OrganizationError{
+			Error: &protos.OrganizationError{
 				ErrorCode:    401,
 				ErrorMessage: err.Error(),
 				HumanMessage: "Unable to assign role for your organization.",
@@ -180,8 +180,8 @@ func (orgG *webOrganizationGRPCApi) CreateOrganization(c context.Context, irRequ
 		orgG.logger.Errorf("unable to create default keys for organization err %v", err)
 	}
 
-	org := &web_api.Organization{}
-	orgRole := &web_api.OrganizationRole{}
+	org := &protos.Organization{}
+	orgRole := &protos.OrganizationRole{}
 	err = utils.Cast(aOrg, org)
 	if err != nil {
 		orgG.logger.Errorf("unable to cast organization to proto org err %v", err)
@@ -190,7 +190,7 @@ func (orgG *webOrganizationGRPCApi) CreateOrganization(c context.Context, irRequ
 	if err != nil {
 		orgG.logger.Errorf("unable to cast organization to proto org err %v", err)
 	}
-	return &web_api.CreateOrganizationResponse{
+	return &protos.CreateOrganizationResponse{
 		Code:    200,
 		Success: true,
 		Data:    org,
@@ -199,7 +199,7 @@ func (orgG *webOrganizationGRPCApi) CreateOrganization(c context.Context, irRequ
 
 }
 
-func (orgG *webOrganizationGRPCApi) UpdateOrganization(c context.Context, irRequest *web_api.UpdateOrganizationRequest) (*web_api.UpdateOrganizationResponse, error) {
+func (orgG *webOrganizationGRPCApi) UpdateOrganization(c context.Context, irRequest *protos.UpdateOrganizationRequest) (*protos.UpdateOrganizationResponse, error) {
 	orgG.logger.Debugf("UpdateOrganization from grpc with requestPayload %v, %v", irRequest, c)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(c)
 	if !isAuthenticated {
@@ -211,17 +211,17 @@ func (orgG *webOrganizationGRPCApi) UpdateOrganization(c context.Context, irRequ
 	_, err := orgG.organizationService.Update(c, iAuth, irRequest.OrganizationId, irRequest.OrganizationName, irRequest.OrganizationIndustry, irRequest.OrganizationContact)
 	if err != nil {
 		orgG.logger.Errorf("UpdateOrganization from grpc with erro %v", err)
-		return &web_api.UpdateOrganizationResponse{
+		return &protos.UpdateOrganizationResponse{
 			Code:    400,
 			Success: false,
-			Error: &web_api.OrganizationError{
+			Error: &protos.OrganizationError{
 				ErrorCode:    400,
 				ErrorMessage: err.Error(),
 				HumanMessage: "Unable to update the organization, please try again in sometime.",
 			}}, nil
 	}
 	// response
-	return &web_api.UpdateOrganizationResponse{
+	return &protos.UpdateOrganizationResponse{
 		Code:    200,
 		Success: true,
 	}, nil
@@ -229,7 +229,7 @@ func (orgG *webOrganizationGRPCApi) UpdateOrganization(c context.Context, irRequ
 }
 
 // getting all the organization
-func (orgG *webOrganizationGRPCApi) GetOrganization(c context.Context, irRequest *web_api.GetOrganizationRequest) (*web_api.GetOrganizationResponse, error) {
+func (orgG *webOrganizationGRPCApi) GetOrganization(c context.Context, irRequest *protos.GetOrganizationRequest) (*protos.GetOrganizationResponse, error) {
 	orgG.logger.Debugf("GetOrganization from grpc with requestPayload %v, %v", irRequest, c)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(c)
 	if !isAuthenticated {
@@ -240,10 +240,10 @@ func (orgG *webOrganizationGRPCApi) GetOrganization(c context.Context, irRequest
 	aRole, err := orgG.userService.GetOrganizationRole(c, iAuth.GetUserInfo().Id)
 	if err != nil {
 		orgG.logger.Errorf("userService.GetOrganizationRole from grpc with erro %v", err)
-		return &web_api.GetOrganizationResponse{
+		return &protos.GetOrganizationResponse{
 			Code:    400,
 			Success: false,
-			Error: &web_api.OrganizationError{
+			Error: &protos.OrganizationError{
 				ErrorCode:    400,
 				ErrorMessage: err.Error(),
 				HumanMessage: "Unable to find role your organization, please try again later.",
@@ -253,18 +253,18 @@ func (orgG *webOrganizationGRPCApi) GetOrganization(c context.Context, irRequest
 	aOrg, err := orgG.organizationService.Get(c, aRole.OrganizationId)
 	if err != nil {
 		orgG.logger.Errorf("organizationService.Get from grpc with erro %v", err)
-		return &web_api.GetOrganizationResponse{
+		return &protos.GetOrganizationResponse{
 			Code:    400,
 			Success: false,
-			Error: &web_api.OrganizationError{
+			Error: &protos.OrganizationError{
 				ErrorCode:    400,
 				ErrorMessage: err.Error(),
 				HumanMessage: "Unable to find your organization, please try again later.",
 			}}, nil
 	}
 
-	org := &web_api.Organization{}
-	orgRole := &web_api.OrganizationRole{}
+	org := &protos.Organization{}
+	orgRole := &protos.OrganizationRole{}
 	err = utils.Cast(aOrg, org)
 	if err != nil {
 		orgG.logger.Errorf("unable to cast organization to proto org err %v", err)
@@ -273,7 +273,7 @@ func (orgG *webOrganizationGRPCApi) GetOrganization(c context.Context, irRequest
 	if err != nil {
 		orgG.logger.Errorf("unable to cast organization role to proto org role err %v", err)
 	}
-	return &web_api.GetOrganizationResponse{
+	return &protos.GetOrganizationResponse{
 		Code:    200,
 		Success: true,
 		Data:    org,
@@ -281,7 +281,7 @@ func (orgG *webOrganizationGRPCApi) GetOrganization(c context.Context, irRequest
 	}, nil
 }
 
-func (orgG *webOrganizationGRPCApi) UpdateBillingInformation(c context.Context, irRequest *web_api.UpdateBillingInformationRequest) (*web_api.BaseResponse, error) {
+func (orgG *webOrganizationGRPCApi) UpdateBillingInformation(c context.Context, irRequest *protos.UpdateBillingInformationRequest) (*protos.BaseResponse, error) {
 	orgG.logger.Debugf("UpdateBillingInformation from grpc with requestPayload %v, %v", irRequest, c)
 	return nil, nil
 }

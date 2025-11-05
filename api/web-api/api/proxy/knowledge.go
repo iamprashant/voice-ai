@@ -1,4 +1,4 @@
-package web_handler
+package web_proxy_api
 
 import (
 	"context"
@@ -6,17 +6,18 @@ import (
 
 	knowledge_client "github.com/rapidaai/pkg/clients/workflow"
 	"github.com/rapidaai/pkg/utils"
-	web_api "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 
-	config "github.com/rapidaai/config"
+	web_api "github.com/rapidaai/api/web-api/api"
+	config "github.com/rapidaai/api/web-api/config"
 	commons "github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	"github.com/rapidaai/pkg/types"
 )
 
 type webKnowledgeApi struct {
-	WebApi
-	cfg             *config.AppConfig
+	web_api.WebApi
+	cfg             *config.WebAppConfig
 	logger          commons.Logger
 	postgres        connectors.PostgresConnector
 	redis           connectors.RedisConnector
@@ -27,21 +28,21 @@ type webKnowledgeGRPCApi struct {
 	webKnowledgeApi
 }
 
-func NewKnowledgeGRPC(config *config.AppConfig, logger commons.Logger, postgres connectors.PostgresConnector, redis connectors.RedisConnector) web_api.KnowledgeServiceServer {
+func NewKnowledgeGRPC(config *config.WebAppConfig, logger commons.Logger, postgres connectors.PostgresConnector, redis connectors.RedisConnector) protos.KnowledgeServiceServer {
 	return &webKnowledgeGRPCApi{
 		webKnowledgeApi{
-			WebApi:          NewWebApi(config, logger, postgres, redis),
+			WebApi:          web_api.NewWebApi(config, logger, postgres, redis),
 			cfg:             config,
 			logger:          logger,
 			postgres:        postgres,
 			redis:           redis,
-			knowledgeClient: knowledge_client.NewKnowledgeServiceClientGRPC(config, logger, redis),
+			knowledgeClient: knowledge_client.NewKnowledgeServiceClientGRPC(&config.AppConfig, logger, redis),
 		},
 	}
 }
 
 // GetAllKnowledgeDocumentSegment implements lexatic_backend.KnowledgeServiceServer.
-func (knowledge *webKnowledgeGRPCApi) GetAllKnowledgeDocumentSegment(c context.Context, iRequest *web_api.GetAllKnowledgeDocumentSegmentRequest) (*web_api.GetAllKnowledgeDocumentSegmentResponse, error) {
+func (knowledge *webKnowledgeGRPCApi) GetAllKnowledgeDocumentSegment(c context.Context, iRequest *protos.GetAllKnowledgeDocumentSegmentRequest) (*protos.GetAllKnowledgeDocumentSegmentResponse, error) {
 	knowledge.logger.Debugf("GetAllKnowledgeDocumentSegment from grpc with requestPayload %v, %v", iRequest, c)
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(c)
 	if !isAuthenticated {
@@ -51,7 +52,7 @@ func (knowledge *webKnowledgeGRPCApi) GetAllKnowledgeDocumentSegment(c context.C
 	return knowledge.knowledgeClient.GetAllKnowledgeDocumentSegment(c, iAuth, iRequest)
 }
 
-func (knowledge *webKnowledgeGRPCApi) GetKnowledge(c context.Context, iRequest *web_api.GetKnowledgeRequest) (*web_api.GetKnowledgeResponse, error) {
+func (knowledge *webKnowledgeGRPCApi) GetKnowledge(c context.Context, iRequest *protos.GetKnowledgeRequest) (*protos.GetKnowledgeResponse, error) {
 	knowledge.logger.Debugf("GetKnowledge from grpc with requestPayload %v, %v", iRequest, c)
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(c)
 	if !isAuthenticated {
@@ -60,13 +61,13 @@ func (knowledge *webKnowledgeGRPCApi) GetKnowledge(c context.Context, iRequest *
 	}
 	_knowledge, err := knowledge.knowledgeClient.GetKnowledge(c, iAuth, iRequest)
 	if err != nil {
-		return utils.Error[web_api.GetKnowledgeResponse](
+		return utils.Error[protos.GetKnowledgeResponse](
 			err,
 			"Unable to get your knowledge, please try again in sometime.")
 	}
 
 	_knowledge.CreatedUser = knowledge.GetUser(c, iAuth, _knowledge.GetCreatedBy())
-	return utils.Success[web_api.GetKnowledgeResponse, *web_api.Knowledge](_knowledge)
+	return utils.Success[protos.GetKnowledgeResponse, *protos.Knowledge](_knowledge)
 
 }
 
@@ -75,7 +76,7 @@ func (knowledge *webKnowledgeGRPCApi) GetKnowledge(c context.Context, iRequest *
 
 /*
  */
-func (knowledge *webKnowledgeGRPCApi) GetAllKnowledge(c context.Context, iRequest *web_api.GetAllKnowledgeRequest) (*web_api.GetAllKnowledgeResponse, error) {
+func (knowledge *webKnowledgeGRPCApi) GetAllKnowledge(c context.Context, iRequest *protos.GetAllKnowledgeRequest) (*protos.GetAllKnowledgeResponse, error) {
 	knowledge.logger.Debugf("GetAllKnowledge from grpc with requestPayload %v, %v", iRequest, c)
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(c)
 	if !isAuthenticated {
@@ -85,7 +86,7 @@ func (knowledge *webKnowledgeGRPCApi) GetAllKnowledge(c context.Context, iReques
 
 	_page, _knowledge, err := knowledge.knowledgeClient.GetAllKnowledge(c, iAuth, iRequest.GetCriterias(), iRequest.GetPaginate())
 	if err != nil {
-		return utils.Error[web_api.GetAllKnowledgeResponse](
+		return utils.Error[protos.GetAllKnowledgeResponse](
 			err,
 			"Unable to get your knowledge, please try again in sometime.")
 	}
@@ -93,12 +94,12 @@ func (knowledge *webKnowledgeGRPCApi) GetAllKnowledge(c context.Context, iReques
 	for _, _ep := range _knowledge {
 		_ep.CreatedUser = knowledge.GetUser(c, iAuth, _ep.GetCreatedBy())
 	}
-	return utils.PaginatedSuccess[web_api.GetAllKnowledgeResponse, []*web_api.Knowledge](
+	return utils.PaginatedSuccess[protos.GetAllKnowledgeResponse, []*protos.Knowledge](
 		_page.GetTotalItem(), _page.GetCurrentPage(),
 		_knowledge)
 }
 
-func (knowledge *webKnowledgeGRPCApi) CreateKnowledge(c context.Context, iRequest *web_api.CreateKnowledgeRequest) (*web_api.CreateKnowledgeResponse, error) {
+func (knowledge *webKnowledgeGRPCApi) CreateKnowledge(c context.Context, iRequest *protos.CreateKnowledgeRequest) (*protos.CreateKnowledgeResponse, error) {
 	knowledge.logger.Debugf("Create knowledge from grpc with requestPayload %v, %v", iRequest, c)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(c)
 	if !isAuthenticated {
@@ -109,7 +110,7 @@ func (knowledge *webKnowledgeGRPCApi) CreateKnowledge(c context.Context, iReques
 }
 
 // CreateKnowledgeTag implements lexatic_backend.KnowledgeServiceServer.
-func (knowledgeGRPCApi *webKnowledgeGRPCApi) CreateKnowledgeTag(ctx context.Context, iRequest *web_api.CreateKnowledgeTagRequest) (*web_api.GetKnowledgeResponse, error) {
+func (knowledgeGRPCApi *webKnowledgeGRPCApi) CreateKnowledgeTag(ctx context.Context, iRequest *protos.CreateKnowledgeTagRequest) (*protos.GetKnowledgeResponse, error) {
 	knowledgeGRPCApi.logger.Debugf("Create knowledge provider model request %v, %v", iRequest, ctx)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
@@ -119,7 +120,7 @@ func (knowledgeGRPCApi *webKnowledgeGRPCApi) CreateKnowledgeTag(ctx context.Cont
 	return knowledgeGRPCApi.knowledgeClient.CreateKnowledgeTag(ctx, iAuth, iRequest)
 }
 
-func (knowledgeGRPCApi *webKnowledgeGRPCApi) UpdateKnowledgeDetail(ctx context.Context, iRequest *web_api.UpdateKnowledgeDetailRequest) (*web_api.GetKnowledgeResponse, error) {
+func (knowledgeGRPCApi *webKnowledgeGRPCApi) UpdateKnowledgeDetail(ctx context.Context, iRequest *protos.UpdateKnowledgeDetailRequest) (*protos.GetKnowledgeResponse, error) {
 	knowledgeGRPCApi.logger.Debugf("Create knowledge provider model request %v, %v", iRequest, ctx)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
@@ -129,7 +130,7 @@ func (knowledgeGRPCApi *webKnowledgeGRPCApi) UpdateKnowledgeDetail(ctx context.C
 	return knowledgeGRPCApi.knowledgeClient.UpdateKnowledgeDetail(ctx, iAuth, iRequest)
 }
 
-func (knowledgeGRPCApi *webKnowledgeGRPCApi) CreateKnowledgeDocument(ctx context.Context, iRequest *web_api.CreateKnowledgeDocumentRequest) (*web_api.CreateKnowledgeDocumentResponse, error) {
+func (knowledgeGRPCApi *webKnowledgeGRPCApi) CreateKnowledgeDocument(ctx context.Context, iRequest *protos.CreateKnowledgeDocumentRequest) (*protos.CreateKnowledgeDocumentResponse, error) {
 	knowledgeGRPCApi.logger.Debugf("Create knowledge document request request %+v", iRequest)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
@@ -140,7 +141,7 @@ func (knowledgeGRPCApi *webKnowledgeGRPCApi) CreateKnowledgeDocument(ctx context
 }
 
 // GetAllKnowledgeDocument implements lexatic_backend.KnowledgeServiceServer.
-func (knowledgeGRPCApi *webKnowledgeGRPCApi) GetAllKnowledgeDocument(ctx context.Context, iRequest *web_api.GetAllKnowledgeDocumentRequest) (*web_api.GetAllKnowledgeDocumentResponse, error) {
+func (knowledgeGRPCApi *webKnowledgeGRPCApi) GetAllKnowledgeDocument(ctx context.Context, iRequest *protos.GetAllKnowledgeDocumentRequest) (*protos.GetAllKnowledgeDocumentResponse, error) {
 	knowledgeGRPCApi.logger.Debugf("Get all knowledge document request %v, %v", iRequest, ctx)
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(ctx)
 	if !isAuthenticated {
@@ -151,7 +152,7 @@ func (knowledgeGRPCApi *webKnowledgeGRPCApi) GetAllKnowledgeDocument(ctx context
 }
 
 // GetAllKnowledgeDocument implements lexatic_backend.KnowledgeServiceServer.
-func (knowledgeGRPCApi *webKnowledgeGRPCApi) DeleteKnowledgeDocumentSegment(ctx context.Context, iRequest *web_api.DeleteKnowledgeDocumentSegmentRequest) (*web_api.BaseResponse, error) {
+func (knowledgeGRPCApi *webKnowledgeGRPCApi) DeleteKnowledgeDocumentSegment(ctx context.Context, iRequest *protos.DeleteKnowledgeDocumentSegmentRequest) (*protos.BaseResponse, error) {
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
 		knowledgeGRPCApi.logger.Errorf("unauthenticated request to delete knowledge document segment")
@@ -161,7 +162,7 @@ func (knowledgeGRPCApi *webKnowledgeGRPCApi) DeleteKnowledgeDocumentSegment(ctx 
 }
 
 // GetAllKnowledgeDocument implements lexatic_backend.KnowledgeServiceServer.
-func (knowledgeGRPCApi *webKnowledgeGRPCApi) UpdateKnowledgeDocumentSegment(ctx context.Context, iRequest *web_api.UpdateKnowledgeDocumentSegmentRequest) (*web_api.BaseResponse, error) {
+func (knowledgeGRPCApi *webKnowledgeGRPCApi) UpdateKnowledgeDocumentSegment(ctx context.Context, iRequest *protos.UpdateKnowledgeDocumentSegmentRequest) (*protos.BaseResponse, error) {
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
 		knowledgeGRPCApi.logger.Errorf("unauthenticated request to update knowledge document segment")
@@ -170,7 +171,7 @@ func (knowledgeGRPCApi *webKnowledgeGRPCApi) UpdateKnowledgeDocumentSegment(ctx 
 	return knowledgeGRPCApi.knowledgeClient.UpdateKnowledgeDocumentSegment(ctx, iAuth, iRequest)
 }
 
-func (knowledgeGRPCApi *webKnowledgeGRPCApi) GetAllKnowledgeLog(ctx context.Context, iRequest *web_api.GetAllKnowledgeLogRequest) (*web_api.GetAllKnowledgeLogResponse, error) {
+func (knowledgeGRPCApi *webKnowledgeGRPCApi) GetAllKnowledgeLog(ctx context.Context, iRequest *protos.GetAllKnowledgeLogRequest) (*protos.GetAllKnowledgeLogResponse, error) {
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
 		knowledgeGRPCApi.logger.Errorf("unauthenticated request to GetAllKnowledgeLog")
@@ -178,7 +179,7 @@ func (knowledgeGRPCApi *webKnowledgeGRPCApi) GetAllKnowledgeLog(ctx context.Cont
 	}
 	return knowledgeGRPCApi.knowledgeClient.GetAllKnowledgeLog(ctx, iAuth, iRequest)
 }
-func (knowledgeGRPCApi *webKnowledgeGRPCApi) GetKnowledgeLog(ctx context.Context, iRequest *web_api.GetKnowledgeLogRequest) (*web_api.GetKnowledgeLogResponse, error) {
+func (knowledgeGRPCApi *webKnowledgeGRPCApi) GetKnowledgeLog(ctx context.Context, iRequest *protos.GetKnowledgeLogRequest) (*protos.GetKnowledgeLogResponse, error) {
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
 		knowledgeGRPCApi.logger.Errorf("unauthenticated request to GetKnowledgeLog")

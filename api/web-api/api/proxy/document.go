@@ -1,10 +1,10 @@
-package web_handler
+package web_proxy_api
 
 import (
 	"context"
 	"errors"
 
-	"github.com/rapidaai/config"
+	config "github.com/rapidaai/api/web-api/config"
 	document_client "github.com/rapidaai/pkg/clients/document"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
@@ -14,7 +14,7 @@ import (
 )
 
 type indexerApi struct {
-	cfg                  *config.AppConfig
+	cfg                  *config.WebAppConfig
 	logger               commons.Logger
 	postgres             connectors.PostgresConnector
 	redis                connectors.RedisConnector
@@ -25,7 +25,7 @@ type indexerGrpcApi struct {
 	indexerApi
 }
 
-func NewDocumentGRPCApi(config *config.AppConfig, logger commons.Logger,
+func NewDocumentGRPCApi(config *config.WebAppConfig, logger commons.Logger,
 	postgres connectors.PostgresConnector,
 	redis connectors.RedisConnector) knowledge_api.DocumentServiceServer {
 	return &indexerGrpcApi{
@@ -34,7 +34,7 @@ func NewDocumentGRPCApi(config *config.AppConfig, logger commons.Logger,
 			logger:               logger,
 			postgres:             postgres,
 			redis:                redis,
-			indexerServiceClient: document_client.NewIndexerServiceClient(config, logger, redis),
+			indexerServiceClient: document_client.NewIndexerServiceClient(&config.AppConfig, logger, redis),
 		},
 	}
 }
