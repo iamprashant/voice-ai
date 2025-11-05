@@ -432,6 +432,8 @@ github.com/hokaccha/go-prettyjson v0.0.0-20211117102719-0474bc63780f h1:7LYC+Yfk
 github.com/hokaccha/go-prettyjson v0.0.0-20211117102719-0474bc63780f/go.mod h1:pFlLw2CfqZiIBOx6BuCeRLCrfxBJipTY0nIOF/VbGcI=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
 github.com/hudl/fargo v1.3.0/go.mod h1:y3CKSmjA+wD2gak7sUSXTAoopbhU08POFhmITJgmKTg=
+github.com/iamprashant/vonage-go-sdk v0.0.0-20251001095859-c473c1750cbd h1:RTxdNxvyBqLDMR53m42sBgKc+8V0vjaHXRFknc+Z2Vg=
+github.com/iamprashant/vonage-go-sdk v0.0.0-20251001095859-c473c1750cbd/go.mod h1:+SDpkGXhL/Z6z4cfCP21xBjDwjX/CzH9a40PCAC1luw=
 github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/ianlancetaylor/demangle v0.0.0-20200824232613-28f6c0f3b639/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/improbable-eng/grpc-web v0.15.0 h1:BN+7z6uNXZ1tQGcNAuaU1YjsLTApzkjt2tzCixLaUPQ=
@@ -753,8 +755,6 @@ github.com/urfave/cli v1.22.1/go.mod h1:Gos4lmkARVdJ6EkW0WaNv/tZAAMe9V7XWyB60NtX
 github.com/urfave/cli v1.22.5/go.mod h1:Gos4lmkARVdJ6EkW0WaNv/tZAAMe9V7XWyB60NtXRu0=
 github.com/vincent-petithory/dataurl v1.0.0 h1:cXw+kPto8NLuJtlMsI152irrVw9fRDX8AbShPRpg2CI=
 github.com/vincent-petithory/dataurl v1.0.0/go.mod h1:FHafX5vmDzyP+1CQATJn7WFKc9CvnvxyvZy6I1MrG/U=
-github.com/vonage/vonage-go-sdk v0.14.0 h1:Th3nrxT2J4m7ahz6aEAK24A0JxM+GNNBKuq5284wXrc=
-github.com/vonage/vonage-go-sdk v0.14.0/go.mod h1:+SDpkGXhL/Z6z4cfCP21xBjDwjX/CzH9a40PCAC1luw=
 github.com/weaviate/weaviate v1.25.1 h1:Eg+Ns+ORy5pTpwo9ZsueB4VBuaguW2qGrnlKO6Py+eI=
 github.com/weaviate/weaviate v1.25.1/go.mod h1:T2T8AEbnDOIyI1TOGDwXpU7ODRy4yrETK0K4M7fBN2w=
 github.com/weaviate/weaviate-go-client/v4 v4.14.0 h1:oFVZZSkim4Ye6SMaOk16hBVXBzMs68IrguYst2GW3TA=

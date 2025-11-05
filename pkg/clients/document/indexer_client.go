@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/rapidaai/api/assistant-api/config"
+	"github.com/rapidaai/config"
 	"github.com/rapidaai/pkg/clients"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
@@ -23,16 +23,16 @@ type IndexerServiceClient interface {
 
 type indexerServiceClient struct {
 	clients.InternalClient
-	cfg    *config.AssistantConfig
+	cfg    *config.AppConfig
 	logger commons.Logger
 	client *http.Client
 }
 
 // NewSendgridServiceClientHTTP creates a new Sendgrid service client for HTTP.
-func NewIndexerServiceClient(config *config.AssistantConfig, logger commons.Logger, redis connectors.RedisConnector) IndexerServiceClient {
+func NewIndexerServiceClient(config *config.AppConfig, logger commons.Logger, redis connectors.RedisConnector) IndexerServiceClient {
 	logger.Debugf("connecting to integration service via HTTP at %s", config.IntegrationHost)
 	return &indexerServiceClient{
-		InternalClient: clients.NewInternalClient(&config.AppConfig, logger, redis),
+		InternalClient: clients.NewInternalClient(config, logger, redis),
 		cfg:            config,
 		logger:         logger,
 		client: &http.Client{
