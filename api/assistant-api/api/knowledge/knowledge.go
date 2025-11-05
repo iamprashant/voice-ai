@@ -38,7 +38,7 @@ func NewKnowledgeGRPCApi(config *config.AssistantConfig, logger commons.Logger,
 			redis:                    redis,
 			knowledgeService:         internal_knowledge_service.NewKnowledgeService(config, logger, postgres, storage_files.NewStorage(config.AssetStoreConfig, logger)),
 			knowledgeDocumentService: internal_knowledge_service.NewKnowledgeDocumentService(config, logger, postgres, opensearch),
-			indexerServiceClient:     document_client.NewIndexerServiceClient(config, logger, redis),
+			indexerServiceClient:     document_client.NewIndexerServiceClient(&config.AppConfig, logger, redis),
 		},
 	}
 }

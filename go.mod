@@ -4,6 +4,8 @@ go 1.24.0
 
 toolchain go1.24.9
 
+replace github.com/vonage/vonage-go-sdk => github.com/iamprashant/vonage-go-sdk v0.0.0-20251001095859-c473c1750cbd
+
 require (
 	cloud.google.com/go/speech v1.28.1
 	cloud.google.com/go/texttospeech v1.16.0
