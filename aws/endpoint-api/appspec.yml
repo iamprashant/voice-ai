@@ -1,0 +1,20 @@
+version: 0.0
+
+os: linux
+
+files:
+  - source: env
+    destination: /opt/app/backend-app/artifacts/endpoint-api/
+  - source: endpoint-api.0.0.1
+    destination: /opt/app/backend-app/artifacts/endpoint-api/
+
+hooks:
+  ApplicationStop:
+    - location: codedeploy/ApplicationStop.sh
+      timeout: 180
+  ValidateService:
+    - location: codedeploy/ValidateService.sh
+      timeout: 180
+  ApplicationStart:
+    - location: codedeploy/ApplicationStart.sh
+      timeout: 180

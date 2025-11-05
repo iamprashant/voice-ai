@@ -1,15 +1,17 @@
 package endpoint_api
 
 import (
-	config "github.com/rapidaai/config"
-	internal_services "github.com/rapidaai/internal/services"
+	config "github.com/rapidaai/api/endpoint-api/config"
+	internal_services "github.com/rapidaai/api/endpoint-api/internal/service"
+	internal_endpoint_service "github.com/rapidaai/api/endpoint-api/internal/service/endpoint"
+	internal_log_service "github.com/rapidaai/api/endpoint-api/internal/service/log"
 	commons "github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	endpoint_grpc_api "github.com/rapidaai/protos"
 )
 
 type endpointApi struct {
-	cfg                *config.AppConfig
+	cfg                *config.EndpointConfig
 	logger             commons.Logger
 	postgres           connectors.PostgresConnector
 	endpointService    internal_services.EndpointService
@@ -20,7 +22,7 @@ type endpointGRPCApi struct {
 	endpointApi
 }
 
-func NewEndpointGRPCApi(config *config.AppConfig, logger commons.Logger,
+func NewEndpointGRPCApi(config *config.EndpointConfig, logger commons.Logger,
 	postgres connectors.PostgresConnector,
 	redis connectors.RedisConnector,
 	opensearch connectors.OpenSearchConnector,
@@ -30,8 +32,8 @@ func NewEndpointGRPCApi(config *config.AppConfig, logger commons.Logger,
 			cfg:                config,
 			logger:             logger,
 			postgres:           postgres,
-			endpointService:    internal_services.NewEndpointService(config, logger, postgres, opensearch),
-			endpointLogService: internal_services.NewEndpointLogService(logger, postgres),
+			endpointService:    internal_endpoint_service.NewEndpointService(config, logger, postgres, opensearch),
+			endpointLogService: internal_log_service.NewEndpointLogService(logger, postgres),
 		},
 	}
 }
