@@ -6,16 +6,16 @@ import (
 	"io"
 	"time"
 
+	"github.com/rapidaai/api/assistant-api/config"
 	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters/requests"
 	internal_adapter_request_generic "github.com/rapidaai/api/assistant-api/internal/adapters/requests/generic"
 	internal_adapter_request_streamers "github.com/rapidaai/api/assistant-api/internal/adapters/requests/streamers"
-	"github.com/rapidaai/config"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	"github.com/rapidaai/pkg/storages"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -28,7 +28,7 @@ type twilioTalking struct {
 // GetMessage implements internal_adapter_requests.Talking.
 func NewTalking(
 	ctx context.Context,
-	config *config.AppConfig,
+	config *config.AssistantConfig,
 	logger commons.Logger,
 	postgres connectors.PostgresConnector,
 	opensearch connectors.OpenSearchConnector,
@@ -83,11 +83,11 @@ func (talking *twilioTalking) Talk(
 			return fmt.Errorf("stream.Recv error: %w", err)
 		}
 		switch msg := req.GetRequest().(type) {
-		case *lexatic_backend.AssistantMessagingRequest_Message:
+		case *protos.AssistantMessagingRequest_Message:
 			if initialized {
 				talking.Input(req.GetMessage())
 			}
-		case *lexatic_backend.AssistantMessagingRequest_Configuration:
+		case *protos.AssistantMessagingRequest_Configuration:
 			if err := talking.Connect(ctx, auth, identifier, msg.Configuration); err != nil {
 				talking.logger.Errorf("unexpected error while connect assistant, might be problem in configuration %+v", err)
 				return fmt.Errorf("talking.Connect error: %w", err)

@@ -3,7 +3,7 @@ package internal_agent_rerankers
 import (
 	"context"
 
-	"github.com/rapidaai/config"
+	"github.com/rapidaai/api/assistant-api/config"
 	integration_client "github.com/rapidaai/pkg/clients/integration"
 	integration_client_builders "github.com/rapidaai/pkg/clients/integration/builders"
 	"github.com/rapidaai/pkg/commons"
@@ -18,10 +18,10 @@ type textReranker struct {
 	inputBuilder      integration_client_builders.InputRerankingBuilder
 }
 
-func NewTextReranker(logger commons.Logger, cfg *config.AppConfig, redis connectors.RedisConnector) Reranking[string] {
+func NewTextReranker(logger commons.Logger, cfg *config.AssistantConfig, redis connectors.RedisConnector) Reranking[string] {
 	return &textReranker{
 		logger:            logger,
-		integrationCaller: integration_client.NewIntegrationServiceClientGRPC(cfg, logger, redis),
+		integrationCaller: integration_client.NewIntegrationServiceClientGRPC(&cfg.AppConfig, logger, redis),
 		inputBuilder:      integration_client_builders.NewRerankingInputBuilder(logger),
 	}
 }

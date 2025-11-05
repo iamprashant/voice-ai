@@ -3,13 +3,13 @@ package internal_factories
 import (
 	"context"
 
+	"github.com/rapidaai/api/assistant-api/config"
 	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters/requests"
 	internal_adapter_request_talking_debugger "github.com/rapidaai/api/assistant-api/internal/adapters/requests/debugger/talking"
 	internal_adapter_request_talking_phone "github.com/rapidaai/api/assistant-api/internal/adapters/requests/phone/talking"
 	internal_adapter_request_talking_sdk "github.com/rapidaai/api/assistant-api/internal/adapters/requests/sdk/talking"
 	internal_adapter_request_streamers "github.com/rapidaai/api/assistant-api/internal/adapters/requests/streamers"
 	internal_adapter_request_talking_web_plugin "github.com/rapidaai/api/assistant-api/internal/adapters/requests/web-plugin/talking"
-	"github.com/rapidaai/config"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	"github.com/rapidaai/pkg/storages"
@@ -19,7 +19,7 @@ import (
 
 func GetTalker(source utils.RapidaSource,
 	ctx context.Context,
-	cfg *config.AppConfig,
+	cfg *config.AssistantConfig,
 	logger commons.Logger,
 	postgres connectors.PostgresConnector,
 	opensearch connectors.OpenSearchConnector,

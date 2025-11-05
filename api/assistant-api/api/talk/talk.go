@@ -51,7 +51,7 @@ func NewConversationGRPCApi(config *config.AssistantConfig, logger commons.Logge
 			assistantConversationService: internal_assistant_service.NewAssistantConversationService(logger, postgres, storage_files.NewStorage(config.AssetStoreConfig, logger)),
 			assistantService:             internal_assistant_service.NewAssistantService(config, logger, postgres, opensearch),
 			storage:                      storage_files.NewStorage(config.AssetStoreConfig, logger),
-			vaultClient:                  web_client.NewVaultClientGRPC(config, logger, redis),
+			vaultClient:                  web_client.NewVaultClientGRPC(&config.AppConfig, logger, redis),
 		},
 	}
 }
