@@ -8,31 +8,31 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/rapidaai/config"
+	"github.com/rapidaai/api/assistant-api/config"
 	"github.com/rapidaai/pkg/clients"
-	commons "github.com/rapidaai/pkg/commons"
+	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	"github.com/rapidaai/pkg/types"
-	lexatic_backend "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
 type IndexerServiceClient interface {
 	IndexKnowledgeDocument(ctx context.Context, auth types.SimplePrinciple,
-		in *lexatic_backend.IndexKnowledgeDocumentRequest) (*lexatic_backend.IndexKnowledgeDocumentResponse, error)
+		in *protos.IndexKnowledgeDocumentRequest) (*protos.IndexKnowledgeDocumentResponse, error)
 }
 
 type indexerServiceClient struct {
 	clients.InternalClient
-	cfg    *config.AppConfig
+	cfg    *config.AssistantConfig
 	logger commons.Logger
 	client *http.Client
 }
 
 // NewSendgridServiceClientHTTP creates a new Sendgrid service client for HTTP.
-func NewIndexerServiceClient(config *config.AppConfig, logger commons.Logger, redis connectors.RedisConnector) IndexerServiceClient {
+func NewIndexerServiceClient(config *config.AssistantConfig, logger commons.Logger, redis connectors.RedisConnector) IndexerServiceClient {
 	logger.Debugf("connecting to integration service via HTTP at %s", config.IntegrationHost)
 	return &indexerServiceClient{
-		InternalClient: clients.NewInternalClient(config, logger, redis),
+		InternalClient: clients.NewInternalClient(&config.AppConfig, logger, redis),
 		cfg:            config,
 		logger:         logger,
 		client: &http.Client{
@@ -41,7 +41,7 @@ func NewIndexerServiceClient(config *config.AppConfig, logger commons.Logger, re
 	}
 }
 
-func (client *indexerServiceClient) IndexKnowledgeDocument(ctx context.Context, auth types.SimplePrinciple, in *lexatic_backend.IndexKnowledgeDocumentRequest) (*lexatic_backend.IndexKnowledgeDocumentResponse, error) {
+func (client *indexerServiceClient) IndexKnowledgeDocument(ctx context.Context, auth types.SimplePrinciple, in *protos.IndexKnowledgeDocumentRequest) (*protos.IndexKnowledgeDocumentResponse, error) {
 	reqBody, err := json.Marshal(in)
 	if err != nil {
 		client.logger.Errorf("unable to marshal request body: %v", err)
@@ -62,7 +62,7 @@ func (client *indexerServiceClient) IndexKnowledgeDocument(ctx context.Context, 
 	}
 	defer resp.Body.Close()
 
-	var res lexatic_backend.IndexKnowledgeDocumentResponse
+	var res protos.IndexKnowledgeDocumentResponse
 	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
 		client.logger.Errorf("unable to decode response: %v", err)
 		return nil, err

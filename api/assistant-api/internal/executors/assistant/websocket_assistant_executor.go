@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/dvonthenen/websocket"
+	"github.com/gorilla/websocket"
 	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters/requests"
 	internal_executors "github.com/rapidaai/api/assistant-api/internal/executors"
 	internal_adapter_telemetry "github.com/rapidaai/api/assistant-api/internal/telemetry"

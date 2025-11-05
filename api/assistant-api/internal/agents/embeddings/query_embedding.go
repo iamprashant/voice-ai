@@ -3,13 +3,13 @@ package internal_agent_embeddings
 import (
 	"context"
 
-	"github.com/rapidaai/config"
+	"github.com/rapidaai/api/assistant-api/config"
 	integration_client "github.com/rapidaai/pkg/clients/integration"
 	integration_client_builders "github.com/rapidaai/pkg/clients/integration/builders"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	"github.com/rapidaai/pkg/types"
-	lexatic_backend "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
 type defaultQueryEmbedding struct {
@@ -18,10 +18,10 @@ type defaultQueryEmbedding struct {
 	inputBuilder      integration_client_builders.InputEmbeddingBuilder
 }
 
-func NewQueryEmbedding(logger commons.Logger, cfg *config.AppConfig, redis connectors.RedisConnector) QueryEmbedding {
+func NewQueryEmbedding(logger commons.Logger, cfg *config.AssistantConfig, redis connectors.RedisConnector) QueryEmbedding {
 	return &defaultQueryEmbedding{
 		logger:            logger,
-		integrationCaller: integration_client.NewIntegrationServiceClientGRPC(cfg, logger, redis),
+		integrationCaller: integration_client.NewIntegrationServiceClientGRPC(&cfg.AppConfig, logger, redis),
 		inputBuilder:      integration_client_builders.NewEmbeddingInputBuilder(logger),
 	}
 }
@@ -30,7 +30,7 @@ func (qe *defaultQueryEmbedding) TextQueryEmbedding(
 	ctx context.Context,
 	auth types.SimplePrinciple,
 	query string, opts *TextEmbeddingOption,
-) (*lexatic_backend.EmbeddingResponse, error) {
+) (*protos.EmbeddingResponse, error) {
 
 	res, err := qe.integrationCaller.Embedding(ctx,
 		auth,

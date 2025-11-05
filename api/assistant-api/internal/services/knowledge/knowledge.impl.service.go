@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/rapidaai/api/assistant-api/config"
 	internal_knowledge_gorm "github.com/rapidaai/api/assistant-api/internal/gorm/knowledges"
 	internal_services "github.com/rapidaai/api/assistant-api/internal/services"
-	"github.com/rapidaai/config"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	gorm_models "github.com/rapidaai/pkg/models/gorm"
@@ -17,18 +17,18 @@ import (
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
 	assistant_grpc_api "github.com/rapidaai/protos"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 	"gorm.io/gorm/clause"
 )
 
 type knowledgeService struct {
 	logger   commons.Logger
-	config   *config.AppConfig
+	config   *config.AssistantConfig
 	postgres connectors.PostgresConnector
 	storage  storages.Storage
 }
 
-func NewKnowledgeService(config *config.AppConfig,
+func NewKnowledgeService(config *config.AssistantConfig,
 	logger commons.Logger, postgres connectors.PostgresConnector, storage storages.Storage) internal_services.KnowledgeService {
 	return &knowledgeService{
 		logger:   logger,
@@ -125,7 +125,7 @@ func (knowledge *knowledgeService) CreateKnowledge(ctx context.Context, auth typ
 	name string, description, visibility *string,
 	embeddingModelProviderId uint64,
 	embeddingModelProviderName string,
-	embeddingModelOptions []*lexatic_backend.Metadata,
+	embeddingModelOptions []*protos.Metadata,
 ) (*internal_knowledge_gorm.Knowledge, error) {
 	db := knowledge.postgres.DB(ctx)
 	knowledgeId := gorm_generator.ID()
@@ -291,9 +291,9 @@ func (eService *knowledgeService) GetAllLog(
 	ctx context.Context,
 	auth types.SimplePrinciple,
 	projectId uint64,
-	criterias []*lexatic_backend.Criteria,
-	paginate *lexatic_backend.Paginate,
-	order *lexatic_backend.Ordering) (int64, []*internal_knowledge_gorm.KnowledgeLog, error) {
+	criterias []*protos.Criteria,
+	paginate *protos.Paginate,
+	order *protos.Ordering) (int64, []*internal_knowledge_gorm.KnowledgeLog, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
 	var (

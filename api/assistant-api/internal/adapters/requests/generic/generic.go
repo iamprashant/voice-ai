@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/rapidaai/api/assistant-api/config"
 	internal_adapter_request_customizers "github.com/rapidaai/api/assistant-api/internal/adapters/requests/customizers"
 	internal_adapter_request_streamers "github.com/rapidaai/api/assistant-api/internal/adapters/requests/streamers"
 	internal_agent_embeddings "github.com/rapidaai/api/assistant-api/internal/agents/embeddings"
@@ -23,7 +24,6 @@ import (
 	internal_assistant_telemetry_exporters "github.com/rapidaai/api/assistant-api/internal/telemetry/assistant/exporters"
 	internal_transcribes "github.com/rapidaai/api/assistant-api/internal/transcribers"
 	internal_transformers "github.com/rapidaai/api/assistant-api/internal/transformers"
-	"github.com/rapidaai/config"
 	endpoint_client "github.com/rapidaai/pkg/clients/endpoint"
 	integration_client "github.com/rapidaai/pkg/clients/integration"
 	web_client "github.com/rapidaai/pkg/clients/web"
@@ -40,7 +40,7 @@ import (
 
 type GenericRequestor struct {
 	logger   commons.Logger
-	config   *config.AppConfig
+	config   *config.AssistantConfig
 	ctx      context.Context
 	source   utils.RapidaSource
 	auth     types.SimplePrinciple
@@ -99,7 +99,7 @@ type GenericRequestor struct {
 
 func NewGenericRequestor(
 	ctx context.Context,
-	config *config.AppConfig,
+	config *config.AssistantConfig,
 	logger commons.Logger,
 	source utils.RapidaSource,
 	postgres connectors.PostgresConnector,
@@ -129,16 +129,16 @@ func NewGenericRequestor(
 		textReranker:  internal_agent_rerankers.NewTextReranker(logger, config, redis),
 
 		// clients
-		deploymentClient:  endpoint_client.NewDeploymentServiceClientGRPC(config, logger, redis),
-		vaultClient:       web_client.NewVaultClientGRPC(config, logger, redis),
-		integrationClient: integration_client.NewIntegrationServiceClientGRPC(config, logger, redis),
+		deploymentClient:  endpoint_client.NewDeploymentServiceClientGRPC(&config.AppConfig, logger, redis),
+		vaultClient:       web_client.NewVaultClientGRPC(&config.AppConfig, logger, redis),
+		integrationClient: integration_client.NewIntegrationServiceClientGRPC(&config.AppConfig, logger, redis),
 
 		//
 		tracer: internal_assistant_telemetry.NewInMemoryTracer(logger,
 			internal_assistant_telemetry_exporters.NewLoggingAssistantTraceExporter(logger),
 			internal_assistant_telemetry_exporters.NewOpensearchAssistantTraceExporter(
 				logger,
-				config, opensearch,
+				&config.AppConfig, opensearch,
 			),
 		),
 
