@@ -15,10 +15,9 @@ func EndpointReaderApiRoute(
 	Logger commons.Logger,
 	Postgres connectors.PostgresConnector,
 	Redis connectors.RedisConnector,
-	Opensearch connectors.OpenSearchConnector,
 
 ) {
-	protos.RegisterEndpointServiceServer(S, endpoint_api.NewEndpointGRPCApi(Cfg, Logger, Postgres, Redis, Opensearch))
+	protos.RegisterEndpointServiceServer(S, endpoint_api.NewEndpointGRPCApi(Cfg, Logger, Postgres, Redis))
 }
 
 func InvokeApiRoute(
@@ -27,7 +26,6 @@ func InvokeApiRoute(
 	Logger commons.Logger,
 	Postgres connectors.PostgresConnector,
 	Redis connectors.RedisConnector,
-	Opensearch connectors.OpenSearchConnector,
 ) {
-	protos.RegisterDeploymentServer(S, endpoint_api.NewInvokerGRPCApi(Cfg, Logger, Postgres, Redis, Opensearch))
+	protos.RegisterDeploymentServer(S, endpoint_api.NewInvokerGRPCApi(Cfg, Logger, Postgres, Redis))
 }

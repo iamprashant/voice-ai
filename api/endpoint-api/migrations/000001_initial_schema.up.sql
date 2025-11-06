@@ -1,28 +1,3 @@
---
--- PostgreSQL database dump
---
-
--- Dumped from database version 16.4 (Postgres.app)
--- Dumped by pg_dump version 16.4 (Postgres.app)
-
-SET statement_timeout = 0;
-SET lock_timeout = 0;
-SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'UTF8';
-SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
-SET check_function_bodies = false;
-SET xmloption = content;
-SET client_min_messages = warning;
-SET row_security = off;
-
-SET default_tablespace = '';
-
-SET default_table_access_method = heap;
-
---
--- Name: endpoint_audits; Type: TABLE; Schema: public; Owner: prashant.srivastav
---
 
 CREATE TABLE public.endpoint_audits (
     id bigint NOT NULL,
@@ -32,18 +7,12 @@ CREATE TABLE public.endpoint_audits (
     endpoint_provider_model_id bigint NOT NULL,
     asset_prefix text,
     time_taken bigint,
-    status character varying(50) DEFAULT 'active'::character varying NOT NULL,
+    status character varying(50) DEFAULT 'ACTIVE'::character varying NOT NULL,
     metric json,
     metrics json,
     source character varying DEFAULT 'web-app'::character varying
 );
 
-
-ALTER TABLE public.endpoint_audits OWNER TO "prashant.srivastav";
-
---
--- Name: endpoint_cachings; Type: TABLE; Schema: public; Owner: prashant.srivastav
---
 
 CREATE TABLE public.endpoint_cachings (
     id bigint NOT NULL,
@@ -59,12 +28,6 @@ CREATE TABLE public.endpoint_cachings (
 );
 
 
-ALTER TABLE public.endpoint_cachings OWNER TO "prashant.srivastav";
-
---
--- Name: endpoint_log_arguments; Type: TABLE; Schema: public; Owner: prashant.srivastav
---
-
 CREATE TABLE public.endpoint_log_arguments (
     id bigint NOT NULL,
     status character varying(50) DEFAULT 'ACTIVE'::character varying NOT NULL,
@@ -78,11 +41,6 @@ CREATE TABLE public.endpoint_log_arguments (
 );
 
 
-ALTER TABLE public.endpoint_log_arguments OWNER TO "prashant.srivastav";
-
---
--- Name: endpoint_log_metadata; Type: TABLE; Schema: public; Owner: prashant.srivastav
---
 
 CREATE TABLE public.endpoint_log_metadata (
     id bigint NOT NULL,
@@ -97,12 +55,6 @@ CREATE TABLE public.endpoint_log_metadata (
 );
 
 
-ALTER TABLE public.endpoint_log_metadata OWNER TO "prashant.srivastav";
-
---
--- Name: endpoint_log_metrics; Type: TABLE; Schema: public; Owner: prashant.srivastav
---
-
 CREATE TABLE public.endpoint_log_metrics (
     id bigint NOT NULL,
     status character varying(50) DEFAULT 'ACTIVE'::character varying NOT NULL,
@@ -116,11 +68,7 @@ CREATE TABLE public.endpoint_log_metrics (
     endpoint_log_id bigint NOT NULL
 );
 
-
-ALTER TABLE public.endpoint_log_metrics OWNER TO "prashant.srivastav";
-
---
--- Name: endpoint_log_options; Type: TABLE; Schema: public; Owner: prashant.srivastav
+ame: endpoint_log_options; Type: TABLE; Schema: public; Owner: prashant.srivastav
 --
 
 CREATE TABLE public.endpoint_log_options (
@@ -135,12 +83,6 @@ CREATE TABLE public.endpoint_log_options (
     endpoint_log_id bigint NOT NULL
 );
 
-
-ALTER TABLE public.endpoint_log_options OWNER TO "prashant.srivastav";
-
---
--- Name: endpoint_logs; Type: TABLE; Schema: public; Owner: prashant.srivastav
---
 
 CREATE TABLE public.endpoint_logs (
     id bigint NOT NULL,
@@ -158,11 +100,6 @@ CREATE TABLE public.endpoint_logs (
 );
 
 
-ALTER TABLE public.endpoint_logs OWNER TO "prashant.srivastav";
-
---
--- Name: endpoint_provider_model_options; Type: TABLE; Schema: public; Owner: prashant.srivastav
---
 
 CREATE TABLE public.endpoint_provider_model_options (
     id bigint NOT NULL,
@@ -177,11 +114,6 @@ CREATE TABLE public.endpoint_provider_model_options (
 );
 
 
-ALTER TABLE public.endpoint_provider_model_options OWNER TO "prashant.srivastav";
-
---
--- Name: endpoint_provider_models; Type: TABLE; Schema: public; Owner: prashant.srivastav
---
 
 CREATE TABLE public.endpoint_provider_models (
     id bigint,
@@ -197,12 +129,6 @@ CREATE TABLE public.endpoint_provider_models (
     updated_by bigint
 );
 
-
-ALTER TABLE public.endpoint_provider_models OWNER TO "prashant.srivastav";
-
---
--- Name: endpoint_retries; Type: TABLE; Schema: public; Owner: prashant.srivastav
---
 
 CREATE TABLE public.endpoint_retries (
     id bigint NOT NULL,
@@ -220,11 +146,6 @@ CREATE TABLE public.endpoint_retries (
 );
 
 
-ALTER TABLE public.endpoint_retries OWNER TO "prashant.srivastav";
-
---
--- Name: endpoint_tags; Type: TABLE; Schema: public; Owner: prashant.srivastav
---
 
 CREATE TABLE public.endpoint_tags (
     id bigint NOT NULL,
@@ -238,11 +159,6 @@ CREATE TABLE public.endpoint_tags (
 );
 
 
-ALTER TABLE public.endpoint_tags OWNER TO "prashant.srivastav";
-
---
--- Name: endpoint_token_audits; Type: TABLE; Schema: public; Owner: prashant.srivastav
---
 
 CREATE TABLE public.endpoint_token_audits (
     id bigint NOT NULL,
@@ -255,12 +171,6 @@ CREATE TABLE public.endpoint_token_audits (
     output_unit_price double precision
 );
 
-
-ALTER TABLE public.endpoint_token_audits OWNER TO "prashant.srivastav";
-
---
--- Name: endpoints; Type: TABLE; Schema: public; Owner: prashant.srivastav
---
 
 CREATE TABLE public.endpoints (
     id bigint NOT NULL,
@@ -282,31 +192,6 @@ CREATE TABLE public.endpoints (
 );
 
 
-ALTER TABLE public.endpoints OWNER TO "prashant.srivastav";
-
---
--- Name: project_credentials; Type: TABLE; Schema: public; Owner: prashant.srivastav
---
-
-CREATE TABLE public.project_credentials (
-    id bigint NOT NULL,
-    organization_id bigint NOT NULL,
-    project_id bigint NOT NULL,
-    name character varying(200) NOT NULL,
-    key character varying(400) NOT NULL,
-    created_date timestamp without time zone DEFAULT now() NOT NULL,
-    updated_date timestamp without time zone,
-    status character varying(50) DEFAULT 'active'::character varying NOT NULL,
-    created_by bigint NOT NULL,
-    updated_by bigint NOT NULL
-);
-
-
-ALTER TABLE public.project_credentials OWNER TO "prashant.srivastav";
-
---
--- Name: endpoint_audits endpoint_audits_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
 
 ALTER TABLE ONLY public.endpoint_audits
     ADD CONSTRAINT endpoint_audits_pkey PRIMARY KEY (id);
@@ -400,17 +285,6 @@ ALTER TABLE ONLY public.endpoints
     ADD CONSTRAINT endpoints_pkey PRIMARY KEY (id);
 
 
---
--- Name: project_credentials project_credentials_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
-ALTER TABLE ONLY public.project_credentials
-    ADD CONSTRAINT project_credentials_pkey PRIMARY KEY (id);
-
-
---
--- Name: endpoint_log_metadata uk_endpoint_log_id; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
 
 ALTER TABLE ONLY public.endpoint_log_metadata
     ADD CONSTRAINT uk_endpoint_log_id UNIQUE (key, endpoint_log_id);
@@ -481,9 +355,3 @@ CREATE INDEX iea_idx_ea_id ON public.endpoint_token_audits USING btree (endpoint
 --
 
 CREATE INDEX iea_idx_ep_id_epm_id ON public.endpoint_audits USING btree (endpoint_id, endpoint_provider_model_id);
-
-
---
--- PostgreSQL database dump complete
---
-

@@ -38,14 +38,13 @@ type invokerGRPCApi struct {
 
 func NewInvokerGRPCApi(config *config.EndpointConfig, logger commons.Logger,
 	postgres connectors.PostgresConnector, redis connectors.RedisConnector,
-	opensearch connectors.OpenSearchConnector,
 ) invoker_api.DeploymentServer {
 	return &invokerGRPCApi{
 		invokerApi{
 			cfg:                config,
 			logger:             logger,
 			postgres:           postgres,
-			endpointService:    internal_endpoint_service.NewEndpointService(config, logger, postgres, opensearch),
+			endpointService:    internal_endpoint_service.NewEndpointService(config, logger, postgres),
 			integrationClient:  integration_client.NewIntegrationServiceClientGRPC(&config.AppConfig, logger, redis),
 			inputBuilder:       integration_client_builders.NewChatInputBuilder(logger),
 			vaultClient:        web_client.NewVaultClientGRPC(&config.AppConfig, logger, redis),

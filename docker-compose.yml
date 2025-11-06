@@ -3,19 +3,20 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: web-api-postgres
+    container_name: postgres
     environment:
       POSTGRES_USER: rapida_user
       POSTGRES_PASSWORD: rapida_db_password
-      POSTGRES_DB: web_api
+      POSTGRES_DB: web_db
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - api-network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U rapida_user -d web_api" ]
+      test: [ "CMD-SHELL", "pg_isready -U rapida_user -d web_db && pg_isready -U rapida_user -d assistant_db && pg_isready -U rapida_user -d integration_db && pg_isready -U rapida_user -d endpoint_db" ]
       interval: 5s
       timeout: 10s
       retries: 3
@@ -23,7 +24,7 @@ services:
   # Redis Cache
   redis:
     image: redis:7-alpine
-    container_name: web-api-redis
+    container_name: redis
     ports:
       - "6379:6379"
     volumes:
@@ -39,7 +40,7 @@ services:
   # OpenSearch
   opensearch:
     image: opensearchproject/opensearch:2.11.1
-    container_name: web-api-opensearch
+    container_name: opensearch
     environment:
       - cluster.name=opensearch-cluster
       - node.name=opensearch-node1

@@ -16,7 +16,6 @@ type EndpointConfig struct {
 	PostgresConfig   configs.PostgresConfig   `mapstructure:"postgres" validate:"required"`
 	RedisConfig      configs.RedisConfig      `mapstructure:"redis" validate:"required"`
 	AssetStoreConfig configs.AssetStoreConfig `mapstructure:"asset_store" validate:"required"`
-	OpenSearchConfig configs.OpenSearchConfig `mapstructure:"opensearch" validate:"required"`
 }
 
 // reading config and intializing configs for application

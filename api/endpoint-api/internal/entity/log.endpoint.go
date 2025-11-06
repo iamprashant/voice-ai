@@ -21,18 +21,3 @@ type EndpointLog struct {
 	Options   []*EndpointLogMetadata `json:"options" gorm:"foreignKey:EndpointLogId"`
 	Metrics   []*EndpointLogMetric   `json:"metrics" gorm:"foreignKey:EndpointLogId"`
 }
-
-// CREATE TABLE endpoint_logs (
-//     id BIGINT PRIMARY KEY,
-//     created_date TIMESTAMP NOT NULL DEFAULT NOW(),
-//     updated_date TIMESTAMP,
-//     status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
-//     source VARCHAR(50) NOT NULL,
-//     project_id BIGINT NOT NULL,
-//     organization_id BIGINT NOT NULL,
-//     endpoint_id BIGINT NOT NULL,
-//     endpoint_provider_model_id BIGINT  NOT NULL,
-//     request Text,
-//     response Text,
-//     time_taken BIGINT
-// );

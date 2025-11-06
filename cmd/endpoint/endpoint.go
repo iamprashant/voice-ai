@@ -28,14 +28,13 @@ import (
 
 // wrapper for gin engine
 type AppRunner struct {
-	E          *gin.Engine
-	S          *grpc.Server
-	Cfg        *config.EndpointConfig
-	Logger     commons.Logger
-	Postgres   connectors.PostgresConnector
-	Redis      connectors.RedisConnector
-	Opensearch connectors.OpenSearchConnector
-	Closeable  []func(context.Context) error
+	E         *gin.Engine
+	S         *grpc.Server
+	Cfg       *config.EndpointConfig
+	Logger    commons.Logger
+	Postgres  connectors.PostgresConnector
+	Redis     connectors.RedisConnector
+	Closeable []func(context.Context) error
 }
 
 func main() {
@@ -189,7 +188,6 @@ func (app *AppRunner) Logging() {
 func (g *AppRunner) AllConnectors() {
 	g.Postgres = connectors.NewPostgresConnector(&g.Cfg.PostgresConfig, g.Logger)
 	g.Redis = connectors.NewRedisConnector(&g.Cfg.RedisConfig, g.Logger)
-	g.Opensearch = connectors.NewOpenSearchConnector(&g.Cfg.OpenSearchConfig, g.Logger)
 
 }
 
@@ -231,12 +229,6 @@ func (app *AppRunner) Init(ctx context.Context) error {
 		return err
 	}
 
-	err = app.Opensearch.Connect(ctx)
-	if err != nil {
-		app.Logger.Error("error while connecting to opensearch.", err)
-		return err
-	}
-	app.Closeable = append(app.Closeable, app.Opensearch.Disconnect)
 	app.Closeable = append(app.Closeable, app.Postgres.Disconnect)
 	app.Closeable = append(app.Closeable, app.Redis.Disconnect)
 	return nil
@@ -258,8 +250,8 @@ func (app *AppRunner) Close(ctx context.Context) {
 // all router initialize
 func (g *AppRunner) AllRouters() {
 	router.HealthCheckRoutes(g.Cfg, g.E, g.Logger, g.Postgres)
-	router.EndpointReaderApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis, g.Opensearch)
-	router.InvokeApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis, g.Opensearch)
+	router.EndpointReaderApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis)
+	router.InvokeApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis)
 
 } // all router initialize
 

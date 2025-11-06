@@ -32,8 +32,18 @@ rebuild:
 logs:
 	cd docker && docker-compose logs -f
 
-logs-api:
+# web
+logs-web:
 	cd docker && docker-compose logs -f web-api
+
+logs-endpoint:
+	cd docker && docker-compose logs -f endpoint-api
+
+logs-assistant:
+	cd docker && docker-compose logs -f assistant-api
+
+logs-integration:
+	cd docker && docker-compose logs -f integration-api
 
 logs-db:
 	cd docker && docker-compose logs -f postgres
@@ -41,6 +51,8 @@ logs-db:
 logs-redis:
 	cd docker && docker-compose logs -f redis
 
+
+# 
 clean:
 	cd docker && docker-compose down -v && docker system prune -a --volumes
 

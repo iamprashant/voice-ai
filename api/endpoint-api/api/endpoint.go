@@ -25,14 +25,13 @@ type endpointGRPCApi struct {
 func NewEndpointGRPCApi(config *config.EndpointConfig, logger commons.Logger,
 	postgres connectors.PostgresConnector,
 	redis connectors.RedisConnector,
-	opensearch connectors.OpenSearchConnector,
 ) protos.EndpointServiceServer {
 	return &endpointGRPCApi{
 		endpointApi{
 			cfg:                config,
 			logger:             logger,
 			postgres:           postgres,
-			endpointService:    internal_endpoint_service.NewEndpointService(config, logger, postgres, opensearch),
+			endpointService:    internal_endpoint_service.NewEndpointService(config, logger, postgres),
 			endpointLogService: internal_log_service.NewEndpointLogService(logger, postgres),
 		},
 	}
