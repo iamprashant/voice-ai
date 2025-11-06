@@ -13,7 +13,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - web-api-network
+      - api-network
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U rapida_user -d web_api" ]
       interval: 5s
@@ -29,9 +29,41 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - web-api-network
+      - api-network
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # OpenSearch
+  opensearch:
+    image: opensearchproject/opensearch:2.11.1
+    container_name: web-api-opensearch
+    environment:
+      - cluster.name=opensearch-cluster
+      - node.name=opensearch-node1
+      - discovery.seed_hosts=opensearch
+      - cluster.initial_master_nodes=opensearch-node1
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=Admin@123456
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - opensearch_data:/usr/share/opensearch/data
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+    networks:
+      - api-network
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -s -k -u admin:Admin@123456 https://localhost:9200 >/dev/null || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -39,12 +71,13 @@ services:
   # Web API Service
   web-api:
     build:
-      context: ./
+      context: .
       dockerfile: docker/web-api/Dockerfile
     container_name: web-api
     ports:
       - "9001:9001"
-
+    env_file:
+      - ./docker/web-api/.web.env
     depends_on:
       postgres:
         condition: service_healthy
@@ -52,14 +85,103 @@ services:
         condition: service_healthy
 
     volumes:
-      - ./docker/web-api/:/opt/apps/env/
+      - ./docker/web-api/.web.env:/opt/apps/env/.web.env:ro
       - assets_volume:/opt/apps/assets
 
     networks:
-      - web-api-network
+      - api-network
 
     healthcheck:
       test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9001/readiness/" ]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  # Assistant API Service
+  assistant-api:
+    build:
+      context: .
+      dockerfile: docker/assistant-api/Dockerfile
+    container_name: assistant-api
+    ports:
+      - "9007:9007"
+    env_file:
+      - ./docker/assistant-api/.assistant.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      opensearch:
+        condition: service_healthy
+
+    volumes:
+      - ./docker/assistant-api/.assistant.env:/opt/apps/env/.assistant.env:ro
+      - assets_volume:/opt/apps/assets
+
+    networks:
+      - api-network
+
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9007/readiness/" ]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  # Integration API Service
+  integration-api:
+    build:
+      context: .
+      dockerfile: docker/integration-api/Dockerfile
+    container_name: integration-api
+    ports:
+      - "9004:9004"
+    env_file:
+      - ./docker/integration-api/.integration.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    volumes:
+      - ./docker/integration-api/.integration.env:/opt/apps/env/.integration.env:ro
+      - assets_volume:/opt/apps/assets
+
+    networks:
+      - api-network
+
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9004/readiness/" ]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  # Endpoint API Service
+  endpoint-api:
+    build:
+      context: .
+      dockerfile: docker/endpoint-api/Dockerfile
+    container_name: endpoint-api
+    ports:
+      - "9005:9005"
+    env_file:
+      - ./docker/endpoint-api/.endpoint.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    volumes:
+      - ./docker/endpoint-api/.endpoint.env:/opt/apps/env/.endpoint.env:ro
+      - assets_volume:/opt/apps/assets
+
+    networks:
+      - api-network
+
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9005/readiness/" ]
       interval: 30s
       timeout: 3s
       retries: 3
@@ -69,9 +191,11 @@ volumes:
     driver: local
   redis_data:
     driver: local
+  opensearch_data:
+    driver: local
   assets_volume:
     driver: local
 
 networks:
-  web-api-network:
+  api-network:
     driver: bridge
