@@ -23,6 +23,7 @@ help:
 	@echo "  make up-db               - Start PostgreSQL only"
 	@echo "  make up-redis            - Start Redis only"
 	@echo "  make up-opensearch       - Start OpenSearch only"
+	@echo "  make up-nginx       - Start nginx only"
 	@echo ""
 	@echo "SHUTDOWN COMMANDS:"
 	@echo "  make down-all            - Stop all services"
@@ -32,6 +33,7 @@ help:
 	@echo "  make down-db             - Stop PostgreSQL only"
 	@echo "  make down-redis          - Stop Redis only"
 	@echo "  make down-opensearch     - Stop OpenSearch only"
+	@echo "  make down-nginx       	  - Stop nginx only"
 	@echo ""
 	@echo "BUILD COMMANDS:"
 	@echo "  make build-all           - Build all services"
@@ -116,6 +118,11 @@ up-db:
 	$(COMPOSE) up -d postgres
 	@echo "✓ PostgreSQL started on port 5432"
 
+up-nginx:
+	@echo "Starting nginx..."
+	$(COMPOSE) up -d nginx
+	@echo "✓ nginx started on port 6379"
+
 up-redis:
 	@echo "Starting Redis..."
 	$(COMPOSE) up -d redis
@@ -177,6 +184,11 @@ down-redis:
 	@echo "Stopping Redis..."
 	$(COMPOSE) stop redis
 	@echo "✓ Redis stopped"
+
+down-nginx:
+	@echo "Stopping nginx..."
+	$(COMPOSE) stop nginx
+	@echo "✓ nginx stopped"
 
 down-opensearch:
 	@echo "Stopping OpenSearch..."

@@ -33,7 +33,7 @@ func NewAssistantDeploymentGRPCApi(config *config.AssistantConfig, logger common
 			logger:            logger,
 			postgres:          postgres,
 			deploymentService: internal_assistant_service.NewAssistantDeploymentService(config, logger, postgres),
-			storage:           storage_files.NewCDNStorage(config.AssetStoreConfig, logger),
+			storage:           storage_files.NewStorage(config.AssetStoreConfig, logger),
 		},
 	}
 }

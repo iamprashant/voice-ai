@@ -22,11 +22,6 @@ type cdnStorage struct {
 	options aws_session.Options
 }
 
-var (
-	PUBLIC_STORAGE = "rapida-assets-01"
-	CDN_URL        = "https://rapida-assets-01.s3.ap-south-1.amazonaws.com"
-)
-
 func NewCDNStorage(cfg configs.AssetStoreConfig, logger commons.Logger) storages.Storage {
 	config := aws.Config{
 		Region: aws.String(cfg.Auth.Region),
@@ -57,10 +52,10 @@ func (storage *cdnStorage) prefix(ctx context.Context, key string) string {
 
 // Store implements storages.Storage.
 func (storage *cdnStorage) Store(ctx context.Context, key string, fileContent []byte) storages.StorageOutput {
-	storage.logger.Debugf("s3.store with file path name %s storage path prefix %s", key, PUBLIC_STORAGE)
+	storage.logger.Debugf("s3.store with file path name %s storage path prefix %s", key, storage.config.StoragePathPrefix)
 	aws_session, err := aws_session.NewSessionWithOptions(storage.options)
 	key = storage.prefix(ctx, key)
-	completePath := fmt.Sprintf("%s/%s", CDN_URL, key)
+	completePath := fmt.Sprintf("%s/%s", storage.config.StoragePathPrefix, key)
 	if err != nil {
 		storage.logger.Errorf("unable to create aws s3 session to upload the document %v", err)
 		return storages.StorageOutput{Error: err, StorageType: configs.S3}
@@ -68,7 +63,7 @@ func (storage *cdnStorage) Store(ctx context.Context, key string, fileContent []
 	s3Client := s3.New(aws_session)
 	reader := bytes.NewReader(fileContent)
 	_, err = s3Client.PutObject(&s3.PutObjectInput{
-		Bucket: aws.String(PUBLIC_STORAGE),
+		Bucket: aws.String(storage.config.StoragePathPrefix),
 		Key:    aws.String(key),
 		Body:   reader,
 	})
@@ -94,7 +89,7 @@ func (storage *cdnStorage) Get(ctx context.Context, key string) storages.GetStor
 	}
 	s3Client := s3.New(aws_session)
 	resp, err := s3Client.GetObjectWithContext(ctx, &s3.GetObjectInput{
-		Bucket: aws.String(PUBLIC_STORAGE),
+		Bucket: aws.String(storage.config.StoragePathPrefix),
 		Key:    aws.String(key),
 	})
 	if err != nil {
@@ -113,6 +108,6 @@ func (storage *cdnStorage) Get(ctx context.Context, key string) storages.GetStor
 func (cdn *cdnStorage) GetUrl(ctx context.Context, key string) storages.StorageOutput {
 	cdn.logger.Debugf("localstorage.getUrl with file path name %s", key)
 	return storages.StorageOutput{
-		CompletePath: fmt.Sprintf("%s/%s", CDN_URL, key),
+		CompletePath: fmt.Sprintf("%s/%s", cdn.config.StoragePathPrefix, key),
 		StorageType:  configs.S3}
 }

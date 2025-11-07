@@ -1,5 +1,5 @@
 # ---- Build stage ----
-FROM --platform=linux/amd64 golang:1.24-bullseye AS builder
+FROM golang:1.24-bullseye AS builder
 
 WORKDIR /app
 
@@ -55,7 +55,7 @@ RUN export CGO_CFLAGS="-I/opt/onnxruntime/include -I/usr/local/include -I/opt/az
     CGO_ENABLED=1 go build -v -o assistant-api ./cmd/assistant/assistant.go
 
 # ---- Runtime stage ----
-FROM --platform=linux/amd64 golang:1.24-bullseye AS runtime
+FROM golang:1.24-bullseye AS runtime
 
 WORKDIR /opt/apps
 
@@ -86,8 +86,5 @@ USER rapida-app
 ENV LD_LIBRARY_PATH="/usr/local/lib:/opt/onnxruntime/lib:/opt/azure-speech-sdk/lib/x64"
 
 EXPOSE 9007
-
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:9007/healthz/ || exit 1
 
 CMD ["./assistant-api"]

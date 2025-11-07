@@ -7,7 +7,6 @@ import (
 	internal_knowledge_service "github.com/rapidaai/api/assistant-api/internal/services/knowledge"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
-	"github.com/rapidaai/pkg/storages"
 	storage_files "github.com/rapidaai/pkg/storages/file-storage"
 	protos "github.com/rapidaai/protos"
 )
@@ -26,8 +25,6 @@ type assistantApi struct {
 	assistantAnalysisService  internal_services.AssistantAnalysisService
 	assistantToolService      internal_services.AssistantToolService
 	assistantKnowledgeService internal_services.AssistantKnowledgeService
-
-	storage storages.Storage
 }
 
 type assistantGrpcApi struct {
@@ -57,7 +54,6 @@ func NewAssistantGRPCApi(config *config.AssistantConfig, logger commons.Logger,
 			assistantAnalysisService:  internal_assistant_service.NewAssistantAnalysisService(logger, postgres),
 			assistantToolService:      internal_assistant_service.NewAssistantToolService(logger, postgres, storage_files.NewStorage(config.AssetStoreConfig, logger)),
 			assistantKnowledgeService: internal_assistant_service.NewAssistantKnowledgeService(logger, postgres, storage_files.NewStorage(config.AssetStoreConfig, logger)),
-			storage:                   storage_files.NewCDNStorage(config.AssetStoreConfig, logger),
 		},
 	}
 }
