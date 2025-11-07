@@ -42,7 +42,7 @@ COPY ui/src/ ./src
 
 
 # Build the React app
-RUN yarn build
+RUN yarn build:docker
 
 # # Final stage - Nginx
 FROM nginx:alpine

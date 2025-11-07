@@ -66,7 +66,7 @@ shell-web:
 	cd docker && docker-compose exec web-api sh
 
 db-web:
-	cd docker && docker-compose exec postgres psql -U rapida_user -d web_api
+	cd docker && docker-compose exec postgres psql -U rapida_user -d web_db
 
 
 # for ui
