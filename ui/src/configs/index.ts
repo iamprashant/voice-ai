@@ -7,11 +7,8 @@ export let ASSISTANT_API = 'http://assistant.rapida.local';
 export let WEB_HOST = 'http://localhost:3000';
 
 export let connectionConfig = new ConnectionConfig({
-  // assistant: 'https://integral-presently-cub.ngrok-free.app',
   assistant: 'http://assistant.rapida.local',
-  // web: 'https://on-arachnid-liberal.ngrok-free.app',
   web: 'http://dev.rapida.local',
-  // endpoint: 'https://on-arachnid-liberal.ngrok-free.app',
   endpoint: 'http://dev.rapida.local',
 });
 
