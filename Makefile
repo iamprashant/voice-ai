@@ -391,6 +391,9 @@ ps: ps-all
 shell-ui:
 	$(COMPOSE) exec ui sh
 
+shell-nginx:
+	$(COMPOSE) exec nginx sh
+
 shell-assistant:
 	$(COMPOSE) exec assistant-api sh
 

@@ -22,14 +22,26 @@ RUN mkdir -p /tmp/build && cd /tmp/build && \
     rm onnxruntime-linux-x64-1.16.0.tgz
 
 # ---- Build RNNoise ----
+# RUN cd /tmp/build && \
+#     git clone https://github.com/rapidaai/rnnoise.git && \
+#     cd rnnoise && \
+#     ./autogen.sh && \
+#     ./configure --prefix=/usr/local && \
+#     make -j$(nproc) && \
+#     make install && \
+#     cd .. && rm -rf rnnoise
+
 RUN cd /tmp/build && \
-    git clone https://github.com/xiph/rnnoise.git && \
-    cd rnnoise && \
+    curl -fsSL https://github.com/rapidaai/rnnoise/archive/refs/heads/main.tar.gz -o rnnoise.tar.gz && \
+    tar -xzf rnnoise.tar.gz && \
+    cd rnnoise-main && \
     ./autogen.sh && \
     ./configure --prefix=/usr/local && \
     make -j$(nproc) && \
     make install && \
-    cd .. && rm -rf rnnoise
+    cd /tmp/build && \
+    rm -rf rnnoise.tar.gz rnnoise-main
+
 
 # ---- Install Azure Speech SDK ----
 RUN cd /tmp/build && \

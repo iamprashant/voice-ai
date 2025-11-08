@@ -46,29 +46,11 @@ COPY ui/src/ ./src
 # Build the React app
 RUN yarn build:docker
 
-# # Final stage - Nginx
-FROM nginx:alpine
+# Final stage - Alpine (just holds the build)
+FROM alpine:latest
 
-# Create user
-RUN addgroup -g 1000 rapida-app && \
-    adduser -D -u 1000 -G rapida-app rapida-app
+# Copy built files from builder
+COPY --from=builder /app/build /build
 
-# Copy nginx config
-COPY docker/nginx/nginx.conf /etc/nginx/conf.d/default.conf
-
-# Copy built app
-COPY --from=builder /app/build /usr/share/nginx/html
-
-# Ensure ownership
-RUN chown -R rapida-app:rapida-app /usr/share/nginx/html /var/cache/nginx /var/log/nginx
-RUN mkdir -p /run && chown -R rapida-app:rapida-app /run
-
-
-# Switch to user
-USER rapida-app
-
-# Expose port
-EXPOSE 3000
-
-# Run nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Keep container running
+CMD cp -r /build/* /usr/share/nginx/html/ 2>/dev/null; tail -f /dev/null
