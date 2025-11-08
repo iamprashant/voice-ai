@@ -44,12 +44,6 @@ CREATE TABLE public.assistant_conversation_messages (
     message_id character varying
 );
 
-
-
---
--- Name: assistant_conversations; Type: TABLE; Schema: public; Owner: prashant.srivastav
---
-
 CREATE TABLE public.assistant_conversations (
     id bigint NOT NULL,
     identifier text NOT NULL,
@@ -67,12 +61,6 @@ CREATE TABLE public.assistant_conversations (
     direction character varying(20) DEFAULT 'inbound'::character varying NOT NULL
 );
 
-
-
---
--- Name: assistant_conversation_action_metrics; Type: TABLE; Schema: public; Owner: prashant.srivastav
---
-
 CREATE TABLE public.assistant_conversation_action_metrics (
     id bigint NOT NULL,
     assistant_conversation_id bigint NOT NULL,
@@ -86,10 +74,7 @@ CREATE TABLE public.assistant_conversation_action_metrics (
     updated_by bigint,
     created_date timestamp without time zone DEFAULT now() NOT NULL,
     updated_date timestamp without time zone
-);
-
-
-CREATE TABLE public.assistant_conversation_actions (
+);CREATE TABLE public.assistant_conversation_actions (
     id bigint NOT NULL,
     assistant_conversation_message_id character varying NOT NULL,
     external_id character varying NOT NULL,
@@ -103,9 +88,6 @@ CREATE TABLE public.assistant_conversation_actions (
     updated_date timestamp without time zone
 );
 
-
-
-
 CREATE TABLE public.assistant_conversation_arguments (
     id bigint NOT NULL,
     assistant_conversation_id bigint NOT NULL,
@@ -117,9 +99,6 @@ CREATE TABLE public.assistant_conversation_arguments (
     created_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_date timestamp without time zone
 );
-
-
-
 CREATE TABLE public.assistant_conversation_contexts (
     id bigint NOT NULL,
     assistant_conversation_id bigint NOT NULL,
@@ -131,9 +110,6 @@ CREATE TABLE public.assistant_conversation_contexts (
     context_id character varying NOT NULL,
     message_id character varying
 );
-
-
-
 CREATE TABLE public.assistant_conversation_message_metadata (
     id bigint NOT NULL,
     assistant_conversation_id bigint NOT NULL,
@@ -146,9 +122,6 @@ CREATE TABLE public.assistant_conversation_message_metadata (
     created_date timestamp without time zone DEFAULT now() NOT NULL,
     updated_date timestamp without time zone
 );
-
-
-
 CREATE TABLE public.assistant_conversation_message_metrics (
     id bigint NOT NULL,
     assistant_conversation_id bigint NOT NULL,
@@ -162,9 +135,6 @@ CREATE TABLE public.assistant_conversation_message_metrics (
     created_date timestamp without time zone DEFAULT now() NOT NULL,
     updated_date timestamp without time zone
 );
-
-
-
 
 CREATE TABLE public.assistant_conversation_message_stages (
     id bigint NOT NULL,
@@ -182,10 +152,7 @@ CREATE TABLE public.assistant_conversation_message_stages (
     updated_by bigint,
     created_date timestamp without time zone DEFAULT now() NOT NULL,
     updated_date timestamp without time zone
-);
-
-
-CREATE TABLE public.assistant_conversation_metadata (
+);CREATE TABLE public.assistant_conversation_metadata (
     id bigint NOT NULL,
     assistant_conversation_id bigint NOT NULL,
     key character varying(200) NOT NULL,
@@ -195,13 +162,7 @@ CREATE TABLE public.assistant_conversation_metadata (
     updated_by bigint,
     created_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_date timestamp without time zone
-);
-
-
-
-
-
-CREATE TABLE public.assistant_conversation_metrics (
+);CREATE TABLE public.assistant_conversation_metrics (
     id bigint NOT NULL,
     assistant_conversation_id bigint NOT NULL,
     name character varying(200) NOT NULL,
@@ -214,9 +175,6 @@ CREATE TABLE public.assistant_conversation_metrics (
     updated_date timestamp without time zone
 );
 
-
-
-
 CREATE TABLE public.assistant_conversation_options (
     id bigint NOT NULL,
     assistant_conversation_id bigint NOT NULL,
@@ -228,9 +186,6 @@ CREATE TABLE public.assistant_conversation_options (
     created_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_date timestamp without time zone
 );
-
-
-
 CREATE TABLE public.assistant_conversation_recordings (
     id bigint NOT NULL,
     created_date timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -244,9 +199,6 @@ CREATE TABLE public.assistant_conversation_recordings (
     assistant_conversation_id bigint,
     recording_url character varying(200) NOT NULL
 );
-
-
-
 
 CREATE TABLE public.assistant_debugger_deployments (
     id bigint NOT NULL,
@@ -265,9 +217,6 @@ CREATE TABLE public.assistant_debugger_deployments (
     icon character varying(50) NOT NULL
 );
 
-
-
-
 CREATE TABLE public.assistant_deployment_audio_options (
     id bigint NOT NULL,
     status character varying(50) DEFAULT 'ACTIVE'::character varying NOT NULL,
@@ -279,9 +228,6 @@ CREATE TABLE public.assistant_deployment_audio_options (
     value text NOT NULL,
     assistant_deployment_audio_id bigint NOT NULL
 );
-
-
-
 CREATE TABLE public.assistant_deployment_audios (
     id bigint NOT NULL,
     status character varying(50) DEFAULT 'ACTIVE'::character varying NOT NULL,
@@ -293,10 +239,7 @@ CREATE TABLE public.assistant_deployment_audios (
     audio_type character varying(50) NOT NULL,
     audio_provider_id bigint NOT NULL,
     audio_provider character varying(255) NOT NULL
-);
-
-
-CREATE TABLE public.assistant_deployment_telephony_options (
+);CREATE TABLE public.assistant_deployment_telephony_options (
     id bigint NOT NULL,
     status character varying(50) DEFAULT 'ACTIVE'::character varying NOT NULL,
     created_by bigint NOT NULL,
@@ -307,9 +250,6 @@ CREATE TABLE public.assistant_deployment_telephony_options (
     value text NOT NULL,
     assistant_deployment_telephony_id bigint NOT NULL
 );
-
-
-
 
 CREATE TABLE public.assistant_deployment_whatsapp_options (
     id bigint NOT NULL,
@@ -322,9 +262,6 @@ CREATE TABLE public.assistant_deployment_whatsapp_options (
     value text NOT NULL,
     assistant_deployment_whatsapp_id bigint NOT NULL
 );
-
-
-
 
 CREATE TABLE public.assistant_knowledge_logs (
     id bigint NOT NULL,
@@ -341,10 +278,7 @@ CREATE TABLE public.assistant_knowledge_logs (
     asset_prefix character varying(200) NOT NULL,
     time_taken bigint,
     source character varying(50) NOT NULL
-);
-
-
-CREATE TABLE public.assistant_knowledge_reranker_options (
+);CREATE TABLE public.assistant_knowledge_reranker_options (
     id bigint NOT NULL,
     status character varying(50) DEFAULT 'ACTIVE'::character varying NOT NULL,
     created_by bigint NOT NULL,
@@ -355,9 +289,6 @@ CREATE TABLE public.assistant_knowledge_reranker_options (
     value text NOT NULL,
     assistant_knowledge_id bigint NOT NULL
 );
-
-
-
 CREATE TABLE public.assistant_knowledges (
     id bigint NOT NULL,
     assistant_id bigint NOT NULL,
@@ -377,9 +308,6 @@ CREATE TABLE public.assistant_knowledges (
     reranker_model_provider_id bigint
 );
 
-
-
-
 CREATE TABLE public.assistant_phone_deployments (
     id bigint NOT NULL,
     status character varying(50) DEFAULT 'ACTIVE'::character varying NOT NULL,
@@ -394,9 +322,6 @@ CREATE TABLE public.assistant_phone_deployments (
     telephony_provider_id bigint NOT NULL,
     telephony_provider character varying(50) NOT NULL
 );
-
-
-
 CREATE TABLE public.assistant_provider_agentkits (
     id bigint NOT NULL,
     created_date timestamp without time zone DEFAULT now() NOT NULL,
@@ -408,10 +333,7 @@ CREATE TABLE public.assistant_provider_agentkits (
     url character varying(200) NOT NULL,
     certificate text,
     metadata text
-);
-
-
-CREATE TABLE public.assistant_provider_model_options (
+);CREATE TABLE public.assistant_provider_model_options (
     id bigint NOT NULL,
     status character varying(50) DEFAULT 'ACTIVE'::character varying NOT NULL,
     created_by bigint NOT NULL,
@@ -422,9 +344,6 @@ CREATE TABLE public.assistant_provider_model_options (
     value text NOT NULL,
     assistant_provider_model_id bigint NOT NULL
 );
-
-
-
 CREATE TABLE public.assistant_provider_models (
     id bigint NOT NULL,
     created_date timestamp without time zone DEFAULT now() NOT NULL,
@@ -437,9 +356,6 @@ CREATE TABLE public.assistant_provider_models (
     template jsonb,
     model_provider_name character varying(200) DEFAULT 'azure-openai'::character varying NOT NULL
 );
-
-
-
 
 CREATE TABLE public.assistant_provider_websockets (
     id bigint NOT NULL,
@@ -454,9 +370,6 @@ CREATE TABLE public.assistant_provider_websockets (
     parameters text
 );
 
-
-
-
 CREATE TABLE public.assistant_tags (
     id bigint NOT NULL,
     created_date timestamp without time zone DEFAULT now() NOT NULL,
@@ -465,10 +378,7 @@ CREATE TABLE public.assistant_tags (
     tag character varying(1000),
     created_by bigint NOT NULL,
     updated_by bigint NOT NULL
-);
-
-
-CREATE TABLE public.assistant_tool_logs (
+);CREATE TABLE public.assistant_tool_logs (
     id bigint NOT NULL,
     created_date timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_date timestamp with time zone,
@@ -485,10 +395,7 @@ CREATE TABLE public.assistant_tool_logs (
     execution_method character varying(20),
     asset_prefix character varying(200) NOT NULL,
     time_taken bigint
-);
-
-
-CREATE TABLE public.assistant_tool_options (
+);CREATE TABLE public.assistant_tool_options (
     id bigint NOT NULL,
     status character varying(50) DEFAULT 'ACTIVE'::character varying NOT NULL,
     created_by bigint NOT NULL,
@@ -499,9 +406,6 @@ CREATE TABLE public.assistant_tool_options (
     value text NOT NULL,
     assistant_tool_id bigint NOT NULL
 );
-
-
-
 
 CREATE TABLE public.assistant_tools (
     id bigint NOT NULL,
@@ -515,13 +419,7 @@ CREATE TABLE public.assistant_tools (
     description character varying(400) NOT NULL,
     fields text NOT NULL,
     execution_method character varying(200) NOT NULL
-);
-
-
-
-
-
-CREATE TABLE public.assistant_web_plugin_deployments (
+);CREATE TABLE public.assistant_web_plugin_deployments (
     id bigint NOT NULL,
     status character varying(50) DEFAULT 'ACTIVE'::character varying NOT NULL,
     created_by bigint NOT NULL,
@@ -538,9 +436,6 @@ CREATE TABLE public.assistant_web_plugin_deployments (
     product_catalog_enabled boolean DEFAULT false NOT NULL,
     article_catalog_enabled boolean DEFAULT false NOT NULL
 );
-
-
-
 
 CREATE TABLE public.assistant_webhook_logs (
     id bigint NOT NULL,
@@ -563,9 +458,6 @@ CREATE TABLE public.assistant_webhook_logs (
     retry_count bigint
 );
 
-
-
-
 CREATE TABLE public.assistant_webhooks (
     id bigint NOT NULL,
     assistant_id bigint NOT NULL,
@@ -586,12 +478,6 @@ CREATE TABLE public.assistant_webhooks (
     http_body text DEFAULT '{}'::text
 );
 
-
-
---
--- Name: assistant_whatsapp_deployments; Type: TABLE; Schema: public; Owner: prashant.srivastav
---
-
 CREATE TABLE public.assistant_whatsapp_deployments (
     id bigint NOT NULL,
     status character varying(50) DEFAULT 'ACTIVE'::character varying NOT NULL,
@@ -609,16 +495,7 @@ CREATE TABLE public.assistant_whatsapp_deployments (
     ending character varying(250) NOT NULL,
     whatsapp_provider_id bigint NOT NULL,
     whatsapp_provider character varying(50) NOT NULL
-);
-
-
-
-
---
--- Name: assistants; Type: TABLE; Schema: public; Owner: prashant.srivastav
---
-
-CREATE TABLE public.assistants (
+);CREATE TABLE public.assistants (
     id bigint NOT NULL,
     name character varying(250),
     description character varying(2000),
@@ -636,15 +513,6 @@ CREATE TABLE public.assistants (
     updated_by bigint,
     assistant_provider character varying(50) DEFAULT 'PROVIDER_MODEL'::character varying NOT NULL
 );
-
-
-
-
-
---
--- Name: knowledge_collections; Type: TABLE; Schema: public; Owner: prashant.srivastav
---
-
 CREATE TABLE public.knowledge_collections (
     id bigint NOT NULL,
     knowledge_id bigint NOT NULL,
@@ -658,8 +526,12 @@ CREATE TABLE public.knowledge_collections (
     router_provider_model_id bigint NOT NULL
 );
 
-
-
+CREATE SEQUENCE public.knowledge_document_embeddings_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
 
 CREATE TABLE public.knowledge_document_embeddings (
     id integer DEFAULT nextval('public.knowledge_document_embeddings_id_seq'::regclass) NOT NULL,
@@ -670,9 +542,6 @@ CREATE TABLE public.knowledge_document_embeddings (
     updated_date timestamp without time zone,
     base64 text
 );
-
-
-
 CREATE TABLE public.knowledge_document_process_rules (
     id bigint NOT NULL,
     created_date timestamp without time zone DEFAULT now() NOT NULL,
@@ -684,7 +553,12 @@ CREATE TABLE public.knowledge_document_process_rules (
     rules text NOT NULL
 );
 
-
+CREATE SEQUENCE public.knowledge_document_segments_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
 CREATE TABLE public.knowledge_document_segments (
     id bigint DEFAULT nextval('public.knowledge_document_segments_id_seq'::regclass) NOT NULL,
     knowledge_document_id bigint NOT NULL,
@@ -709,9 +583,6 @@ CREATE TABLE public.knowledge_document_segments (
     updated_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     knowledge_id bigint NOT NULL
 );
-
-
-
 
 CREATE TABLE public.knowledge_documents (
     id bigint NOT NULL,
@@ -744,9 +615,6 @@ CREATE TABLE public.knowledge_documents (
     document_size bigint DEFAULT 0,
     document_structure character varying(50)
 );
-
-
-
 CREATE TABLE public.knowledge_embedding_model_options (
     id bigint NOT NULL,
     status character varying(50) DEFAULT 'ACTIVE'::character varying NOT NULL,
@@ -758,9 +626,6 @@ CREATE TABLE public.knowledge_embedding_model_options (
     value text NOT NULL,
     knowledge_id bigint NOT NULL
 );
-
-
-
 CREATE TABLE public.knowledge_logs (
     id bigint NOT NULL,
     created_date timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -779,9 +644,6 @@ CREATE TABLE public.knowledge_logs (
     time_taken bigint,
     additional_data text
 );
-
-
-
 CREATE TABLE public.knowledge_model_options (
     id bigint NOT NULL,
     status character varying(50) DEFAULT 'ACTIVE'::character varying NOT NULL,
@@ -793,9 +655,6 @@ CREATE TABLE public.knowledge_model_options (
     value text NOT NULL,
     knowledge_id bigint NOT NULL
 );
-
-
-
 CREATE TABLE public.knowledge_tags (
     id bigint NOT NULL,
     created_date timestamp without time zone DEFAULT now() NOT NULL,
@@ -804,13 +663,7 @@ CREATE TABLE public.knowledge_tags (
     tag character varying(1000),
     created_by bigint NOT NULL,
     updated_by bigint
-);
-
-
-
-
-
-CREATE TABLE public.knowledges (
+);CREATE TABLE public.knowledges (
     id bigint NOT NULL,
     name character varying NOT NULL,
     description text,
@@ -826,15 +679,6 @@ CREATE TABLE public.knowledges (
     embedding_model_provider_id bigint,
     storage_namespace character varying(400)
 );
-
-
-
-
-
---
--- Name: tools; Type: TABLE; Schema: public; Owner: prashant.srivastav
---
-
 CREATE TABLE public.tools (
     id bigint NOT NULL,
     created_date timestamp without time zone DEFAULT now() NOT NULL,
@@ -853,783 +697,168 @@ CREATE TABLE public.tools (
     organization_id bigint NOT NULL
 );
 
-
-
---
--- Name: assistant_analyses assistant_analyses_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_analyses
     ADD CONSTRAINT assistant_analyses_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_api_deployments assistant_api_deployments_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_api_deployments
     ADD CONSTRAINT assistant_api_deployments_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_conversation_messages assistant_conversaction_messages_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_conversation_messages
     ADD CONSTRAINT assistant_conversaction_messages_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_conversations assistant_conversactions_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_conversations
     ADD CONSTRAINT assistant_conversactions_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_conversation_action_metrics assistant_conversation_action_metrics_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_conversation_action_metrics
     ADD CONSTRAINT assistant_conversation_action_metrics_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_conversation_actions assistant_conversation_actions_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_conversation_actions
     ADD CONSTRAINT assistant_conversation_actions_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_conversation_arguments assistant_conversation_arguments_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_conversation_arguments
     ADD CONSTRAINT assistant_conversation_arguments_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_conversation_contexts assistant_conversation_contexts_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_conversation_contexts
     ADD CONSTRAINT assistant_conversation_contexts_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_conversation_message_metadata assistant_conversation_message_metadata_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_conversation_message_metadata
     ADD CONSTRAINT assistant_conversation_message_metadata_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_conversation_message_metrics assistant_conversation_message_metrics_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_conversation_message_metrics
     ADD CONSTRAINT assistant_conversation_message_metrics_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_conversation_message_stages assistant_conversation_message_stages_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_conversation_message_stages
     ADD CONSTRAINT assistant_conversation_message_stages_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_conversation_metadata assistant_conversation_metadata_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_conversation_metadata
     ADD CONSTRAINT assistant_conversation_metadata_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_conversation_metrics assistant_conversation_metrics_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_conversation_metrics
     ADD CONSTRAINT assistant_conversation_metrics_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_conversation_options assistant_conversation_options_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_conversation_options
     ADD CONSTRAINT assistant_conversation_options_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_conversation_recordings assistant_conversation_recordings_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_conversation_recordings
     ADD CONSTRAINT assistant_conversation_recordings_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_debugger_deployments assistant_debugger_deployments_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_debugger_deployments
     ADD CONSTRAINT assistant_debugger_deployments_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_deployment_audio_options assistant_deployment_audio_options_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_deployment_audio_options
     ADD CONSTRAINT assistant_deployment_audio_options_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_deployment_audios assistant_deployment_audios_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_deployment_audios
     ADD CONSTRAINT assistant_deployment_audios_pkey PRIMARY KEY (id);
-
-
-
---
--- Name: assistant_deployment_telephony_options assistant_deployment_telephony_options_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_deployment_telephony_options
     ADD CONSTRAINT assistant_deployment_telephony_options_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_deployment_whatsapp_options assistant_deployment_whatsapp_options_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_deployment_whatsapp_options
     ADD CONSTRAINT assistant_deployment_whatsapp_options_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_knowledge_logs assistant_knowledge_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_knowledge_logs
     ADD CONSTRAINT assistant_knowledge_logs_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_knowledge_reranker_options assistant_knowledge_reranker_options_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_knowledge_reranker_options
     ADD CONSTRAINT assistant_knowledge_reranker_options_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_phone_deployments assistant_phone_deployments_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_phone_deployments
     ADD CONSTRAINT assistant_phone_deployments_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_provider_agentkits assistant_provider_agentkits_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_provider_agentkits
     ADD CONSTRAINT assistant_provider_agentkits_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_provider_model_options assistant_provider_model_options_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_provider_model_options
     ADD CONSTRAINT assistant_provider_model_options_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_provider_websockets assistant_provider_websockets_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_provider_websockets
     ADD CONSTRAINT assistant_provider_websockets_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_tool_logs assistant_tool_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_tool_logs
     ADD CONSTRAINT assistant_tool_logs_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_tool_options assistant_tool_options_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_tool_options
     ADD CONSTRAINT assistant_tool_options_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_tools assistant_tools_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_tools
     ADD CONSTRAINT assistant_tools_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_web_plugin_deployments assistant_web_plugin_deployments_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_web_plugin_deployments
     ADD CONSTRAINT assistant_web_plugin_deployments_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_webhook_logs assistant_webhook_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_webhook_logs
     ADD CONSTRAINT assistant_webhook_logs_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_webhooks assistant_webhooks_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_webhooks
     ADD CONSTRAINT assistant_webhooks_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_whatsapp_deployments assistant_whatsapp_deployments_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_whatsapp_deployments
     ADD CONSTRAINT assistant_whatsapp_deployments_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_conversation_contexts ctx_idx_assistant_conversation_contexts; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_conversation_contexts
-    ADD CONSTRAINT ctx_idx_assistant_conversation_contexts UNIQUE (assistant_conversation_id, context_id);
-
-
-ALTER TABLE ONLY public.knowledge_collections
+    ADD CONSTRAINT ctx_idx_assistant_conversation_contexts UNIQUE (assistant_conversation_id, context_id);ALTER TABLE ONLY public.knowledge_collections
     ADD CONSTRAINT knowledge_collections_pkey PRIMARY KEY (id);
-
-
---
--- Name: knowledge_document_embeddings knowledge_document_embeddings_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.knowledge_document_embeddings
     ADD CONSTRAINT knowledge_document_embeddings_pkey PRIMARY KEY (id);
-
-
---
--- Name: knowledge_document_process_rules knowledge_document_process_rules_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.knowledge_document_process_rules
     ADD CONSTRAINT knowledge_document_process_rules_pkey PRIMARY KEY (id);
-
-
---
--- Name: knowledge_document_segments knowledge_document_segments_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.knowledge_document_segments
     ADD CONSTRAINT knowledge_document_segments_pkey PRIMARY KEY (id);
-
-
---
--- Name: knowledge_embedding_model_options knowledge_embedding_model_options_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.knowledge_embedding_model_options
     ADD CONSTRAINT knowledge_embedding_model_options_pkey PRIMARY KEY (id);
-
-
---
--- Name: knowledge_logs knowledge_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.knowledge_logs
     ADD CONSTRAINT knowledge_logs_pkey PRIMARY KEY (id);
-
-
---
--- Name: knowledge_model_options knowledge_model_options_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.knowledge_model_options
     ADD CONSTRAINT knowledge_model_options_pkey PRIMARY KEY (id);
-
-
---
--- Name: knowledges knowledges_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.knowledges
     ADD CONSTRAINT knowledges_pkey PRIMARY KEY (id);
-
-
---
--- Name: tools tools_pkey; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.tools
     ADD CONSTRAINT tools_pkey PRIMARY KEY (id);
-
-
---
--- Name: assistant_conversation_arguments uk_an_arguments; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_conversation_arguments
     ADD CONSTRAINT uk_an_arguments UNIQUE (assistant_conversation_id, name);
-
-
---
--- Name: assistant_conversation_metadata uk_an_metadata; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_conversation_metadata
     ADD CONSTRAINT uk_an_metadata UNIQUE (assistant_conversation_id, key);
-
-
---
--- Name: assistant_conversation_options uk_an_options; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_conversation_options
     ADD CONSTRAINT uk_an_options UNIQUE (assistant_conversation_id, key);
-
-
---
--- Name: assistant_conversation_action_metrics uk_assistant_conversation_action_metrics; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_conversation_action_metrics
     ADD CONSTRAINT uk_assistant_conversation_action_metrics UNIQUE (assistant_conversation_action_id, name);
-
-
---
--- Name: assistant_conversation_message_metadata uk_assistant_conversation_message_metadata; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_conversation_message_metadata
     ADD CONSTRAINT uk_assistant_conversation_message_metadata UNIQUE (assistant_conversation_message_id, key);
-
-
---
--- Name: assistant_conversation_message_metrics uk_assistant_conversation_message_metrics; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_conversation_message_metrics
     ADD CONSTRAINT uk_assistant_conversation_message_metrics UNIQUE (assistant_conversation_message_id, name);
-
-
---
--- Name: assistant_conversation_message_stages uk_assistant_conversation_message_stages; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_conversation_message_stages
     ADD CONSTRAINT uk_assistant_conversation_message_stages UNIQUE (assistant_conversation_message_id, stage);
-
-
---
--- Name: assistant_conversation_metrics uk_assistant_conversation_name; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_conversation_metrics
     ADD CONSTRAINT uk_assistant_conversation_name UNIQUE (assistant_conversation_id, name);
-
-
---
--- Name: assistant_deployment_audio_options uk_assistant_deployment_audio_option; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_deployment_audio_options
     ADD CONSTRAINT uk_assistant_deployment_audio_option UNIQUE (key, assistant_deployment_audio_id);
-
-
-
---
--- Name: assistant_deployment_telephony_options uk_assistant_deployment_telephony_options; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_deployment_telephony_options
     ADD CONSTRAINT uk_assistant_deployment_telephony_options UNIQUE (key, assistant_deployment_telephony_id);
-
-
---
--- Name: assistant_deployment_whatsapp_options uk_assistant_deployment_whatsapp_options; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_deployment_whatsapp_options
     ADD CONSTRAINT uk_assistant_deployment_whatsapp_options UNIQUE (key, assistant_deployment_whatsapp_id);
-
-
-
---
--- Name: assistant_knowledge_reranker_options uk_assistant_knowledge_configuration_id; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_knowledge_reranker_options
     ADD CONSTRAINT uk_assistant_knowledge_configuration_id UNIQUE (key, assistant_knowledge_id);
-
-
---
--- Name: assistant_provider_model_options uk_assistant_provider_model_id; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_provider_model_options
     ADD CONSTRAINT uk_assistant_provider_model_id UNIQUE (key, assistant_provider_model_id);
-
-
---
--- Name: assistant_tool_options uk_assistant_tool_id; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_tool_options
     ADD CONSTRAINT uk_assistant_tool_id UNIQUE (key, assistant_tool_id);
-
-
---
--- Name: knowledge_embedding_model_options uk_knowledge_embedding_id; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.knowledge_embedding_model_options
     ADD CONSTRAINT uk_knowledge_embedding_id UNIQUE (key, knowledge_id);
-
-
---
--- Name: knowledge_model_options uk_knowledge_id; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.knowledge_model_options
     ADD CONSTRAINT uk_knowledge_id UNIQUE (key, knowledge_id);
-
-
---
--- Name: assistant_knowledges unique_assistant_knowledge; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_knowledges
     ADD CONSTRAINT unique_assistant_knowledge UNIQUE (assistant_id, knowledge_id);
-
-
---
--- Name: assistant_conversation_messages unique_message_id_assistant_conversation_id; Type: CONSTRAINT; Schema: public; Owner: prashant.srivastav
---
-
 ALTER TABLE ONLY public.assistant_conversation_messages
     ADD CONSTRAINT unique_message_id_assistant_conversation_id UNIQUE (message_id, assistant_conversation_id);
 
-
-
---
--- Name: assistant_conversation_id_assistant_conversation_contexts; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX assistant_conversation_id_assistant_conversation_contexts ON public.assistant_conversation_contexts USING btree (assistant_conversation_id);
-
-
-
---
--- Name: idx_assistant_api_deployments_on_assistant_id; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_assistant_api_deployments_on_assistant_id ON public.assistant_api_deployments USING btree (assistant_id);
-
-
---
--- Name: idx_assistant_conversactions_identifier_assistant_org_proj; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_assistant_conversactions_identifier_assistant_org_proj ON public.assistant_conversations USING btree (identifier, assistant_id, organization_id, project_id);
-
-
---
--- Name: idx_assistant_conversation_action_metrics; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_assistant_conversation_action_metrics ON public.assistant_conversation_action_metrics USING btree (assistant_conversation_action_id);
-
-
---
--- Name: idx_assistant_conversation_message_id; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_assistant_conversation_message_id ON public.assistant_conversation_message_metrics USING btree (assistant_conversation_message_id);
-
-
---
--- Name: idx_assistant_conversation_message_metadata; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_assistant_conversation_message_metadata ON public.assistant_conversation_message_metadata USING btree (assistant_conversation_message_id);
-
-
---
--- Name: idx_assistant_conversation_message_stages; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_assistant_conversation_message_stages ON public.assistant_conversation_message_stages USING btree (assistant_conversation_message_id);
-
-
---
--- Name: idx_assistant_debugger_deployments_on_assistant_id; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_assistant_debugger_deployments_on_assistant_id ON public.assistant_debugger_deployments USING btree (assistant_id);
-
-
---
--- Name: idx_assistant_deployment_audios_on_deployment_id_and_audio_type; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_assistant_deployment_audios_on_deployment_id_and_audio_type ON public.assistant_deployment_audios USING btree (assistant_deployment_id, audio_type);
-
-
---
--- Name: idx_assistant_knowledge_configurations_assistant_id; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_assistant_knowledge_configurations_assistant_id ON public.assistant_knowledges USING btree (assistant_id);
-
-
---
--- Name: idx_assistant_knowledge_configurations_assistant_id_status; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_assistant_knowledge_configurations_assistant_id_status ON public.assistant_knowledges USING btree (assistant_id, status);
-
-
---
--- Name: idx_assistant_knowledge_configurations_status; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_assistant_knowledge_configurations_status ON public.assistant_knowledges USING btree (status);
-
-
---
--- Name: idx_assistant_knowledges_on_assistant_id_and_status; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_assistant_knowledges_on_assistant_id_and_status ON public.assistant_knowledges USING btree (assistant_id, status);
-
-
---
--- Name: idx_assistant_phone_deployments_on_assistant_id; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_assistant_phone_deployments_on_assistant_id ON public.assistant_phone_deployments USING btree (assistant_id);
-
-
---
--- Name: idx_assistant_provider_model_parameters_id; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_assistant_provider_model_parameters_id ON public.assistant_provider_model_parameters USING btree (assistant_provider_model_id);
-
-
---
--- Name: idx_assistant_provider_model_variables_id; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_assistant_provider_model_variables_id ON public.assistant_provider_model_variables USING btree (assistant_provider_model_id);
-
-
---
--- Name: idx_assistant_provider_models_assistant_id; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_assistant_provider_models_assistant_id ON public.assistant_provider_models USING btree (assistant_id);
-
-
---
--- Name: idx_assistant_provider_models_id; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE UNIQUE INDEX idx_assistant_provider_models_id ON public.assistant_provider_models USING btree (id);
-
-
---
--- Name: idx_assistant_provider_models_id_assistant_id; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_assistant_provider_models_id_assistant_id ON public.assistant_provider_models USING btree (id, assistant_id);
-
-
---
--- Name: idx_assistant_provider_models_on_assistant_id; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_assistant_provider_models_on_assistant_id ON public.assistant_provider_models USING btree (assistant_id);
-
-
---
--- Name: idx_assistant_tags; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE UNIQUE INDEX idx_assistant_tags ON public.assistant_tags USING btree (assistant_id);
-
-
---
--- Name: idx_assistant_tags_assistant_id; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_assistant_tags_assistant_id ON public.assistant_tags USING btree (assistant_id);
-
-
---
--- Name: idx_assistant_tags_on_assistant_id; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_assistant_tags_on_assistant_id ON public.assistant_tags USING btree (assistant_id);
-
-
---
--- Name: idx_assistant_tools_on_assistant_id_and_status; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_assistant_tools_on_assistant_id_and_status ON public.assistant_tools USING btree (assistant_id, status);
-
-
---
--- Name: idx_assistant_web_plugin_deployments_on_assistant_id; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_assistant_web_plugin_deployments_on_assistant_id ON public.assistant_web_plugin_deployments USING btree (assistant_id);
-
-
---
--- Name: idx_assistant_whatsapp_deployments_on_assistant_id; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_assistant_whatsapp_deployments_on_assistant_id ON public.assistant_whatsapp_deployments USING btree (assistant_id);
-
-
---
--- Name: idx_assistants_id; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE UNIQUE INDEX idx_assistants_id ON public.assistants USING btree (id);
-
-
---
--- Name: idx_endpoint_cachings; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE UNIQUE INDEX idx_endpoint_cachings ON public.endpoint_cachings USING btree (endpoint_id);
-
-
---
--- Name: idx_endpoint_retries; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE UNIQUE INDEX idx_endpoint_retries ON public.endpoint_retries USING btree (endpoint_id, retry_type);
-
-
---
--- Name: idx_endpoint_tags; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE UNIQUE INDEX idx_endpoint_tags ON public.endpoint_tags USING btree (endpoint_id);
-
-
---
--- Name: idx_knowledge_collections_knowledge_id; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_knowledge_collections_knowledge_id ON public.knowledge_collections USING btree (knowledge_id);
-
-
---
--- Name: idx_knowledge_collections_knowledge_id_status; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_knowledge_collections_knowledge_id_status ON public.knowledge_collections USING btree (knowledge_id, status);
-
-
---
--- Name: idx_knowledge_collections_status; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_knowledge_collections_status ON public.knowledge_collections USING btree (status);
-
-
---
--- Name: idx_knowledge_documents_knowledge_id_project_id_organization_id; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_knowledge_documents_knowledge_id_project_id_organization_id ON public.knowledge_documents USING btree (knowledge_id, project_id, organization_id);
-
-
---
--- Name: idx_knowledge_documents_organization_id; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_knowledge_documents_organization_id ON public.knowledge_documents USING btree (organization_id);
-
-
---
--- Name: idx_knowledge_documents_project_id; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_knowledge_documents_project_id ON public.knowledge_documents USING btree (project_id);
-
-
---
--- Name: idx_knowledge_tags; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE UNIQUE INDEX idx_knowledge_tags ON public.knowledge_tags USING btree (knowledge_id);
-
-
---
--- Name: idx_knowledges_id; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_knowledges_id ON public.knowledges USING btree (id);
-
-
---
--- Name: idx_knowledges_id_status; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_knowledges_id_status ON public.knowledges USING btree (id, status);
-
-
---
--- Name: idx_knowledges_status; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_knowledges_status ON public.knowledges USING btree (status);
-
-
---
--- Name: idx_o_auth_external_connects; Type: INDEX; Schema: public; Owner: prashant.srivastav
---
-
 CREATE INDEX idx_o_auth_external_connects ON public.o_auth_external_connects USING btree (identifier);
 CREATE INDEX idx_recordings_conversation_id ON public.assistant_conversation_recordings USING btree (assistant_conversation_id);
 CREATE INDEX uf_idx_id_project_id_organization_id ON public.workflows USING btree (project_id, id, organization_id);
-
-
