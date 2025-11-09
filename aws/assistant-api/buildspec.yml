@@ -21,6 +21,11 @@ phases:
       golang: 1.21
   pre_build:
     commands:
+      # For appspec
+      - cp aws/assistant-api/appspec.yml ./appspec.yml
+      - cp aws/assistant-api/env/env.production ./env.production
+      - cp -r aws/assistant-api/scripts scripts
+
       - export PB_REL=https://github.com/protocolbuffers/protobuf/releases
       - curl -LO $PB_REL/download/v3.20.0/protoc-3.20.0-linux-x86_64.zip
       - unzip protoc-3.20.0-linux-x86_64.zip -d $HOME/protobuf
@@ -44,12 +49,12 @@ phases:
       - ./autogen.sh
       - ./configure --prefix=/usr/local
       - make
-      - sudo make install  # Ensure installation is done with proper permissions
+      - sudo make install # Ensure installation is done with proper permissions
 
       # Append RNNoise-specific flags to the environment variables
-      - export CGO_CFLAGS="$CGO_CFLAGS -I/usr/local/include"  # Append RNNoise include path
-      - export CGO_LDFLAGS="$CGO_LDFLAGS -L/usr/local/lib -lrnnoise"  # Append RNNoise library path
-      - export LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"  # Append RNNoise library path
+      - export CGO_CFLAGS="$CGO_CFLAGS -I/usr/local/include" # Append RNNoise include path
+      - export CGO_LDFLAGS="$CGO_LDFLAGS -L/usr/local/lib -lrnnoise" # Append RNNoise library path
+      - export LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH" # Append RNNoise library path
 
       # for azure sdk
       - wget -O SpeechSDK-Linux.tar.gz https://aka.ms/csspeech/linuxbinary
@@ -61,8 +66,6 @@ phases:
       - export CGO_LDFLAGS="$CGO_LDFLAGS -L/opt/azure-speech-sdk/lib/x64 -lMicrosoft.CognitiveServices.Speech.core"
       # Return to the previous directory
       - cd -
-
-
 
   build:
     commands:
@@ -76,8 +79,8 @@ artifacts:
   files:
     - workflow-api.0.0.1
     - appspec.yml
-    - env
-    - codedeploy/*
+    - env.production
+    - scripts/*
 cache:
   paths:
     - "/go/pkg/**/*"

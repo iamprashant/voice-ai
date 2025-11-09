@@ -1,5 +1,5 @@
 #!/bin/bash
-export ENV_PATH="/opt/app/backend-app/artifacts/workflow-api/env"
+export ENV_PATH="/opt/app/backend-app/artifacts/workflow-api/env.production"
 export CGO_CFLAGS="-Il"
 export CGO_LDFLAGS="-L/opt/onnxruntime/lib -lonnxruntime"
 export LD_LIBRARY_PATH="/opt/onnxruntime/lib:$LD_LIBRARY_PATH"
