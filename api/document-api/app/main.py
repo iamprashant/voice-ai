@@ -90,18 +90,9 @@ async def add_datasource(request: Request, call_next):
 add_all_routers(app=app)
 
 
-# async def grpc_server():
-#     server = grpc.aio.server(interceptors=[ExceptionToStatusInterceptor()])
-#     add_KnowledgeIndexerServiceServicer_to_server(BarService(), server)
-#     server.add_insecure_port(f"[::]:{get_settings().port}")
-#     await server.start()
-#     await server.wait_for_termination()
-
-
 # Running of app.
 if __name__ == "__main__":
     _log.info(f"starting the app with {get_settings().host}:{get_settings().port}")
-    # asyncio.run(grpc_server())
     uvicorn.run(
         "app.main:app",
         host=get_settings().host,

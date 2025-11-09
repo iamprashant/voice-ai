@@ -74,7 +74,8 @@ CREATE TABLE public.assistant_conversation_action_metrics (
     updated_by bigint,
     created_date timestamp without time zone DEFAULT now() NOT NULL,
     updated_date timestamp without time zone
-);CREATE TABLE public.assistant_conversation_actions (
+);
+CREATE TABLE public.assistant_conversation_actions (
     id bigint NOT NULL,
     assistant_conversation_message_id character varying NOT NULL,
     external_id character varying NOT NULL,
@@ -152,7 +153,8 @@ CREATE TABLE public.assistant_conversation_message_stages (
     updated_by bigint,
     created_date timestamp without time zone DEFAULT now() NOT NULL,
     updated_date timestamp without time zone
-);CREATE TABLE public.assistant_conversation_metadata (
+);
+CREATE TABLE public.assistant_conversation_metadata (
     id bigint NOT NULL,
     assistant_conversation_id bigint NOT NULL,
     key character varying(200) NOT NULL,
@@ -162,7 +164,8 @@ CREATE TABLE public.assistant_conversation_message_stages (
     updated_by bigint,
     created_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_date timestamp without time zone
-);CREATE TABLE public.assistant_conversation_metrics (
+);
+CREATE TABLE public.assistant_conversation_metrics (
     id bigint NOT NULL,
     assistant_conversation_id bigint NOT NULL,
     name character varying(200) NOT NULL,
@@ -239,7 +242,8 @@ CREATE TABLE public.assistant_deployment_audios (
     audio_type character varying(50) NOT NULL,
     audio_provider_id bigint NOT NULL,
     audio_provider character varying(255) NOT NULL
-);CREATE TABLE public.assistant_deployment_telephony_options (
+);
+CREATE TABLE public.assistant_deployment_telephony_options (
     id bigint NOT NULL,
     status character varying(50) DEFAULT 'ACTIVE'::character varying NOT NULL,
     created_by bigint NOT NULL,
@@ -278,7 +282,8 @@ CREATE TABLE public.assistant_knowledge_logs (
     asset_prefix character varying(200) NOT NULL,
     time_taken bigint,
     source character varying(50) NOT NULL
-);CREATE TABLE public.assistant_knowledge_reranker_options (
+);
+CREATE TABLE public.assistant_knowledge_reranker_options (
     id bigint NOT NULL,
     status character varying(50) DEFAULT 'ACTIVE'::character varying NOT NULL,
     created_by bigint NOT NULL,
@@ -333,7 +338,8 @@ CREATE TABLE public.assistant_provider_agentkits (
     url character varying(200) NOT NULL,
     certificate text,
     metadata text
-);CREATE TABLE public.assistant_provider_model_options (
+);
+CREATE TABLE public.assistant_provider_model_options (
     id bigint NOT NULL,
     status character varying(50) DEFAULT 'ACTIVE'::character varying NOT NULL,
     created_by bigint NOT NULL,
@@ -378,7 +384,8 @@ CREATE TABLE public.assistant_tags (
     tag character varying(1000),
     created_by bigint NOT NULL,
     updated_by bigint NOT NULL
-);CREATE TABLE public.assistant_tool_logs (
+);
+CREATE TABLE public.assistant_tool_logs (
     id bigint NOT NULL,
     created_date timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_date timestamp with time zone,
@@ -395,7 +402,8 @@ CREATE TABLE public.assistant_tags (
     execution_method character varying(20),
     asset_prefix character varying(200) NOT NULL,
     time_taken bigint
-);CREATE TABLE public.assistant_tool_options (
+);
+CREATE TABLE public.assistant_tool_options (
     id bigint NOT NULL,
     status character varying(50) DEFAULT 'ACTIVE'::character varying NOT NULL,
     created_by bigint NOT NULL,
@@ -419,7 +427,8 @@ CREATE TABLE public.assistant_tools (
     description character varying(400) NOT NULL,
     fields text NOT NULL,
     execution_method character varying(200) NOT NULL
-);CREATE TABLE public.assistant_web_plugin_deployments (
+);
+CREATE TABLE public.assistant_web_plugin_deployments (
     id bigint NOT NULL,
     status character varying(50) DEFAULT 'ACTIVE'::character varying NOT NULL,
     created_by bigint NOT NULL,
@@ -495,7 +504,8 @@ CREATE TABLE public.assistant_whatsapp_deployments (
     ending character varying(250) NOT NULL,
     whatsapp_provider_id bigint NOT NULL,
     whatsapp_provider character varying(50) NOT NULL
-);CREATE TABLE public.assistants (
+);
+CREATE TABLE public.assistants (
     id bigint NOT NULL,
     name character varying(250),
     description character varying(2000),
@@ -663,7 +673,8 @@ CREATE TABLE public.knowledge_tags (
     tag character varying(1000),
     created_by bigint NOT NULL,
     updated_by bigint
-);CREATE TABLE public.knowledges (
+);
+CREATE TABLE public.knowledges (
     id bigint NOT NULL,
     name character varying NOT NULL,
     description text,
@@ -764,7 +775,8 @@ ALTER TABLE ONLY public.assistant_webhooks
 ALTER TABLE ONLY public.assistant_whatsapp_deployments
     ADD CONSTRAINT assistant_whatsapp_deployments_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.assistant_conversation_contexts
-    ADD CONSTRAINT ctx_idx_assistant_conversation_contexts UNIQUE (assistant_conversation_id, context_id);ALTER TABLE ONLY public.knowledge_collections
+    ADD CONSTRAINT ctx_idx_assistant_conversation_contexts UNIQUE (assistant_conversation_id, context_id);
+ALTER TABLE ONLY public.knowledge_collections
     ADD CONSTRAINT knowledge_collections_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.knowledge_document_embeddings
     ADD CONSTRAINT knowledge_document_embeddings_pkey PRIMARY KEY (id);
@@ -833,8 +845,6 @@ CREATE INDEX idx_assistant_knowledge_configurations_assistant_id_status ON publi
 CREATE INDEX idx_assistant_knowledge_configurations_status ON public.assistant_knowledges USING btree (status);
 CREATE INDEX idx_assistant_knowledges_on_assistant_id_and_status ON public.assistant_knowledges USING btree (assistant_id, status);
 CREATE INDEX idx_assistant_phone_deployments_on_assistant_id ON public.assistant_phone_deployments USING btree (assistant_id);
-CREATE INDEX idx_assistant_provider_model_parameters_id ON public.assistant_provider_model_parameters USING btree (assistant_provider_model_id);
-CREATE INDEX idx_assistant_provider_model_variables_id ON public.assistant_provider_model_variables USING btree (assistant_provider_model_id);
 CREATE INDEX idx_assistant_provider_models_assistant_id ON public.assistant_provider_models USING btree (assistant_id);
 CREATE UNIQUE INDEX idx_assistant_provider_models_id ON public.assistant_provider_models USING btree (id);
 CREATE INDEX idx_assistant_provider_models_id_assistant_id ON public.assistant_provider_models USING btree (id, assistant_id);
@@ -846,9 +856,6 @@ CREATE INDEX idx_assistant_tools_on_assistant_id_and_status ON public.assistant_
 CREATE INDEX idx_assistant_web_plugin_deployments_on_assistant_id ON public.assistant_web_plugin_deployments USING btree (assistant_id);
 CREATE INDEX idx_assistant_whatsapp_deployments_on_assistant_id ON public.assistant_whatsapp_deployments USING btree (assistant_id);
 CREATE UNIQUE INDEX idx_assistants_id ON public.assistants USING btree (id);
-CREATE UNIQUE INDEX idx_endpoint_cachings ON public.endpoint_cachings USING btree (endpoint_id);
-CREATE UNIQUE INDEX idx_endpoint_retries ON public.endpoint_retries USING btree (endpoint_id, retry_type);
-CREATE UNIQUE INDEX idx_endpoint_tags ON public.endpoint_tags USING btree (endpoint_id);
 CREATE INDEX idx_knowledge_collections_knowledge_id ON public.knowledge_collections USING btree (knowledge_id);
 CREATE INDEX idx_knowledge_collections_knowledge_id_status ON public.knowledge_collections USING btree (knowledge_id, status);
 CREATE INDEX idx_knowledge_collections_status ON public.knowledge_collections USING btree (status);
@@ -859,6 +866,4 @@ CREATE UNIQUE INDEX idx_knowledge_tags ON public.knowledge_tags USING btree (kno
 CREATE INDEX idx_knowledges_id ON public.knowledges USING btree (id);
 CREATE INDEX idx_knowledges_id_status ON public.knowledges USING btree (id, status);
 CREATE INDEX idx_knowledges_status ON public.knowledges USING btree (status);
-CREATE INDEX idx_o_auth_external_connects ON public.o_auth_external_connects USING btree (identifier);
 CREATE INDEX idx_recordings_conversation_id ON public.assistant_conversation_recordings USING btree (assistant_conversation_id);
-CREATE INDEX uf_idx_id_project_id_organization_id ON public.workflows USING btree (project_id, id, organization_id);

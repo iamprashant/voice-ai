@@ -111,13 +111,11 @@ class ApplicationSettings(BaseSettings):
     authentication_config: Optional[AuthenticationConfig] = Field(
         default=None, description="auth config for internal service " "communication"
     )
-    celery: Optional[CeleryConfig] = Field(default=None, description="celery config")
 
     knowledge_extractor_config: Optional[ExtractorConfig] = Field(
         description="config for extracting knowledge from files"
     )
-    # Client authentication
-    # jwt: Optional[JwtConfig] = JwtConfig(env_prefix="jwt__")
+
     model_config = SettingsConfigDict(env_file_encoding="utf-8", extra="ignore")
 
 

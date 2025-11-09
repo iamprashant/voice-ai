@@ -14,10 +14,10 @@ from app.bridges.artifacts.protos.integration_api_pb2 import (
 
 
 def build_embedding_input(
-        credential: Credential,
-        contents: MutableMapping[int, str],
-        parameters: Mapping[str, str],
-        additional_data: Union[MutableMapping[str, str], None] = None,
+    credential: Credential,
+    contents: MutableMapping[int, str],
+    parameters: Mapping[str, str],
+    additional_data: Union[MutableMapping[str, str], None] = None,
 ) -> EmbeddingRequest:
     parameters_dict = {}
     for k, v in parameters.items():
@@ -30,5 +30,7 @@ def build_embedding_input(
         credential=credential,
         content=contents,
         modelParameters=parameters_dict,
-        additionalData={key: str(value) for key, value in (additional_data or {}).items()},
+        additionalData={
+            key: str(value) for key, value in (additional_data or {}).items()
+        },
     )
