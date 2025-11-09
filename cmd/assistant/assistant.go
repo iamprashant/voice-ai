@@ -340,7 +340,6 @@ func (g *AppRunner) RequestLoggerMiddleware() {
 	g.E.Use(middlewares.NewRequestLoggerMiddleware(g.Cfg.Name, g.Logger))
 
 }
-
 func (app *AppRunner) Migrate() error {
 	dsn := fmt.Sprintf(
 		"postgres://%s:%s@%s:%d/%s?sslmode=%s",
@@ -356,27 +355,47 @@ func (app *AppRunner) Migrate() error {
 		return fmt.Errorf("failed to get current working directory: %w", err)
 	}
 	migrationsPath := fmt.Sprintf("file://%s/api/assistant-api/migrations", currentDir)
-	app.Logger.Infof("Running migrations with database: %s", app.Cfg.PostgresConfig.DBName)
+
+	app.Logger.Infof("Looking for migration files at path: %s", migrationsPath)
+	app.Logger.Infof("Using DSN for migration: %s", dsn)
+
 	m, err := migrate.New(migrationsPath, dsn)
 	if err != nil {
-		return fmt.Errorf("migration init failed: %w", err)
+		return fmt.Errorf("migration initialization failed: %w", err)
 	}
-	defer m.Close()
+	defer func() {
+		sourceErr, databaseErr := m.Close()
+		if sourceErr != nil {
+			app.Logger.Errorf("Source closing error: %v", sourceErr)
+		}
+		if databaseErr != nil {
+			app.Logger.Errorf("Database connection closing error: %v", databaseErr)
+		}
+	}()
 
-	// Check if database is in a dirty state
-	version, dirty, _ := m.Version()
+	version, dirty, err := m.Version()
+	if err != nil && err != migrate.ErrNilVersion {
+		return fmt.Errorf("error fetching migration version: %w", err)
+	}
 	if dirty {
-		app.Logger.Warnf("Database is in a dirty state at version: %d. Forcing cleanup.", version)
-		// Force to last known good version
-		if err := m.Force(int(version)); err != nil {
+		app.Logger.Warnf("Database is in a dirty state at version: %d. Trying to force clean...", version)
+		if err := m.Force(int(version - 1)); err != nil {
 			return fmt.Errorf("failed to force migration version: %w", err)
 		}
+		app.Logger.Infof("Migration state forced to clean. You can restart migration.")
+		return nil
 	}
 
-	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
-		return fmt.Errorf("migration failed: %w", err)
+	// Perform database migration
+	if err := m.Up(); err != nil {
+		if err == migrate.ErrNoChange {
+			app.Logger.Infof("No migration changes detected.")
+		} else {
+			return fmt.Errorf("migration failed: %w", err)
+		}
+	} else {
+		app.Logger.Infof("Migrations completed successfully.")
 	}
 
-	app.Logger.Infof("Migrations completed successfully")
 	return nil
 }

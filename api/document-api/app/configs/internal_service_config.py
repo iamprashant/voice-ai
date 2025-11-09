@@ -11,17 +11,15 @@ either express or implied. See the License for the specific language governing p
 and limitations under the License.
 
 """
+
 from pydantic import BaseModel
 
 
 class InternalServiceConfig(BaseModel):
     web_host: str
     integration_host: str
-    provider_host: str
-    experiment_host: str
     endpoint_host: str
-    webhook_host: str
-    workflow_host: str
+    assistant_host: str
 
     class Config:
         # For secret key

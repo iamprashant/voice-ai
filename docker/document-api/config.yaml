@@ -4,53 +4,41 @@ port: 9010
 
 authentication_config:
   strict: false
-  # type: "token"
   type: "jwt"
   config:
-    # auth_host: "localhost:9001"
     secret_key: "rpd_pks"
 
 elastic_search:
-  host: "search-rapida-search-01-5k7cwwoptncgdagfvbqer7j3g4.aos.ap-south-1.on.aws"
-  port: 443
-  auth:
-    user: "rapida_username"
-    password: "BigBang_rapida_2023"
-  scheme: "https"
+  host: "opensearch"
+  port: 9200
+  scheme: "http"
   max_connection: 5
 
 postgres:
-  host: "localhost"
+  host: "postgres"
   port: 5432
   auth:
-    password: "root"
-    user: "prashant.srivastav"
-  db: "workflow_db"
-  max_connection: 1
-  ideal_connection: 1
+    password: "rapida_db_password"
+    user: "rapida_user"
+  db: "assistant_db"
+  max_connection: 10
+  ideal_connection: 5
 
 internal_service:
-  web_host: "localhost:9001"
-  integration_host: "localhost:9004"
-  provider_host: "localhost:9001"
-  experiment_host: "localhost:9003"
-  endpoint_host: "localhost:9005"
-  webhook_host: "localhost:9006"
-  workflow_host: "localhost:9006"
+  web_host: "web-api:9001"
+  integration_host: "integration-api:9004"
+  endpoint_host: "endpoint-api:9005"
+  assistant_host: "assistant-api:9007"
 
 storage:
-  # storage_type: "local"
-  # storage_path_prefix: "/opt/apps/assets"
-  storage_type: "s3"
-  storage_path_prefix: "development-assets-01"
-  auth:
-    region: "ap-south-1"
-    access_key_id: "AKIAWFZCROPHVZP62OX6"
-    secret_access_key: "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"
-
-celery:
-  broker: "redis://localhost:6379/0"
-  backend: "redis://localhost:6379/0"
+  storage_type: "local"
+  storage_path_prefix: "/opt/apps/assets"
+  # storage_type: "s3"
+  # storage_path_prefix: "development-assets-01"
+  # auth:
+  #   region: "ap-south-1"
+  #   access_key_id: "AKIAWFZCROPHVZP62OX6"
+  #   secret_access_key: "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"
 
 knowledge_extractor_config:
   chunking_technique:
