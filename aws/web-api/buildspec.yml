@@ -26,6 +26,9 @@ phases:
       - ln -s $HOME/protobuf/bin/protoc /usr/local/bin/protoc
       - go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.34.0
       - go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.3.0
+      - cp aws/web-api/appspec.yml ./appspec.yml
+      - cp aws/web-api/env/env.production ./env
+      - cp -r aws/web-api/scripts scripts
 
   build:
     commands:
@@ -34,13 +37,13 @@ phases:
       - go mod download
       - sh bin/artifacts-generate.sh
       - GOOS=linux GOARCH=amd64 go build -o web-api.0.0.1 cmd/web.go
-      - cp codedeploy/env.production ./env
+
 artifacts:
   files:
     - web-api.0.0.1
     - appspec.yml
     - env
-    - codedeploy/*
+    - scripts/*
 cache:
   paths:
     - "/go/pkg/**/*"
