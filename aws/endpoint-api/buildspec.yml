@@ -34,13 +34,15 @@ phases:
       - go mod download
       - sh bin/generate-artifacts.sh
       - GOOS=linux GOARCH=amd64 go build -o endpoint-api.0.0.1 cmd/endpoint.go
-      - cp codedeploy/env.production ./env
+      - cp aws/endpoint-api/appspec.yml ./appspec.yml
+      - cp aws/endpoint-api/env/env.production ./env.production
+      - cp -r aws/endpoint-api/scripts scripts
 artifacts:
   files:
     - endpoint-api.0.0.1
     - appspec.yml
-    - env
-    - codedeploy/*
+    - env.production
+    - scripts/*
 cache:
   paths:
     - "/go/pkg/**/*"
