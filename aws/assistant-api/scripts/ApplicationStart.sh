@@ -1,5 +1,5 @@
 #!/bin/bash
-export ENV_PATH="/opt/app/backend-app/artifacts/workflow-api/env.production"
+export ENV_PATH="/opt/app/backend-app/artifacts/assistant-api/env.production"
 export CGO_CFLAGS="-Il"
 export CGO_LDFLAGS="-L/opt/onnxruntime/lib -lonnxruntime"
 export LD_LIBRARY_PATH="/opt/onnxruntime/lib:$LD_LIBRARY_PATH"
@@ -12,4 +12,4 @@ export CGO_CFLAGS="$CGO_CFLAGS -I/opt/azure-speech-sdk/include/c_api"
 export CGO_LDFLAGS="$CGO_LDFLAGS -L/opt/azure-speech-sdk/lib/x64 -lMicrosoft.CognitiveServices.Speech.core"
 export LD_LIBRARY_PATH="/opt/azure-speech-sdk/lib/x64:$LD_LIBRARY_PATH"
 
-/opt/app/backend-app/artifacts/workflow-api/workflow-api.0.0.1 > /dev/null 2> /dev/null < /dev/null &
+/opt/app/backend-app/artifacts/assistant-api/assistant-api.0.0.1 > /dev/null 2> /dev/null < /dev/null &

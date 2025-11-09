@@ -4,9 +4,9 @@ os: linux
 
 files:
   - source: env.production
-    destination: /opt/app/backend-app/artifacts/workflow-api/
-  - source: workflow-api.0.0.1
-    destination: /opt/app/backend-app/artifacts/workflow-api/
+    destination: /opt/app/backend-app/artifacts/assistant-api/
+  - source: assistant-api.0.0.1
+    destination: /opt/app/backend-app/artifacts/assistant-api/
 
 hooks:
   ApplicationStop:

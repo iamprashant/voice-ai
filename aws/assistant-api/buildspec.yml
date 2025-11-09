@@ -68,13 +68,13 @@ phases:
       - echo "Checking out submodule at specific commit"
       - go mod download
       - sh bin/artifacts-generate.sh
-      - GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build -o workflow-api.0.0.1 cmd/workflow.go
+      - GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build -o assistant-api.0.0.1 cmd/assistant/assistant.go
       - cp aws/assistant-api/appspec.yml ./appspec.yml
       - cp aws/assistant-api/env/env.production ./env.production
       - cp -r aws/assistant-api/scripts scripts
 artifacts:
   files:
-    - workflow-api.0.0.1
+    - assistant-api.0.0.1
     - appspec.yml
     - env.production
     - scripts/*
