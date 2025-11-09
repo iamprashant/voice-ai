@@ -36,7 +36,7 @@ phases:
       - echo "updating submodule"
       - go mod download
       - sh bin/artifacts-generate.sh
-      - GOOS=linux GOARCH=amd64 go build -o web-api.0.0.1 cmd/web.go
+      - GOOS=linux GOARCH=amd64 go build -o web-api.0.0.1 cmd/web/web.go
 
 artifacts:
   files:
