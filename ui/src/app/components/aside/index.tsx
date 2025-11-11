@@ -11,7 +11,6 @@ export const Aside: FC<AsideProps> = (props: AsideProps) => {
         'backdrop-blur-2xl',
         'group',
         'overflow-y-scroll',
-        // 'border-r dark:border-gray-800/20',
         'w-14 h-full duration-200 hover:w-80 pb-10 hover:border-r hover:bg-white dark:hover:bg-gray-900',
         props.className,
       )}

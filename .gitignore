@@ -1,2 +1,2 @@
 .vscode
-end-of-turn.onnx
+*.onnx

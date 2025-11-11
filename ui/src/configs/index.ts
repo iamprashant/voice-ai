@@ -1,5 +1,5 @@
 /* eslint-disable import/no-mutable-exports */
-import { AgentStrategy, InputVarType } from '@/models/common';
+import { InputVarType } from '@/models/common';
 import { ConnectionConfig } from '@rapidaai/react';
 
 export let WEB_API = 'http://dev.rapida.local';
@@ -61,13 +61,6 @@ export const UPDATE_DATASETS_EVENT_EMITTER =
   'prompt-editor-context-block-update-datasets';
 export const UPDATE_HISTORY_EVENT_EMITTER =
   'prompt-editor-history-block-update-role';
-
-export const DEFAULT_AGENT_SETTING = {
-  enabled: false,
-  max_iteration: 5,
-  strategy: AgentStrategy.functionCall,
-  tools: [],
-};
 
 export const SUPPORTED_PROMPT_VARIABLE_TYPE = () => {
   return [

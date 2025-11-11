@@ -12,14 +12,6 @@ export enum ResourceRole {
   anyone = 'anyone',
 }
 
-/**
- *
- */
-export enum AgentStrategy {
-  functionCall = 'function_call',
-  react = 'react',
-}
-
 export enum InputVarType {
   stringInput = 'string',
   textInput = 'text',

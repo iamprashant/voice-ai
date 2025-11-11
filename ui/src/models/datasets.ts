@@ -16,12 +16,6 @@ export type RetrievalConfig = {
   scoreThreshold: number;
 };
 
-export enum DataSourceType {
-  FILE = 'upload_file',
-  NOTION = 'notion_import',
-  WEB = 'web_import',
-}
-
 export const DEFAULT_RETRIVAL_CONFIG = {
   searchMethod: RETRIEVE_METHOD.semantic,
   rerankingEnable: false,
