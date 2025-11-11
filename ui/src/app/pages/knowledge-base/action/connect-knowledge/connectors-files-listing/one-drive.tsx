@@ -6,7 +6,7 @@ import React, {
   useEffect,
   useState,
 } from 'react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { BluredWrapper } from '@/app/components/Wrapper/BluredWrapper';
 import { SearchIconInput } from '@/app/components/Form/Input/IconInput';
 import { Card } from '@/app/components/base/cards';

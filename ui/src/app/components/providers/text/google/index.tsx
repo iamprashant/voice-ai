@@ -4,7 +4,7 @@ import { FormLabel } from '@/app/components/form-label';
 import { IButton } from '@/app/components/Form/Button';
 import { FieldSet } from '@/app/components/Form/Fieldset';
 import { Popover } from '@/app/components/Popover';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { Bolt, X } from 'lucide-react';
 import { useState } from 'react';
 import { Input } from '@/app/components/Form/Input';

@@ -5,7 +5,7 @@ import {
 } from '@/app/components/Form/Button';
 import { useRapidaStore } from '@/hooks';
 import React from 'react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { PlusIcon } from '@/app/components/Icon/plus';
 import { Spinner } from '@/app/components/Loader/Spinner';
 

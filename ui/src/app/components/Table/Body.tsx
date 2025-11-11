@@ -1,6 +1,6 @@
 import React, { HTMLAttributes, TdHTMLAttributes } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 
 /**
  *

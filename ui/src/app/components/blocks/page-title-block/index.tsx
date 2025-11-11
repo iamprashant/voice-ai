@@ -1,5 +1,5 @@
 import React, { FC, HTMLAttributes } from 'react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 
 export const PageTitleBlock: FC<HTMLAttributes<HTMLDivElement>> = props => {
   return (

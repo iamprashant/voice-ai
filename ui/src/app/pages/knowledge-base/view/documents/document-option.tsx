@@ -1,5 +1,5 @@
 import { CardOptionMenu } from '@/app/components/Menu';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { KnowledgeDocument } from '@rapidaai/react';
 import { ReloadIcon } from '@/app/components/Icon/Reload';
 

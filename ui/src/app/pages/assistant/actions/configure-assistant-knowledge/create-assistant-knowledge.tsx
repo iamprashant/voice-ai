@@ -22,7 +22,7 @@ import { useConfirmDialog } from '@/app/pages/assistant/actions/hooks/use-confir
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { useGlobalNavigation } from '@/hooks/use-global-navigator';
 import { RETRIEVE_METHOD } from '@/models/datasets';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { InfoIcon } from 'lucide-react';
 import { FC, useState } from 'react';
 import toast from 'react-hot-toast/headless';

@@ -13,7 +13,7 @@ import { useRapidaStore } from '@/hooks';
 import { Metadata } from '@rapidaai/react';
 import { ServiceError } from '@rapidaai/react';
 import { Tab } from '@/app/components/Tab';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { DateTimeColumn } from '@/app/components/Table/DateColumn';
 import { ChevronRight } from 'lucide-react';
 import { StatusIndicator } from '@/app/components/indicators/status';

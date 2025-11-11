@@ -6,7 +6,7 @@ import type { FC } from 'react';
 // import { ExpandIcon } from '@/app/components/Icon/Expand';
 // import { TickIcon } from '@/app/components/Icon/Tick';
 // import { CopyIcon } from '@/app/components/Icon/Copy';
-// import { cn } from '@/styles/media';
+// import { cn } from '@/utils';
 // import { useToggleExpend } from '@/hooks/use-toggle-expend';
 // import PromptEditor from '@/app/components/prompt-editor';
 

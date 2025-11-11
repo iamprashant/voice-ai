@@ -1,46 +1,5 @@
-import { ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
 import moment from 'moment';
 import { Timestamp } from 'google-protobuf/google/protobuf/timestamp_pb';
-
-/*
- * Media queries utility
- */
-
-/*
- * Inspired by https://github.com/DefinitelyTyped/DefinitelyTyped/issues/32914
- */
-
-// Update your breakpoints if you want
-export const sizes = {
-  small: 600,
-  medium: 1024,
-  large: 1440,
-  xlarge: 1920,
-};
-
-// Iterate through the sizes and create min-width media queries
-export const media = (Object.keys(sizes) as Array<keyof typeof sizes>).reduce(
-  (acc, size) => {
-    acc[size] = () => `@media (min-width:${sizes[size]}px)`;
-    return acc;
-  },
-  {} as { [key in keyof typeof sizes]: () => string },
-);
-
-/* Example
-const SomeDiv = styled.div`
-  display: flex;
-  ....
-  ${media.medium} {
-    display: block
-  }
-`;
-*/
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
 
 export function formatDateWithMillisecond(date: Date): string {
   const pad = (n: number, z = 2) => n.toString().padStart(z, '0');
@@ -133,6 +92,7 @@ export function daysAgoFromTimestamp(timestamp: Timestamp): number {
   const today = moment().utc();
   return today.diff(givenDate, 'days');
 }
+
 export function toHumanReadableRelativeDay(timestamp: Timestamp): string {
   const daysAgo = daysAgoFromTimestamp(timestamp);
   if (daysAgo === 0) {
@@ -149,3 +109,69 @@ export function getTimeFromDate(timestamp: Timestamp): string {
   const minutes = toDate(timestamp).getMinutes().toString().padStart(2, '0');
   return `${hours}:${minutes}`;
 }
+
+/**
+ * Converts nanoseconds to milliseconds.
+ * @param nano - The number of nanoseconds or undefined.
+ * @returns The equivalent number of milliseconds, or undefined if input is undefined.
+ */
+export function nanoToMilli(
+  nano: number | string | undefined,
+): number | undefined {
+  if (nano === undefined) return undefined;
+  const nanoNumber = typeof nano === 'string' ? parseFloat(nano) : nano;
+  return Number((nanoNumber / 1_000_000).toFixed(2));
+}
+
+export function nanoToMinute(
+  nano: number | string | undefined,
+): number | undefined {
+  if (nano === undefined) return undefined;
+  const nanoNumber = typeof nano === 'string' ? parseFloat(nano) : nano;
+  return Number((nanoNumber / 60_000_000_000).toFixed(2));
+}
+
+export function formatNanoToReadableMinute(
+  nano: number | string | undefined,
+): string {
+  if (nano === undefined || isNaN(Number(nano))) {
+    return 'n/a';
+  }
+
+  const nanoNumber = typeof nano === 'string' ? parseFloat(nano) : nano;
+  const totalSeconds = Math.floor(nanoNumber / 1_000_000_000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  if (totalSeconds <= 0) {
+    return 'n/a';
+  }
+
+  if (minutes > 0) {
+    return `${minutes}m ${seconds}s`;
+  } else {
+    return `${seconds}s`;
+  }
+}
+export function formatNanoToReadableMilli(
+  nano: number | string | undefined,
+  fraction = 2,
+): string {
+  if (nano === undefined || isNaN(Number(nano))) {
+    return 'n/a';
+  }
+
+  const nanoNumber = typeof nano === 'string' ? parseFloat(nano) : nano;
+  const totalMilliSeconds = nanoNumber / 1_000_000; // No Math.floor, keep fractions
+
+  if (totalMilliSeconds <= 0) {
+    return 'n/a';
+  }
+
+  return `${totalMilliSeconds.toFixed(fraction)} ms`; // ToFixed ensures readability for fractions
+}
+
+export const toDateString = (d: Date) => {
+  const postgresDateString = d.toLocaleDateString('en-CA');
+  return postgresDateString;
+};

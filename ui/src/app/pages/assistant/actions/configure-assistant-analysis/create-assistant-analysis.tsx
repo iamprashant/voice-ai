@@ -6,7 +6,7 @@ import {
   IBlueBorderButton,
   ICancelButton,
 } from '@/app/components/Form/Button';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { FieldSet } from '@/app/components/Form/Fieldset';
 import { FormLabel } from '@/app/components/form-label';
 import { Input } from '@/app/components/Form/Input';

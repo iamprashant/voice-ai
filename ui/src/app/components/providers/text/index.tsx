@@ -26,7 +26,7 @@ import {
   GetOpenaiTextProviderDefaultOptions,
   ValidateOpenaiTextProviderDefaultOptions,
 } from '@/app/components/providers/text/openai/constants';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { FC, useCallback } from 'react';
 import { FieldSet } from '@/app/components/Form/Fieldset';
 import { FormLabel } from '@/app/components/form-label';

@@ -11,7 +11,7 @@ import { TextSearchIcon } from '@/app/components/Icon/text-search';
 import { VectorSearchIcon } from '@/app/components/Icon/vector-search';
 import { Tooltip } from '@/app/components/Tooltip';
 import { RETRIEVE_METHOD } from '@/models/datasets';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { ExternalLink, Info, InfoIcon } from 'lucide-react';
 import { InputGroup } from '@/app/components/input-group';
 import { YellowNoticeBlock } from '@/app/components/container/message/notice-block';

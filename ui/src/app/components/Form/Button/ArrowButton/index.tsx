@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { BorderButton, Button } from '@/app/components/Form/Button';
 import { useRapidaStore } from '@/hooks';
 /**

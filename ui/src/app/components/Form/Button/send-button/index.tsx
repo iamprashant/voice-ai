@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { Button } from '@/app/components/Form/Button';
 import { useRapidaStore } from '@/hooks';
 import { Spinner } from '@/app/components/Loader/Spinner';

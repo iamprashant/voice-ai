@@ -9,7 +9,7 @@ import {
 } from 'framer-motion';
 import { CloseIcon } from '@/app/components/Icon/Close';
 import { TitleHeading } from '@/app/components/Heading/TitleHeading';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 /**
  *
  */

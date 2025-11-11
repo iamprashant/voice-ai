@@ -10,7 +10,7 @@ import { Switch } from '@/app/components/Form/Switch';
 import { Slider } from '@/app/components/Form/Slider';
 import { Dataset } from '@/models/datasets';
 import { IBlueBGButton, ICancelButton } from '@/app/components/Form/Button';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { ErrorMessage } from '@/app/components/Form/error-message';
 import { Card } from '@/app/components/base/cards';
 import { HybridSearchIcon } from '@/app/components/Icon/hybrid-search';

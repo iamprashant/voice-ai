@@ -5,7 +5,7 @@ import { RapidaIcon } from '@/app/components/Icon/Rapida';
 import { SidebarIconWrapper } from '@/app/components/navigation/sidebar/sidebar-icon-wrapper';
 import { SidebarLabel } from '@/app/components/navigation/sidebar/sidebar-label';
 import { SidebarSimpleListItem } from '@/app/components/navigation/sidebar/sidebar-simple-list-item';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { FolderKey, Key, KeyIcon, KeySquare } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';

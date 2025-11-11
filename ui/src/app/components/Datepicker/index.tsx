@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import Flatpickr from 'react-flatpickr';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { Calendar } from 'lucide-react';
 
 export const Datepicker: FC<{

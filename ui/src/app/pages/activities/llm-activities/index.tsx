@@ -11,7 +11,7 @@ import { CustomLink } from '@/app/components/custom-link';
 import { BluredWrapper } from '@/app/components/Wrapper/BluredWrapper';
 import { DateTimeColumn } from '@/app/components/Table/DateColumn';
 import { useActivityLogPage } from '@/hooks/use-activity-log-page-store';
-import { formatNanoToReadableMilli, toDateString } from '@/utils';
+import { formatNanoToReadableMilli, toDateString } from '@/utils/date';
 import { getMetadataValue } from '@/utils/metadata';
 import { Spinner } from '@/app/components/Loader/Spinner';
 import { ScrollableResizableTable } from '@/app/components/data-table';

@@ -4,7 +4,7 @@ import { Spinner } from '@/app/components/Loader/Spinner';
 import { MarkdownViewer } from '@/app/components/MarkdownViewer';
 import { Tab } from '@/app/components/Tab';
 import { ExecuteMessage } from '@/app/pages/endpoint/view/try-playground/experiment-prompt/components/execute-message';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { FC, useEffect, useState } from 'react';
 import { CodeHighlighting } from '@/app/components/code-highlighting';
 

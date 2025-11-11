@@ -5,7 +5,7 @@ import {
   PortalToFollowElemContent,
   PortalToFollowElemTrigger,
 } from '@/app/components/portal-to-follow-elem';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 interface TooltipProps extends HTMLAttributes<HTMLDivElement> {
   position?: 'top' | 'right' | 'bottom' | 'left';
   triggerMethod?: 'hover' | 'click';

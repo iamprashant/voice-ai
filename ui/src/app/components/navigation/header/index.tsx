@@ -1,5 +1,5 @@
 import React, { FC, Fragment, HTMLAttributes, memo, useContext } from 'react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { Menu, MenuItem, MenuItems, Transition } from '@headlessui/react';
 import { RightArrowIcon } from '@/app/components/Icon/RightArrow';
 import { AuthContext } from '@/context/auth-context';

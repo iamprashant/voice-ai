@@ -1,5 +1,5 @@
 import { ButtonProps, IconButton } from '@/app/components/Form/Button';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { Trash2 } from 'lucide-react';
 import { FC } from 'react';
 

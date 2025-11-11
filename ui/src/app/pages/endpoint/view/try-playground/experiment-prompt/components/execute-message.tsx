@@ -4,7 +4,7 @@ import { PlayIcon } from '@/app/components/Icon/Play';
 import { TickIcon } from '@/app/components/Icon/Tick';
 import { Spinner } from '@/app/components/Loader/Spinner';
 import { PlainWrapper } from '@/app/components/Wrapper/AlertWrapper';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import React, { FC } from 'react';
 import { FieldErrors } from 'react-hook-form';
 

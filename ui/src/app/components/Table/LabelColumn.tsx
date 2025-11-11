@@ -1,6 +1,6 @@
 import { TD } from '@/app/components/Table/TD';
 import React, { HTMLAttributes } from 'react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 
 /**
  *

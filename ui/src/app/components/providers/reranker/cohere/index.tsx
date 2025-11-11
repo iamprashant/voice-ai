@@ -1,7 +1,7 @@
 import { Metadata } from '@rapidaai/react';
 import { Dropdown } from '@/app/components/Dropdown';
 import { COHERE_RERANKER_MODEL } from '@/app/components/providers/reranker/cohere/constants';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 
 export const ConfigureCohereRerankerModel: React.FC<{
   inputClass?: string;

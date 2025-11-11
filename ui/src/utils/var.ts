@@ -44,7 +44,6 @@ export const getVars = (value: string): string[] => {
     const fullMatch = match[0];
     const varName = match[1];
 
-    // Skip excluded placeholders
     if (
       [
         CONTEXT_PLACEHOLDER_TEXT,

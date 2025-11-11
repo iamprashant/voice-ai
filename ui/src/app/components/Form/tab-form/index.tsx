@@ -1,4 +1,4 @@
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { FC, HTMLAttributes, ReactElement } from 'react';
 import { PageActionButtonBlock } from '@/app/components/blocks/page-action-button-block';
 

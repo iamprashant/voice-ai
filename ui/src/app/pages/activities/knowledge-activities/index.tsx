@@ -9,7 +9,7 @@ import { SearchIconInput } from '@/app/components/Form/Input/IconInput';
 import { CustomLink } from '@/app/components/custom-link';
 import { BluredWrapper } from '@/app/components/Wrapper/BluredWrapper';
 import { DateTimeColumn } from '@/app/components/Table/DateColumn';
-import { formatNanoToReadableMilli, toDateString } from '@/utils';
+import { formatNanoToReadableMilli, toDateString } from '@/utils/date';
 import { Spinner } from '@/app/components/Loader/Spinner';
 import { ScrollableResizableTable } from '@/app/components/data-table';
 import { IButton } from '@/app/components/Form/Button';

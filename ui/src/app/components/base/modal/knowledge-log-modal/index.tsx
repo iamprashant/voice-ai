@@ -10,7 +10,7 @@ import {
 } from '@rapidaai/react';
 import { useRapidaStore } from '@/hooks';
 import { Tab } from '@/app/components/Tab';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { DateTimeColumn } from '@/app/components/Table/DateColumn';
 import { ChevronRight } from 'lucide-react';
 import { StatusIndicator } from '@/app/components/indicators/status';

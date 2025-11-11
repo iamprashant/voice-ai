@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tooltip as TP } from '@material-tailwind/react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 
 export function Tooltip(props: { children: any; icon: React.ReactElement }) {
   const colorClasses = () => {

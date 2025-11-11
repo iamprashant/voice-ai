@@ -6,7 +6,7 @@ import toast from 'react-hot-toast/headless';
 import { BluredWrapper } from '@/app/components/Wrapper/BluredWrapper';
 import { SearchIconInput } from '@/app/components/Form/Input/IconInput';
 import { TablePagination } from '@/app/components/base/tables/table-pagination';
-import { toDate, toHumanReadableDateTime } from '@/styles/media';
+import { toDate, toHumanReadableDateTime } from '@/utils/date';
 import { useAssistantConversationListPageStore } from '@/hooks/use-assistant-conversation-list-page-store';
 import { AssistantConversation } from '@rapidaai/react';
 import { StatusIndicator } from '@/app/components/indicators/status';
@@ -26,7 +26,7 @@ import { useGlobalNavigation } from '@/hooks/use-global-navigator';
 import { TableCell } from '@/app/components/base/tables/table-cell';
 import { CustomLink } from '@/app/components/custom-link';
 import { getMetricValue } from '@/utils/metadata';
-import { formatNanoToReadableMinute } from '@/utils';
+import { formatNanoToReadableMinute } from '@/utils/date';
 import { ConversationDirectionIndicator } from '@/app/components/indicators/conversation-direction';
 
 interface ConversationProps {

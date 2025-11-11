@@ -5,7 +5,7 @@ import { Input } from '@/app/components/Form/Input';
 import { Select } from '@/app/components/Form/Select';
 import { FileUploadIcon } from '@/app/components/Icon/file-upload';
 import { InputGroup } from '@/app/components/input-group';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { FC, useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 

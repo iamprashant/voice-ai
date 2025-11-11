@@ -1,7 +1,7 @@
 import { Tooltip } from '@/app/components/base/tooltip';
 import { RapidaIcon } from '@/app/components/Icon/Rapida';
 import { TextImage } from '@/app/components/Image/TextImage';
-import { cn, toHumanReadableRelativeTimeFromDate } from '@/styles/media';
+import { toHumanReadableRelativeTimeFromDate } from '@/utils/date';
 import {
   Feedback,
   Message,
@@ -12,12 +12,12 @@ import {
   useAgentMessages,
 } from '@rapidaai/react';
 import { FC, useEffect, useRef, useState } from 'react';
-
 import { motion } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { MessageFeedbackDialog } from '@/app/components/base/modal/message-feedback-modal';
 import MarkdownPreview from '@uiw/react-markdown-preview';
+import { cn } from '@/utils';
 
 export const ConversationMessages: FC<{ vag: VoiceAgent }> = ({ vag }) => {
   const messages = useAgentMessages(vag);

@@ -4,7 +4,7 @@ import { useCredential } from '@/hooks/use-credential';
 import { useRapidaStore } from '@/hooks';
 import { ConnectionConfig, ServiceError } from '@rapidaai/react';
 import { Tab } from '@/app/components/Tab';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { ChevronRight } from 'lucide-react';
 import { ModalProps } from '@/app/components/base/modal';
 import { RightSideModal } from '@/app/components/base/modal/right-side-modal';

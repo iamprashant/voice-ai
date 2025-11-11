@@ -30,7 +30,7 @@ import {
   PutOnHoldToolDefintion,
   ValidatePutOnHoldDefaultOptions,
 } from '@/app/components/tools/put-on-hold/constant';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { FC } from 'react';
 import { FieldSet } from '@/app/components/Form/Fieldset';
 import { FormLabel } from '@/app/components/form-label';

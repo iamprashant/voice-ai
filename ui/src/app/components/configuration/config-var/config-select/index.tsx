@@ -2,7 +2,7 @@ import type { FC } from 'react';
 import React from 'react';
 import { ReactSortable } from 'react-sortablejs';
 import { Input } from '@/app/components/Form/Input';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { IBlueBorderPlusButton } from '@/app/components/Form/Button';
 import { DeleteButton } from '@/app/components/Form/Button/delete-button';
 import { GripVertical } from 'lucide-react';

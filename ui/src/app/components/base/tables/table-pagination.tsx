@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { IButton } from '@/app/components/Form/Button';
 import { ColumnPreferencesDialog } from '@/app/components/base/modal/column-preference-modal';
 import { Settings, SlidersHorizontal } from 'lucide-react';

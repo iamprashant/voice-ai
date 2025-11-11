@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import SourceIndicator from '@/app/components/indicators/source';
 import { StatusIndicator } from '@/app/components/indicators/status';
-import { toContentText } from '@/utils/rapida_content';
-import { cn, toHumanReadableDateTime } from '@/styles/media';
+import { toContentText } from '@rapidaai/react';
+import {
+  toHumanReadableDateTime,
+  formatNanoToReadableMilli,
+} from '@/utils/date';
+import { cn } from '@/utils';
 import {
   getMetricValueOrDefault,
   getTimeTakenMetric,
@@ -15,7 +19,6 @@ import { TableRow } from '@/app/components/base/tables/table-row';
 import { TableCell } from '@/app/components/base/tables/table-cell';
 import { CustomLink } from '@/app/components/custom-link';
 import { useConversationLogPageStore } from '@/hooks/use-conversation-log-page-store';
-import { formatNanoToReadableMilli } from '@/utils';
 
 interface SingleTraceProps {
   row: AssistantConversationMessage;

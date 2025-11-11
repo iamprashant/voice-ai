@@ -1,58 +1,12 @@
 import { generate } from 'random-words';
 import { ResourceRole } from '@/models/common';
 import { RETRIEVE_METHOD } from '@/models/datasets';
-import {
-  DEBUGGER_SOURCE,
-  RAPIDA_APP_SOURCE,
-  RapidaSource,
-} from '@/utils/rapida_source';
+import { ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
-import clsx from 'clsx';
-import { getBrowser } from '@/utils/browser';
-import { RapidaEnvironment } from '@/utils/rapida_environment';
-
-/**
- *
- * @param ms
- * @returns
- */
-export const sleep = (ms: number) => {
-  return new Promise(resolve => setTimeout(resolve, ms));
-};
-
-/**
- *
- * @param fn
- * @returns
- */
-export async function asyncRunSafe<T = any>(
-  fn: Promise<T>,
-): Promise<[Error] | [null, T]> {
-  try {
-    return [null, await fn];
-  } catch (e) {
-    if (e instanceof Error) return [e];
-    return [new Error('unknown error')];
-  }
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
 }
-
-/**
- *
- * @param text
- * @param font
- * @returns
- */
-export const getTextWidthWithCanvas = (text: string, font?: string) => {
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  if (ctx) {
-    ctx.font =
-      font ??
-      '12px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"';
-    return Number(ctx.measureText(text).width.toFixed(2));
-  }
-  return 0;
-};
 
 const chars =
   '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_';
@@ -68,46 +22,6 @@ export function randomString(length: number) {
     result += chars[Math.floor(Math.random() * chars.length)];
   return result;
 }
-
-export const getPurifyHref = (href: string) => {
-  if (!href) return '';
-
-  return href
-    .replace(/javascript:/gi, '')
-    .replace(/vbscript:/gi, '')
-    .replace(/data:/gi, '');
-};
-
-export const toDateString = (d: Date) => {
-  const postgresDateString = d.toLocaleDateString('en-CA');
-  return postgresDateString;
-};
-
-/**
- *
- * @param rl
- * @returns
- */
-export const isOrgResource = (rl: ResourceRole): boolean => {
-  if (
-    rl === ResourceRole.owner ||
-    rl === ResourceRole.projectMember ||
-    rl === ResourceRole.organizationMember
-  )
-    return true;
-  return false;
-};
-
-/**
- *
- * @param rl
- * @returns
- */
-export const isProjectResource = (rl: ResourceRole): boolean => {
-  if (rl === ResourceRole.owner || rl === ResourceRole.projectMember)
-    return true;
-  return false;
-};
 
 /**
  *
@@ -138,29 +52,6 @@ export function retrieveMethodFromString(method: string): RETRIEVE_METHOD {
       return RETRIEVE_METHOD.semantic; // Or throw an error if appropriate
   }
 }
-
-/**
- *
- * @returns
- */
-export const isElectron = (): boolean => {
-  return window.isElectron;
-};
-
-/**
- *
- * @param str
- * @returns
- */
-export const toTitleCase = (str: any) => {
-  return str
-    .toLowerCase()
-    .split(' ')
-    .map((word: any) => {
-      return word.charAt(0).toUpperCase() + word.slice(1);
-    })
-    .join(' ');
-};
 
 /**
  *
@@ -257,25 +148,6 @@ export function mergeProps<T extends Props[]>(
   return result as UnionToIntersection<TupleTypes<T>>;
 }
 
-export function isSafari(): boolean {
-  return getBrowser()?.name === 'Safari';
-}
-
-export const GetEnvironment = (): RapidaEnvironment => {
-  return process.env.NODE_ENV !== 'development'
-    ? RapidaEnvironment.PRODUCTION
-    : RapidaEnvironment.DEVELOPMENT;
-};
-
-/**
- *
- * @returns
- */
-export const GetSource = (): RapidaSource => {
-  if (isElectron()) return RAPIDA_APP_SOURCE;
-  return DEBUGGER_SOURCE;
-};
-
 /**
  *
  * @param prefix
@@ -285,64 +157,3 @@ export const randomMeaningfullName = (prefix?: string): string => {
   const name = generate({ exactly: 3, join: '-' });
   return prefix ? `${prefix}-${name}` : name;
 };
-
-/**
- * Converts nanoseconds to milliseconds.
- * @param nano - The number of nanoseconds or undefined.
- * @returns The equivalent number of milliseconds, or undefined if input is undefined.
- */
-export function nanoToMilli(
-  nano: number | string | undefined,
-): number | undefined {
-  if (nano === undefined) return undefined;
-  const nanoNumber = typeof nano === 'string' ? parseFloat(nano) : nano;
-  return Number((nanoNumber / 1_000_000).toFixed(2));
-}
-
-export function nanoToMinute(
-  nano: number | string | undefined,
-): number | undefined {
-  if (nano === undefined) return undefined;
-  const nanoNumber = typeof nano === 'string' ? parseFloat(nano) : nano;
-  return Number((nanoNumber / 60_000_000_000).toFixed(2));
-}
-
-export function formatNanoToReadableMinute(
-  nano: number | string | undefined,
-): string {
-  if (nano === undefined || isNaN(Number(nano))) {
-    return 'n/a';
-  }
-
-  const nanoNumber = typeof nano === 'string' ? parseFloat(nano) : nano;
-  const totalSeconds = Math.floor(nanoNumber / 1_000_000_000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-
-  if (totalSeconds <= 0) {
-    return 'n/a';
-  }
-
-  if (minutes > 0) {
-    return `${minutes}m ${seconds}s`;
-  } else {
-    return `${seconds}s`;
-  }
-}
-export function formatNanoToReadableMilli(
-  nano: number | string | undefined,
-  fraction = 2,
-): string {
-  if (nano === undefined || isNaN(Number(nano))) {
-    return 'n/a';
-  }
-
-  const nanoNumber = typeof nano === 'string' ? parseFloat(nano) : nano;
-  const totalMilliSeconds = nanoNumber / 1_000_000; // No Math.floor, keep fractions
-
-  if (totalMilliSeconds <= 0) {
-    return 'n/a';
-  }
-
-  return `${totalMilliSeconds.toFixed(fraction)} ms`; // ToFixed ensures readability for fractions
-}

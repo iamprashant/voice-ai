@@ -8,7 +8,7 @@ import { SwitchWithLabel } from '@/app/components/Form/Switch';
 import { InputGroup } from '@/app/components/input-group';
 import { InputHelper } from '@/app/components/input-helper';
 import { ProviderConfig } from '@/app/components/providers';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { useCallback } from 'react';
 import { SpeechToTextProvider } from '@/app/components/providers/speech-to-text';
 import { ConditionalInputGroup } from '@/app/components/conditional-input-group';

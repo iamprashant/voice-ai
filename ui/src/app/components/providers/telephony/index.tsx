@@ -17,7 +17,7 @@ import { FormLabel } from '@/app/components/form-label';
 import { FieldSet } from '@/app/components/Form/Fieldset';
 import { InputGroup } from '@/app/components/input-group';
 import { InputHelper } from '@/app/components/input-helper';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { CredentialDropdown } from '@/app/components/Dropdown/credential-dropdown';
 import { useCallback } from 'react';
 

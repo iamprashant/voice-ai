@@ -1,6 +1,6 @@
 import { LanguageIcon } from '@/app/components/Icon/Language';
 import { ToolProviderPill } from '@/app/components/Pill/tool-provider-pill';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { FC, HTMLAttributes } from 'react';
 
 interface DocumentSourcePillProps extends HTMLAttributes<HTMLSpanElement> {

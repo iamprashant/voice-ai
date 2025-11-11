@@ -17,7 +17,7 @@ import { VoiceAgent } from '@/app/pages/preview-agent/voice-agent/voice-agent';
 import { useRapidaStore } from '@/hooks';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { InputVarType } from '@/models/common';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { getStatusMetric } from '@/utils/metadata';
 import {
   AgentConfig,

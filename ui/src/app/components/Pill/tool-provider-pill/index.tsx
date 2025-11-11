@@ -1,6 +1,6 @@
 import { ToolProvider } from '@rapidaai/react';
 import { useProviderContext } from '@/context/provider-context';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { FC, HTMLAttributes, useEffect, useState } from 'react';
 
 /**

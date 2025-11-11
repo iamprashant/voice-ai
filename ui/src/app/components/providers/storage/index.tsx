@@ -14,7 +14,7 @@ import {
   ConfigureGoogleStorage,
   ValidateGoogleCloudStorageOptions,
 } from '@/app/components/providers/storage/google';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { ProviderConfig, STORAGE_PROVIDER } from '@/app/components/providers';
 import { CredentialDropdown } from '@/app/components/Dropdown/credential-dropdown';
 import { useCallback } from 'react';

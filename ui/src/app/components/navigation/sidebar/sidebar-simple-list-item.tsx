@@ -1,6 +1,6 @@
 import { CustomLink } from '@/app/components/custom-link';
 import React, { HTMLAttributes } from 'react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 
 interface SidebarLinkItemProps extends HTMLAttributes<HTMLDivElement> {
   active?: boolean;

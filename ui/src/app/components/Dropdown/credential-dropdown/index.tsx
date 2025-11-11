@@ -3,7 +3,7 @@ import { Dropdown } from '@/app/components/Dropdown';
 import { FormLabel } from '@/app/components/form-label';
 import { IButton } from '@/app/components/Form/Button';
 import { FieldSet } from '@/app/components/Form/Fieldset';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { Plus, RotateCcw } from 'lucide-react';
 import { FC, useCallback, useEffect, useState } from 'react';
 import { CreateProviderCredentialDialog } from '@/app/components/base/modal/create-provider-credential-modal';

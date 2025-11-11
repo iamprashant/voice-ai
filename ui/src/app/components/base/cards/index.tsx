@@ -1,7 +1,7 @@
 import { CustomLink, CustomLinkProps } from '@/app/components/custom-link';
 import { MultiplePills } from '@/app/components/Pill';
 import { Tooltip } from '@/app/components/Tooltip';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { FC, HTMLAttributes } from 'react';
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {}

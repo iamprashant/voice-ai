@@ -1,4 +1,4 @@
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import React, { FC } from 'react';
 
 export const SpeakLoader: FC<{ isRecording: boolean }> = ({ isRecording }) => {

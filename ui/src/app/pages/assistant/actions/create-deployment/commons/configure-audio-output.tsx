@@ -8,7 +8,7 @@ import { InputGroup } from '@/app/components/input-group';
 import { InputHelper } from '@/app/components/input-helper';
 import { ProviderConfig } from '@/app/components/providers';
 
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { TextToSpeechProvider } from '@/app/components/providers/text-to-speech';
 import { ConditionalInputGroup } from '@/app/components/conditional-input-group';
 

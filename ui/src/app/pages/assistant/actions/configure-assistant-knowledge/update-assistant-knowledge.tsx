@@ -26,7 +26,7 @@ import { useRapidaStore } from '@/hooks';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { useGlobalNavigation } from '@/hooks/use-global-navigator';
 import { RETRIEVE_METHOD } from '@/models/datasets';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { retrieveMethodFromString } from '@/utils';
 import { InfoIcon } from 'lucide-react';
 import { FC, useEffect, useState } from 'react';

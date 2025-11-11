@@ -4,7 +4,7 @@ import { TextImage } from '@/app/components/Image/TextImage';
 import { User } from '@rapidaai/react';
 import { StatusIndicator } from '@/app/components/indicators/status';
 import { RoleIndicator } from '@/app/components/indicators/role';
-import { toHumanReadableDate } from '@/styles/media';
+import { toHumanReadableDate } from '@/utils/date';
 import { TableRow } from '@/app/components/base/tables/table-row';
 
 /**

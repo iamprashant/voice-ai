@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { FieldSet } from '@/app/components/Form/Fieldset';
 import { Tooltip } from '@/app/components/Tooltip';
 import { Input } from '@/app/components/Form/Input';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { InfoIcon } from '@/app/components/Icon/Info';
 import { FormLabel } from '@/app/components/form-label';
 import { ModalBody } from '@/app/components/base/modal/modal-body';

@@ -1,5 +1,5 @@
 import React, { HTMLAttributes } from 'react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 
 export function BluredWrapper(props: HTMLAttributes<HTMLDivElement>) {
   return (

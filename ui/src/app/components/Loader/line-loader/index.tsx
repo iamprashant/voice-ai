@@ -1,6 +1,6 @@
 import { useRapidaStore } from '@/hooks';
 
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 
 export function LineLoader(props: React.HTMLAttributes<HTMLDivElement>) {
   const { loading } = useRapidaStore();

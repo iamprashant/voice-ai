@@ -1,6 +1,6 @@
 import React, { HTMLAttributes } from 'react';
 import { Link } from 'react-router-dom';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 /**
  *
  * @param props

@@ -43,11 +43,11 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { PlusIcon } from '@/app/components/Icon/plus';
 import { Popover } from '@/app/components/Popover';
 import { ActionableEmptyMessage } from '@/app/components/container/message/actionable-empty-message';
-import { cn, toHumanReadableDateTime } from '@/styles/media';
+import { toHumanReadableDateTime } from '@/utils/date';
 import { InputHelper } from '@/app/components/input-helper';
 import { CodeHighlighting } from '@/app/components/code-highlighting';
 import { useRapidaStore } from '@/hooks';
-import { PaginationButtonBlock } from '@/app/components/blocks/pagination-button-block';
+import { cn } from '@/utils';
 
 export const ConfigureAssistantDeploymentPage = () => {
   const { assistantId } = useParams();

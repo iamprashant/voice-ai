@@ -1,7 +1,8 @@
 import { FC, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useGlobalNavigation } from '@/hooks/use-global-navigator';
-import { cn, toHumanReadableDateTime } from '@/styles/media';
+import { toHumanReadableDateTime } from '@/utils/date';
+import { cn } from '@/utils';
 import { ExternalLink, Plus, RotateCw } from 'lucide-react';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { useRapidaStore } from '@/hooks';

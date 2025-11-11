@@ -5,7 +5,7 @@ import { IButton, ILinkBorderButton } from '@/app/components/Form/Button';
 import { FieldSet } from '@/app/components/Form/Fieldset';
 import { useCredential } from '@/hooks';
 import { useKnowledgePageStore } from '@/hooks/use-knowledge-page-store';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 
 import { ExternalLink, RotateCcw } from 'lucide-react';
 import { FC, useCallback, useEffect, useState } from 'react';

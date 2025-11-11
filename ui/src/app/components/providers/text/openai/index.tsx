@@ -5,7 +5,7 @@ import { IButton } from '@/app/components/Form/Button';
 import { FieldSet } from '@/app/components/Form/Fieldset';
 import { Popover } from '@/app/components/Popover';
 import { OPENAI_TEXT_MODEL } from '@/app/components/providers/text/openai/constants';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { Bolt, Settings, X } from 'lucide-react';
 import { useState } from 'react';
 import { Input } from '@/app/components/Form/Input';

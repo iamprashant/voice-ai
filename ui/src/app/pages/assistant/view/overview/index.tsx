@@ -4,12 +4,12 @@ import { SectionLoader } from '@/app/components/Loader/section-loader';
 import { Analytics } from '@/app/pages/assistant/view/overview/analytics';
 import { useCredential, useRapidaStore } from '@/hooks';
 import { useAssistantTracePageStore } from '@/hooks/use-assistant-trace-page-store';
-import { toDateString } from '@/utils';
 import { FC, useEffect } from 'react';
 import toast from 'react-hot-toast/headless';
 import { YellowNoticeBlock } from '@/app/components/container/message/notice-block';
 import { ExternalLink, Info } from 'lucide-react';
 import { useGlobalNavigation } from '@/hooks/use-global-navigator';
+import { toDateString } from '@/utils/date';
 
 /**
  *

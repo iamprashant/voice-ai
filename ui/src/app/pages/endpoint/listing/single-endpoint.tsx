@@ -4,7 +4,7 @@ import { useEndpointPageStore } from '@/hooks';
 import { TagColumn } from '@/app/components/Table/TagColumn';
 
 import { TickIcon } from '@/app/components/Icon/Tick';
-import { cn, toHumanReadableRelativeTime } from '@/styles/media';
+import { nanoToMilli, toHumanReadableRelativeTime } from '@/utils/date';
 import { CopyableColumn } from '@/app/components/Table/CopyableColumn';
 import { LabelColumn } from '@/app/components/Table/LabelColumn';
 import { DateColumn } from '@/app/components/Table/DateColumn';
@@ -15,7 +15,7 @@ import { TextColumn } from '@/app/components/Table/TextColumn';
 import { TableRow } from '@/app/components/base/tables/table-row';
 import { TableCell } from '@/app/components/base/tables/table-cell';
 import { ProviderPill } from '@/app/components/Pill/provider-model-pill';
-import { nanoToMilli } from '@/utils';
+import { cn } from '@/utils';
 import { CustomLink } from '@/app/components/custom-link';
 
 /**

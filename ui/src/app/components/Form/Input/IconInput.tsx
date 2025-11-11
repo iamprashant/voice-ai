@@ -1,4 +1,4 @@
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { Input } from '@/app/components/Form/Input';
 import { SearchIcon } from '@/app/components/Icon/Search';
 import { forwardRef, InputHTMLAttributes } from 'react';

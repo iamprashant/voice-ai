@@ -1,4 +1,4 @@
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 
 interface SpinnerProps {
   size?: 'xs' | 'sm' | 'md' | 'lg';

@@ -4,7 +4,7 @@ import { FieldSet } from '@/app/components/Form/Fieldset';
 import { Input } from '@/app/components/Form/Input';
 import { Slider } from '@/app/components/Form/Slider';
 import { Tooltip } from '@/app/components/Tooltip';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { ExternalLink, Info, InfoIcon } from 'lucide-react';
 import { CodeEditor } from '@/app/components/Form/editor/code-editor';
 import { Textarea } from '@/app/components/Form/Textarea';

@@ -16,16 +16,16 @@ import { PaginationButtonBlock } from '@/app/components/blocks/pagination-button
 import { IButton } from '@/app/components/Form/Button';
 import { ChevronRight } from 'lucide-react';
 import { useCurrentCredential } from '@/hooks/use-credential';
-import { formatNanoToReadableMilli } from '@/utils';
+import { formatNanoToReadableMilli } from '@/utils/date';
 import {
-  cn,
   formatDateWithMillisecond,
   toDate,
   toDateWithMicroseconds,
-} from '@/styles/media';
+} from '@/utils/date';
 import { Tooltip } from '@/app/components/base/tooltip';
 import { CodeHighlighting } from '@/app/components/code-highlighting';
 import { Timestamp } from 'google-protobuf/google/protobuf/timestamp_pb';
+import { cn } from '@/utils';
 
 interface ConversationTelemetryDialogProps extends ModalProps {
   criterias?: Criteria[]; // Added criteria prop to accept Criteria from parent

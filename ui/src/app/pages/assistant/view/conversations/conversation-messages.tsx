@@ -2,8 +2,8 @@ import { useCredential } from '@/hooks';
 import {
   AssistantConversation,
   AssistantConversationMessage,
+  toContentText,
 } from '@rapidaai/react';
-import { toContentText } from '@/utils/rapida_content';
 import { RapidaIcon } from '@/app/components/Icon/Rapida';
 import { FC, useCallback, useContext, useEffect, useRef } from 'react';
 import { AssistantChatContext } from '@/hooks/use-assistant-chat';

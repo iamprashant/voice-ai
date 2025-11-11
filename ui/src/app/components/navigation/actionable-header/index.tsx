@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect, FC } from 'react';
 import { HelpPopover } from '@/app/components/Popover/HelpPopover';
 import { ProjectSelectorDropdown } from '@/app/components/Dropdown/ProjectDropdown';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { ProfilePopover } from '@/app/components/Popover/ProfilePopover';
 import { IButton } from '@/app/components/Form/Button';
 import { useLocation } from 'react-router-dom';

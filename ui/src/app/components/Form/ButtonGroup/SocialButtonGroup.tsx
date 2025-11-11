@@ -1,5 +1,5 @@
-import { cn } from '@/styles/media';
-import { WEB_API } from '@/configs';
+import { CONFIG } from '@/configs';
+import { cn } from '@/utils';
 export function SocialButtonGroup(props: {
   google: boolean;
   linkedin: boolean;
@@ -7,13 +7,13 @@ export function SocialButtonGroup(props: {
   password: boolean;
 }) {
   const linkedinClick = () => {
-    window.location.replace(WEB_API + '/oauth/linkedin');
+    window.location.replace(CONFIG.connection.web + '/oauth/linkedin');
   };
   const googleClick = () => {
-    window.location.replace(WEB_API + '/oauth/google');
+    window.location.replace(CONFIG.connection.web + '/oauth/google');
   };
   const githubClick = () => {
-    window.location.replace(WEB_API + '/oauth/github');
+    window.location.replace(CONFIG.connection.web + '/oauth/github');
   };
 
   return (

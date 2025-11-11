@@ -5,7 +5,7 @@ import { CreateToolCredential } from '@rapidaai/react';
 import { GetCredentialResponse } from '@rapidaai/react';
 import { Label } from '@/app/components/Form/Label';
 import { Input } from '@/app/components/Form/Input';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { ErrorMessage } from '@/app/components/Form/error-message';
 import { useRapidaStore } from '@/hooks';
 import toast from 'react-hot-toast/headless';

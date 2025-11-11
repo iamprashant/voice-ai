@@ -5,7 +5,7 @@ import { IBlueBorderButton, ICancelButton } from '@/app/components/Form/Button';
 import { FieldSet } from '@/app/components/Form/Fieldset';
 import { Input } from '@/app/components/Form/Input';
 import { Select } from '@/app/components/Form/Select';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { ArrowRight, ExternalLink, Info, Plus, Trash2 } from 'lucide-react';
 import { FC, useState } from 'react';
 import { InputGroup } from '@/app/components/input-group';

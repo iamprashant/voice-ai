@@ -6,7 +6,7 @@
  * contain code that should be seen on all pages. (e.g. navigation bar)
  */
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { GlobalStyle } from '@/styles/global-styles';
+import {} from '@/styles/global-styles';
 import * as WebRoutes from '@/app/routes';
 import { GA } from '@/app/components/ga';
 import React from 'react';
@@ -80,7 +80,6 @@ export function App() {
           </Routes>
         </BrowserRouter>
       </AuthProvider>
-      <GlobalStyle />
     </React.Fragment>
   );
 }

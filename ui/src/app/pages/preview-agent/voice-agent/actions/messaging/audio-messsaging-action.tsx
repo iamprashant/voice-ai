@@ -16,7 +16,7 @@ import {
   useInputModeToggleAgent,
   VoiceAgent,
 } from '@rapidaai/react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { Tooltip } from '@/app/components/base/tooltip';
 
 /**

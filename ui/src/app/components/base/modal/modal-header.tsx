@@ -1,5 +1,5 @@
 import { IButton } from '@/app/components/Form/Button';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { X } from 'lucide-react';
 import { FC, HTMLAttributes } from 'react';
 

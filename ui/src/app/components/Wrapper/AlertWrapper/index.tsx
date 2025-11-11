@@ -1,5 +1,5 @@
 import React, { HTMLAttributes } from 'react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 
 export function ErrorWrapper(props: HTMLAttributes<HTMLDivElement>) {
   return (

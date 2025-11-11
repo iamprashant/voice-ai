@@ -2,7 +2,7 @@ import { Helmet } from '@/app/components/Helmet';
 import { ToolProviderListing } from '@/app/components/configuration/tool-provider-config/tool-provider-listing';
 import { ToolProviderContextProvider } from '@/context/tool-provider-context';
 import { Tab } from '@/app/components/Tab';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { useToolProviderPageStore } from '@/hooks/use-tool-provider-page-store';
 import { PageHeaderBlock } from '@/app/components/blocks/page-header-block';

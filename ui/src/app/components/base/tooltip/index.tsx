@@ -6,7 +6,7 @@ import {
   PortalToFollowElemTrigger,
 } from '@/app/components/portal-to-follow-elem';
 import { Placement } from '@floating-ui/react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 
 type TooltipProps = {
   className?: string;

@@ -1,13 +1,13 @@
 import { FC } from 'react';
 import { TickIcon } from '@/app/components/Icon/Tick';
-import { cn, toHumanReadableRelativeTime } from '@/styles/media';
+import { cn } from '@/utils';
+import { toHumanReadableRelativeTime } from '@/utils/date';
 import { LabelColumn } from '@/app/components/Table/LabelColumn';
 import { KnowledgeDocument } from '@rapidaai/react';
 import { useKnowledgeDocumentPageStore } from '@/hooks/use-knowledge-document-page-store';
 import { formatFileSize, formatNumber } from '@/utils/format';
 import { DocumentSourcePill } from '@/app/components/Pill/document-source-pill';
 import { FileExtensionIcon } from '@/app/components/Icon/file-extension';
-import { IdColumn } from '@/app/components/Table/IdColumn';
 import { DocumentOption } from '@/app/pages/knowledge-base/view/documents/document-option';
 import { useCredential, useRapidaStore } from '@/hooks';
 import toast from 'react-hot-toast/headless';

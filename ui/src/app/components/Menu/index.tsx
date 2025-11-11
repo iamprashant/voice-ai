@@ -1,6 +1,6 @@
 import React, { FC, Fragment } from 'react';
 import { Menu, Transition } from '@headlessui/react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { Float } from '@headlessui-float/react';
 import { DotIcon } from '@/app/components/Icon/Dot';
 import { ChevronDown } from 'lucide-react';

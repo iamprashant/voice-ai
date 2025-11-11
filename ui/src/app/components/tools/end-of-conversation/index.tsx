@@ -5,7 +5,7 @@ import { FieldSet } from '@/app/components/Form/Fieldset';
 import { Input } from '@/app/components/Form/Input';
 import { Textarea } from '@/app/components/Form/Textarea';
 import { InputGroup } from '@/app/components/input-group';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { Metadata } from '@rapidaai/react';
 import { ExternalLink, Info } from 'lucide-react';
 

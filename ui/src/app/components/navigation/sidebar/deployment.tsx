@@ -2,7 +2,7 @@ import React, { memo, useContext, useEffect, useMemo, useState } from 'react';
 import { ChevronDownIcon } from '@/app/components/Icon/ChevronDown';
 import { Disclosure } from '@/app/components/Disclosure';
 import { ChevronUpIcon } from '@/app/components/Icon/ChevronUp';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { DeploymentIcon } from '@/app/components/Icon/Deployment';
 import { EndpointIcon } from '@/app/components/Icon/Endpoint';
 import { AssistantIcon } from '@/app/components/Icon/Assistant';

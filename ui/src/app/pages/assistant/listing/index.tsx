@@ -18,7 +18,7 @@ import { ChevronsLeftRightEllipsis, Code, Plus, RotateCw } from 'lucide-react';
 import { PageHeaderBlock } from '@/app/components/blocks/page-header-block';
 import { PageTitleBlock } from '@/app/components/blocks/page-title-block';
 import { PaginationButtonBlock } from '@/app/components/blocks/pagination-button-block';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { Popover } from '@/app/components/Popover';
 
 /**

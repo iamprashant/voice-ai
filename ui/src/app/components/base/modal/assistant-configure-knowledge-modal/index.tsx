@@ -23,7 +23,7 @@ import {
 } from '@/app/components/providers/reranker';
 import { Tooltip } from '@/app/components/Tooltip';
 import { RETRIEVE_METHOD } from '@/models/datasets';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { InfoIcon } from 'lucide-react';
 import { FC, useEffect, useState } from 'react';
 interface ConfigureAssistantKnowledgeDialogProps extends ModalProps {

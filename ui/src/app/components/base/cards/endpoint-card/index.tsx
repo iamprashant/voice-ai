@@ -8,7 +8,7 @@ import {
   ClickableCard,
 } from '@/app/components/base/cards';
 import { SearchableDeployment } from '@rapidaai/react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { BorderButton } from '@/app/components/Form/Button';
 import { useNavigate } from 'react-router-dom';
 

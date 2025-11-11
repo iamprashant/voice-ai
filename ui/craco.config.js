@@ -8,10 +8,9 @@ module.exports = {
     },
     plugins: [new MonacoWebpackPlugin()],
     configure: webpackConfig => {
-      const isElectron = process.env.IS_ELECTRON === 'true';
       webpackConfig.output = {
         ...webpackConfig.output,
-        publicPath: isElectron ? './' : '/', // Ensures assets are loaded with relative paths in Electron
+        publicPath: '/', // Ensures assets are loaded with relative paths in Electron
       };
       // Disable the minimizer
       webpackConfig.optimization = {

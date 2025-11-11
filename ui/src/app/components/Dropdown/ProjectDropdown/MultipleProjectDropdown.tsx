@@ -1,7 +1,7 @@
 import { Fragment, useContext } from 'react';
 import React from 'react';
 import { Listbox, Transition } from '@headlessui/react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { Float } from '@headlessui-float/react';
 import { AuthContext } from '@/context/auth-context';
 import { Check } from 'lucide-react';

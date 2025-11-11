@@ -1,5 +1,5 @@
 import { Select } from '@/app/components/Form/Select';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { InputVarType } from '@/models/common';
 import React, { FC } from 'react';
 

@@ -4,7 +4,7 @@ import { FieldSet } from '@/app/components/Form/Fieldset';
 import { Input } from '@/app/components/Form/Input';
 import { InputGroup } from '@/app/components/input-group';
 import { InputHelper } from '@/app/components/input-helper';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { FC } from 'react';
 
 /**

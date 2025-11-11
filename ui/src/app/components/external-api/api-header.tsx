@@ -1,6 +1,6 @@
 import { IBlueBorderButton, ICancelButton } from '@/app/components/Form/Button';
 import { Input } from '@/app/components/Form/Input';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { Plus, Trash2 } from 'lucide-react';
 import { FC, useEffect, useState } from 'react';
 

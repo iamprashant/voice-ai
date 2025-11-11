@@ -9,7 +9,7 @@ import {
 } from '@rapidaai/react';
 import { MessagingAction } from '@/app/pages/preview-agent/voice-agent/actions';
 import { ConversationMessages } from '@/app/pages/preview-agent/voice-agent/text/conversations';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { QuickSuggestion } from '@/app/pages/preview-agent/voice-agent/text/suggestions';
 import { Tab } from '@/app/components/Tab';
 import { YellowNoticeBlock } from '@/app/components/container/message/notice-block';

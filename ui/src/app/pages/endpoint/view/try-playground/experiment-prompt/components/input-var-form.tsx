@@ -1,9 +1,8 @@
-import { Variable } from '@rapidaai/react';
+import { Variable, BytesToAny, StringToAny } from '@rapidaai/react';
 import { Pill } from '@/app/components/Pill';
 import React, { HTMLAttributes } from 'react';
 import p from 'google-protobuf/google/protobuf/any_pb';
-import { BytesToAny, StringToAny } from '@/utils/rapida_value';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 
 export const InputVarForm = React.forwardRef<
   HTMLTextAreaElement,

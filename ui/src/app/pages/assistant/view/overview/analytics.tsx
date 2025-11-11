@@ -1,5 +1,5 @@
 import { AssistantConversationMessage } from '@rapidaai/react';
-import { toDate } from '@/styles/media';
+import { toDate } from '@/utils/date';
 import {
   getStatusMetric,
   getTimeTakenMetric,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 
 export function VaultIcon(props: React.SVGProps<SVGSVGElement>) {
   return (

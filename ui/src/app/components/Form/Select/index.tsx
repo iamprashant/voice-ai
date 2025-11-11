@@ -1,4 +1,4 @@
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { forwardRef } from 'react';
 
 export type SelectionOption = {

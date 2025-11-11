@@ -4,7 +4,7 @@ import { ProviderConfig } from '@/app/components/providers';
 import { ConfigureCohereRerankerModel } from '@/app/components/providers/reranker/cohere';
 import { GetCohereRerankerDefaultOptions } from '@/app/components/providers/reranker/cohere/constants';
 
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { FC } from 'react';
 
 export const GetDefaultRerankerConfigIfInvalid = (

@@ -1,6 +1,6 @@
 import React, { HTMLAttributes } from 'react';
 import MarkdownPreview from '@uiw/react-markdown-preview';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 
 interface MarkdownViewerProps extends HTMLAttributes<HTMLDivElement> {
   text?: string;

@@ -24,7 +24,7 @@ import {
   GetVoyageEmbeddingDefaultOptions,
   ValidateVoyageEmbeddingDefaultOptions,
 } from '@/app/components/providers/embedding/voyageai/constants';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { FC, useCallback } from 'react';
 import { CredentialDropdown } from '@/app/components/Dropdown/credential-dropdown';
 import { FieldSet } from '@/app/components/Form/Fieldset';

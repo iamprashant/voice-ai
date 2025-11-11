@@ -19,7 +19,7 @@ import { IBlueButton, IButton } from '@/app/components/Form/Button';
 import { ExternalLink, Info, Plus, RotateCw } from 'lucide-react';
 import { connectionConfig } from '@/configs';
 import { Eye, EyeOff, Copy, CheckCircle } from 'lucide-react';
-import { toHumanReadableDate } from '@/styles/media';
+import { toHumanReadableDate } from '@/utils/date';
 import { Card, CardTitle } from '@/app/components/base/cards';
 import { YellowNoticeBlock } from '@/app/components/container/message/notice-block';
 import { FieldSet } from '@/app/components/Form/Fieldset';

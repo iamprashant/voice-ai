@@ -1,4 +1,4 @@
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { HTMLAttributes } from 'react';
 
 export function TabHeader(props: HTMLAttributes<HTMLDivElement>) {

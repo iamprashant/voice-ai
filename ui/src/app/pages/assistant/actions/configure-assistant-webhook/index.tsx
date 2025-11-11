@@ -1,8 +1,7 @@
 import React, { FC, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-
 import { useGlobalNavigation } from '@/hooks/use-global-navigator';
-import { cn, toHumanReadableDateTime } from '@/styles/media';
+import { toHumanReadableDateTime } from '@/utils/date';
 import { Plus, RotateCw } from 'lucide-react';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { useRapidaStore } from '@/hooks';
@@ -23,6 +22,7 @@ import { ActionableEmptyMessage } from '@/app/components/container/message/actio
 import { UpdateAssistantWebhook } from '@/app/pages/assistant/actions/configure-assistant-webhook/update-assistant-webhook';
 import { useAssistantWebhookPageStore } from '@/app/pages/assistant/actions/store/use-webhook-page-store';
 import { PaginationButtonBlock } from '@/app/components/blocks/pagination-button-block';
+import { cn } from '@/utils';
 
 export function ConfigureAssistantWebhookPage() {
   const { assistantId } = useParams();

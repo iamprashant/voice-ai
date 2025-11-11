@@ -1,6 +1,6 @@
 import { FC, HTMLAttributes } from 'react';
 import { Card, CardDescription, CardTitle } from '@/app/components/base/cards';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { CardOptionMenu } from '@/app/components/Menu';
 import { SquareFunction } from 'lucide-react';
 import { AssistantTool } from '@rapidaai/react';

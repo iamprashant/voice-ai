@@ -7,7 +7,7 @@ import {
 } from '@headlessui/react';
 import { Spinner } from '@/app/components/Loader/Spinner';
 import React, { ChangeEvent, Fragment, HTMLAttributes } from 'react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { Float } from '@headlessui-float/react';
 import { SearchIconInput } from '@/app/components/Form/Input/IconInput';
 import { Check, ChevronDown } from 'lucide-react';

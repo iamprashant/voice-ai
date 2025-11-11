@@ -4,7 +4,8 @@ import { useCredential } from '@/hooks/use-credential';
 import { FC, HTMLAttributes, useEffect, useState } from 'react';
 import toast from 'react-hot-toast/headless';
 import { Outlet, useParams } from 'react-router-dom';
-import { cn, toHumanReadableRelativeTime } from '@/styles/media';
+import { toHumanReadableRelativeTime } from '@/utils/date';
+import { cn } from '@/utils';
 import {
   AssistantDefinition,
   ConnectionConfig,

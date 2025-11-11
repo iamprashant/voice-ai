@@ -5,7 +5,7 @@ import {
   toHumanReadableDate,
   toHumanReadableDateTime,
   toHumanReadableRelativeTime,
-} from '@/styles/media';
+} from '@/utils/date';
 
 /**
  *

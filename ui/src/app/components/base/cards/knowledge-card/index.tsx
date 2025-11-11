@@ -7,7 +7,7 @@ import {
 } from '@/app/components/base/cards';
 import { Knowledge } from '@rapidaai/react';
 import { KnowledgeIcon } from '@/app/components/Icon/knowledge';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { CardOptionMenu } from '@/app/components/Menu';
 import { formatHumanReadableNumber } from '@/utils/format';
 

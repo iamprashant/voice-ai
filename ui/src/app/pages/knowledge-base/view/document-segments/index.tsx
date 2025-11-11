@@ -4,7 +4,7 @@ import { TablePagination } from '@/app/components/base/tables/table-pagination';
 import { BluredWrapper } from '@/app/components/Wrapper/BluredWrapper';
 import { useRapidaStore } from '@/hooks';
 import { useKnowledgeDocumentSegmentPageStore } from '@/hooks/use-knowledge-document-segment-page-store';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { FC, useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast/headless';
 import { Knowledge } from '@rapidaai/react';

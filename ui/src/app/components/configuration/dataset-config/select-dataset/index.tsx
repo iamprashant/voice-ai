@@ -14,7 +14,7 @@ import { SelectKnowledgeCard } from '@/app/components/base/cards/knowledge-card'
 import { ActionableEmptyMessage } from '@/app/components/container/message/actionable-empty-message';
 import { MoveRight, Plus, X } from 'lucide-react';
 import { IBlueBGButton } from '../../../Form/Button/index';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { ModalBody } from '@/app/components/base/modal/modal-body';
 import { GenericModal } from '@/app/components/base/modal';
 import { ModalFitHeightBlock } from '@/app/components/blocks/modal-fit-height-block';
