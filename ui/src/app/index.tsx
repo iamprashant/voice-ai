@@ -13,7 +13,6 @@ import React from 'react';
 import { StaticPageNotFoundPage } from '@/app/pages/static-pages';
 import { AuthProvider } from '@/context/auth-context';
 import { useWorkspace } from '@/context/workplace-context';
-import { DemoPage, HomePage } from '@/app/pages/landing';
 import { Helmet } from '@/app/components/Helmet';
 
 /**
@@ -22,7 +21,6 @@ import { Helmet } from '@/app/components/Helmet';
  */
 export function App() {
   const workspace = useWorkspace();
-
   return (
     <React.Fragment>
       <Helmet title="Home" />
@@ -75,15 +73,8 @@ export function App() {
             <Route
               key="/"
               path="/"
-              element={
-                workspace.landing !== '/' ? (
-                  <Navigate to={workspace.landing} replace />
-                ) : (
-                  <HomePage />
-                )
-              }
+              element={<Navigate to={'/auth/signin'} replace />}
             />
-            <Route path="/demo" element={<DemoPage />} />
             <Route path="/static/*" element={<WebRoutes.StaticRoute />} />
             <Route path="*" element={<StaticPageNotFoundPage />} />
           </Routes>

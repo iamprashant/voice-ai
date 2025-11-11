@@ -1,7 +1,7 @@
 import { Spinner } from '@/app/components/Loader/Spinner';
 import React, { FC } from 'react';
 import { cn } from '@/styles/media';
-import { ArrowRight, ChevronRight, PlusIcon } from 'lucide-react';
+import { ChevronRight, PlusIcon } from 'lucide-react';
 /**
  *
  */

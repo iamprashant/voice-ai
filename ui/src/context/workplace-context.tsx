@@ -14,7 +14,6 @@ type AuthProvider = 'password' | 'google' | 'linkedin' | 'github';
 interface WorkspaceContextProps {
   domain: string;
   logo: ReactElement;
-  landing: '/' | '/auth/signin';
   authentication: AuthConfig;
 }
 
@@ -88,7 +87,7 @@ const workspaceConfigs: Record<string, WorkspaceContextProps> = {
         </svg>
       </div>
     ),
-    landing: '/auth/signin',
+
     authentication: {
       signIn: {
         enable: true,
@@ -125,7 +124,7 @@ const workspaceConfigs: Record<string, WorkspaceContextProps> = {
         src="https://www.beanbag.ai/static/media/darkLogo.040cbcdb4409413d0838.png"
       />
     ),
-    landing: '/auth/signin',
+
     authentication: {
       signIn: {
         enable: true,
@@ -158,7 +157,6 @@ const defaultWorkspace: WorkspaceContextProps = {
       <RapidaTextIcon className="h-6" />
     </div>
   ),
-  landing: '/',
   authentication: {
     signIn: {
       enable: true,
