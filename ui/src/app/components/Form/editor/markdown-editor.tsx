@@ -5,7 +5,7 @@ import MarkdownEditor, {
   defaultCommands,
   ICommand,
 } from '@uiw/react-markdown-editor';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { useDarkMode } from '@/context/dark-mode-context';
 
 type MarkdownTextEditorProps = {

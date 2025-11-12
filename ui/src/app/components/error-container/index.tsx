@@ -1,4 +1,4 @@
-import { IBlueBGButton } from '@/app/components/Form/Button';
+import { IBlueBGButton } from '@/app/components/form/button';
 
 import { ArrowLeft } from 'lucide-react';
 import { FC } from 'react';

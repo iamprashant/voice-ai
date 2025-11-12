@@ -1,25 +1,25 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Helmet } from '@/app/components/Helmet';
+import { Helmet } from '@/app/components/helmet';
 import { useCredential } from '@/hooks/use-credential';
 import { useRapidaStore } from '@/hooks';
 import { TablePagination } from '@/app/components/base/tables/table-pagination';
-import { SearchIconInput } from '@/app/components/Form/Input/IconInput';
+import { SearchIconInput } from '@/app/components/form/input/IconInput';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { BluredWrapper } from '@/app/components/Wrapper/BluredWrapper';
+import { BluredWrapper } from '@/app/components/wrapper/blured-wrapper';
 import toast from 'react-hot-toast/headless';
 import SingleAssistant from './single-assistant';
 import { useAssistantPageStore } from '@/hooks/use-assistant-page-store';
 import { Assistant } from '@rapidaai/react';
-import { Spinner } from '@/app/components/Loader/Spinner';
+import { Spinner } from '@/app/components/loader/spinner';
 import { ActionableEmptyMessage } from '@/app/components/container/message/actionable-empty-message';
 import { HowAssistantWorksDialog } from '@/app/components/base/modal/how-it-works-modal/how-assistant-works';
-import { IBlueButton, IButton } from '@/app/components/Form/Button';
+import { IBlueButton, IButton } from '@/app/components/form/button';
 import { ChevronsLeftRightEllipsis, Code, Plus, RotateCw } from 'lucide-react';
 import { PageHeaderBlock } from '@/app/components/blocks/page-header-block';
 import { PageTitleBlock } from '@/app/components/blocks/page-title-block';
 import { PaginationButtonBlock } from '@/app/components/blocks/pagination-button-block';
-import { cn } from '@/styles/media';
-import { Popover } from '@/app/components/Popover';
+import { cn } from '@/utils';
+import { Popover } from '@/app/components/popover';
 
 /**
  * Assistant page

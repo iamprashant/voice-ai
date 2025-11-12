@@ -7,7 +7,7 @@ import {
   useAnimate,
   motion,
 } from 'framer-motion';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 /**
  *
  */

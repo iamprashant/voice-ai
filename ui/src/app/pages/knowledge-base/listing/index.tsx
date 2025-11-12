@@ -1,23 +1,23 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Helmet } from '@/app/components/Helmet';
+import { Helmet } from '@/app/components/helmet';
 import { useCredential } from '@/hooks/use-credential';
 import { useRapidaStore } from '@/hooks';
 import { TablePagination } from '@/app/components/base/tables/table-pagination';
-import { SearchIconInput } from '@/app/components/Form/Input/IconInput';
-import { BluredWrapper } from '@/app/components/Wrapper/BluredWrapper';
+import { SearchIconInput } from '@/app/components/form/input/IconInput';
+import { BluredWrapper } from '@/app/components/wrapper/blured-wrapper';
 import toast from 'react-hot-toast/headless';
 import { useKnowledgePageStore } from '@/hooks/use-knowledge-page-store';
 import { Knowledge } from '@rapidaai/react';
-import { Spinner } from '@/app/components/Loader/Spinner';
+import { Spinner } from '@/app/components/loader/spinner';
 import { ClickableKnowledgeCard } from '@/app/components/base/cards/knowledge-card';
 import { ActionableEmptyMessage } from '@/app/components/container/message/actionable-empty-message';
 import { HowKnowledgeWorksDialog } from '@/app/components/base/modal/how-it-works-modal/how-knowledge-works';
 import { useGlobalNavigation } from '@/hooks/use-global-navigator';
-import { IBlueButton, IButton } from '@/app/components/Form/Button';
+import { IBlueButton, IButton } from '@/app/components/form/button';
 import { Plus, RotateCw } from 'lucide-react';
 import { PageHeaderBlock } from '@/app/components/blocks/page-header-block';
 import { PageTitleBlock } from '@/app/components/blocks/page-title-block';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { PaginationButtonBlock } from '@/app/components/blocks/pagination-button-block';
 
 /**

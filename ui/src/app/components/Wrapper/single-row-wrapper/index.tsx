@@ -1,4 +1,4 @@
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import React, { HtmlHTMLAttributes } from 'react';
 interface SingleRowWrapperProps extends HtmlHTMLAttributes<HTMLDivElement> {}
 function SingleRowWrapper(props: SingleRowWrapperProps) {

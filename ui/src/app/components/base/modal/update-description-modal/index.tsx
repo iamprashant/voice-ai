@@ -1,12 +1,12 @@
-import { IBlueBGButton, ICancelButton } from '@/app/components/Form/Button';
-import { ErrorMessage } from '@/app/components/Form/error-message';
+import { IBlueBGButton, ICancelButton } from '@/app/components/form/button';
+import { ErrorMessage } from '@/app/components/form/error-message';
 import { GenericModal, ModalProps } from '@/app/components/base/modal';
 import { useRapidaStore } from '@/hooks';
 import React, { useEffect, useState } from 'react';
-import { FieldSet } from '@/app/components/Form/Fieldset';
-import { Tooltip } from '@/app/components/Tooltip';
-import { Input } from '@/app/components/Form/Input';
-import { cn } from '@/styles/media';
+import { FieldSet } from '@/app/components/form/fieldset';
+import { Tooltip } from '@/app/components/tooltip';
+import { Input } from '@/app/components/form/input';
+import { cn } from '@/utils';
 import { InfoIcon } from '@/app/components/Icon/Info';
 import { FormLabel } from '@/app/components/form-label';
 import { ModalBody } from '@/app/components/base/modal/modal-body';
@@ -15,7 +15,7 @@ import { MoveRight } from 'lucide-react';
 import { ModalHeader } from '@/app/components/base/modal/modal-header';
 import { ModalFitHeightBlock } from '@/app/components/blocks/modal-fit-height-block';
 import { ModalTitleBlock } from '@/app/components/blocks/modal-title-block';
-import { Textarea } from '@/app/components/Form/Textarea';
+import { Textarea } from '@/app/components/form/textarea';
 
 interface UpdateDescriptionDialogProps extends ModalProps {
   title?: string;

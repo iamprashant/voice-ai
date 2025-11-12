@@ -1,28 +1,20 @@
-import React, {
-  FC,
-  HTMLAttributes,
-  memo,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from 'react';
-import { cn } from '@/styles/media';
-import { BluredWrapper } from '@/app/components/Wrapper/BluredWrapper';
-import { SearchIconInput } from '@/app/components/Form/Input/IconInput';
+import { FC, memo, useCallback, useContext, useEffect, useState } from 'react';
+import { cn } from '@/utils';
+import { BluredWrapper } from '@/app/components/wrapper/blured-wrapper';
+import { SearchIconInput } from '@/app/components/form/input/IconInput';
 import { Card } from '@/app/components/base/cards';
-import { TableHederWithCheckbox } from '@/app/components/Table/TableHeader';
 import { ConnectorFileContext } from '@/hooks/use-connector-file-page-store';
 import { TablePagination } from '@/app/components/base/tables/table-pagination';
 import { useCredential, useRapidaStore } from '@/hooks';
 import { Struct } from 'google-protobuf/google/protobuf/struct_pb';
 import toast from 'react-hot-toast/headless';
-import { TD } from '@/app/components/Table/TD';
-import { TR } from '@/app/components/Table/Body';
-import { IdColumn } from '@/app/components/Table/IdColumn';
-import { formatFileSize } from '@/utils/format';
-import { Spinner } from '@/app/components/Loader/Spinner';
+import { Spinner } from '@/app/components/loader/spinner';
 import { KnowledgeFileListingProps } from '@/app/pages/knowledge-base/action/connect-knowledge/connectors-files-listing';
+import { TableHederWithCheckbox } from '@/app/components/base/tables/table-head';
+import { TableRow } from '@/app/components/base/tables/table-row';
+import { TableCell } from '@/app/components/base/tables/table-cell';
+import { SizeCell } from '@/app/components/base/tables/size-cell';
+import { TextCell } from '@/app/components/base/tables/text-cell';
 
 export const GitlabKnowledgeFileListing: FC<KnowledgeFileListingProps> = memo(
   ({ toolProvider, className }) => {
@@ -193,8 +185,8 @@ export const GitlabKnowledgeFileListing: FC<KnowledgeFileListingProps> = memo(
           <tbody>
             {ctx.files.map((x, idx) => {
               return (
-                <TR key={idx}>
-                  <TD>
+                <TableRow key={idx}>
+                  <TableCell>
                     <input
                       type="checkbox"
                       name="file-ids"
@@ -206,16 +198,20 @@ export const GitlabKnowledgeFileListing: FC<KnowledgeFileListingProps> = memo(
                         ontoggle(x.getFieldsMap().get('id')?.getStringValue())
                       }
                     />
-                  </TD>
-                  <IdColumn to="">
+                  </TableCell>
+                  <TextCell>
                     {x.getFieldsMap().get('title')?.getStringValue()}
-                  </IdColumn>
-                  <TD>{x.getFieldsMap().get('folder')?.getStringValue()}</TD>
-                  <FileSize
+                  </TextCell>
+                  <TableCell>
+                    {x.getFieldsMap().get('folder')?.getStringValue()}
+                  </TableCell>
+                  <SizeCell
                     size={x.getFieldsMap().get('fileSize')?.getStringValue()}
                   />
-                  <TD>{x.getFieldsMap().get('mimeType')?.getStringValue()}</TD>
-                </TR>
+                  <TableCell>
+                    {x.getFieldsMap().get('mimeType')?.getStringValue()}
+                  </TableCell>
+                </TableRow>
               );
             })}
           </tbody>
@@ -242,8 +238,3 @@ export const GitlabKnowledgeFileListing: FC<KnowledgeFileListingProps> = memo(
     );
   },
 );
-
-const FileSize: FC<{ size?: string }> = ({ size }) => {
-  if (size) return <TD>{formatFileSize(+size)}</TD>;
-  return <TD>{size}</TD>;
-};

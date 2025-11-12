@@ -1,13 +1,13 @@
-import { Helmet } from '@/app/components/Helmet';
+import { Helmet } from '@/app/components/helmet';
 import { FC, useCallback, useState } from 'react';
 import { useCredential, useRapidaStore } from '@/hooks';
 import {
   Button,
   IBlueBGButton,
   ICancelButton,
-} from '@/app/components/Form/Button';
+} from '@/app/components/form/button';
 import { KnowledgeDocument } from '@rapidaai/react';
-import { TabForm } from '@/app/components/Form/tab-form';
+import { TabForm } from '@/app/components/form/tab-form';
 import { useCreateKnowledgeDocumentPageStore } from '@/hooks/use-create-knowledge-document-page-store';
 import { ToolProviderContextProvider } from '@/context/tool-provider-context';
 import { useToolProviderPageStore } from '@/hooks/use-tool-provider-page-store';

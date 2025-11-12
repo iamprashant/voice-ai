@@ -1,4 +1,4 @@
-import { IBlueButton, IButton } from '@/app/components/Form/Button';
+import { IBlueButton, IButton } from '@/app/components/form/button';
 import { useRapidaStore } from '@/hooks';
 import { FC, useEffect } from 'react';
 import toast from 'react-hot-toast/headless';
@@ -11,7 +11,7 @@ import { PageHeaderBlock } from '@/app/components/blocks/page-header-block';
 import { PageTitleBlock } from '@/app/components/blocks/page-title-block';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { useAssistantKnowledgePageStore } from '@/app/pages/assistant/actions/store/use-knowledge-page-store';
-import { SectionLoader } from '@/app/components/Loader/section-loader';
+import { SectionLoader } from '@/app/components/loader/section-loader';
 import { TablePagination } from '@/app/components/base/tables/table-pagination';
 import { UpdateKnowledge } from '@/app/pages/assistant/actions/configure-assistant-knowledge/update-assistant-knowledge';
 import { CreateKnowledge } from '@/app/pages/assistant/actions/configure-assistant-knowledge/create-assistant-knowledge';

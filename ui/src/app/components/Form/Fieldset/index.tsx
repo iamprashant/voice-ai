@@ -1,5 +1,5 @@
 import React, { FieldsetHTMLAttributes } from 'react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 
 /**
  *

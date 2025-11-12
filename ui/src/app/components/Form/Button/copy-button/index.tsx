@@ -2,10 +2,10 @@ import {
   BorderButton,
   ButtonProps,
   IButton,
-} from '@/app/components/Form/Button';
+} from '@/app/components/form/button';
 import { CopyIcon } from '@/app/components/Icon/Copy';
 import { TickIcon } from '@/app/components/Icon/Tick';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import React, { useState } from 'react';
 
 export function CopyButton(props: ButtonProps) {

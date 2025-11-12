@@ -2,15 +2,15 @@ import { useCredential } from '@/hooks';
 import {
   AssistantConversation,
   AssistantConversationMessage,
+  toContentText,
 } from '@rapidaai/react';
-import { toContentText } from '@/utils/rapida_content';
 import { RapidaIcon } from '@/app/components/Icon/Rapida';
 import { FC, useCallback, useContext, useEffect, useRef } from 'react';
 import { AssistantChatContext } from '@/hooks/use-assistant-chat';
 import { useBoolean } from 'ahooks';
-import { SectionLoader } from '@/app/components/Loader/section-loader';
+import { SectionLoader } from '@/app/components/loader/section-loader';
 import { ArrowDownToLine, RotateCw } from 'lucide-react';
-import { IButton } from '@/app/components/Form/Button';
+import { IButton } from '@/app/components/form/button';
 
 import MarkdownPreview from '@uiw/react-markdown-preview';
 import { ActionableEmptyMessage } from '@/app/components/container/message/actionable-empty-message';

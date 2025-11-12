@@ -2,12 +2,12 @@ import {
   BorderButton,
   Button,
   ButtonProps,
-} from '@/app/components/Form/Button';
+} from '@/app/components/form/button';
 import { useRapidaStore } from '@/hooks';
 import React from 'react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { PlusIcon } from '@/app/components/Icon/plus';
-import { Spinner } from '@/app/components/Loader/Spinner';
+import { Spinner } from '@/app/components/loader/spinner';
 
 interface AddButtonProp extends ButtonProps {
   label?: string;

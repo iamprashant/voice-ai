@@ -1,6 +1,6 @@
 import { Variable } from '@rapidaai/react';
 import { Endpoint, EndpointProviderModel } from '@rapidaai/react';
-import { Tab } from '@/app/components/Tab';
+import { Tab } from '@/app/components/tab';
 import { FC } from 'react';
 import { CodeHighlighting } from '@/app/components/code-highlighting';
 

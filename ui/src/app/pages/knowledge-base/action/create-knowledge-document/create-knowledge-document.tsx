@@ -6,10 +6,10 @@ import { useCreateKnowledgeDocumentPageStore } from '@/hooks/use-create-knowledg
 import {
   IBlueBGArrowButton,
   ICancelButton,
-} from '@/app/components/Form/Button';
+} from '@/app/components/form/button';
 import { ManualFile } from '@/app/pages/knowledge-base/action/components/datasource-uploader/manual-file';
 import { useGlobalNavigation } from '@/hooks/use-global-navigator';
-import { ErrorMessage } from '@/app/components/Form/error-message';
+import { ErrorMessage } from '@/app/components/form/error-message';
 
 export function CreateKnowledgeDocumentPage() {
   const { id } = useParams();

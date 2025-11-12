@@ -1,7 +1,7 @@
-import { Dropdown } from '@/app/components/Dropdown';
-import { CredentialDropdown } from '@/app/components/Dropdown/credential-dropdown';
+import { Dropdown } from '@/app/components/dropdown';
+import { CredentialDropdown } from '@/app/components/dropdown/credential-dropdown';
 import { FormLabel } from '@/app/components/form-label';
-import { FieldSet } from '@/app/components/Form/Fieldset';
+import { FieldSet } from '@/app/components/form/fieldset';
 import {
   ProviderConfig,
   TEXT_TO_SPEECH_PROVIDER,

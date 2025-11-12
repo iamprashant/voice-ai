@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Helmet } from '@/app/components/Helmet';
-import { Label } from '@/app/components/Form/Label';
-import { Input } from '@/app/components/Form/Input';
-import { ArrowButton } from '@/app/components/Form/Button/ArrowButton';
+import { Helmet } from '@/app/components/helmet';
+import { Label } from '@/app/components/form/label';
+import { Input } from '@/app/components/form/input';
+import { ArrowButton } from '@/app/components/form/button/ArrowButton';
 import { UpdateUser, GetUser } from '@rapidaai/react';
 import { ServiceError } from '@rapidaai/react';
 import { GetUserResponse, UpdateUserResponse } from '@rapidaai/react';
@@ -11,8 +11,8 @@ import { useForm } from 'react-hook-form';
 import { useCredential } from '@/hooks/use-credential';
 import { useRapidaStore } from '@/hooks';
 import toast from 'react-hot-toast/headless';
-import { DescriptiveHeading } from '@/app/components/Heading/DescriptiveHeading';
-import { BorderButton } from '@/app/components/Form/Button';
+import { DescriptiveHeading } from '@/app/components/heading/descriptive-heading';
+import { BorderButton } from '@/app/components/form/button';
 import { connectionConfig } from '@/configs';
 export function PersonalSettingPage() {
   /**

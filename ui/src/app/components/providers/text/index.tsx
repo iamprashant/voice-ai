@@ -1,5 +1,5 @@
 import { Metadata, VaultCredential } from '@rapidaai/react';
-import { Dropdown } from '@/app/components/Dropdown';
+import { Dropdown } from '@/app/components/dropdown';
 import { ProviderConfig, TEXT_PROVIDERS } from '@/app/components/providers';
 import { ConfigureAnthropicTextProviderModel } from '@/app/components/providers/text/anthropic';
 import {
@@ -26,11 +26,11 @@ import {
   GetOpenaiTextProviderDefaultOptions,
   ValidateOpenaiTextProviderDefaultOptions,
 } from '@/app/components/providers/text/openai/constants';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { FC, useCallback } from 'react';
-import { FieldSet } from '@/app/components/Form/Fieldset';
+import { FieldSet } from '@/app/components/form/fieldset';
 import { FormLabel } from '@/app/components/form-label';
-import { CredentialDropdown } from '@/app/components/Dropdown/credential-dropdown';
+import { CredentialDropdown } from '@/app/components/dropdown/credential-dropdown';
 
 export const GetDefaultTextProviderConfigIfInvalid = (
   provider: string,

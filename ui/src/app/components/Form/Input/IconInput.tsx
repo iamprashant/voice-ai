@@ -1,5 +1,5 @@
-import { cn } from '@/styles/media';
-import { Input } from '@/app/components/Form/Input';
+import { cn } from '@/utils';
+import { Input } from '@/app/components/form/input';
 import { SearchIcon } from '@/app/components/Icon/Search';
 import { forwardRef, InputHTMLAttributes } from 'react';
 

@@ -3,13 +3,13 @@ import { useRapidaStore } from '@/hooks';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast/headless';
-import { Helmet } from '@/app/components/Helmet';
+import { Helmet } from '@/app/components/helmet';
 import {
   IBlueBGArrowButton,
   IBlueBGButton,
   ICancelButton,
-} from '@/app/components/Form/Button';
-import { TabForm } from '@/app/components/Form/tab-form';
+} from '@/app/components/form/button';
+import { TabForm } from '@/app/components/form/tab-form';
 import {
   CreateEndpointResponse,
   EndpointAttribute,
@@ -25,12 +25,12 @@ import {
 import { ProviderConfig } from '@/app/components/providers';
 import { ConfigPrompt } from '@/app/components/configuration/config-prompt';
 import { randomMeaningfullName, randomString } from '@/utils';
-import { FieldSet } from '@/app/components/Form/Fieldset';
+import { FieldSet } from '@/app/components/form/fieldset';
 import { FormLabel } from '@/app/components/form-label';
-import { Input } from '@/app/components/Form/Input';
-import { TagInput } from '@/app/components/Form/tag-input';
-import { EndpointTag } from '@/app/components/Form/tag-input/endpoint-tags';
-import { Textarea } from '@/app/components/Form/Textarea';
+import { Input } from '@/app/components/form/input';
+import { TagInput } from '@/app/components/form/tag-input';
+import { EndpointTag } from '@/app/components/form/tag-input/endpoint-tags';
+import { Textarea } from '@/app/components/form/textarea';
 import { CreateEndpoint } from '@rapidaai/react';
 import { ServiceError } from '@rapidaai/react';
 import { ChatCompletePrompt } from '@/utils/prompt';

@@ -1,8 +1,8 @@
 import { useDarkMode } from '@/context/dark-mode-context';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import React, { FC, HTMLAttributes } from 'react';
 import Editor, { OnMount } from '@monaco-editor/react';
-import { CopyButton } from '@/app/components/Form/Button/copy-button';
+import { CopyButton } from '@/app/components/form/button/copy-button';
 
 export interface CodeHighlightingProps extends HTMLAttributes<HTMLDivElement> {
   code: string;

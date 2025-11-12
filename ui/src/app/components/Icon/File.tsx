@@ -1,5 +1,5 @@
 import React, { FC, memo } from 'react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { getIcon } from 'material-file-icons';
 
 interface FileIconProps extends React.SVGProps<SVGSVGElement> {

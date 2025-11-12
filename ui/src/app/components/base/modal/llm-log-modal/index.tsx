@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { TableText } from '@/app/components/Table/Body';
 import toast from 'react-hot-toast/headless';
 import { useCredential } from '@/hooks/use-credential';
 
@@ -12,9 +11,8 @@ import {
 import { useRapidaStore } from '@/hooks';
 import { Metadata } from '@rapidaai/react';
 import { ServiceError } from '@rapidaai/react';
-import { Tab } from '@/app/components/Tab';
-import { cn } from '@/styles/media';
-import { DateTimeColumn } from '@/app/components/Table/DateColumn';
+import { Tab } from '@/app/components/tab';
+import { cn } from '@/utils';
 import { ChevronRight } from 'lucide-react';
 import { StatusIndicator } from '@/app/components/indicators/status';
 import { ModalProps } from '@/app/components/base/modal';
@@ -22,6 +20,7 @@ import { RightSideModal } from '@/app/components/base/modal/right-side-modal';
 import { HttpStatusSpanIndicator } from '@/app/components/indicators/http-status';
 import { connectionConfig } from '@/configs';
 import { CodeHighlighting } from '@/app/components/code-highlighting';
+import { toHumanReadableDateTime } from '@/utils/date';
 
 interface LLMLogModalProps extends ModalProps {
   currentActivityId: string;
@@ -129,10 +128,8 @@ export function LLMLogDialog(props: LLMLogModalProps) {
                           <div className="capitalize font-semibold">
                             Time Taken
                           </div>
-                          <div className="">
-                            <TableText>
-                              {`${activity.getTimetaken() / 1000000}ms`}{' '}
-                            </TableText>
+                          <div className="font-normal text-left max-w-[20rem] truncate">
+                            {`${activity.getTimetaken() / 1000000}ms`}{' '}
                           </div>
                         </div>
                         <div className="space-y-1">
@@ -140,7 +137,9 @@ export function LLMLogDialog(props: LLMLogModalProps) {
                             Request Created Time
                           </div>
                           <div className="">
-                            <DateTimeColumn date={activity.getCreateddate()} />
+                            {toHumanReadableDateTime(
+                              activity.getCreateddate()!,
+                            )}
                           </div>
                         </div>
 
@@ -173,8 +172,8 @@ export function LLMLogDialog(props: LLMLogModalProps) {
                             <div className="capitalize font-semibold">
                               {ad.getKey().replaceAll('_', ' ')}{' '}
                             </div>
-                            <div className="">
-                              <TableText>{ad.getValue()} </TableText>
+                            <div className="font-normal text-left max-w-[20rem] truncate">
+                              {ad.getValue()}
                             </div>
                           </div>
                         );

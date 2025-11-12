@@ -5,13 +5,13 @@ import {
   BlueBorderButton,
   IBlueBGButton,
   ILinkButton,
-} from '@/app/components/Form/Button';
+} from '@/app/components/form/button';
 import { ReloadIcon } from '@/app/components/Icon/Reload';
 import { CreateToolProviderCredentialDialog } from '@/app/components/base/modal/connect-tool-provider-credential-modal';
-import { WEB_API } from '@/configs';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { FC, HTMLAttributes, memo, useState } from 'react';
 import { StatusIndicator } from '@/app/components/indicators/status';
+import { CONFIG } from '@/configs';
 
 //
 export interface ToolProviderConnectParams {
@@ -96,7 +96,7 @@ const ToolProviderConnectButton: FC<
       <ILinkButton
         className="h-8 invisible group-hover:visible rounded-[2px]"
         target="_blank"
-        href={`${WEB_API}${connectUrl}?${queryParams.toString()}`}
+        href={`${CONFIG.connection.web}${connectUrl}?${queryParams.toString()}`}
       >
         Connect {toolProvider.getName()}
       </ILinkButton>
@@ -153,7 +153,7 @@ const ToolConnectIconButton: FC<
       <ILinkButton
         className="h-7 w-7 p-1 text-sm font-medium border invisible group-hover:visible text-gray-500!"
         target="_blank"
-        href={`${WEB_API}${connectUrl}?${queryParams.toString()}`}
+        href={`${CONFIG.connection.web}${connectUrl}?${queryParams.toString()}`}
       >
         <ReloadIcon className="w-4 h-4" />
       </ILinkButton>

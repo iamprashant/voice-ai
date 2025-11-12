@@ -5,11 +5,11 @@ import {
   ListboxOptions,
   Transition,
 } from '@headlessui/react';
-import { Spinner } from '@/app/components/Loader/Spinner';
+import { Spinner } from '@/app/components/loader/spinner';
 import React, { ChangeEvent, Fragment, HTMLAttributes } from 'react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { Float } from '@headlessui-float/react';
-import { SearchIconInput } from '@/app/components/Form/Input/IconInput';
+import { SearchIconInput } from '@/app/components/form/input/IconInput';
 import { Check, ChevronDown } from 'lucide-react';
 /**
  *

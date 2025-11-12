@@ -1,7 +1,7 @@
 import { Transition, Menu } from '@headlessui/react';
-import { BorderButton, ButtonProps } from '@/app/components/Form/Button';
+import { BorderButton, ButtonProps } from '@/app/components/form/button';
 import React, { Fragment } from 'react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 
 /**
  *

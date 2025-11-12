@@ -13,10 +13,6 @@ export const AssistantChatContextProvider: React.FC<{ children }> = ({
   children,
 }) => {
   const actions = useAssistantChat();
-
-  /**
-   *
-   */
   return (
     <AssistantChatContext.Provider value={actions}>
       {children}

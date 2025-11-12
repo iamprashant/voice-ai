@@ -1,13 +1,13 @@
 import { Metadata } from '@rapidaai/react';
 import { FormLabel } from '@/app/components/form-label';
-import { FieldSet } from '@/app/components/Form/Fieldset';
-import { Input } from '@/app/components/Form/Input';
-import { Slider } from '@/app/components/Form/Slider';
-import { Tooltip } from '@/app/components/Tooltip';
-import { cn } from '@/styles/media';
+import { FieldSet } from '@/app/components/form/fieldset';
+import { Input } from '@/app/components/form/input';
+import { Slider } from '@/app/components/form/slider';
+import { Tooltip } from '@/app/components/tooltip';
+import { cn } from '@/utils';
 import { ExternalLink, Info, InfoIcon } from 'lucide-react';
-import { CodeEditor } from '@/app/components/Form/editor/code-editor';
-import { Textarea } from '@/app/components/Form/Textarea';
+import { CodeEditor } from '@/app/components/form/editor/code-editor';
+import { Textarea } from '@/app/components/form/textarea';
 import { InputGroup } from '@/app/components/input-group';
 import { YellowNoticeBlock } from '@/app/components/container/message/notice-block';
 

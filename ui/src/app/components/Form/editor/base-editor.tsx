@@ -2,7 +2,7 @@ import type { FC, HtmlHTMLAttributes } from 'react';
 import React, { useRef } from 'react';
 import cn from 'classnames';
 import { useBoolean } from 'ahooks';
-import { IButton, IconButton } from '@/app/components/Form/Button';
+import { IButton, IconButton } from '@/app/components/form/button';
 import { CircleCheck, Clipboard, MaximizeIcon, XIcon } from 'lucide-react';
 import { useToggleExpend } from '@/hooks/use-toggle-expend';
 import { TickIcon } from '@/app/components/Icon/Tick';

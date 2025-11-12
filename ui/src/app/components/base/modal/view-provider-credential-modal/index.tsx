@@ -12,9 +12,9 @@ import {
   BlueBorderButton,
   IBlueBGButton,
   IRedBGButton,
-} from '@/app/components/Form/Button';
+} from '@/app/components/form/button';
 import { useProviderContext } from '@/context/provider-context';
-import { toHumanReadableRelativeTime } from '@/styles/media';
+import { toHumanReadableRelativeTime } from '@/utils/date';
 import { DeleteIcon } from '@/app/components/Icon/delete';
 import { ServiceError } from '@rapidaai/react';
 import { ModalFooter } from '@/app/components/base/modal/modal-footer';

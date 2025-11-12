@@ -1,5 +1,5 @@
 import { LanguageIcon } from '@/app/components/Icon/Language';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { FC, HTMLAttributes } from 'react';
 
 interface LanguagePillProps extends HTMLAttributes<HTMLSpanElement> {

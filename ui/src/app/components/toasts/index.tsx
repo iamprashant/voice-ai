@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import toast, { useToaster } from 'react-hot-toast/headless';
 import { TickIcon } from '@/app/components/Icon/Tick';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { CloseIcon } from '@/app/components/Icon/Close';
 import { ExclamationTriangleIcon } from '@/app/components/Icon/exclamation-triangle';
 import { motion } from 'framer-motion';

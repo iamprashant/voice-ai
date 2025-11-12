@@ -1,32 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { Helmet } from '@/app/components/Helmet';
-import { Datepicker } from '@/app/components/Datepicker';
+import { Helmet } from '@/app/components/helmet';
+import { Datepicker } from '@/app/components/datepicker';
 import { useCredential } from '@/hooks/use-credential';
 import toast from 'react-hot-toast/headless';
 import { useRapidaStore } from '@/hooks';
 import { TablePagination } from '@/app/components/base/tables/table-pagination';
-import { SearchIconInput } from '@/app/components/Form/Input/IconInput';
+import { SearchIconInput } from '@/app/components/form/input/IconInput';
 import { Metadata } from '@rapidaai/react';
 import { CustomLink } from '@/app/components/custom-link';
-import { BluredWrapper } from '@/app/components/Wrapper/BluredWrapper';
-import { DateTimeColumn } from '@/app/components/Table/DateColumn';
-import { formatNanoToReadableMilli, toDateString } from '@/utils';
+import { BluredWrapper } from '@/app/components/wrapper/blured-wrapper';
+import { formatNanoToReadableMilli, toDateString } from '@/utils/date';
 import { getMetadataValue } from '@/utils/metadata';
-import { Spinner } from '@/app/components/Loader/Spinner';
+import { Spinner } from '@/app/components/loader/spinner';
 import { ScrollableResizableTable } from '@/app/components/data-table';
-import { IButton } from '@/app/components/Form/Button';
+import { IButton } from '@/app/components/form/button';
 import { ExternalLink, RotateCw } from 'lucide-react';
 import { TableCell } from '@/app/components/base/tables/table-cell';
 import { TableRow } from '@/app/components/base/tables/table-row';
 import { StatusIndicator } from '@/app/components/indicators/status';
-import { LLMLogDialog } from '@/app/components/base/modal/llm-log-modal';
 import { PageTitleBlock } from '@/app/components/blocks/page-title-block';
 import { YellowNoticeBlock } from '@/app/components/container/message/notice-block';
 import { PaginationButtonBlock } from '@/app/components/blocks/pagination-button-block';
 import { PageHeaderBlock } from '@/app/components/blocks/page-header-block';
 import { useToolActivityLogPage } from '@/hooks/use-tool-activity-log-page-store';
 import { ToolLogDialog } from '@/app/components/base/modal/tool-log-modal';
-import { ToolActionPill } from '@/app/components/Pill/tool-action-pill';
+import { ToolActionPill } from '@/app/components/pill/tool-action-pill';
+import { DateCell } from '@/app/components/base/tables/date-cell';
 
 /**
  * Listing all the audit log for the user organization and selected project
@@ -208,9 +207,7 @@ export function ListingPage() {
                   </TableCell>
                 )}
                 {visibleColumn('created_date') && (
-                  <TableCell>
-                    <DateTimeColumn date={at.getCreateddate()} />
-                  </TableCell>
+                  <DateCell date={at.getCreateddate()} />
                 )}
               </TableRow>
             );

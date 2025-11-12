@@ -1,11 +1,11 @@
-import { SideTab } from '@/app/components/Tab';
-import { cn } from '@/styles/media';
-import { toContentText } from '@/utils/rapida_content';
+import { SideTab } from '@/app/components/tab';
+import { cn } from '@/utils';
+import { toContentText } from '@rapidaai/react';
 import { FC } from 'react';
 import { MessageMetadatas } from './message-metadatas';
 import { MessageMetrics } from './message-metrics';
 import { AssistantConversationMessage } from '@rapidaai/react';
-import { MarkdownViewer } from '@/app/components/MarkdownViewer';
+import { MarkdownViewer } from '@/app/components/markdown-viewer';
 
 /**
  *

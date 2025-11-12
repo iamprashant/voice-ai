@@ -1,4 +1,4 @@
-import { IBlueButton, IButton } from '@/app/components/Form/Button';
+import { IBlueButton, IButton } from '@/app/components/form/button';
 import { useRapidaStore } from '@/hooks';
 import { FC, useEffect } from 'react';
 import toast from 'react-hot-toast/headless';
@@ -10,7 +10,7 @@ import { ExternalLink, Info, Plus, RotateCw } from 'lucide-react';
 import { PageTitleBlock } from '@/app/components/blocks/page-title-block';
 import { PageHeaderBlock } from '@/app/components/blocks/page-header-block';
 import { CreateTool } from '@/app/pages/assistant/actions/configure-assistant-tool/create-assistant-tool';
-import { SectionLoader } from '@/app/components/Loader/section-loader';
+import { SectionLoader } from '@/app/components/loader/section-loader';
 import { useAssistantToolPageStore } from '@/app/pages/assistant/actions/store/use-tool-page-store';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { UpdateTool } from '@/app/pages/assistant/actions/configure-assistant-tool/update-assistant-tool';

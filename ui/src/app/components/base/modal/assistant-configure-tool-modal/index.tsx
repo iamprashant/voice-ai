@@ -1,5 +1,5 @@
 import React, { FC, useEffect, useState } from 'react';
-import { IBlueBGButton, ICancelButton } from '@/app/components/Form/Button';
+import { IBlueBGButton, ICancelButton } from '@/app/components/form/button';
 import {
   BuildinTool,
   BuildinToolConfig,

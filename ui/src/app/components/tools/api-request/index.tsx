@@ -1,16 +1,16 @@
 import { Metadata } from '@rapidaai/react';
 import { FormLabel } from '@/app/components/form-label';
-import { IBlueBorderButton, ICancelButton } from '@/app/components/Form/Button';
-import { FieldSet } from '@/app/components/Form/Fieldset';
-import { Input } from '@/app/components/Form/Input';
-import { Select } from '@/app/components/Form/Select';
-import { cn } from '@/styles/media';
+import { IBlueBorderButton, ICancelButton } from '@/app/components/form/button';
+import { FieldSet } from '@/app/components/form/fieldset';
+import { Input } from '@/app/components/form/input';
+import { Select } from '@/app/components/form/select';
+import { cn } from '@/utils';
 import { ArrowRight, ExternalLink, Info, Plus, Trash2 } from 'lucide-react';
 import { FC, useState } from 'react';
-import { CodeEditor } from '@/app/components/Form/editor/code-editor';
+import { CodeEditor } from '@/app/components/form/editor/code-editor';
 import { InputGroup } from '@/app/components/input-group';
 import { YellowNoticeBlock } from '@/app/components/container/message/notice-block';
-import { Textarea } from '@/app/components/Form/Textarea';
+import { Textarea } from '@/app/components/form/textarea';
 import { APiStringHeader } from '@/app/components/external-api/api-header';
 
 export const ConfigureAPIRequest: React.FC<{

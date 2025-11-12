@@ -2,15 +2,15 @@ import { useRapidaStore } from '@/hooks';
 import { useCredential } from '@/hooks/use-credential';
 import React, { useCallback, useEffect } from 'react';
 import toast from 'react-hot-toast/headless';
-import { BluredWrapper } from '@/app/components/Wrapper/BluredWrapper';
-import { SearchIconInput } from '@/app/components/Form/Input/IconInput';
+import { BluredWrapper } from '@/app/components/wrapper/blured-wrapper';
+import { SearchIconInput } from '@/app/components/form/input/IconInput';
 import { KnowledgeDocument } from '@rapidaai/react';
 import { useKnowledgeDocumentPageStore } from '@/hooks/use-knowledge-document-page-store';
 import { TablePagination } from '@/app/components/base/tables/table-pagination';
 import { SingleDocument } from '@/app/pages/knowledge-base/view/documents/single-document';
 import { useNavigate } from 'react-router-dom';
 import { Knowledge } from '@rapidaai/react';
-import { Spinner } from '@/app/components/Loader/Spinner';
+import { Spinner } from '@/app/components/loader/spinner';
 import { ActionableEmptyMessage } from '@/app/components/container/message/actionable-empty-message';
 import { ScrollableResizableTable } from '@/app/components/data-table';
 

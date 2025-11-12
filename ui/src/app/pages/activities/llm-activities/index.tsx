@@ -1,21 +1,20 @@
 import { useState, useEffect } from 'react';
-import { Helmet } from '@/app/components/Helmet';
-import { Datepicker } from '@/app/components/Datepicker';
+import { Helmet } from '@/app/components/helmet';
+import { Datepicker } from '@/app/components/datepicker';
 import { useCredential } from '@/hooks/use-credential';
 import toast from 'react-hot-toast/headless';
 import { useRapidaStore } from '@/hooks';
 import { TablePagination } from '@/app/components/base/tables/table-pagination';
-import { SearchIconInput } from '@/app/components/Form/Input/IconInput';
+import { SearchIconInput } from '@/app/components/form/input/IconInput';
 import { Metadata } from '@rapidaai/react';
 import { CustomLink } from '@/app/components/custom-link';
-import { BluredWrapper } from '@/app/components/Wrapper/BluredWrapper';
-import { DateTimeColumn } from '@/app/components/Table/DateColumn';
+import { BluredWrapper } from '@/app/components/wrapper/blured-wrapper';
 import { useActivityLogPage } from '@/hooks/use-activity-log-page-store';
-import { formatNanoToReadableMilli, toDateString } from '@/utils';
+import { formatNanoToReadableMilli, toDateString } from '@/utils/date';
 import { getMetadataValue } from '@/utils/metadata';
-import { Spinner } from '@/app/components/Loader/Spinner';
+import { Spinner } from '@/app/components/loader/spinner';
 import { ScrollableResizableTable } from '@/app/components/data-table';
-import { IButton } from '@/app/components/Form/Button';
+import { IButton } from '@/app/components/form/button';
 import { ExternalLink, RotateCw } from 'lucide-react';
 import { TableCell } from '@/app/components/base/tables/table-cell';
 import { TableRow } from '@/app/components/base/tables/table-row';
@@ -24,9 +23,10 @@ import { LLMLogDialog } from '@/app/components/base/modal/llm-log-modal';
 import { HttpStatusSpanIndicator } from '@/app/components/indicators/http-status';
 import { PageTitleBlock } from '@/app/components/blocks/page-title-block';
 import { YellowNoticeBlock } from '@/app/components/container/message/notice-block';
-import { ProviderPill } from '@/app/components/Pill/provider-model-pill';
+import { ProviderPill } from '@/app/components/pill/provider-model-pill';
 import { PaginationButtonBlock } from '@/app/components/blocks/pagination-button-block';
 import { PageHeaderBlock } from '@/app/components/blocks/page-header-block';
+import { DateCell } from '@/app/components/base/tables/date-cell';
 
 /**
  * Listing all the audit log for the user organization and selected project
@@ -223,9 +223,7 @@ export function ListingPage() {
                   </TableCell>
                 )}
                 {visibleColumn('Created Date') && (
-                  <TableCell>
-                    <DateTimeColumn date={at.getCreateddate()} />
-                  </TableCell>
+                  <DateCell date={at.getCreateddate()} />
                 )}
                 {visibleColumn('Status') && (
                   <TableCell>

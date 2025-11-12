@@ -1,5 +1,5 @@
-import { CodeEditor } from '@/app/components/Form/editor/code-editor';
-import { cn } from '@/styles/media';
+import { CodeEditor } from '@/app/components/form/editor/code-editor';
+import { cn } from '@/utils';
 import React, { HTMLAttributes, useState } from 'react';
 
 interface TextAreaProps

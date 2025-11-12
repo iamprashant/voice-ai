@@ -1,4 +1,4 @@
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { FC, HTMLAttributes, useEffect, useState } from 'react';
 import { COMPLETE_PROVIDER, RapidaProvider } from '@/app/components/providers';
 

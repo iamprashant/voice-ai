@@ -7,8 +7,8 @@ import {
 } from '@/app/components/base/cards';
 import { Knowledge } from '@rapidaai/react';
 import { KnowledgeIcon } from '@/app/components/Icon/knowledge';
-import { cn } from '@/styles/media';
-import { CardOptionMenu } from '@/app/components/Menu';
+import { cn } from '@/utils';
+import { CardOptionMenu } from '@/app/components/menu';
 import { formatHumanReadableNumber } from '@/utils/format';
 
 interface KnowledgeCardProps extends HTMLAttributes<HTMLDivElement> {

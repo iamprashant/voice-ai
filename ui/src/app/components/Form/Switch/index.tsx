@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { Switch as SW } from '@headlessui/react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 
 /**
  *

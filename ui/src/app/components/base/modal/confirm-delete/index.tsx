@@ -1,5 +1,5 @@
-import { ICancelButton, IRedBGButton } from '@/app/components/Form/Button';
-import { Input } from '@/app/components/Form/Input';
+import { ICancelButton, IRedBGButton } from '@/app/components/form/button';
+import { Input } from '@/app/components/form/input';
 import { InfoIcon } from '@/app/components/Icon/Info';
 import { GenericModal } from '@/app/components/base/modal';
 import { ModalFooter } from '@/app/components/base/modal/modal-footer';

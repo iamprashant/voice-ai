@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { ArrowLeft, ArrowRight } from 'lucide-react'; // Importing React Lucide icons
 import { Globe, Bug, Code, Coffee, Phone } from 'lucide-react';
 import { RapidaIcon } from '@/app/components/Icon/Rapida';

@@ -1,15 +1,15 @@
 import { KnowledgeDocumentSegment } from '@rapidaai/react';
-import { PageHeading } from '@/app/components/Heading/PageHeading';
+import { PageHeading } from '@/app/components/heading/page-heading';
 import { TablePagination } from '@/app/components/base/tables/table-pagination';
-import { BluredWrapper } from '@/app/components/Wrapper/BluredWrapper';
+import { BluredWrapper } from '@/app/components/wrapper/blured-wrapper';
 import { useRapidaStore } from '@/hooks';
 import { useKnowledgeDocumentSegmentPageStore } from '@/hooks/use-knowledge-document-segment-page-store';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { FC, useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast/headless';
 import { Knowledge } from '@rapidaai/react';
-import { EditButton } from '@/app/components/Form/Button/edit-button';
-import { DeleteButton } from '@/app/components/Form/Button/delete-button';
+import { EditButton } from '@/app/components/form/button/edit-button';
+import { DeleteButton } from '@/app/components/form/button/delete-button';
 import { useCurrentCredential } from '@/hooks/use-credential';
 
 import { EditKnowledgeDocumentSegmentDialog } from '@/app/components/base/modal/edit-knowledge-document-segment-modal';

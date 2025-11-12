@@ -1,8 +1,8 @@
 import { useRapidaStore } from '@/hooks';
 import { FC, HTMLAttributes, ReactElement } from 'react';
 import { motion } from 'framer-motion';
-import { cn } from '@/styles/media';
-import { Loader } from '@/app/components/Loader';
+import { cn } from '@/utils';
+import { Loader } from '@/app/components/loader';
 import { RapidaIcon } from '@/app/components/Icon/Rapida';
 import { RapidaTextIcon } from '@/app/components/Icon/RapidaText';
 import { RightArrowIcon } from '@/app/components/Icon/RightArrow';

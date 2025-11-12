@@ -12,13 +12,13 @@ import {
   ConfigureVonageTelephony,
   ValidateVonageTelephonyOptions,
 } from '@/app/components/providers/telephony/vonage';
-import { Dropdown } from '@/app/components/Dropdown';
+import { Dropdown } from '@/app/components/dropdown';
 import { FormLabel } from '@/app/components/form-label';
-import { FieldSet } from '@/app/components/Form/Fieldset';
+import { FieldSet } from '@/app/components/form/fieldset';
 import { InputGroup } from '@/app/components/input-group';
 import { InputHelper } from '@/app/components/input-helper';
-import { cn } from '@/styles/media';
-import { CredentialDropdown } from '@/app/components/Dropdown/credential-dropdown';
+import { cn } from '@/utils';
+import { CredentialDropdown } from '@/app/components/dropdown/credential-dropdown';
 import { useCallback } from 'react';
 
 export const ValidateTelephonyOptions = (

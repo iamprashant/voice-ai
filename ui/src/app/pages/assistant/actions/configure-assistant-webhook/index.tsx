@@ -1,14 +1,13 @@
 import React, { FC, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-
 import { useGlobalNavigation } from '@/hooks/use-global-navigator';
-import { cn, toHumanReadableDateTime } from '@/styles/media';
+import { toHumanReadableDateTime } from '@/utils/date';
 import { Plus, RotateCw } from 'lucide-react';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { useRapidaStore } from '@/hooks';
-import { SectionLoader } from '@/app/components/Loader/section-loader';
-import { BluredWrapper } from '@/app/components/Wrapper/BluredWrapper';
-import { SearchIconInput } from '@/app/components/Form/Input/IconInput';
+import { SectionLoader } from '@/app/components/loader/section-loader';
+import { BluredWrapper } from '@/app/components/wrapper/blured-wrapper';
+import { SearchIconInput } from '@/app/components/form/input/IconInput';
 import { TablePagination } from '@/app/components/base/tables/table-pagination';
 import { TableSection } from '@/app/components/sections/table-section';
 import { ScrollableResizableTable } from '@/app/components/data-table';
@@ -16,13 +15,14 @@ import { TableRow } from '@/app/components/base/tables/table-row';
 import { TableCell } from '@/app/components/base/tables/table-cell';
 import { StatusIndicator } from '@/app/components/indicators/status';
 import { CreateAssistantWebhook } from './create-assistant-webhook';
-import { IBlueButton, IButton } from '@/app/components/Form/Button';
+import { IBlueButton, IButton } from '@/app/components/form/button';
 import toast from 'react-hot-toast/headless';
-import { CardOptionMenu } from '@/app/components/Menu';
+import { CardOptionMenu } from '@/app/components/menu';
 import { ActionableEmptyMessage } from '@/app/components/container/message/actionable-empty-message';
 import { UpdateAssistantWebhook } from '@/app/pages/assistant/actions/configure-assistant-webhook/update-assistant-webhook';
 import { useAssistantWebhookPageStore } from '@/app/pages/assistant/actions/store/use-webhook-page-store';
 import { PaginationButtonBlock } from '@/app/components/blocks/pagination-button-block';
+import { cn } from '@/utils';
 
 export function ConfigureAssistantWebhookPage() {
   const { assistantId } = useParams();

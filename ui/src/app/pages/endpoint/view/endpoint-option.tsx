@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { CardOptionMenu } from '@/app/components/Menu';
+import { CardOptionMenu } from '@/app/components/menu';
 import { useEndpointPageStore } from '@/hooks';
 import { Endpoint, EndpointProviderModel } from '@rapidaai/react';
 

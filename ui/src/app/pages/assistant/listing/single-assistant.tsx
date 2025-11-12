@@ -1,16 +1,16 @@
 import React, { FC } from 'react';
 import { Assistant } from '@rapidaai/react';
 import {
-  cn,
   toHumanReadableDate,
   toHumanReadableDateFromDate,
   toHumanReadableRelativeDay,
-} from '@/styles/media';
+} from '@/utils/date';
 import TooltipPlus from '@/app/components/base/tooltip-plus';
 import SourceIndicator from '@/app/components/indicators/source';
 import { useGlobalNavigation } from '@/hooks/use-global-navigator';
 import { AssistantConversation } from '@rapidaai/react';
-import { IBlueBGButton } from '@/app/components/Form/Button';
+import { IBlueBGButton } from '@/app/components/form/button';
+import { cn } from '@/utils';
 
 const SingleAssistant: FC<{ assistant: Assistant }> = ({ assistant }) => {
   const gn = useGlobalNavigation();

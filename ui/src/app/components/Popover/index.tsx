@@ -1,6 +1,6 @@
 import React, { Fragment, useRef, useEffect, HTMLAttributes } from 'react';
 import { Transition } from '@headlessui/react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import {
   offset,
   useDismiss,

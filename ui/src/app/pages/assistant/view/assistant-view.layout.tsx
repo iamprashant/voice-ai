@@ -1,10 +1,11 @@
-import { Helmet } from '@/app/components/Helmet';
+import { Helmet } from '@/app/components/helmet';
 import { useRapidaStore } from '@/hooks';
 import { useCredential } from '@/hooks/use-credential';
 import { FC, HTMLAttributes, useEffect, useState } from 'react';
 import toast from 'react-hot-toast/headless';
 import { Outlet, useParams } from 'react-router-dom';
-import { cn, toHumanReadableRelativeTime } from '@/styles/media';
+import { toHumanReadableRelativeTime } from '@/utils/date';
+import { cn } from '@/utils';
 import {
   AssistantDefinition,
   ConnectionConfig,
@@ -13,7 +14,7 @@ import {
 } from '@rapidaai/react';
 import { useAssistantPageStore } from '@/hooks/use-assistant-page-store';
 import { TabLink } from '@/app/components/tab-link';
-import { IBlueButton, IButton } from '@/app/components/Form/Button';
+import { IBlueButton, IButton } from '@/app/components/form/button';
 import {
   Bolt,
   ChevronsLeftRightEllipsis,
@@ -27,7 +28,7 @@ import { PageHeaderBlock } from '@/app/components/blocks/page-header-block';
 import { PageTitleBlock } from '@/app/components/blocks/page-title-block';
 import { ErrorContainer } from '@/app/components/error-container';
 import { connectionConfig } from '@/configs';
-import { Popover } from '@/app/components/Popover';
+import { Popover } from '@/app/components/popover';
 /**
  *
  * @returns

@@ -1,4 +1,4 @@
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { CheckIcon } from 'lucide-react';
 import { forwardRef, InputHTMLAttributes } from 'react';
 interface InputCheckboxProps extends InputHTMLAttributes<HTMLInputElement> {}

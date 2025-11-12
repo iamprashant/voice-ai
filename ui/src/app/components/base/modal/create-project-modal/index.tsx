@@ -1,21 +1,21 @@
 import React, { useCallback, useContext, useState } from 'react';
-import { Input } from '@/app/components/Form/Input';
-import { Textarea } from '@/app/components/Form/Textarea';
+import { Input } from '@/app/components/form/input';
+import { Textarea } from '@/app/components/form/textarea';
 import { CreateProject } from '@rapidaai/react';
 import { CreateProjectResponse } from '@rapidaai/react';
 import { useForm } from 'react-hook-form';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { useRapidaStore } from '@/hooks';
-import { ErrorMessage } from '@/app/components/Form/error-message';
+import { ErrorMessage } from '@/app/components/form/error-message';
 import toast from 'react-hot-toast/headless';
 import { GenericModal, ModalProps } from '@/app/components/base/modal';
 import { ServiceError } from '@rapidaai/react';
 import { AuthContext } from '@/context/auth-context';
-import { FieldSet } from '@/app/components/Form/Fieldset';
+import { FieldSet } from '@/app/components/form/fieldset';
 import {
   IBlueBGArrowButton,
   ICancelButton,
-} from '@/app/components/Form/Button';
+} from '@/app/components/form/button';
 import { ModalHeader } from '@/app/components/base/modal/modal-header';
 import { ModalBody } from '@/app/components/base/modal/modal-body';
 import { ModalFooter } from '@/app/components/base/modal/modal-footer';

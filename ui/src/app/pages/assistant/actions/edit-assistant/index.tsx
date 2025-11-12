@@ -16,11 +16,11 @@ import {
   IBlueBGButton,
   ICancelButton,
   IRedBorderButton,
-} from '@/app/components/Form/Button';
-import { FieldSet } from '@/app/components/Form/Fieldset';
-import { Input } from '@/app/components/Form/Input';
-import { CopyInput } from '@/app/components/Form/Input/copy-input';
-import { Textarea } from '@/app/components/Form/Textarea';
+} from '@/app/components/form/button';
+import { FieldSet } from '@/app/components/form/fieldset';
+import { Input } from '@/app/components/form/input';
+import { CopyInput } from '@/app/components/form/input/copy-input';
+import { Textarea } from '@/app/components/form/textarea';
 import { InputGroup } from '@/app/components/input-group';
 import { InputHelper } from '@/app/components/input-helper';
 import { useDeleteConfirmDialog } from '@/app/pages/assistant/actions/hooks/use-delete-confirmation';

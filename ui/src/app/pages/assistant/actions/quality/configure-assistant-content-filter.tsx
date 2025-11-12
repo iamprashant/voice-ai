@@ -1,9 +1,9 @@
 import { PageActionButtonBlock } from '@/app/components/blocks/page-action-button-block';
 import { PageHeaderBlock } from '@/app/components/blocks/page-header-block';
 import { PageTitleBlock } from '@/app/components/blocks/page-title-block';
-import { IBlueBGButton, ICancelButton } from '@/app/components/Form/Button';
-import { Select } from '@/app/components/Form/Select';
-import { Slider } from '@/app/components/Form/Slider';
+import { IBlueBGButton, ICancelButton } from '@/app/components/form/button';
+import { Select } from '@/app/components/form/select';
+import { Slider } from '@/app/components/form/slider';
 import { InputGroup } from '@/app/components/input-group';
 import { useState } from 'react';
 

@@ -1,5 +1,5 @@
 import { HTMLAttributes } from 'react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 
 export function EmptyMessage(props: HTMLAttributes<HTMLDivElement>) {
   return (

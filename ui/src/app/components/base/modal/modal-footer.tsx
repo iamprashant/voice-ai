@@ -1,6 +1,6 @@
 import { RedNoticeBlock } from '@/app/components/container/message/notice-block';
 import { AlertTriangle } from '@/app/components/Icon/alert-triangle';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { FC, HTMLAttributes } from 'react';
 
 interface ModalFooterProps extends HTMLAttributes<HTMLDivElement> {

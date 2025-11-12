@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Switch } from '@/app/components/Form/Switch';
-import { Label } from '@/app/components/Form/Label';
-import { IBlueBGButton, ICancelButton } from '@/app/components/Form/Button';
-import { ErrorMessage } from '@/app/components/Form/error-message';
+import { Switch } from '@/app/components/form/switch';
+import { Label } from '@/app/components/form/label';
+import { IBlueBGButton, ICancelButton } from '@/app/components/form/button';
+import { ErrorMessage } from '@/app/components/form/error-message';
 import { ModalFooter } from '@/app/components/base/modal/modal-footer';
 import { ModalBody } from '@/app/components/base/modal/modal-body';
 import { GenericModal } from '@/app/components/base/modal';

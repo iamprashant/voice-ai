@@ -1,10 +1,10 @@
 import ConfigSelect from '@/app/components/configuration/config-var/config-select';
 import { FormLabel } from '@/app/components/form-label';
-import { FieldSet } from '@/app/components/Form/Fieldset';
-import { Input } from '@/app/components/Form/Input';
-import { Textarea } from '@/app/components/Form/Textarea';
+import { FieldSet } from '@/app/components/form/fieldset';
+import { Input } from '@/app/components/form/input';
+import { Textarea } from '@/app/components/form/textarea';
 import { InputGroup } from '@/app/components/input-group';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { FC } from 'react';
 
 export interface ExperienceConfig {

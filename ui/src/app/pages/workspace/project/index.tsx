@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Helmet } from '@/app/components/Helmet';
+import { Helmet } from '@/app/components/helmet';
 import {
   ArchiveProjectResponse,
   GetAllProjectResponse,
@@ -9,20 +9,20 @@ import { CreateProjectDialog } from '@/app/components/base/modal/create-project-
 import { GetAllProject, DeleteProject } from '@rapidaai/react';
 import { useCredential } from '@/hooks/use-credential';
 import toast from 'react-hot-toast/headless';
-import { SearchIconInput } from '@/app/components/Form/Input/IconInput';
+import { SearchIconInput } from '@/app/components/form/input/IconInput';
 import { TablePagination } from '@/app/components/base/tables/table-pagination';
 import { useRapidaStore } from '@/hooks';
-import { BluredWrapper } from '@/app/components/Wrapper/BluredWrapper';
+import { BluredWrapper } from '@/app/components/wrapper/blured-wrapper';
 import { ServiceError } from '@rapidaai/react';
-import { IBlueButton, IButton } from '@/app/components/Form/Button';
+import { IBlueButton, IButton } from '@/app/components/form/button';
 import { Plus, RotateCw } from 'lucide-react';
 import { Table } from '@/app/components/base/tables/table';
 import { TableHead } from '@/app/components/base/tables/table-head';
 import { TableBody } from '@/app/components/base/tables/table-body';
 import { TableRow } from '@/app/components/base/tables/table-row';
 import { TableCell } from '@/app/components/base/tables/table-cell';
-import { ProjectUserGroupAvatar } from '@/app/components/Avatar/ProjectUserGroupAvatar';
-import { toHumanReadableDate } from '@/styles/media';
+import { ProjectUserGroupAvatar } from '@/app/components/avatar/project-user-group-avatar';
+import { toHumanReadableDate } from '@/utils/date';
 import { RoleIndicator } from '@/app/components/indicators/role';
 import { ProjectOption } from '@/app/pages/workspace/project/project-options';
 import { PageHeaderBlock } from '@/app/components/blocks/page-header-block';

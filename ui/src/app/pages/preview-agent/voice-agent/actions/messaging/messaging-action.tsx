@@ -1,6 +1,6 @@
 import { FC, HTMLAttributes } from 'react';
 import { Channel, useInputModeToggleAgent, VoiceAgent } from '@rapidaai/react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { AudioMessagingAction } from './audio-messsaging-action';
 import { SimpleMessagingAction } from './simple-messaging-action';
 

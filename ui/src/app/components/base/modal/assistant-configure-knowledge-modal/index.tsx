@@ -5,14 +5,14 @@ import { ModalFooter } from '@/app/components/base/modal/modal-footer';
 import { ModalHeader } from '@/app/components/base/modal/modal-header';
 import { ModalFitHeightBlock } from '@/app/components/blocks/modal-fit-height-block';
 import { ModalTitleBlock } from '@/app/components/blocks/modal-title-block';
-import { KnowledgeDropdown } from '@/app/components/Dropdown/knowledge-dropdown';
+import { KnowledgeDropdown } from '@/app/components/dropdown/knowledge-dropdown';
 import { FormLabel } from '@/app/components/form-label';
-import { IBlueBGButton, ICancelButton } from '@/app/components/Form/Button';
-import CheckboxCard from '@/app/components/Form/checkbox-card';
-import { FieldSet } from '@/app/components/Form/Fieldset';
-import { Input } from '@/app/components/Form/Input';
-import { Slider } from '@/app/components/Form/Slider';
-import { SwitchWithLabel } from '@/app/components/Form/Switch';
+import { IBlueBGButton, ICancelButton } from '@/app/components/form/button';
+import CheckboxCard from '@/app/components/form/checkbox-card';
+import { FieldSet } from '@/app/components/form/fieldset';
+import { Input } from '@/app/components/form/input';
+import { Slider } from '@/app/components/form/slider';
+import { SwitchWithLabel } from '@/app/components/form/switch';
 import { HybridSearchIcon } from '@/app/components/Icon/hybrid-search';
 import { TextSearchIcon } from '@/app/components/Icon/text-search';
 import { VectorSearchIcon } from '@/app/components/Icon/vector-search';
@@ -21,9 +21,9 @@ import {
   GetDefaultRerankerConfigIfInvalid,
   RerankerProvider,
 } from '@/app/components/providers/reranker';
-import { Tooltip } from '@/app/components/Tooltip';
+import { Tooltip } from '@/app/components/tooltip';
 import { RETRIEVE_METHOD } from '@/models/datasets';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { InfoIcon } from 'lucide-react';
 import { FC, useEffect, useState } from 'react';
 interface ConfigureAssistantKnowledgeDialogProps extends ModalProps {

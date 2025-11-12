@@ -1,4 +1,4 @@
-import { SimpleButton } from '@/app/components/Form/Button';
+import { SimpleButton } from '@/app/components/form/button';
 import React, { useEffect, useState } from 'react';
 
 export interface ImageBoxProps

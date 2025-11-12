@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { UpdateProjectDialog } from '@/app/components/base/modal/update-project-modal';
 import { Project } from '@rapidaai/react';
-import { CardOptionMenu } from '@/app/components/Menu';
+import { CardOptionMenu } from '@/app/components/menu';
 
 export const ProjectOption = (props: {
   project: Project.AsObject;

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Helmet } from '@/app/components/Helmet';
+import { Helmet } from '@/app/components/helmet';
 import { Switch } from '@headlessui/react';
 export function NotificationSettingPage() {
   const [enabled, setEnabled] = useState(false);

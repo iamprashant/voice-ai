@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { cn } from '@/styles/media';
-import { IButton } from '@/app/components/Form/Button';
+import { cn } from '@/utils';
+import { IButton } from '@/app/components/form/button';
 import { ColumnPreferencesDialog } from '@/app/components/base/modal/column-preference-modal';
 import { Settings, SlidersHorizontal } from 'lucide-react';
 import TooltipPlus from '@/app/components/base/tooltip-plus';

@@ -1,13 +1,14 @@
 import { Endpoint, EndpointProviderModel } from '@rapidaai/react';
-import { BorderButton } from '@/app/components/Form/Button';
+import { BorderButton } from '@/app/components/form/button';
 import { useEndpointProviderModelPageStore } from '@/hooks';
 import { useRapidaStore } from '@/hooks';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import React, { useEffect } from 'react';
 import toast from 'react-hot-toast/headless';
-import { cn, toHumanReadableRelativeTime } from '@/styles/media';
-import { TextImage } from '@/app/components/Image/TextImage';
-import { CopyButton } from '@/app/components/Form/Button/copy-button';
+import { cn } from '@/utils';
+import { toHumanReadableRelativeTime } from '@/utils/date';
+import { TextImage } from '@/app/components/text-image';
+import { CopyButton } from '@/app/components/form/button/copy-button';
 import { SingleDotIcon } from '@/app/components/Icon/single-dot';
 import { RevisionIndicator } from '@/app/components/indicators/revision';
 import { ReloadIcon } from '@/app/components/Icon/Reload';

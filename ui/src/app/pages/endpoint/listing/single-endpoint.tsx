@@ -1,22 +1,20 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 import { Endpoint } from '@rapidaai/react';
 import { useEndpointPageStore } from '@/hooks';
-import { TagColumn } from '@/app/components/Table/TagColumn';
-
 import { TickIcon } from '@/app/components/Icon/Tick';
-import { cn, toHumanReadableRelativeTime } from '@/styles/media';
-import { CopyableColumn } from '@/app/components/Table/CopyableColumn';
-import { LabelColumn } from '@/app/components/Table/LabelColumn';
-import { DateColumn } from '@/app/components/Table/DateColumn';
-import { CostColumn } from '@/app/components/Table/CostColumn';
-import { NumberColumn } from '@/app/components/Table/NumberColumn';
-import { LatencyColumn } from '@/app/components/Table/LatencyColumn';
-import { TextColumn } from '@/app/components/Table/TextColumn';
+import { nanoToMilli, toHumanReadableRelativeTime } from '@/utils/date';
+import { DateCell } from '@/app/components/base/tables/date-cell';
+import { CostCell } from '@/app/components/base/tables/cost-cell';
+import { NumberCell } from '@/app/components/base/tables/number-cell';
 import { TableRow } from '@/app/components/base/tables/table-row';
 import { TableCell } from '@/app/components/base/tables/table-cell';
-import { ProviderPill } from '@/app/components/Pill/provider-model-pill';
-import { nanoToMilli } from '@/utils';
+import { ProviderPill } from '@/app/components/pill/provider-model-pill';
+import { LabelCell } from '@/app/components/base/tables/label-cell';
+import { cn } from '@/utils';
 import { CustomLink } from '@/app/components/custom-link';
+import { TextCell } from '@/app/components/base/tables/text-cell';
+import { CopyCell } from '@/app/components/base/tables/copy-cell';
+import { TagCell } from '@/app/components/base/tables/tag-cell';
 
 /**
  *
@@ -91,22 +89,22 @@ export const SingleEndpoint: FC<SingleEndpointProps> = ({ endpoint }) => {
         <TableCell>{endpoint.getId()}</TableCell>
       )}
       {endpointAction.visibleColumn('getVersion') && (
-        <CopyableColumn>{`vrsn_${endpoint
+        <CopyCell>{`vrsn_${endpoint
           .getEndpointprovidermodel()
-          ?.getId()}`}</CopyableColumn>
+          ?.getId()}`}</CopyCell>
       )}
       {endpointAction.visibleColumn('getTags') && (
-        <TagColumn tags={endpoint.getEndpointtag()?.getTagList()} />
+        <TagCell tags={endpoint.getEndpointtag()?.getTagList()} />
       )}
       {endpointAction.visibleColumn('getCount') && (
-        <LabelColumn className="bg-blue-300/10 text-blue-500 dark:text-blue-400 ">
+        <LabelCell className="bg-blue-300/10 text-blue-500 dark:text-blue-400 ">
           {endpoint.getEndpointanalytics()?.getCount()}
-        </LabelColumn>
+        </LabelCell>
       )}
       {endpointAction.visibleColumn('getErrorRate') && (
-        <LabelColumn className="bg-red-300/10 text-red-500 dark:text-red-400 ">
+        <LabelCell className="bg-red-300/10 text-red-500 dark:text-red-400 ">
           {getErrorRate(endpoint)}%
-        </LabelColumn>
+        </LabelCell>
       )}
       {endpointAction.visibleColumn('getCurrentModel') && (
         <TableCell className="min-w-60">
@@ -118,7 +116,7 @@ export const SingleEndpoint: FC<SingleEndpointProps> = ({ endpoint }) => {
         </TableCell>
       )}
       {endpointAction.visibleColumn('getCost') && (
-        <CostColumn
+        <CostCell
           cost={
             endpoint.getEndpointanalytics()?.getTotalinputcost()! +
             endpoint.getEndpointanalytics()?.getTotaloutputcost()!
@@ -126,17 +124,17 @@ export const SingleEndpoint: FC<SingleEndpointProps> = ({ endpoint }) => {
         />
       )}
       {endpointAction.visibleColumn('getTotalToken') && (
-        <NumberColumn num={endpoint.getEndpointanalytics()?.getTotaltoken()} />
+        <NumberCell num={endpoint.getEndpointanalytics()?.getTotaltoken()} />
       )}
       {endpointAction.visibleColumn('getP50') && (
-        <LatencyColumn>
+        <TextCell>
           {nanoToMilli(endpoint.getEndpointanalytics()?.getP50latency())}
-        </LatencyColumn>
+        </TextCell>
       )}
       {endpointAction.visibleColumn('getP99') && (
-        <LatencyColumn>
+        <TextCell>
           {nanoToMilli(endpoint.getEndpointanalytics()?.getP99latency())}
-        </LatencyColumn>
+        </TextCell>
       )}
       {endpointAction.visibleColumn('getMRR') &&
         (endpoint.getEndpointanalytics()?.getLastactivity() &&
@@ -145,11 +143,9 @@ export const SingleEndpoint: FC<SingleEndpointProps> = ({ endpoint }) => {
           ?.getLastactivity()
           ?.toDate()
           .getTime()! > new Date('1970-01-01').getTime() ? (
-          <DateColumn
-            date={endpoint.getEndpointanalytics()?.getLastactivity()}
-          />
+          <DateCell date={endpoint.getEndpointanalytics()?.getLastactivity()} />
         ) : (
-          <TextColumn className="opacity-50">No yet run</TextColumn>
+          <TextCell>No yet run</TextCell>
         ))}
       {endpointAction.visibleColumn('getCreatedBy') && (
         <TableCell>

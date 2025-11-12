@@ -2,15 +2,15 @@ import { FC } from 'react';
 import { useParams } from 'react-router-dom';
 import { useConfirmDialog } from '@/app/pages/assistant/actions/hooks/use-confirmation';
 import { useGlobalNavigation } from '@/hooks/use-global-navigator';
-import { IBlueBGButton, ICancelButton } from '@/app/components/Form/Button';
+import { IBlueBGButton, ICancelButton } from '@/app/components/form/button';
 import React, { useState } from 'react';
 import { InputGroup } from '@/app/components/input-group';
-import { FieldSet } from '@/app/components/Form/Fieldset';
+import { FieldSet } from '@/app/components/form/fieldset';
 import { InputHelper } from '@/app/components/input-helper';
 import { PageHeaderBlock } from '@/app/components/blocks/page-header-block';
 import { PageTitleBlock } from '@/app/components/blocks/page-title-block';
 import { PageActionButtonBlock } from '@/app/components/blocks/page-action-button-block';
-import { InputCheckbox } from '@/app/components/Form/Checkbox';
+import { InputCheckbox } from '@/app/components/form/checkbox';
 
 export function ConfigureAssistantAnalysisPage() {
   const { assistantId } = useParams();

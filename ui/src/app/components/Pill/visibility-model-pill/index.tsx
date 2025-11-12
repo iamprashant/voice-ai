@@ -1,5 +1,5 @@
 import { PrivateIcon } from '@/app/components/Icon/Private';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { FC, HTMLAttributes } from 'react';
 
 interface VisibilityPillProps extends HTMLAttributes<HTMLSpanElement> {

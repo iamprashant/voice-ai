@@ -1,4 +1,4 @@
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { Check } from 'lucide-react';
 import React, { FC, InputHTMLAttributes } from 'react';
 

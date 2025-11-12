@@ -15,7 +15,7 @@ import {
 } from '@floating-ui/react';
 
 import type { OffsetOptions, Placement } from '@floating-ui/react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 export type PortalToFollowElemOptions = {
   /*
    * top, bottom, left, right

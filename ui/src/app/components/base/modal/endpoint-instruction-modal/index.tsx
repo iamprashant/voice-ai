@@ -3,7 +3,7 @@ import { RightSideModal } from '@/app/components/base/modal/right-side-modal';
 
 import { EndpointIntegration } from '@/app/components/integration-document/endpoint-integration';
 import { ModalProps } from '@/app/components/base/modal';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { HTMLAttributes } from 'react';
 
 interface EndpointInstructionDialogProps

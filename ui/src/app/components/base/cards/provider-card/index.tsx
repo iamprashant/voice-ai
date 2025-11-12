@@ -1,8 +1,8 @@
 import { Card, CardDescription, CardTitle } from '@/app/components/base/cards';
-import { IBlueBGButton } from '@/app/components/Form/Button';
-import { CardOptionMenu } from '@/app/components/Menu';
+import { IBlueBGButton } from '@/app/components/form/button';
+import { CardOptionMenu } from '@/app/components/menu';
 import { useAllProviderCredentials } from '@/hooks/use-model';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { FC, HTMLAttributes, memo, useEffect, useState } from 'react';
 import { StatusIndicator } from '@/app/components/indicators/status';
 import { RapidaProvider } from '@/app/components/providers';
@@ -46,7 +46,10 @@ export const ProviderCard: FC<ProviderCardProps> = memo(
           }}
         />
         <Card
-          className={cn('shadow-sm group flex flex-col rounded-[2px]', className)}
+          className={cn(
+            'shadow-sm group flex flex-col rounded-[2px]',
+            className,
+          )}
           data-id={provider.id}
         >
           <header className="flex justify-between">

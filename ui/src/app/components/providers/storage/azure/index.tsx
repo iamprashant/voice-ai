@@ -1,7 +1,7 @@
 import { Metadata } from '@rapidaai/react';
 import { FormLabel } from '@/app/components/form-label';
-import { FieldSet } from '@/app/components/Form/Fieldset';
-import { Input } from '@/app/components/Form/Input';
+import { FieldSet } from '@/app/components/form/fieldset';
+import { Input } from '@/app/components/form/input';
 
 export const ValidateAzureStorageOptions = (options: Metadata[]): boolean => {
   const credentialID = options.find(

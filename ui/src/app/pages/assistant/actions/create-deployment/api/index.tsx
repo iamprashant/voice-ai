@@ -18,9 +18,9 @@ import {
 } from '@/app/pages/assistant/actions/create-deployment/commons/configure-experience';
 import { ConfigureAudioOutputProvider } from '@/app/pages/assistant/actions/create-deployment/commons/configure-audio-output';
 import { ConfigureAudioInputProvider } from '@/app/pages/assistant/actions/create-deployment/commons/configure-audio-input';
-import { IBlueBGButton, ICancelButton } from '@/app/components/Form/Button';
+import { IBlueBGButton, ICancelButton } from '@/app/components/form/button';
 import toast from 'react-hot-toast/headless';
-import { Helmet } from '@/app/components/Helmet';
+import { Helmet } from '@/app/components/helmet';
 
 import {
   GetDefaultMicrophoneConfig,

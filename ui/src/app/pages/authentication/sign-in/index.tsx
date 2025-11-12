@@ -1,7 +1,7 @@
 import { useState, useContext, useEffect, useCallback } from 'react';
-import { Helmet } from '@/app/components/Helmet';
-import { SocialButtonGroup } from '@/app/components/Form/ButtonGroup/SocialButtonGroup';
-import { Input } from '@/app/components/Form/Input';
+import { Helmet } from '@/app/components/helmet';
+import { SocialButtonGroup } from '@/app/components/form/button-group/SocialButtonGroup';
+import { Input } from '@/app/components/form/input';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import {
@@ -12,12 +12,12 @@ import {
   AuthenticateUser,
 } from '@rapidaai/react';
 import { useRapidaStore } from '@/hooks';
-import { ErrorMessage } from '@/app/components/Form/error-message';
-import { IBlueBGArrowButton } from '@/app/components/Form/Button';
+import { ErrorMessage } from '@/app/components/form/error-message';
+import { IBlueBGArrowButton } from '@/app/components/form/button';
 import { ServiceError } from '@rapidaai/react';
 import { AuthContext } from '@/context/auth-context';
 import { FormLabel } from '@/app/components/form-label';
-import { FieldSet } from '@/app/components/Form/Fieldset';
+import { FieldSet } from '@/app/components/form/fieldset';
 import { useWorkspace } from '@/context/workplace-context';
 import { connectionConfig } from '@/configs';
 /**

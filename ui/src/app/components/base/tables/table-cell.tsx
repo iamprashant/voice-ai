@@ -1,4 +1,4 @@
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 
 export function TableCell(props: React.TdHTMLAttributes<HTMLTableCellElement>) {
   return (

@@ -2,7 +2,7 @@ import type { FC } from 'react';
 import React, { useCallback } from 'react';
 import { useBoolean } from 'ahooks';
 import Base from './base-editor';
-import { Textarea } from '@/app/components/Form/Textarea';
+import { Textarea } from '@/app/components/form/textarea';
 
 type Props = {
   value: string;

@@ -4,8 +4,8 @@ import { ModalFooter } from '@/app/components/base/modal/modal-footer';
 import { ModalHeader } from '@/app/components/base/modal/modal-header';
 import { ModalFormBlock } from '@/app/components/blocks/modal-form-block';
 import { ModalTitleBlock } from '@/app/components/blocks/modal-title-block';
-import { IBlueBGButton, ICancelButton } from '@/app/components/Form/Button';
-import { Textarea } from '@/app/components/Form/Textarea';
+import { IBlueBGButton, ICancelButton } from '@/app/components/form/button';
+import { Textarea } from '@/app/components/form/textarea';
 import { Check } from 'lucide-react';
 import { FC, useState } from 'react';
 

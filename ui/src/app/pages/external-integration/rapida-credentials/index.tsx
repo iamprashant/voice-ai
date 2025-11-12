@@ -10,21 +10,21 @@ import {
   ProjectCredential,
 } from '@rapidaai/react';
 import toast from 'react-hot-toast/headless';
-import { Helmet } from '@/app/components/Helmet';
+import { Helmet } from '@/app/components/helmet';
 import { ActionableEmptyMessage } from '@/app/components/container/message/actionable-empty-message';
 import { AuthContext } from '@/context/auth-context';
 import { PageHeaderBlock } from '@/app/components/blocks/page-header-block';
 import { PageTitleBlock } from '@/app/components/blocks/page-title-block';
-import { IBlueButton, IButton } from '@/app/components/Form/Button';
+import { IBlueButton, IButton } from '@/app/components/form/button';
 import { ExternalLink, Info, Plus, RotateCw } from 'lucide-react';
 import { connectionConfig } from '@/configs';
 import { Eye, EyeOff, Copy, CheckCircle } from 'lucide-react';
-import { toHumanReadableDate } from '@/styles/media';
+import { toHumanReadableDate } from '@/utils/date';
 import { Card, CardTitle } from '@/app/components/base/cards';
 import { YellowNoticeBlock } from '@/app/components/container/message/notice-block';
-import { FieldSet } from '@/app/components/Form/Fieldset';
+import { FieldSet } from '@/app/components/form/fieldset';
 import { FormLabel } from '@/app/components/form-label';
-import { CopyButton } from '@/app/components/Form/Button/copy-button';
+import { CopyButton } from '@/app/components/form/button/copy-button';
 /**
  *
  * @returns

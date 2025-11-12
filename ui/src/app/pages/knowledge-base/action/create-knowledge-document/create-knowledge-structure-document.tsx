@@ -3,15 +3,15 @@ import { useCallback, useEffect, useState } from 'react';
 import { useCredential, useRapidaStore } from '@/hooks';
 import { KnowledgeDocument } from '@rapidaai/react';
 import { useCreateKnowledgeDocumentPageStore } from '@/hooks/use-create-knowledge-document-page-store';
-import { HoverButton, OutlineButton } from '@/app/components/Form/Button';
+import { HoverButton, OutlineButton } from '@/app/components/form/button';
 import { ManualFile } from '@/app/pages/knowledge-base/action/components/datasource-uploader/manual-file';
 import { useGlobalNavigation } from '@/hooks/use-global-navigator';
-import { ErrorMessage } from '@/app/components/Form/error-message';
+import { ErrorMessage } from '@/app/components/form/error-message';
 import { RapidaDocumentType } from '@/utils/rapida_document';
 import { ArrowLeft, UploadIcon } from 'lucide-react';
-import { Select } from '@/app/components/Form/Select';
-import { Helmet } from '@/app/components/Helmet';
-import { Label } from '@/app/components/Form/Label';
+import { Select } from '@/app/components/form/select';
+import { Helmet } from '@/app/components/helmet';
+import { Label } from '@/app/components/form/label';
 
 export function CreateKnowledgeStructureDocumentPage() {
   const { id } = useParams();

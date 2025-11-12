@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Helmet } from '@/app/components/Helmet';
-import { DescriptiveHeading } from '@/app/components/Heading/DescriptiveHeading';
+import { Helmet } from '@/app/components/helmet';
+import { DescriptiveHeading } from '@/app/components/heading/descriptive-heading';
 
 /**
  *

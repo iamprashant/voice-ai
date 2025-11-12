@@ -1,4 +1,4 @@
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { Switch } from '@headlessui/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Lock, Unlock } from 'lucide-react';

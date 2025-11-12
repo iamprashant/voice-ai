@@ -6,10 +6,10 @@ import {
 import { Send } from 'lucide-react';
 import { FC, HTMLAttributes, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Spinner } from '@/app/components/Loader/Spinner';
-import { ScalableTextarea } from '@/app/components/Form/Textarea';
+import { Spinner } from '@/app/components/loader/spinner';
+import { ScalableTextarea } from '@/app/components/form/textarea';
 
 interface SimpleMessagingAcitonProps extends HTMLAttributes<HTMLDivElement> {
   placeholder?: string;

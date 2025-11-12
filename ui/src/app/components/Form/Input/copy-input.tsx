@@ -1,5 +1,5 @@
 import { forwardRef, InputHTMLAttributes, useState } from 'react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { Copy } from 'lucide-react';
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {}
 

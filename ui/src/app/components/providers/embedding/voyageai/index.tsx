@@ -1,5 +1,5 @@
 import { Metadata } from '@rapidaai/react';
-import { Dropdown } from '@/app/components/Dropdown';
+import { Dropdown } from '@/app/components/dropdown';
 import { VOYAGE_EMBEDDING_MODEL } from '@/app/components/providers/embedding/voyageai/constants';
 
 export const ConfigureVoyageEmbeddingModel: React.FC<{

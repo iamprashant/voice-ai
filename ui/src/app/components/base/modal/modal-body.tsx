@@ -1,4 +1,4 @@
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { FC, HTMLAttributes } from 'react';
 
 export const ModalBody: FC<HTMLAttributes<HTMLDivElement>> = props => {

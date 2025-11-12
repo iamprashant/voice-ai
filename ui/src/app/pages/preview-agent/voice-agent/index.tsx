@@ -1,23 +1,23 @@
 import { GreenNoticeBlock } from '@/app/components/container/message/notice-block';
-import { Dropdown } from '@/app/components/Dropdown';
-import { IBlueBGArrowButton } from '@/app/components/Form/Button';
-import { ErrorMessage } from '@/app/components/Form/error-message';
-import { FieldSet } from '@/app/components/Form/Fieldset';
-import { Input } from '@/app/components/Form/Input';
+import { Dropdown } from '@/app/components/dropdown';
+import { IBlueBGArrowButton } from '@/app/components/form/button';
+import { ErrorMessage } from '@/app/components/form/error-message';
+import { FieldSet } from '@/app/components/form/fieldset';
+import { Input } from '@/app/components/form/input';
 import {
   JsonTextarea,
   NumberTextarea,
   ParagraphTextarea,
   TextTextarea,
   UrlTextarea,
-} from '@/app/components/Form/Textarea';
+} from '@/app/components/form/textarea';
 import { InputGroup } from '@/app/components/input-group';
 import { InputVarForm } from '@/app/pages/endpoint/view/try-playground/experiment-prompt/components/input-var-form';
 import { VoiceAgent } from '@/app/pages/preview-agent/voice-agent/voice-agent';
 import { useRapidaStore } from '@/hooks';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { InputVarType } from '@/models/common';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { getStatusMetric } from '@/utils/metadata';
 import {
   AgentConfig,

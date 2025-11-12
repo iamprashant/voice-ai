@@ -1,11 +1,11 @@
 import { YellowNoticeBlock } from '@/app/components/container/message/notice-block';
 import { FormLabel } from '@/app/components/form-label';
-import { CodeEditor } from '@/app/components/Form/editor/code-editor';
-import { FieldSet } from '@/app/components/Form/Fieldset';
-import { Input } from '@/app/components/Form/Input';
-import { Textarea } from '@/app/components/Form/Textarea';
+import { CodeEditor } from '@/app/components/form/editor/code-editor';
+import { FieldSet } from '@/app/components/form/fieldset';
+import { Input } from '@/app/components/form/input';
+import { Textarea } from '@/app/components/form/textarea';
 import { InputGroup } from '@/app/components/input-group';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { Metadata } from '@rapidaai/react';
 import { ExternalLink, Info } from 'lucide-react';
 

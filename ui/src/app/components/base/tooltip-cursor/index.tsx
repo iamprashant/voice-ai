@@ -1,4 +1,4 @@
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import React, { useState, useEffect, useRef } from 'react';
 
 interface TooltipCursorProps {

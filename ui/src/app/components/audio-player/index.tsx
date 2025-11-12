@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState, FC, ReactNode, ChangeEvent } from 'react';
 import WaveSurfer from 'wavesurfer.js';
 import TimelinePlugin from 'wavesurfer.js/dist/plugins/timeline.esm.js';
-import { IButton } from '@/app/components/Form/Button';
+import { IButton } from '@/app/components/form/button';
 import { ArrowDownToLine, Pause, Play, Volume2, VolumeX } from 'lucide-react';
 import { Tooltip } from '@/app/components/base/tooltip';
-import { cn } from '@/styles/media';
-import { Slider } from '@/app/components/Form/Slider';
+import { cn } from '@/utils';
+import { Slider } from '@/app/components/form/slider';
 
 type AudioPlayerProps = {
   src: string;

@@ -1,5 +1,5 @@
 import React, { HTMLAttributes, useEffect, useState } from 'react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import TooltipPlus from '@/app/components/base/tooltip-plus';
 
 export function Pill(props: HTMLAttributes<HTMLSpanElement>) {

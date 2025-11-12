@@ -8,11 +8,11 @@ import {
   ProjectCredential,
 } from '@rapidaai/react';
 import { ActionableEmptyMessage } from '@/app/components/container/message/actionable-empty-message';
-import { CopyButton } from '@/app/components/Form/Button/copy-button';
-import { ReloadButton } from '@/app/components/Form/Button/ReloadButton';
+import { CopyButton } from '@/app/components/form/button/copy-button';
+import { ReloadButton } from '@/app/components/form/button/ReloadButton';
 import { useRapidaStore } from '@/hooks';
 import { useCurrentCredential } from '@/hooks/use-credential';
-import { toHumanReadableRelativeDay } from '@/styles/media';
+import { toHumanReadableRelativeDay } from '@/utils/date';
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast/headless';
 import { connectionConfig } from '@/configs';

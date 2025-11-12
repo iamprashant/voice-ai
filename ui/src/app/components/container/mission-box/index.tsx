@@ -1,6 +1,6 @@
 import { ActionableHeader } from '@/app/components/navigation/actionable-header';
 import { SidebarNavigation } from '@/app/components/navigation/sidebar';
-import { Loader } from '@/app/components/Loader';
+import { Loader } from '@/app/components/loader';
 import { useRapidaStore } from '@/hooks';
 import { Toast } from '@/app/components/toasts';
 import { ProviderContextProvider } from '@/context/provider-context';
@@ -27,23 +27,6 @@ export function MissionBox(props: { children?: any }) {
               {props.children}
             </div>
           </div>
-          {/* <Agent
-            agentConfig={
-              new AgentConfig(
-                '2219166493587800064',
-                new InputOptions([Channel.Text], Channel.Text),
-              )
-            }
-            connectionConfig={new AssistantConnectionConfig(
-              ConnectionConfig.WithWebpluginClient({
-                ApiKey:
-                  '9eaaf1742be1ea0b3040ac34902e22b1182d3339127e939e499464715d472600',
-                UserId: 'hello',
-              }),
-            ).withLocal()}
-          >
-            <Widget />
-          </Agent> */}
         </div>
       </main>
     </ProviderContextProvider>

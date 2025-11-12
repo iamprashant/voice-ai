@@ -1,22 +1,22 @@
 import { Knowledge, Metadata } from '@rapidaai/react';
 import { Card } from '@/app/components/base/cards';
-import { KnowledgeDropdown } from '@/app/components/Dropdown/knowledge-dropdown';
+import { KnowledgeDropdown } from '@/app/components/dropdown/knowledge-dropdown';
 import { FormLabel } from '@/app/components/form-label';
-import CheckboxCard from '@/app/components/Form/checkbox-card';
-import { FieldSet } from '@/app/components/Form/Fieldset';
-import { Input } from '@/app/components/Form/Input';
-import { Slider } from '@/app/components/Form/Slider';
+import CheckboxCard from '@/app/components/form/checkbox-card';
+import { FieldSet } from '@/app/components/form/fieldset';
+import { Input } from '@/app/components/form/input';
+import { Slider } from '@/app/components/form/slider';
 import { HybridSearchIcon } from '@/app/components/Icon/hybrid-search';
 import { TextSearchIcon } from '@/app/components/Icon/text-search';
 import { VectorSearchIcon } from '@/app/components/Icon/vector-search';
-import { Tooltip } from '@/app/components/Tooltip';
+import { Tooltip } from '@/app/components/tooltip';
 import { RETRIEVE_METHOD } from '@/models/datasets';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 import { ExternalLink, Info, InfoIcon } from 'lucide-react';
 import { InputGroup } from '@/app/components/input-group';
 import { YellowNoticeBlock } from '@/app/components/container/message/notice-block';
-import { Textarea } from '@/app/components/Form/Textarea';
-import { CodeEditor } from '@/app/components/Form/editor/code-editor';
+import { Textarea } from '@/app/components/form/textarea';
+import { CodeEditor } from '@/app/components/form/editor/code-editor';
 
 export const ConfigureKnowledgeRetrieval: React.FC<{
   inputClass?: string;

@@ -1,14 +1,14 @@
 import React, { useCallback, useState } from 'react';
-import { DescriptiveHeading } from '@/app/components/Heading/DescriptiveHeading';
-import { Helmet } from '@/app/components/Helmet';
-import { Input } from '@/app/components/Form/Input';
-import { Label } from '@/app/components/Form/Label';
+import { DescriptiveHeading } from '@/app/components/heading/descriptive-heading';
+import { Helmet } from '@/app/components/helmet';
+import { Input } from '@/app/components/form/input';
+import { Label } from '@/app/components/form/label';
 import { useNavigate, useParams } from 'react-router-dom';
 import { CreatePassword } from '@rapidaai/react';
 import { CreatePasswordResponse } from '@rapidaai/react';
 import { useForm } from 'react-hook-form';
-import { Button } from '@/app/components/Form/Button';
-import { ErrorMessage } from '@/app/components/Form/error-message';
+import { Button } from '@/app/components/form/button';
+import { ErrorMessage } from '@/app/components/form/error-message';
 import { ServiceError } from '@rapidaai/react';
 import { connectionConfig } from '@/configs';
 

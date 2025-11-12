@@ -5,18 +5,18 @@ import {
   IBlueBGArrowButton,
   IBlueBorderButton,
   ICancelButton,
-} from '@/app/components/Form/Button';
-import { cn } from '@/styles/media';
-import { FieldSet } from '@/app/components/Form/Fieldset';
+} from '@/app/components/form/button';
+import { cn } from '@/utils';
+import { FieldSet } from '@/app/components/form/fieldset';
 import { FormLabel } from '@/app/components/form-label';
-import { Input } from '@/app/components/Form/Input';
-import { Select } from '@/app/components/Form/Select';
-import { Textarea } from '@/app/components/Form/Textarea';
+import { Input } from '@/app/components/form/input';
+import { Select } from '@/app/components/form/select';
+import { Textarea } from '@/app/components/form/textarea';
 import { ArrowRight, Plus, Trash2 } from 'lucide-react';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { PageActionButtonBlock } from '@/app/components/blocks/page-action-button-block';
 import { randomMeaningfullName } from '@/utils';
-import { EndpointDropdown } from '@/app/components/Dropdown/endpoint-dropdown';
+import { EndpointDropdown } from '@/app/components/dropdown/endpoint-dropdown';
 import { CreateAnalysis, Endpoint } from '@rapidaai/react';
 import toast from 'react-hot-toast/headless';
 import { connectionConfig } from '@/configs';

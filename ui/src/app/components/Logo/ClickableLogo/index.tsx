@@ -1,4 +1,4 @@
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 
 interface ClickableLogoProps extends React.HTMLAttributes<HTMLDivElement> {
   isBeta: boolean;

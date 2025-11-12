@@ -9,7 +9,7 @@ import { Endpoint, EndpointProviderModel } from '@rapidaai/react';
 import { InvokeResponse } from '@rapidaai/react';
 import { useRapidaStore } from '@/hooks';
 import { useCredential } from '@/hooks/use-credential';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Variable } from '@rapidaai/react';
 
@@ -24,7 +24,7 @@ import {
   ParagraphTextarea,
   TextTextarea,
   UrlTextarea,
-} from '@/app/components/Form/Textarea';
+} from '@/app/components/form/textarea';
 
 import { InputVarType } from '@/models/common';
 import { OutputMessage } from '@/app/pages/endpoint/view/try-playground/experiment-prompt/components/output-message';

@@ -48,14 +48,3 @@ export const formatFileSize = (num: number) => {
   }
   return `${num.toFixed(2)}${units[index]}B`;
 };
-
-export const formatTime = (num: number) => {
-  if (!num) return num;
-  const units = ['sec', 'min', 'h'];
-  let index = 0;
-  while (num >= 60 && index < units.length) {
-    num = num / 60;
-    index++;
-  }
-  return `${num.toFixed(2)} ${units[index]}`;
-};

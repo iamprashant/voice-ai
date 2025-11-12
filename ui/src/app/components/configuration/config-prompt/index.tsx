@@ -5,11 +5,11 @@ import {
   MAX_PROMPT_MESSAGE_LENGTH,
   SUPPORTED_PROMPT_VARIABLE_TYPE,
 } from '@/configs';
-import { IBlueBorderButton } from '@/app/components/Form/Button';
+import { IBlueBorderButton } from '@/app/components/form/button';
 import { Plus } from 'lucide-react';
 import { FormLabel } from '@/app/components/form-label';
-import { FieldSet } from '@/app/components/Form/Fieldset';
-import { ScalableTextarea } from '@/app/components/Form/Textarea';
+import { FieldSet } from '@/app/components/form/fieldset';
+import { ScalableTextarea } from '@/app/components/form/textarea';
 import { getNewVar, getVars } from '@/utils/var';
 import { TypeOfVariable } from '@/app/components/configuration/config-prompt/type-of-variable';
 export type IPromptProps = {

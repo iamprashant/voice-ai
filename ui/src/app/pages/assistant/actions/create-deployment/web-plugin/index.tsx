@@ -1,4 +1,4 @@
-import { IBlueBGButton, ICancelButton } from '@/app/components/Form/Button';
+import { IBlueBGButton, ICancelButton } from '@/app/components/form/button';
 import { useRapidaStore } from '@/hooks';
 import { FC, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -29,7 +29,7 @@ import {
   FeatureConfig,
 } from '@/app/pages/assistant/actions/create-deployment/web-plugin/configure-feature';
 import toast from 'react-hot-toast/headless';
-import { Helmet } from '@/app/components/Helmet';
+import { Helmet } from '@/app/components/helmet';
 import {
   GetDefaultSpeakerConfig,
   GetDefaultTextToSpeechIfInvalid,

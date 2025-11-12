@@ -1,19 +1,19 @@
 import { FC } from 'react';
 import { TickIcon } from '@/app/components/Icon/Tick';
-import { cn, toHumanReadableRelativeTime } from '@/styles/media';
-import { LabelColumn } from '@/app/components/Table/LabelColumn';
+import { cn } from '@/utils';
+import { toHumanReadableRelativeTime } from '@/utils/date';
 import { KnowledgeDocument } from '@rapidaai/react';
 import { useKnowledgeDocumentPageStore } from '@/hooks/use-knowledge-document-page-store';
 import { formatFileSize, formatNumber } from '@/utils/format';
-import { DocumentSourcePill } from '@/app/components/Pill/document-source-pill';
+import { DocumentSourcePill } from '@/app/components/pill/document-source-pill';
 import { FileExtensionIcon } from '@/app/components/Icon/file-extension';
-import { IdColumn } from '@/app/components/Table/IdColumn';
 import { DocumentOption } from '@/app/pages/knowledge-base/view/documents/document-option';
 import { useCredential, useRapidaStore } from '@/hooks';
 import toast from 'react-hot-toast/headless';
 import { WarningInfo } from '@/app/components/Icon/Warning';
 import { TableRow } from '@/app/components/base/tables/table-row';
 import { TableCell } from '@/app/components/base/tables/table-cell';
+import { LabelCell } from '@/app/components/base/tables/label-cell';
 
 /**
  *
@@ -130,13 +130,13 @@ export const SingleDocument: FC<SingleDocumentProps> = ({
         </td>
       )}
       {kdAction.visibleColumn('getDocumenttype') && (
-        <LabelColumn className="bg-blue-300/10 text-blue-500 dark:text-blue-400 truncate">
+        <LabelCell className="bg-blue-300/10 text-blue-500 dark:text-blue-400 truncate">
           {document
             .getDocumentsource()
             ?.getFieldsMap()
             .get('mimeType')
             ?.getStringValue()}
-        </LabelColumn>
+        </LabelCell>
       )}
 
       {kdAction.visibleColumn('getDocumentSource') && (
@@ -157,24 +157,22 @@ export const SingleDocument: FC<SingleDocumentProps> = ({
       )}
 
       {kdAction.visibleColumn('getDocumentsize') && (
-        <LabelColumn>{formatFileSize(document.getDocumentsize())}</LabelColumn>
+        <LabelCell>{formatFileSize(document.getDocumentsize())}</LabelCell>
       )}
 
       {kdAction.visibleColumn('getRetrievalcount') && (
-        <LabelColumn>
-          {formatFileSize(document.getRetrievalcount())}
-        </LabelColumn>
+        <LabelCell>{formatFileSize(document.getRetrievalcount())}</LabelCell>
       )}
 
       {kdAction.visibleColumn('getTokencount') && (
-        <LabelColumn>{formatNumber(document.getTokencount())}</LabelColumn>
+        <LabelCell>{formatNumber(document.getTokencount())}</LabelCell>
       )}
 
       {kdAction.visibleColumn('getWordcount') && (
-        <LabelColumn>{formatNumber(document.getWordcount())}</LabelColumn>
+        <LabelCell>{formatNumber(document.getWordcount())}</LabelCell>
       )}
       {kdAction.visibleColumn('getId') && (
-        <LabelColumn>{`doc_${document.getId()}`}</LabelColumn>
+        <LabelCell>{`doc_${document.getId()}`}</LabelCell>
       )}
       <TableCell>
         <DocumentOption document={document} onReloadIndex={onReloadIndex} />

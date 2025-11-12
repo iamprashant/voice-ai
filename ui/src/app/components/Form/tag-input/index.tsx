@@ -1,7 +1,7 @@
-import { FieldSet } from '@/app/components/Form/Fieldset';
+import { FieldSet } from '@/app/components/form/fieldset';
 import React, { FC } from 'react';
 import { CloseIcon } from '@/app/components/Icon/Close';
-import { Input } from '@/app/components/Form/Input';
+import { Input } from '@/app/components/form/input';
 
 /**
  *

@@ -1,7 +1,7 @@
 import { ValidHttpUrl } from '@/utils';
 import { FileIcon, defaultStyles } from 'react-file-icon';
 import { FC } from 'react';
-import { cn } from '@/styles/media';
+import { cn } from '@/utils';
 
 export const FileExtensionIcon: FC<{
   filename: string;

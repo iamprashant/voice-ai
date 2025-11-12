@@ -4,7 +4,7 @@ import { useGlobalNavigation } from '@/hooks/use-global-navigator';
 import {
   IBlueBGArrowButton,
   ICancelButton,
-} from '@/app/components/Form/Button';
+} from '@/app/components/form/button';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { PageActionButtonBlock } from '@/app/components/blocks/page-action-button-block';
 import {

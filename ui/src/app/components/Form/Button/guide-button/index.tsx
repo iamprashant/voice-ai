@@ -1,5 +1,5 @@
 import React from 'react';
-import { BorderButton, ButtonProps } from '@/app/components/Form/Button';
+import { BorderButton, ButtonProps } from '@/app/components/form/button';
 
 import { GuideIcon } from '@/app/components/Icon/guide';
 
