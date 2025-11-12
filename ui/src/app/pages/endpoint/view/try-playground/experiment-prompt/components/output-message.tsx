@@ -1,8 +1,8 @@
 import { Metric } from '@rapidaai/react';
 import { InvokeResponse } from '@rapidaai/react';
-import { Spinner } from '@/app/components/Loader/Spinner';
-import { MarkdownViewer } from '@/app/components/MarkdownViewer';
-import { Tab } from '@/app/components/Tab';
+import { Spinner } from '@/app/components/loader/spinner';
+import { MarkdownViewer } from '@/app/components/markdown-viewer';
+import { Tab } from '@/app/components/tab';
 import { ExecuteMessage } from '@/app/pages/endpoint/view/try-playground/experiment-prompt/components/execute-message';
 import { cn } from '@/utils';
 import { FC, useEffect, useState } from 'react';

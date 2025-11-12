@@ -2,13 +2,13 @@ import { FC, useEffect, useState } from 'react';
 import { useRapidaStore } from '@/hooks';
 import { useCredential } from '@/hooks/use-credential';
 import { useParams } from 'react-router-dom';
-import { Helmet } from '@/app/components/Helmet';
+import { Helmet } from '@/app/components/helmet';
 import {
   IBlueBGArrowButton,
   ICancelButton,
-} from '@/app/components/Form/Button';
-import { TabForm } from '@/app/components/Form/tab-form';
-import { FieldSet } from '@/app/components/Form/Fieldset';
+} from '@/app/components/form/button';
+import { TabForm } from '@/app/components/form/tab-form';
+import { FieldSet } from '@/app/components/form/fieldset';
 import { useConfirmDialog } from '@/app/pages/assistant/actions/hooks/use-confirmation';
 import { useGlobalNavigation } from '@/hooks/use-global-navigator';
 import {
@@ -20,7 +20,7 @@ import {
   AssistantDefinition,
 } from '@rapidaai/react';
 import { FormLabel } from '@/app/components/form-label';
-import { Textarea } from '@/app/components/Form/Textarea';
+import { Textarea } from '@/app/components/form/textarea';
 import { ConfigPrompt } from '@/app/components/configuration/config-prompt';
 import { ErrorContainer } from '@/app/components/error-container';
 import { ProviderConfig } from '@/app/components/providers';

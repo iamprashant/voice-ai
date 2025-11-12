@@ -6,20 +6,20 @@ import {
   IBlueBGArrowButton,
   IBlueBorderButton,
   ICancelButton,
-} from '@/app/components/Form/Button';
+} from '@/app/components/form/button';
 import { InputGroup } from '@/app/components/input-group';
 import { cn } from '@/utils';
-import { FieldSet } from '@/app/components/Form/Fieldset';
+import { FieldSet } from '@/app/components/form/fieldset';
 import { FormLabel } from '@/app/components/form-label';
-import { Input } from '@/app/components/Form/Input';
-import { Select } from '@/app/components/Form/Select';
-import { Textarea } from '@/app/components/Form/Textarea';
+import { Input } from '@/app/components/form/input';
+import { Select } from '@/app/components/form/select';
+import { Textarea } from '@/app/components/form/textarea';
 import { ArrowRight, Plus, Trash2 } from 'lucide-react';
-import { Slider } from '@/app/components/Form/Slider';
+import { Slider } from '@/app/components/form/slider';
 import { GetAssistantWebhook, UpdateWebhook } from '@rapidaai/react';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { PageActionButtonBlock } from '@/app/components/blocks/page-action-button-block';
-import { InputCheckbox } from '@/app/components/Form/Checkbox';
+import { InputCheckbox } from '@/app/components/form/checkbox';
 import { InputHelper } from '@/app/components/input-helper';
 import toast from 'react-hot-toast/headless';
 import { useRapidaStore } from '@/hooks';

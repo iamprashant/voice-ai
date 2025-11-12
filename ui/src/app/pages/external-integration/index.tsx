@@ -1,5 +1,5 @@
 import { lazyLoad } from '@/utils/loadable';
-import { PageLoader } from '@/app/components/Loader/page-loader';
+import { PageLoader } from '@/app/components/loader/page-loader';
 
 export const IntegrationModelPage = lazyLoad(
   () => import('./provider-models'),

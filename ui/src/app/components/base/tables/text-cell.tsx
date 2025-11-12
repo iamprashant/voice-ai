@@ -1,15 +1,15 @@
-import { TD } from '@/app/components/Table/TD';
 import React, { HTMLAttributes } from 'react';
 import { cn } from '@/utils';
+import { TableCell } from '@/app/components/base/tables/table-cell';
 
 /**
  *
  * @param props
  * @returns
  */
-export function TextColumn(props: HTMLAttributes<HTMLDivElement>) {
+export function TextCell(props: HTMLAttributes<HTMLDivElement>) {
   return (
-    <TD>
+    <TableCell>
       <span
         className={cn(
           'font-normal text-left max-w-[20rem] truncate',
@@ -18,6 +18,6 @@ export function TextColumn(props: HTMLAttributes<HTMLDivElement>) {
       >
         {props.children}
       </span>
-    </TD>
+    </TableCell>
   );
 }

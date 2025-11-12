@@ -1,9 +1,10 @@
 /* eslint-disable import/no-mutable-exports */
 import { InputVarType } from '@/models/common';
 import { ConnectionConfig } from '@rapidaai/react';
+
 export interface SentryAnalyticsConfig {
-  dsn: string; // Data source name for Sentry
-  tracePropagationTargets: RegExp[]; // Targets where trace propagation applies
+  dsn: string;
+  tracePropagationTargets: RegExp[];
 }
 
 export interface RapidaConfig {
@@ -29,7 +30,6 @@ export const getConfig = (): RapidaConfig => {
       },
     };
   }
-
   return {
     connection: {
       assistant: 'http://assistant.rapida.local',
@@ -45,7 +45,6 @@ export const connectionConfig = new ConnectionConfig(CONFIG.connection);
 //
 export const MAX_PROMPT_MESSAGE_LENGTH = 10;
 export const MAX_VAR_KEY_LENGHT = 100;
-export const DEFAULT_VALUE_MAX_LEN = 500;
 export const VAR_ITEM_TEMPLATE = {
   name: '',
   type: 'string',
@@ -53,8 +52,6 @@ export const VAR_ITEM_TEMPLATE = {
 };
 
 export const zhRegex = /^[\u4E00-\u9FA5]$/m;
-export const emojiRegex = /^[\uD800-\uDBFF][\uDC00-\uDFFF]$/m;
-export const emailRegex = /^[\w\.-]+@([\w-]+\.)+[\w-]{2,}$/m;
 const MAX_ZN_VAR_NAME_LENGHT = 8;
 const MAX_EN_VAR_VALUE_LENGHT = 30;
 export const getMaxVarNameLength = (value: string) => {

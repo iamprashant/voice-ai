@@ -1,9 +1,9 @@
-import { SimpleButton } from '@/app/components/Form/Button';
+import { SimpleButton } from '@/app/components/form/button';
 import { CloseIcon } from '@/app/components/Icon/Close';
 import { FileExtensionIcon } from '@/app/components/Icon/file-extension';
 import { FileUploadIcon } from '@/app/components/Icon/file-upload';
 import { SingleDotIcon } from '@/app/components/Icon/single-dot';
-import SingleRowWrapper from '@/app/components/Wrapper/single-row-wrapper';
+import SingleRowWrapper from '@/app/components/wrapper/single-row-wrapper';
 import { useCreateKnowledgeDocumentPageStore } from '@/hooks/use-create-knowledge-document-page-store';
 import { formatFileSize } from '@/utils/format';
 import { FC, useCallback } from 'react';

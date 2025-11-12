@@ -1,9 +1,9 @@
 import { Metadata } from '@rapidaai/react';
-import { Dropdown } from '@/app/components/Dropdown';
+import { Dropdown } from '@/app/components/dropdown';
 import { FormLabel } from '@/app/components/form-label';
-import { FieldSet } from '@/app/components/Form/Fieldset';
-import { Input } from '@/app/components/Form/Input';
-import { Slider } from '@/app/components/Form/Slider';
+import { FieldSet } from '@/app/components/form/fieldset';
+import { Input } from '@/app/components/form/input';
+import { Slider } from '@/app/components/form/slider';
 import { InputGroup } from '@/app/components/input-group';
 import { InputHelper } from '@/app/components/input-helper';
 import { ProviderConfig } from '@/app/components/providers';

@@ -1,7 +1,7 @@
 import { Metadata } from '@rapidaai/react';
-import { Dropdown } from '@/app/components/Dropdown';
+import { Dropdown } from '@/app/components/dropdown';
 import { FormLabel } from '@/app/components/form-label';
-import { FieldSet } from '@/app/components/Form/Fieldset';
+import { FieldSet } from '@/app/components/form/fieldset';
 import { AZURE_LANGUAGE } from '@/app/components/providers/speech-to-text/azure/constant';
 export {
   GetAzureDefaultOptions,

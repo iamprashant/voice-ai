@@ -3,15 +3,15 @@ import React, { useCallback, useContext, useEffect } from 'react';
 import cn from 'classnames';
 import { useCredential, useRapidaStore } from '@/hooks';
 import toast from 'react-hot-toast/headless';
-import { SearchIconInput } from '@/app/components/Form/Input/IconInput';
-import { BluredWrapper } from '@/app/components/Wrapper/BluredWrapper';
+import { SearchIconInput } from '@/app/components/form/input/IconInput';
+import { BluredWrapper } from '@/app/components/wrapper/blured-wrapper';
 import { TablePagination } from '@/app/components/base/tables/table-pagination';
 import { ToolProviderContext } from '@/hooks/use-tool-provider-page-store';
 import {
   ToolProviderCard,
   ToolProviderConnectParams,
 } from '@/app/components/base/cards/tool-provider-card';
-import CheckboxCard from '@/app/components/Form/checkbox-card';
+import CheckboxCard from '@/app/components/form/checkbox-card';
 import { useAllToolProviderCredentials } from '@/hooks/use-tool-provider';
 import { ToolProvider } from '@rapidaai/react';
 

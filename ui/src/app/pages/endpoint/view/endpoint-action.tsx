@@ -1,6 +1,6 @@
 import { FC } from 'react';
 import { Endpoint } from '@rapidaai/react';
-import { IBlueButton } from '@/app/components/Form/Button';
+import { IBlueButton } from '@/app/components/form/button';
 import { useNavigate } from 'react-router-dom';
 import { useResourceRole } from '@/hooks/use-credential';
 import { isOwnerResource } from '@/utils';

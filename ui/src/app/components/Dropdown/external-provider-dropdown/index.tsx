@@ -1,5 +1,5 @@
 import { cn } from '@/utils';
-import { Dropdown } from '@/app/components/Dropdown';
+import { Dropdown } from '@/app/components/dropdown';
 import {
   INTEGRATION_PROVIDER,
   IntegrationProvider,

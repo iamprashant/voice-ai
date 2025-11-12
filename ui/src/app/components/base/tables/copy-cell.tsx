@@ -1,10 +1,10 @@
-import { BorderButton } from '@/app/components/Form/Button';
+import { TableCell } from '@/app/components/base/tables/table-cell';
+import { BorderButton } from '@/app/components/form/button';
 import { CopyIcon } from '@/app/components/Icon/Copy';
 import { TickIcon } from '@/app/components/Icon/Tick';
-import { TD } from '@/app/components/Table/TD';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
-export function CopyableColumn(props: { children: string }) {
+export function CopyCell(props: { children: string }) {
   const [isChecked, setIsChecked] = useState(false);
   const copyItem = (item: string) => {
     setIsChecked(true);
@@ -14,7 +14,7 @@ export function CopyableColumn(props: { children: string }) {
     }, 2000); // Reset back after 2 seconds
   };
   return (
-    <TD>
+    <TableCell>
       <div className="flex items-center justify-between group w-fit space-x-2">
         <div className="text-[15px] font-medium">{props.children}</div>
         <div className="flex items-start gap-1.5 opacity-0 transition-all focus-within:opacity-100 group-hover:opacity-100 [&:has([data-state='open'])]:opacity-100">
@@ -32,6 +32,6 @@ export function CopyableColumn(props: { children: string }) {
           </BorderButton>
         </div>
       </div>
-    </TD>
+    </TableCell>
   );
 }

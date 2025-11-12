@@ -7,21 +7,21 @@ import React, {
   useState,
 } from 'react';
 import { cn } from '@/utils';
-import { BluredWrapper } from '@/app/components/Wrapper/BluredWrapper';
-import { SearchIconInput } from '@/app/components/Form/Input/IconInput';
+import { BluredWrapper } from '@/app/components/wrapper/blured-wrapper';
+import { SearchIconInput } from '@/app/components/form/input/IconInput';
 import { Card } from '@/app/components/base/cards';
-import { TableHederWithCheckbox } from '@/app/components/Table/TableHeader';
 import { ConnectorFileContext } from '@/hooks/use-connector-file-page-store';
 import { TablePagination } from '@/app/components/base/tables/table-pagination';
 import { useCredential, useRapidaStore } from '@/hooks';
 import { Struct } from 'google-protobuf/google/protobuf/struct_pb';
 import toast from 'react-hot-toast/headless';
-import { TD } from '@/app/components/Table/TD';
-import { TR } from '@/app/components/Table/Body';
-import { IdColumn } from '@/app/components/Table/IdColumn';
-import { Spinner } from '@/app/components/Loader/Spinner';
+import { Spinner } from '@/app/components/loader/spinner';
 import { KnowledgeFileListingProps } from '@/app/pages/knowledge-base/action/connect-knowledge/connectors-files-listing';
 import { Content } from '@rapidaai/react';
+import { TableHederWithCheckbox } from '@/app/components/base/tables/table-head';
+import { TableRow } from '@/app/components/base/tables/table-row';
+import { TableCell } from '@/app/components/base/tables/table-cell';
+import { TextCell } from '@/app/components/base/tables/text-cell';
 
 export const GithubKnowledgeFileListing: FC<KnowledgeFileListingProps> = memo(
   ({ toolProvider, className, onChangeContents }) => {
@@ -201,8 +201,8 @@ export const GithubKnowledgeFileListing: FC<KnowledgeFileListingProps> = memo(
           <tbody>
             {ctx.files.map((x, idx) => {
               return (
-                <TR key={idx}>
-                  <TD>
+                <TableRow key={idx}>
+                  <TableCell>
                     <input
                       type="checkbox"
                       name="file-ids"
@@ -226,16 +226,17 @@ export const GithubKnowledgeFileListing: FC<KnowledgeFileListingProps> = memo(
                         )
                       }
                     />
-                  </TD>
-                  <IdColumn to="">
+                  </TableCell>
+                  <TextCell>
                     {x.getFieldsMap().get('full_name')?.getStringValue()}
-                  </IdColumn>
-                  <TD>{x.getFieldsMap().get('html_url')?.getStringValue()}</TD>
-
-                  <TD>
+                  </TextCell>
+                  <TextCell>
+                    {x.getFieldsMap().get('html_url')?.getStringValue()}
+                  </TextCell>
+                  <TextCell>
                     {x.getFieldsMap().get('organization')?.getStringValue()}
-                  </TD>
-                </TR>
+                  </TextCell>
+                </TableRow>
               );
             })}
           </tbody>

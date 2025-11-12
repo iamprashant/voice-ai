@@ -1,11 +1,11 @@
 import type { FC } from 'react';
 import React, { useCallback, useEffect, useState } from 'react';
-import { IBlueBGButton, ICancelButton } from '@/app/components/Form/Button';
+import { IBlueBGButton, ICancelButton } from '@/app/components/form/button';
 import { useCredential, useRapidaStore } from '@/hooks';
 import toast from 'react-hot-toast/headless';
-import CheckboxCard from '@/app/components/Form/checkbox-card';
-import { SearchIconInput } from '@/app/components/Form/Input/IconInput';
-import { BluredWrapper } from '@/app/components/Wrapper/BluredWrapper';
+import CheckboxCard from '@/app/components/form/checkbox-card';
+import { SearchIconInput } from '@/app/components/form/input/IconInput';
+import { BluredWrapper } from '@/app/components/wrapper/blured-wrapper';
 import { TablePagination } from '@/app/components/base/tables/table-pagination';
 import { ActionableEmptyMessage } from '@/app/components/container/message/actionable-empty-message';
 import { useGlobalNavigation } from '@/hooks/use-global-navigator';

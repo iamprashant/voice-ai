@@ -1,6 +1,6 @@
 import { CustomLink, CustomLinkProps } from '@/app/components/custom-link';
-import { MultiplePills } from '@/app/components/Pill';
-import { Tooltip } from '@/app/components/Tooltip';
+import { MultiplePills } from '@/app/components/pill';
+import { Tooltip } from '@/app/components/tooltip';
 import { cn } from '@/utils';
 import { FC, HTMLAttributes } from 'react';
 

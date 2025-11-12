@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { TableText } from '@/app/components/Table/Body';
 import toast from 'react-hot-toast/headless';
 import { useCredential } from '@/hooks/use-credential';
 import {
@@ -9,15 +8,15 @@ import {
   KnowledgeLog,
 } from '@rapidaai/react';
 import { useRapidaStore } from '@/hooks';
-import { Tab } from '@/app/components/Tab';
+import { Tab } from '@/app/components/tab';
 import { cn } from '@/utils';
-import { DateTimeColumn } from '@/app/components/Table/DateColumn';
 import { ChevronRight } from 'lucide-react';
 import { StatusIndicator } from '@/app/components/indicators/status';
 import { ModalProps } from '@/app/components/base/modal';
 import { RightSideModal } from '@/app/components/base/modal/right-side-modal';
 import { connectionConfig } from '@/configs';
 import { CodeHighlighting } from '@/app/components/code-highlighting';
+import { toHumanReadableDateTime } from '@/utils/date';
 
 interface KnowledgeLogModalProps extends ModalProps {
   currentActivityId: string;
@@ -111,9 +110,7 @@ export function KnowledgeLogDialog(props: KnowledgeLogModalProps) {
                             Time Taken
                           </div>
                           <div className="">
-                            <TableText>
-                              {`${Number(activity.getTimetaken()) / 1000000}ms`}{' '}
-                            </TableText>
+                            {`${Number(activity.getTimetaken()) / 1000000}ms`}{' '}
                           </div>
                         </div>
                         <div className="space-y-1">
@@ -121,7 +118,9 @@ export function KnowledgeLogDialog(props: KnowledgeLogModalProps) {
                             Request Created Time
                           </div>
                           <div className="">
-                            <DateTimeColumn date={activity.getCreateddate()} />
+                            {toHumanReadableDateTime(
+                              activity.getCreateddate()!,
+                            )}
                           </div>
                         </div>
 

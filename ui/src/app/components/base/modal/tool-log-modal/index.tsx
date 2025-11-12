@@ -9,7 +9,7 @@ import {
   AssistantToolLog,
 } from '@rapidaai/react';
 import { useRapidaStore } from '@/hooks';
-import { Tab } from '@/app/components/Tab';
+import { Tab } from '@/app/components/tab';
 import { cn } from '@/utils';
 import { ChevronRight } from 'lucide-react';
 import { ModalProps } from '@/app/components/base/modal';

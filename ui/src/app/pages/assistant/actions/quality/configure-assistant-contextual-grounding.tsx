@@ -6,12 +6,12 @@ import {
   IBlueBGButton,
   IBlueBorderButton,
   ICancelButton,
-} from '@/app/components/Form/Button';
-import { FieldSet } from '@/app/components/Form/Fieldset';
-import { Input } from '@/app/components/Form/Input';
-import { Select } from '@/app/components/Form/Select';
-import { Slider } from '@/app/components/Form/Slider';
-import { SwitchWithLabel } from '@/app/components/Form/Switch';
+} from '@/app/components/form/button';
+import { FieldSet } from '@/app/components/form/fieldset';
+import { Input } from '@/app/components/form/input';
+import { Select } from '@/app/components/form/select';
+import { Slider } from '@/app/components/form/slider';
+import { SwitchWithLabel } from '@/app/components/form/switch';
 import { InputGroup } from '@/app/components/input-group';
 import { InputHelper } from '@/app/components/input-helper';
 import { useState } from 'react';

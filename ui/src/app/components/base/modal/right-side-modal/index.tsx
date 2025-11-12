@@ -8,7 +8,7 @@ import {
   motion,
 } from 'framer-motion';
 import { CloseIcon } from '@/app/components/Icon/Close';
-import { TitleHeading } from '@/app/components/Heading/TitleHeading';
+import { TitleHeading } from '@/app/components/heading/title-heading';
 import { cn } from '@/utils';
 /**
  *

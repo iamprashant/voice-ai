@@ -1,6 +1,6 @@
-import { IBlueBGButton, ICancelButton } from '@/app/components/Form/Button';
+import { IBlueBGButton, ICancelButton } from '@/app/components/form/button';
 import { GenericModal, ModalProps } from '@/app/components/base/modal';
-import { Spinner } from '@/app/components/Loader/Spinner';
+import { Spinner } from '@/app/components/loader/spinner';
 import React, { ReactElement } from 'react';
 import { cn } from '@/utils';
 import { ModalBody } from '@/app/components/base/modal/modal-body';

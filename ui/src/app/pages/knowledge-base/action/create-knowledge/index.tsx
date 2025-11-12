@@ -1,19 +1,19 @@
-import { FieldSet } from '@/app/components/Form/Fieldset';
-import { Helmet } from '@/app/components/Helmet';
-import { Input } from '@/app/components/Form/Input';
-import { TagInput } from '@/app/components/Form/tag-input';
+import { FieldSet } from '@/app/components/form/fieldset';
+import { Helmet } from '@/app/components/helmet';
+import { Input } from '@/app/components/form/input';
+import { TagInput } from '@/app/components/form/tag-input';
 import { useCreateKnowledgePageStore } from '@/hooks/use-create-knowledge-page-store';
 import { useCallback, useEffect, useState } from 'react';
 import { useCredential, useRapidaStore } from '@/hooks';
 import {
   IBlueBGArrowButton,
   ICancelButton,
-} from '@/app/components/Form/Button';
+} from '@/app/components/form/button';
 import { KnowledgeDocument } from '@rapidaai/react';
-import { TabForm } from '@/app/components/Form/tab-form';
+import { TabForm } from '@/app/components/form/tab-form';
 import { useCreateKnowledgeDocumentPageStore } from '@/hooks/use-create-knowledge-document-page-store';
 import { Knowledge } from '@rapidaai/react';
-import { KnowledgeTags } from '@/app/components/Form/tag-input/knowledge-tags';
+import { KnowledgeTags } from '@/app/components/form/tag-input/knowledge-tags';
 import toast from 'react-hot-toast/headless';
 import { create_knowledge_success_message } from '@/utils/messages';
 import { useGlobalNavigation } from '@/hooks/use-global-navigator';
@@ -21,7 +21,7 @@ import { ManualFile } from '@/app/pages/knowledge-base/action/components/datasou
 import { FormLabel } from '@/app/components/form-label/index';
 import ConfirmDialog from '@/app/components/base/modal/confirm-ui';
 import { useNavigate } from 'react-router-dom';
-import { Textarea } from '@/app/components/Form/Textarea';
+import { Textarea } from '@/app/components/form/textarea';
 import { EmbeddingProvider } from '@/app/components/providers/embedding';
 import { YellowNoticeBlock } from '@/app/components/container/message/notice-block';
 import { ExternalLink, Info } from 'lucide-react';

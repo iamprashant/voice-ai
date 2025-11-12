@@ -1,17 +1,17 @@
 import { useEffect, useState, type FC } from 'react';
-import { Input } from '@/app/components/Form/Input';
-import { FieldSet } from '@/app/components/Form/Fieldset';
-import { Tooltip } from '@/app/components/Tooltip';
+import { Input } from '@/app/components/form/input';
+import { FieldSet } from '@/app/components/form/fieldset';
+import { Tooltip } from '@/app/components/tooltip';
 import { InfoIcon } from '@/app/components/Icon/Info';
-import CheckboxCard from '@/app/components/Form/checkbox-card';
+import CheckboxCard from '@/app/components/form/checkbox-card';
 
 import { VectorSearchIcon } from '@/app/components/Icon/vector-search';
-import { Switch } from '@/app/components/Form/Switch';
-import { Slider } from '@/app/components/Form/Slider';
+import { Switch } from '@/app/components/form/switch';
+import { Slider } from '@/app/components/form/slider';
 import { Dataset } from '@/models/datasets';
-import { IBlueBGButton, ICancelButton } from '@/app/components/Form/Button';
+import { IBlueBGButton, ICancelButton } from '@/app/components/form/button';
 import { cn } from '@/utils';
-import { ErrorMessage } from '@/app/components/Form/error-message';
+import { ErrorMessage } from '@/app/components/form/error-message';
 import { Card } from '@/app/components/base/cards';
 import { HybridSearchIcon } from '@/app/components/Icon/hybrid-search';
 import { TextSearchIcon } from '@/app/components/Icon/text-search';

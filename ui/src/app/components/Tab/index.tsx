@@ -1,5 +1,5 @@
-import { TabBody } from '@/app/components/Tab/TabBody';
-import { TabHeader } from '@/app/components/Tab/TabHeader';
+import { TabBody } from '@/app/components/tab/tab-body';
+import { TabHeader } from '@/app/components/tab/tab-header';
 import { cn } from '@/utils';
 import React, { FC, HTMLAttributes, useState } from 'react';
 

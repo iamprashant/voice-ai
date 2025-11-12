@@ -1,6 +1,6 @@
 import { Assistant } from '@rapidaai/react';
 import { AssistantConversationMessage } from '@rapidaai/react';
-import { SectionLoader } from '@/app/components/Loader/section-loader';
+import { SectionLoader } from '@/app/components/loader/section-loader';
 import { Analytics } from '@/app/pages/assistant/view/overview/analytics';
 import { useCredential, useRapidaStore } from '@/hooks';
 import { useAssistantTracePageStore } from '@/hooks/use-assistant-trace-page-store';

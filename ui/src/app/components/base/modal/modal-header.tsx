@@ -1,4 +1,4 @@
-import { IButton } from '@/app/components/Form/Button';
+import { IButton } from '@/app/components/form/button';
 import { cn } from '@/utils';
 import { X } from 'lucide-react';
 import { FC, HTMLAttributes } from 'react';

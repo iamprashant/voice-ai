@@ -15,7 +15,7 @@ import { useCurrentCredential } from '@/hooks/use-credential';
 import { AssistantConversation } from '@rapidaai/react';
 import { useRapidaStore } from '@/hooks';
 import { SideTab } from '@/app/components/tab-link';
-import { PageLoader } from '@/app/components/Loader/page-loader';
+import { PageLoader } from '@/app/components/loader/page-loader';
 import {
   Activity,
   BookText,
@@ -27,7 +27,7 @@ import {
   RotateCw,
 } from 'lucide-react';
 import { useGlobalNavigation } from '@/hooks/use-global-navigator';
-import { IBlueButton } from '@/app/components/Form/Button';
+import { IBlueButton } from '@/app/components/form/button';
 import { PageHeaderBlock } from '@/app/components/blocks/page-header-block';
 import { PageTitleBlock } from '@/app/components/blocks/page-title-block';
 import { Table } from '@/app/components/base/tables/table';

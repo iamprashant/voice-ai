@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { DescriptiveHeading } from '@/app/components/Heading/DescriptiveHeading';
-import { Label } from '@/app/components/Form/Label';
-import { Input } from '@/app/components/Form/Input';
+import { DescriptiveHeading } from '@/app/components/heading/descriptive-heading';
+import { Label } from '@/app/components/form/label';
+import { Input } from '@/app/components/form/input';
 import { CreateProject } from '@rapidaai/react';
 import { CreateProjectResponse } from '@rapidaai/react';
 import { useForm } from 'react-hook-form';
 import { useCredential } from '@/hooks/use-credential';
-import { ErrorMessage } from '@/app/components/Form/error-message';
+import { ErrorMessage } from '@/app/components/form/error-message';
 import { ModalProps } from '@/app/components/base/modal';
 import { useRapidaStore } from '@/hooks';
 import { ServiceError } from '@rapidaai/react';

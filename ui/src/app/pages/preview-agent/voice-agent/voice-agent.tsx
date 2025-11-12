@@ -11,7 +11,7 @@ import { MessagingAction } from '@/app/pages/preview-agent/voice-agent/actions';
 import { ConversationMessages } from '@/app/pages/preview-agent/voice-agent/text/conversations';
 import { cn } from '@/utils';
 import { QuickSuggestion } from '@/app/pages/preview-agent/voice-agent/text/suggestions';
-import { Tab } from '@/app/components/Tab';
+import { Tab } from '@/app/components/tab';
 import { YellowNoticeBlock } from '@/app/components/container/message/notice-block';
 import {
   JsonTextarea,
@@ -19,7 +19,7 @@ import {
   ParagraphTextarea,
   TextTextarea,
   UrlTextarea,
-} from '@/app/components/Form/Textarea';
+} from '@/app/components/form/textarea';
 import { InputVarForm } from '@/app/pages/endpoint/view/try-playground/experiment-prompt/components/input-var-form';
 import { InputVarType } from '@/models/common';
 import { InputGroup } from '@/app/components/input-group';

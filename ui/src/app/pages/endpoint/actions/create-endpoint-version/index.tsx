@@ -1,11 +1,11 @@
 import { FC, useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast/headless';
-import { Helmet } from '@/app/components/Helmet';
+import { Helmet } from '@/app/components/helmet';
 import {
   IBlueBGArrowButton,
   ICancelButton,
-} from '@/app/components/Form/Button';
-import { TabForm } from '@/app/components/Form/tab-form';
+} from '@/app/components/form/button';
+import { TabForm } from '@/app/components/form/tab-form';
 import ConfirmDialog from '@/app/components/base/modal/confirm-ui';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { useRapidaStore } from '@/hooks';
@@ -26,9 +26,9 @@ import { ServiceError } from '@rapidaai/react';
 import { ChatCompletePrompt, Prompt } from '@/utils/prompt';
 import { CreateEndpointProviderModelResponse } from '@rapidaai/react';
 import { randomString } from '@/utils';
-import { FieldSet } from '@/app/components/Form/Fieldset';
+import { FieldSet } from '@/app/components/form/fieldset';
 import { FormLabel } from '@/app/components/form-label';
-import { Textarea } from '@/app/components/Form/Textarea';
+import { Textarea } from '@/app/components/form/textarea';
 import { connectionConfig } from '@/configs';
 import { YellowNoticeBlock } from '@/app/components/container/message/notice-block';
 import { ExternalLink, Info } from 'lucide-react';

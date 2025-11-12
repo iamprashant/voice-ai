@@ -1,8 +1,8 @@
 import { PageHeaderBlock } from '@/app/components/blocks/page-header-block';
 import { PageTitleBlock } from '@/app/components/blocks/page-title-block';
-import { IBlueButton } from '@/app/components/Form/Button';
+import { IBlueButton } from '@/app/components/form/button';
 import { PlayIcon } from '@/app/components/Icon/Play';
-import { Spinner } from '@/app/components/Loader/Spinner';
+import { Spinner } from '@/app/components/loader/spinner';
 import { FC } from 'react';
 
 export const PlaygroundHeader: FC<{

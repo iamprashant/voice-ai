@@ -1,4 +1,4 @@
-import { TD } from '@/app/components/Table/TD';
+import { TableCell } from '@/app/components/base/tables/table-cell';
 import { formatHumanReadableNumber } from '@/utils/format';
 import React, { useEffect, useState } from 'react';
 
@@ -7,7 +7,7 @@ import React, { useEffect, useState } from 'react';
  * @param props
  * @returns
  */
-export function NumberColumn(props: { num?: string }) {
+export function NumberCell(props: { num?: string }) {
   const [num, setNum] = useState('');
 
   useEffect(() => {
@@ -18,8 +18,8 @@ export function NumberColumn(props: { num?: string }) {
     setNum(formatHumanReadableNumber(props.num));
   }, [props.num]);
   return (
-    <TD className="text-center">
+    <TableCell className="text-center">
       <span className="font-medium max-w-[20rem] truncate">{num}</span>
-    </TD>
+    </TableCell>
   );
 }

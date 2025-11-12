@@ -1,5 +1,5 @@
 import { lazyLoad } from '@/utils/loadable';
-import { LineLoader } from '@/app/components/Loader/line-loader';
+import { LineLoader } from '@/app/components/loader/line-loader';
 
 export const AccountPersonalSettingPage = lazyLoad(
   () => import('./personal-setting'),

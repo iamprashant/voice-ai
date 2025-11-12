@@ -2,7 +2,7 @@ import {
   BorderButton,
   ButtonProps,
   IButton,
-} from '@/app/components/Form/Button';
+} from '@/app/components/form/button';
 import { CopyIcon } from '@/app/components/Icon/Copy';
 import { TickIcon } from '@/app/components/Icon/Tick';
 import { cn } from '@/utils';

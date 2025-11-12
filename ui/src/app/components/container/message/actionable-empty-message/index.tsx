@@ -1,4 +1,4 @@
-import { IBlueBorderPlusButton } from '@/app/components/Form/Button';
+import { IBlueBorderPlusButton } from '@/app/components/form/button';
 import { FC } from 'react';
 
 export const ActionableEmptyMessage: FC<{

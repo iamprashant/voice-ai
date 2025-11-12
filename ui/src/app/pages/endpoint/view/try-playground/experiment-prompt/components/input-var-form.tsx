@@ -1,5 +1,5 @@
 import { Variable, BytesToAny, StringToAny } from '@rapidaai/react';
-import { Pill } from '@/app/components/Pill';
+import { Pill } from '@/app/components/pill';
 import React, { HTMLAttributes } from 'react';
 import p from 'google-protobuf/google/protobuf/any_pb';
 import { cn } from '@/utils';

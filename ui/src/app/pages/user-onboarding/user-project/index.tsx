@@ -1,19 +1,19 @@
 import React, { useCallback, useContext, useState } from 'react';
-import { DescriptiveHeading } from '@/app/components/Heading/DescriptiveHeading';
-import { Helmet } from '@/app/components/Helmet';
-import { Textarea } from '@/app/components/Form/Textarea';
-import { Input } from '@/app/components/Form/Input';
+import { DescriptiveHeading } from '@/app/components/heading/descriptive-heading';
+import { Helmet } from '@/app/components/helmet';
+import { Textarea } from '@/app/components/form/textarea';
+import { Input } from '@/app/components/form/input';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { CreateProject } from '@rapidaai/react';
 import { CreateProjectResponse } from '@rapidaai/react';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { useRapidaStore } from '@/hooks';
-import { IBlueBGArrowButton } from '@/app/components/Form/Button';
-import { ErrorMessage } from '@/app/components/Form/error-message';
+import { IBlueBGArrowButton } from '@/app/components/form/button';
+import { ErrorMessage } from '@/app/components/form/error-message';
 import { ServiceError } from '@rapidaai/react';
 import { AuthContext } from '@/context/auth-context';
-import { FieldSet } from '@/app/components/Form/Fieldset';
+import { FieldSet } from '@/app/components/form/fieldset';
 import { FormLabel } from '@/app/components/form-label';
 import { connectionConfig } from '@/configs';
 export function CreateProjectPage() {

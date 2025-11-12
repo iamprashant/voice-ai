@@ -27,7 +27,7 @@
         "build": "yarn run build:css && cross-env FAST_REFRESH=false craco build",
         "build:docker": "yarn run build:css && cross-env NODE_ENV=development FAST_REFRESH=false craco build",
         "build:css": "npx @tailwindcss/cli -i src/styles/tailwind.css -o src/styles/generated/tailwindcss.css --minify --optimize",
-        "tailwind:watch": "npx @tailwindcss/cli -i src/styles/tailwind.css -o src/styles/generated/tailwindcss.css --watch --poll'",
+        "tailwind:watch": "npx @tailwindcss/cli -i src/styles/tailwind.css -o src/styles/generated/tailwindcss.css --watch --poll",
         "test": "craco test",
         "checkTs": "tsc --noEmit",
         "eslint": "eslint --ext js,ts,tsx",

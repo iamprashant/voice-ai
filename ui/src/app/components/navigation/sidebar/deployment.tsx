@@ -10,7 +10,7 @@ import { SidebarIconWrapper } from '@/app/components/navigation/sidebar/sidebar-
 import { SidebarLabel } from '@/app/components/navigation/sidebar/sidebar-label';
 import { SidebarSimpleListItem } from '@/app/components/navigation/sidebar/sidebar-simple-list-item';
 import { useLocation } from 'react-router-dom';
-import { Tooltip } from '@/app/components/Tooltip';
+import { Tooltip } from '@/app/components/tooltip';
 import { BetaIcon } from '@/app/components/Icon/Beta';
 
 export const Deployment = memo(() => {

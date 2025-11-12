@@ -6,10 +6,10 @@ import {
   IBlueBorderPlusButton,
   IBlueButton,
   IButton,
-} from '@/app/components/Form/Button';
-import { CopyButton } from '@/app/components/Form/Button/copy-button';
-import { FieldSet } from '@/app/components/Form/Fieldset';
-import { Helmet } from '@/app/components/Helmet';
+} from '@/app/components/form/button';
+import { CopyButton } from '@/app/components/form/button/copy-button';
+import { FieldSet } from '@/app/components/form/fieldset';
+import { Helmet } from '@/app/components/helmet';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { useGlobalNavigation } from '@/hooks/use-global-navigator';
 import {
@@ -38,10 +38,10 @@ import {
 } from '@rapidaai/react';
 import toast from 'react-hot-toast/headless';
 import { connectionConfig } from '@/configs';
-import { ProviderPill } from '@/app/components/Pill/provider-model-pill';
+import { ProviderPill } from '@/app/components/pill/provider-model-pill';
 import { AnimatePresence, motion } from 'framer-motion';
 import { PlusIcon } from '@/app/components/Icon/plus';
-import { Popover } from '@/app/components/Popover';
+import { Popover } from '@/app/components/popover';
 import { ActionableEmptyMessage } from '@/app/components/container/message/actionable-empty-message';
 import { toHumanReadableDateTime } from '@/utils/date';
 import { InputHelper } from '@/app/components/input-helper';
@@ -138,31 +138,34 @@ export const ConfigureAssistantDeploymentPage = () => {
             open={createDeploymentPopover}
             setOpen={setCreateDeploymentPopover}
           >
-            <div className="space-y-0.5">
+            <div className="space-y-0.5 text-sm/6">
               <IButton
                 className="w-full justify-start"
                 onClick={() => navi.goToConfigureWeb(assistantId!)}
               >
-                <Globe className="w-4 h-4 mr-2" /> Create new web widget
+                <Globe className="w-4 h-4 mr-2" strokeWidth={1.5} /> Add to Your
+                Website
               </IButton>
               <IButton
                 className="w-full justify-start"
                 onClick={() => navi.goToConfigureApi(assistantId!)}
               >
-                <Code className="w-4 h-4 mr-2" /> Create new api deployment
+                <Code className="w-4 h-4 mr-2" strokeWidth={1.5} /> Integrate
+                with SDK
               </IButton>
               <IButton
                 className="w-full justify-start"
                 onClick={() => navi.goToConfigureCall(assistantId!)}
               >
-                <Phone className="w-4 h-4 mr-2" /> Create new phone call
-                deployment
+                <Phone className="w-4 h-4 mr-2" strokeWidth={1.5} /> Deploy on
+                Phone Call
               </IButton>
               <IButton
                 className="w-full justify-start"
                 onClick={() => navi.goToConfigureDebugger(assistantId!)}
               >
-                <Bug className="w-4 h-4 mr-2" /> Create new debugger deployement
+                <Bug className="w-4 h-4 mr-2" strokeWidth={1.5} /> Deploy for
+                Debugging
               </IButton>
             </div>
           </Popover>
@@ -700,7 +703,7 @@ export const ConfigureAssistantDeploymentPage = () => {
         },
         assistant_id: "2139456643765633024",
         token:
-          "5e04b962dfd988ca0f4ac9e097f17841ebf34d7e38c50297e245c12bddce2117",
+          "",
         user: {
           id: "ayan-global-user",
           name: "Guest",
@@ -764,28 +767,29 @@ export const ConfigureAssistantDeploymentPage = () => {
                         className="w-full justify-start"
                         onClick={() => navi.goToConfigureWeb(assistantId!)}
                       >
-                        <Globe className="w-4 h-4 mr-2" /> Create new web widget
+                        <Globe className="w-4 h-4 mr-2" strokeWidth={1.5} /> Add
+                        to Your Website
                       </IButton>
                       <IButton
                         className="w-full justify-start"
                         onClick={() => navi.goToConfigureApi(assistantId!)}
                       >
-                        <Code className="w-4 h-4 mr-2" /> Create new api
-                        deployment
+                        <Code className="w-4 h-4 mr-2" strokeWidth={1.5} />{' '}
+                        Integrate with SDK
                       </IButton>
                       <IButton
                         className="w-full justify-start"
                         onClick={() => navi.goToConfigureCall(assistantId!)}
                       >
-                        <Phone className="w-4 h-4 mr-2" /> Create new phone call
-                        deployment
+                        <Phone className="w-4 h-4 mr-2" strokeWidth={1.5} />{' '}
+                        Deploy on Phone Call
                       </IButton>
                       <IButton
                         className="w-full justify-start"
                         onClick={() => navi.goToConfigureDebugger(assistantId!)}
                       >
-                        <Bug className="w-4 h-4 mr-2" /> Create new debugger
-                        deployement
+                        <Bug className="w-4 h-4 mr-2" strokeWidth={1.5} />{' '}
+                        Deploy for Debugging
                       </IButton>
                     </div>
                   </Popover>

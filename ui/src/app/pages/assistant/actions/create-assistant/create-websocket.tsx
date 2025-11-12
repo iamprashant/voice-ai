@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { Helmet } from '@/app/components/Helmet';
+import { Helmet } from '@/app/components/helmet';
 import { useRapidaStore } from '@/hooks';
-import { TabForm } from '@/app/components/Form/tab-form';
+import { TabForm } from '@/app/components/form/tab-form';
 import {
   IBlueBGArrowButton,
   IBlueBorderButton,
   ICancelButton,
-} from '@/app/components/Form/Button';
+} from '@/app/components/form/button';
 import {
   Assistant,
   CreateAssistant,
@@ -18,12 +18,12 @@ import { useConfirmDialog } from '@/app/pages/assistant/actions/hooks/use-confir
 import { useGlobalNavigation } from '@/hooks/use-global-navigator';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { randomMeaningfullName } from '@/utils';
-import { FieldSet } from '@/app/components/Form/Fieldset';
+import { FieldSet } from '@/app/components/form/fieldset';
 import { FormLabel } from '@/app/components/form-label';
-import { Input } from '@/app/components/Form/Input';
-import { Textarea } from '@/app/components/Form/Textarea';
-import { TagInput } from '@/app/components/Form/tag-input';
-import { AssistantTag } from '@/app/components/Form/tag-input/assistant-tags';
+import { Input } from '@/app/components/form/input';
+import { Textarea } from '@/app/components/form/textarea';
+import { TagInput } from '@/app/components/form/tag-input';
+import { AssistantTag } from '@/app/components/form/tag-input/assistant-tags';
 import {
   Bug,
   ChevronRight,

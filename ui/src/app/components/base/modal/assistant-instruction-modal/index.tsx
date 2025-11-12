@@ -5,8 +5,8 @@ import { ModalFitHeightBlock } from '@/app/components/blocks/modal-fit-height-bl
 import { CheckCircle, ExternalLink } from 'lucide-react';
 import { ModalBody } from '@/app/components/base/modal/modal-body';
 import { ModalFooter } from '@/app/components/base/modal/modal-footer';
-import { ICancelButton, ILinkButton } from '@/app/components/Form/Button';
-import { FieldSet } from '@/app/components/Form/Fieldset';
+import { ICancelButton, ILinkButton } from '@/app/components/form/button';
+import { FieldSet } from '@/app/components/form/fieldset';
 import { CodeHighlighting } from '@/app/components/code-highlighting';
 
 interface AssistantInstructionDialogProps

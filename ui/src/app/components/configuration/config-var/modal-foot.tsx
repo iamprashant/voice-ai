@@ -1,4 +1,4 @@
-import { Button } from '@/app/components/Form/Button';
+import { Button } from '@/app/components/form/button';
 import type { FC } from 'react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';

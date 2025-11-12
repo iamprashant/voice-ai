@@ -1,8 +1,8 @@
 import { IntArrayImage } from '@/app/components/base/images/int-array-imge';
 import { FormLabel } from '@/app/components/form-label';
-import { FieldSet } from '@/app/components/Form/Fieldset';
-import { Input } from '@/app/components/Form/Input';
-import { Select } from '@/app/components/Form/Select';
+import { FieldSet } from '@/app/components/form/fieldset';
+import { Input } from '@/app/components/form/input';
+import { Select } from '@/app/components/form/select';
 import { FileUploadIcon } from '@/app/components/Icon/file-upload';
 import { InputGroup } from '@/app/components/input-group';
 import { cn } from '@/utils';

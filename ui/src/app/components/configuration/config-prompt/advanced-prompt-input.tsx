@@ -4,7 +4,7 @@ import { useBoolean } from 'ahooks';
 import MessageTypeSelector from './message-type-selector';
 import type { PromptRole } from '@/models/debug';
 import { DeleteIcon } from '@/app/components/Icon/delete';
-import { IButton } from '@/app/components/Form/Button';
+import { IButton } from '@/app/components/form/button';
 import { CloseIcon } from '@/app/components/Icon/Close';
 import { ExpandIcon } from '@/app/components/Icon/Expand';
 import { TickIcon } from '@/app/components/Icon/Tick';

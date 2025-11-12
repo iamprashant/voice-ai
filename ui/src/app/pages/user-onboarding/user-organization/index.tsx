@@ -1,19 +1,19 @@
 import React, { useCallback, useContext, useState } from 'react';
-import { DescriptiveHeading } from '@/app/components/Heading/DescriptiveHeading';
-import { Helmet } from '@/app/components/Helmet';
-import { IBlueBGArrowButton } from '@/app/components/Form/Button';
-import { Input } from '@/app/components/Form/Input';
-import { Select } from '@/app/components/Form/Select';
+import { DescriptiveHeading } from '@/app/components/heading/descriptive-heading';
+import { Helmet } from '@/app/components/helmet';
+import { IBlueBGArrowButton } from '@/app/components/form/button';
+import { Input } from '@/app/components/form/input';
+import { Select } from '@/app/components/form/select';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { CreateOrganization } from '@rapidaai/react';
 import { CreateOrganizationResponse } from '@rapidaai/react';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { useRapidaStore } from '@/hooks';
-import { ErrorMessage } from '@/app/components/Form/error-message';
+import { ErrorMessage } from '@/app/components/form/error-message';
 import { ServiceError } from '@rapidaai/react';
 import { AuthContext } from '@/context/auth-context';
-import { FieldSet } from '@/app/components/Form/Fieldset';
+import { FieldSet } from '@/app/components/form/fieldset';
 import { FormLabel } from '@/app/components/form-label';
 import { connectionConfig } from '@/configs';
 export function CreateOrganizationPage() {

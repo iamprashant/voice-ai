@@ -1,6 +1,6 @@
 import { Tooltip } from '@/app/components/base/tooltip';
 import { RapidaIcon } from '@/app/components/Icon/Rapida';
-import { TextImage } from '@/app/components/Image/TextImage';
+import { TextImage } from '@/app/components/text-image';
 import { toHumanReadableRelativeTimeFromDate } from '@/utils/date';
 import {
   Feedback,

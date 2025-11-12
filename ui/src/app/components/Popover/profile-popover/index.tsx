@@ -1,5 +1,5 @@
 import React from 'react';
-import { Popover, PopoverProps } from '@/app/components/Popover';
+import { Popover, PopoverProps } from '@/app/components/popover';
 import { CustomLink } from '@/app/components/custom-link';
 import { Link } from 'react-router-dom';
 

@@ -1,15 +1,15 @@
-import { Helmet } from '@/app/components/Helmet';
+import { Helmet } from '@/app/components/helmet';
 import { ToolProviderListing } from '@/app/components/configuration/tool-provider-config/tool-provider-listing';
 import { ToolProviderContextProvider } from '@/context/tool-provider-context';
-import { Tab } from '@/app/components/Tab';
+import { Tab } from '@/app/components/tab';
 import { cn } from '@/utils';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { useToolProviderPageStore } from '@/hooks/use-tool-provider-page-store';
 import { PageHeaderBlock } from '@/app/components/blocks/page-header-block';
 import { PageTitleBlock } from '@/app/components/blocks/page-title-block';
 import { INTEGRATION_PROVIDER } from '@/app/components/providers';
-import { BluredWrapper } from '@/app/components/Wrapper/BluredWrapper';
-import { SearchIconInput } from '@/app/components/Form/Input/IconInput';
+import { BluredWrapper } from '@/app/components/wrapper/blured-wrapper';
+import { SearchIconInput } from '@/app/components/form/input/IconInput';
 import { TablePagination } from '@/app/components/base/tables/table-pagination';
 import { ExternalIntegrationProviderCard } from '@/app/components/base/cards/external-integration-provider-card';
 /**

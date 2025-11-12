@@ -1,16 +1,16 @@
 import { Metadata, Endpoint } from '@rapidaai/react';
-import { EndpointDropdown } from '@/app/components/Dropdown/endpoint-dropdown';
+import { EndpointDropdown } from '@/app/components/dropdown/endpoint-dropdown';
 import { FormLabel } from '@/app/components/form-label';
-import { IBlueBorderButton, ICancelButton } from '@/app/components/Form/Button';
-import { FieldSet } from '@/app/components/Form/Fieldset';
-import { Input } from '@/app/components/Form/Input';
-import { Select } from '@/app/components/Form/Select';
+import { IBlueBorderButton, ICancelButton } from '@/app/components/form/button';
+import { FieldSet } from '@/app/components/form/fieldset';
+import { Input } from '@/app/components/form/input';
+import { Select } from '@/app/components/form/select';
 import { cn } from '@/utils';
 import { ArrowRight, ExternalLink, Info, Plus, Trash2 } from 'lucide-react';
 import { FC, useState } from 'react';
 import { InputGroup } from '@/app/components/input-group';
-import { CodeEditor } from '@/app/components/Form/editor/code-editor';
-import { Textarea } from '@/app/components/Form/Textarea';
+import { CodeEditor } from '@/app/components/form/editor/code-editor';
+import { Textarea } from '@/app/components/form/textarea';
 import { YellowNoticeBlock } from '@/app/components/container/message/notice-block';
 
 export const ConfigureEndpoint: React.FC<{

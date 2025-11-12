@@ -1,6 +1,6 @@
 import React from 'react';
-import { OptionMenu } from '@/app/components/Menu';
-import { OptionMenuItem } from '@/app/components/Menu/index';
+import { OptionMenu } from '@/app/components/menu';
+import { OptionMenuItem } from '@/app/components/menu/index';
 
 /**
  *

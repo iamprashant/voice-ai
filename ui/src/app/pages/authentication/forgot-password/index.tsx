@@ -1,18 +1,16 @@
 import React, { useCallback, useState } from 'react';
-import { Helmet } from '@/app/components/Helmet';
-import { Input } from '@/app/components/Form/Input';
+import { Helmet } from '@/app/components/helmet';
+import { Input } from '@/app/components/form/input';
 import { ForgotPassword } from '@rapidaai/react';
 import { ForgotPasswordResponse } from '@rapidaai/react';
 import { useForm } from 'react-hook-form';
 import { useRapidaStore } from '@/hooks';
-import { ErrorMessage } from '@/app/components/Form/error-message';
-import { IBlueBGArrowButton } from '@/app/components/Form/Button';
+import { ErrorMessage } from '@/app/components/form/error-message';
+import { IBlueBGArrowButton } from '@/app/components/form/button';
 import { ServiceError } from '@rapidaai/react';
-import { FieldSet } from '@/app/components/Form/Fieldset';
+import { FieldSet } from '@/app/components/form/fieldset';
 import { FormLabel } from '@/app/components/form-label';
-import { MoveRight } from 'lucide-react';
-import { Spinner } from '@/app/components/Loader/Spinner';
-import { FormActionHeading } from '@/app/components/Heading/ActionHeading/FormActionHeading';
+import { FormActionHeading } from '@/app/components/heading/action-heading/form-action-heading';
 import { connectionConfig } from '@/configs';
 
 export function ForgotPasswordPage() {

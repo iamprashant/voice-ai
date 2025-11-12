@@ -1,6 +1,5 @@
 import React, {
   FC,
-  HTMLAttributes,
   memo,
   useCallback,
   useContext,
@@ -8,21 +7,21 @@ import React, {
   useState,
 } from 'react';
 import { cn } from '@/utils';
-import { BluredWrapper } from '@/app/components/Wrapper/BluredWrapper';
-import { SearchIconInput } from '@/app/components/Form/Input/IconInput';
+import { BluredWrapper } from '@/app/components/wrapper/blured-wrapper';
+import { SearchIconInput } from '@/app/components/form/input/IconInput';
 import { Card } from '@/app/components/base/cards';
-import { TableHederWithCheckbox } from '@/app/components/Table/TableHeader';
 import { ConnectorFileContext } from '@/hooks/use-connector-file-page-store';
 import { TablePagination } from '@/app/components/base/tables/table-pagination';
 import { useCredential, useRapidaStore } from '@/hooks';
 import { Struct } from 'google-protobuf/google/protobuf/struct_pb';
 import toast from 'react-hot-toast/headless';
-import { TD } from '@/app/components/Table/TD';
-import { TR } from '@/app/components/Table/Body';
-import { IdColumn } from '@/app/components/Table/IdColumn';
-import { formatFileSize } from '@/utils/format';
-import { Spinner } from '@/app/components/Loader/Spinner';
+import { Spinner } from '@/app/components/loader/spinner';
 import { KnowledgeFileListingProps } from '@/app/pages/knowledge-base/action/connect-knowledge/connectors-files-listing';
+import { TableHederWithCheckbox } from '@/app/components/base/tables/table-head';
+import { TableRow } from '@/app/components/base/tables/table-row';
+import { TableCell } from '@/app/components/base/tables/table-cell';
+import { TextCell } from '@/app/components/base/tables/text-cell';
+import { SizeCell } from '@/app/components/base/tables/size-cell';
 
 export const ConfluenceKnowledgeFileListing: FC<KnowledgeFileListingProps> =
   memo(({ toolProvider, className }) => {
@@ -204,8 +203,8 @@ export const ConfluenceKnowledgeFileListing: FC<KnowledgeFileListingProps> =
           <tbody>
             {ctx.files.map((x, idx) => {
               return (
-                <TR key={idx}>
-                  <TD>
+                <TableRow key={idx}>
+                  <TableCell>
                     <input
                       type="checkbox"
                       name="file-ids"
@@ -217,16 +216,20 @@ export const ConfluenceKnowledgeFileListing: FC<KnowledgeFileListingProps> =
                         ontoggle(x.getFieldsMap().get('id')?.getStringValue())
                       }
                     />
-                  </TD>
-                  <IdColumn to="">
+                  </TableCell>
+                  <TextCell>
                     {x.getFieldsMap().get('title')?.getStringValue()}
-                  </IdColumn>
-                  <TD>{x.getFieldsMap().get('folder')?.getStringValue()}</TD>
-                  <FileSize
+                  </TextCell>
+                  <TextCell>
+                    {x.getFieldsMap().get('folder')?.getStringValue()}
+                  </TextCell>
+                  <SizeCell
                     size={x.getFieldsMap().get('fileSize')?.getStringValue()}
                   />
-                  <TD>{x.getFieldsMap().get('mimeType')?.getStringValue()}</TD>
-                </TR>
+                  <TextCell>
+                    {x.getFieldsMap().get('mimeType')?.getStringValue()}
+                  </TextCell>
+                </TableRow>
               );
             })}
           </tbody>
@@ -252,8 +255,3 @@ export const ConfluenceKnowledgeFileListing: FC<KnowledgeFileListingProps> =
       </Card>
     );
   });
-
-const FileSize: FC<{ size?: string }> = ({ size }) => {
-  if (size) return <TD>{formatFileSize(+size)}</TD>;
-  return <TD>{size}</TD>;
-};

@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { Helmet } from '@/app/components/Helmet';
+import { Helmet } from '@/app/components/helmet';
 import { useRapidaStore } from '@/hooks';
-import { TabForm } from '@/app/components/Form/tab-form';
+import { TabForm } from '@/app/components/form/tab-form';
 import {
   IBlueBGArrowButton,
   IBlueButton,
   ICancelButton,
-} from '@/app/components/Form/Button';
+} from '@/app/components/form/button';
 import {
   Assistant,
   ConnectionConfig,
@@ -19,12 +19,12 @@ import { useGlobalNavigation } from '@/hooks/use-global-navigator';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { ConfigPrompt } from '@/app/components/configuration/config-prompt';
 import { randomMeaningfullName, randomString } from '@/utils';
-import { FieldSet } from '@/app/components/Form/Fieldset';
+import { FieldSet } from '@/app/components/form/fieldset';
 import { FormLabel } from '@/app/components/form-label';
-import { Input } from '@/app/components/Form/Input';
-import { Textarea } from '@/app/components/Form/Textarea';
-import { TagInput } from '@/app/components/Form/tag-input';
-import { AssistantTag } from '@/app/components/Form/tag-input/assistant-tags';
+import { Input } from '@/app/components/form/input';
+import { Textarea } from '@/app/components/form/textarea';
+import { TagInput } from '@/app/components/form/tag-input';
+import { AssistantTag } from '@/app/components/form/tag-input/assistant-tags';
 import {
   GetDefaultTextProviderConfigIfInvalid,
   TextProvider,
@@ -46,7 +46,7 @@ import {
 import { ActionableEmptyMessage } from '@/app/components/container/message/actionable-empty-message';
 import { ConfigureAssistantToolDialog } from '@/app/components/base/modal/assistant-configure-tool-modal';
 import { YellowNoticeBlock } from '@/app/components/container/message/notice-block';
-import { CardOptionMenu } from '@/app/components/Menu';
+import { CardOptionMenu } from '@/app/components/menu';
 import { CreateAssistant } from '@rapidaai/react';
 import { CreateAssistantToolRequest } from '@rapidaai/react';
 import { Struct } from 'google-protobuf/google/protobuf/struct_pb';

@@ -1,5 +1,5 @@
 import { Metadata } from '@rapidaai/react';
-import { Dropdown } from '@/app/components/Dropdown';
+import { Dropdown } from '@/app/components/dropdown';
 import { COHERE_RERANKER_MODEL } from '@/app/components/providers/reranker/cohere/constants';
 import { cn } from '@/utils';
 

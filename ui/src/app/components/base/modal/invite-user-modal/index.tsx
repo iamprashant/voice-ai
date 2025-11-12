@@ -1,22 +1,22 @@
 import React, { useCallback, useState } from 'react';
-import { Input } from '@/app/components/Form/Input';
-import { MultipleProjectDropdown } from '@/app/components/Dropdown/ProjectDropdown/MultipleProjectDropdown';
-import { ProjectRoleDropdown } from '@/app/components/Dropdown/ProjectRoleDropdown';
+import { Input } from '@/app/components/form/input';
+import { MultipleProjectDropdown } from '@/app/components/dropdown/project-dropdown/MultipleProjectDropdown';
+import { ProjectRoleDropdown } from '@/app/components/dropdown/project-role-dropdown';
 import { AddUsersToProject } from '@rapidaai/react';
 import { AddUsersToProjectResponse } from '@rapidaai/react';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { useRapidaStore } from '@/hooks';
-import { ErrorMessage } from '@/app/components/Form/error-message';
+import { ErrorMessage } from '@/app/components/form/error-message';
 import toast from 'react-hot-toast/headless';
 import { GenericModal, ModalProps } from '@/app/components/base/modal';
 import {
   IBlueBGArrowButton,
   ICancelButton,
-} from '@/app/components/Form/Button';
+} from '@/app/components/form/button';
 import { ServiceError } from '@rapidaai/react';
 import { ModalBody } from '@/app/components/base/modal/modal-body';
 import { ModalFooter } from '@/app/components/base/modal/modal-footer';
-import { FieldSet } from '@/app/components/Form/Fieldset';
+import { FieldSet } from '@/app/components/form/fieldset';
 import { FormLabel } from '@/app/components/form-label';
 import { ModalHeader } from '@/app/components/base/modal/modal-header';
 import { ModalTitleBlock } from '@/app/components/blocks/modal-title-block';

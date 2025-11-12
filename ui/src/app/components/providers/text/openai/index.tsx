@@ -1,19 +1,19 @@
 import { Metadata } from '@rapidaai/react';
-import { Dropdown } from '@/app/components/Dropdown';
+import { Dropdown } from '@/app/components/dropdown';
 import { FormLabel } from '@/app/components/form-label';
-import { IButton } from '@/app/components/Form/Button';
-import { FieldSet } from '@/app/components/Form/Fieldset';
-import { Popover } from '@/app/components/Popover';
+import { IButton } from '@/app/components/form/button';
+import { FieldSet } from '@/app/components/form/fieldset';
+import { Popover } from '@/app/components/popover';
 import { OPENAI_TEXT_MODEL } from '@/app/components/providers/text/openai/constants';
 import { cn } from '@/utils';
 import { Bolt, Settings, X } from 'lucide-react';
 import { useState } from 'react';
-import { Input } from '@/app/components/Form/Input';
-import { Slider } from '@/app/components/Form/Slider';
+import { Input } from '@/app/components/form/input';
+import { Slider } from '@/app/components/form/slider';
 import { InputHelper } from '@/app/components/input-helper';
-import { InputCheckbox } from '@/app/components/Form/Checkbox';
-import { Select } from '@/app/components/Form/Select';
-import { Textarea } from '@/app/components/Form/Textarea';
+import { InputCheckbox } from '@/app/components/form/checkbox';
+import { Select } from '@/app/components/form/select';
+import { Textarea } from '@/app/components/form/textarea';
 
 export const ConfigureOpenaiTextProviderModel: React.FC<{
   onParameterChange: (parameters: Metadata[]) => void;

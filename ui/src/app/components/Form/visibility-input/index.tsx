@@ -1,5 +1,5 @@
-import { FieldSet } from '@/app/components/Form/Fieldset';
-import { Label } from '@/app/components/Form/Label';
+import { FieldSet } from '@/app/components/form/fieldset';
+import { Label } from '@/app/components/form/label';
 import { PrivateVisibilityIcon } from '@/app/components/Icon/private-visibility';
 import { PublicVisibilityIcon } from '@/app/components/Icon/public-visibility';
 import { FC } from 'react';

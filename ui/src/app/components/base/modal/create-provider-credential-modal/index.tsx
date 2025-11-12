@@ -6,16 +6,14 @@ import {
 import { useForm } from 'react-hook-form';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { CreateProviderKey } from '@rapidaai/react';
-import { GetCredentialResponse } from '@rapidaai/react';
-import { Input } from '@/app/components/Form/Input';
-import { ProviderDropdown } from '@/app/components/Dropdown/ProviderDropdown';
-import { ErrorMessage } from '@/app/components/Form/error-message';
+import { Input } from '@/app/components/form/input';
+import { ProviderDropdown } from '@/app/components/dropdown/provider-dropdown';
+import { ErrorMessage } from '@/app/components/form/error-message';
 import { useRapidaStore } from '@/hooks';
 import toast from 'react-hot-toast/headless';
 import { GenericModal, ModalProps } from '@/app/components/base/modal';
-import { FieldSet } from '@/app/components/Form/Fieldset';
-import { IBlueBGButton, ICancelButton } from '@/app/components/Form/Button';
-import { ServiceError } from '@rapidaai/react';
+import { FieldSet } from '@/app/components/form/fieldset';
+import { IBlueBGButton, ICancelButton } from '@/app/components/form/button';
 import { ModalFooter } from '@/app/components/base/modal/modal-footer';
 import { ModalBody } from '@/app/components/base/modal/modal-body';
 import { FormLabel } from '@/app/components/form-label';
@@ -25,8 +23,8 @@ import { ModalTitleBlock } from '@/app/components/blocks/modal-title-block';
 import { connectionConfig } from '@/configs';
 import { COMPLETE_PROVIDER, RapidaProvider } from '@/app/components/providers';
 import { useProviderContext } from '@/context/provider-context';
-import { Select } from '@/app/components/Form/Select';
-import { Textarea } from '@/app/components/Form/Textarea';
+import { Select } from '@/app/components/form/select';
+import { Textarea } from '@/app/components/form/textarea';
 import { Struct } from 'google-protobuf/google/protobuf/struct_pb';
 
 /**

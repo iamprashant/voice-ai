@@ -2,7 +2,7 @@ import { Endpoint, EndpointProviderModel } from '@rapidaai/react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { TryChatComplete } from '@/app/pages/endpoint/view/try-playground/experiment-prompt/try-chat-complete';
 import { InputGroup } from '@/app/components/input-group';
-import { Helmet } from '@/app/components/Helmet';
+import { Helmet } from '@/app/components/helmet';
 import { BotIcon, Code, ExternalLink, PencilRuler } from 'lucide-react';
 import { ToolIcon } from '@/app/components/Icon/tool';
 export function Playground(props: {

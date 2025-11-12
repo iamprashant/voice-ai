@@ -2,7 +2,7 @@ import React, { FC, useCallback, useEffect, useState } from 'react';
 import {
   IBlueBGArrowButton,
   ICancelButton,
-} from '@/app/components/Form/Button';
+} from '@/app/components/form/button';
 import { GenericModal, ModalProps } from '@/app/components/base/modal';
 import { ModalFitHeightBlock } from '@/app/components/blocks/modal-fit-height-block';
 import { ModalHeader } from '@/app/components/base/modal/modal-header';

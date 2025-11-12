@@ -3,7 +3,7 @@ import toast from 'react-hot-toast/headless';
 import { useCredential } from '@/hooks/use-credential';
 import { useRapidaStore } from '@/hooks';
 import { ConnectionConfig, ServiceError } from '@rapidaai/react';
-import { Tab } from '@/app/components/Tab';
+import { Tab } from '@/app/components/tab';
 import { cn } from '@/utils';
 import { ChevronRight } from 'lucide-react';
 import { ModalProps } from '@/app/components/base/modal';

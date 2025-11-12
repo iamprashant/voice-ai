@@ -1,7 +1,7 @@
 import React from 'react';
-import { BorderButton, ButtonProps } from '@/app/components/Form/Button';
+import { BorderButton, ButtonProps } from '@/app/components/form/button';
 import { ReloadIcon } from '@/app/components/Icon/Reload';
-import { Spinner } from '@/app/components/Loader/Spinner';
+import { Spinner } from '@/app/components/loader/spinner';
 
 interface ReloadButtonProps extends ButtonProps {}
 export function ReloadButton(props: ReloadButtonProps) {

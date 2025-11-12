@@ -1,4 +1,4 @@
-import { Dropdown } from '@/app/components/Dropdown';
+import { Dropdown } from '@/app/components/dropdown';
 import { COMPLETE_PROVIDER, RapidaProvider } from '@/app/components/providers';
 
 export function ProviderDropdown(props: {

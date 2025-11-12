@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { InviteUserDialog } from '@/app/components/base/modal/invite-user-modal';
-import { TextImage } from '../Image/TextImage';
+import { TextImage } from '../text-image';
 
 export function ProjectUserGroupAvatar(props: {
   size?: 7 | 8 | 9;

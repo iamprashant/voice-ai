@@ -13,7 +13,7 @@ import React from 'react';
 import { StaticPageNotFoundPage } from '@/app/pages/static-pages';
 import { AuthProvider } from '@/context/auth-context';
 import { useWorkspace } from '@/context/workplace-context';
-import { Helmet } from '@/app/components/Helmet';
+import { Helmet } from '@/app/components/helmet';
 
 /**
  * Main app containers

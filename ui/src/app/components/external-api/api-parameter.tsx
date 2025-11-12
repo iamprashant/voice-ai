@@ -1,5 +1,5 @@
-import { IBlueBorderButton, ICancelButton } from '@/app/components/Form/Button';
-import { Input } from '@/app/components/Form/Input';
+import { IBlueBorderButton, ICancelButton } from '@/app/components/form/button';
+import { Input } from '@/app/components/form/input';
 import { cn } from '@/utils';
 import { Plus, Trash2 } from 'lucide-react';
 import { FC } from 'react';

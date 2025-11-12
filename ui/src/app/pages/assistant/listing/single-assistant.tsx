@@ -9,7 +9,7 @@ import TooltipPlus from '@/app/components/base/tooltip-plus';
 import SourceIndicator from '@/app/components/indicators/source';
 import { useGlobalNavigation } from '@/hooks/use-global-navigator';
 import { AssistantConversation } from '@rapidaai/react';
-import { IBlueBGButton } from '@/app/components/Form/Button';
+import { IBlueBGButton } from '@/app/components/form/button';
 import { cn } from '@/utils';
 
 const SingleAssistant: FC<{ assistant: Assistant }> = ({ assistant }) => {

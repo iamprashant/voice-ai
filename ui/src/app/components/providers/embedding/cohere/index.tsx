@@ -1,5 +1,5 @@
 import { Metadata } from '@rapidaai/react';
-import { Dropdown } from '@/app/components/Dropdown';
+import { Dropdown } from '@/app/components/dropdown';
 import { COHERE_EMBEDDING_MODEL } from '@/app/components/providers/embedding/cohere/constants';
 
 export const ConfigureCohereEmbeddingModel: React.FC<{

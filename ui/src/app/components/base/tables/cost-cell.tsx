@@ -1,4 +1,4 @@
-import { TD } from '@/app/components/Table/TD';
+import { TableCell } from '@/app/components/base/tables/table-cell';
 import React, { useEffect, useState } from 'react';
 
 /**
@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react';
  * @param props
  * @returns
  */
-export function CostColumn(props: { cost?: number }) {
+export function CostCell(props: { cost?: number }) {
   const [cost, setCost] = useState('');
 
   useEffect(() => {
@@ -22,8 +22,8 @@ export function CostColumn(props: { cost?: number }) {
     );
   }, [props.cost]);
   return (
-    <TD className="text-center">
+    <TableCell className="text-center">
       <span className="font-medium max-w-[20rem] truncate">{cost}</span>
-    </TD>
+    </TableCell>
   );
 }

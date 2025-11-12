@@ -3,7 +3,7 @@ import { ChevronsLeftRightIcon } from '@/app/components/Icon/chevrons-left-right
 import { ChevronsRightLeftIcon } from '@/app/components/Icon/chevrons-right-left';
 import { CloseIcon } from '@/app/components/Icon/Close';
 import { MinusIcon } from '@/app/components/Icon/minus';
-import { Loader } from '@/app/components/Loader';
+import { Loader } from '@/app/components/loader';
 import { useRapidaStore } from '@/hooks';
 import { FC, HTMLAttributes } from 'react';
 

@@ -1,5 +1,5 @@
 import { cn } from '@/utils';
-import React, { HTMLAttributes } from 'react';
+import { HTMLAttributes } from 'react';
 
 export function TabBody(props: HTMLAttributes<HTMLDivElement>) {
   return (

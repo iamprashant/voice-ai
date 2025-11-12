@@ -1,4 +1,4 @@
-import { IBlueBorderButton } from '@/app/components/Form/Button';
+import { IBlueBorderButton } from '@/app/components/form/button';
 import { useAssistantProviderPageStore } from '@/hooks';
 import { useRapidaStore } from '@/hooks';
 import { useCredential } from '@/hooks/use-credential';
@@ -7,9 +7,9 @@ import toast from 'react-hot-toast/headless';
 import { toHumanReadableDateTime } from '@/utils/date';
 import { cn } from '@/utils';
 import { Assistant, GetAllAssistantProviderResponse } from '@rapidaai/react';
-import { CopyButton } from '@/app/components/Form/Button/copy-button';
+import { CopyButton } from '@/app/components/form/button/copy-button';
 import { RevisionIndicator } from '@/app/components/indicators/revision';
-import { SectionLoader } from '@/app/components/Loader/section-loader';
+import { SectionLoader } from '@/app/components/loader/section-loader';
 import { Brain, ChevronsLeftRightEllipsis, Code, Rocket } from 'lucide-react';
 import { TableSection } from '@/app/components/sections/table-section';
 import { ScrollableResizableTable } from '@/app/components/data-table';

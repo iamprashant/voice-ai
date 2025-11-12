@@ -18,9 +18,9 @@ import {
   GetAssistantDeploymentRequest,
 } from '@rapidaai/react';
 import { GetAssistantDebuggerDeployment } from '@rapidaai/react';
-import { IBlueBGButton, ICancelButton } from '@/app/components/Form/Button';
+import { IBlueBGButton, ICancelButton } from '@/app/components/form/button';
 import toast from 'react-hot-toast/headless';
-import { Helmet } from '@/app/components/Helmet';
+import { Helmet } from '@/app/components/helmet';
 import {
   GetDefaultMicrophoneConfig,
   GetDefaultSpeechToTextIfInvalid,

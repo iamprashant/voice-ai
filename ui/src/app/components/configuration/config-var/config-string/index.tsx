@@ -1,4 +1,4 @@
-import { Input } from '@/app/components/Form/Input';
+import { Input } from '@/app/components/form/input';
 import type { FC } from 'react';
 import React, { useEffect } from 'react';
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Switch } from '@headlessui/react';
-import { Helmet } from '@/app/components/Helmet';
-import { DescriptiveHeading } from '@/app/components/Heading/DescriptiveHeading';
+import { Helmet } from '@/app/components/helmet';
+import { DescriptiveHeading } from '@/app/components/heading/descriptive-heading';
 export function AccessSecurityPage() {
   const [enabled, setEnabled] = useState(true);
   return (

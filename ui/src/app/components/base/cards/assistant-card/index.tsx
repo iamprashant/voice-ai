@@ -10,7 +10,7 @@ import {
 } from '@/app/components/base/cards';
 import { SearchableDeployment } from '@rapidaai/react';
 import { cn } from '@/utils';
-import { BorderButton } from '@/app/components/Form/Button';
+import { BorderButton } from '@/app/components/form/button';
 import { useNavigate } from 'react-router-dom';
 
 interface AssistantCardProps {

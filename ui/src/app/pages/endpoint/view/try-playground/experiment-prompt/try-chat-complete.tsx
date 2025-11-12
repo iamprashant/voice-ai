@@ -24,7 +24,7 @@ import {
   ParagraphTextarea,
   TextTextarea,
   UrlTextarea,
-} from '@/app/components/Form/Textarea';
+} from '@/app/components/form/textarea';
 
 import { InputVarType } from '@/models/common';
 import { OutputMessage } from '@/app/pages/endpoint/view/try-playground/experiment-prompt/components/output-message';

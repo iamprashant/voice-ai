@@ -1,10 +1,10 @@
-import { Helmet } from '@/app/components/Helmet';
+import { Helmet } from '@/app/components/helmet';
 import { useRapidaStore } from '@/hooks';
 import { useCredential } from '@/hooks/use-credential';
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast/headless';
 import { useParams } from 'react-router-dom';
-import { Tab } from '@/app/components/Tab';
+import { Tab } from '@/app/components/tab';
 import { Documents } from './documents';
 import { ConnectionConfig, GetKnowledgeBase } from '@rapidaai/react';
 import { GetKnowledgeResponse } from '@rapidaai/react';
@@ -19,7 +19,7 @@ import { DocumentSegments } from '@/app/pages/knowledge-base/view/document-segme
 import { PageHeaderBlock } from '@/app/components/blocks/page-header-block';
 import { connectionConfig } from '@/configs';
 import { CreateKnowledgeDocumentDialog } from '@/app/components/base/modal/create-knowledge-document-modal';
-import { IBlueButton } from '@/app/components/Form/Button';
+import { IBlueButton } from '@/app/components/form/button';
 import { PlusIcon } from '@/app/components/Icon/plus';
 
 /**

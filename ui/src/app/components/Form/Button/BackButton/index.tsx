@@ -1,5 +1,5 @@
 import React from 'react';
-import { BorderButton, ButtonProps } from '@/app/components/Form/Button';
+import { BorderButton, ButtonProps } from '@/app/components/form/button';
 import { BackIcon } from '@/app/components/Icon/Back';
 
 interface BackButtonProps extends ButtonProps {}

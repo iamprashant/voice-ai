@@ -1,7 +1,7 @@
 import { Metadata, VaultCredential } from '@rapidaai/react';
-import { Dropdown } from '@/app/components/Dropdown';
+import { Dropdown } from '@/app/components/dropdown';
 import { FormLabel } from '@/app/components/form-label';
-import { FieldSet } from '@/app/components/Form/Fieldset';
+import { FieldSet } from '@/app/components/form/fieldset';
 import {
   ConfigureAwsStorage,
   ValidateAwsStorageOptions,
@@ -16,7 +16,7 @@ import {
 } from '@/app/components/providers/storage/google';
 import { cn } from '@/utils';
 import { ProviderConfig, STORAGE_PROVIDER } from '@/app/components/providers';
-import { CredentialDropdown } from '@/app/components/Dropdown/credential-dropdown';
+import { CredentialDropdown } from '@/app/components/dropdown/credential-dropdown';
 import { useCallback } from 'react';
 
 export const ValidateStorageOptions = (

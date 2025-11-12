@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 import { useRef } from 'react';
 import { useBoolean } from 'ahooks';
-import { IButton } from '@/app/components/Form/Button';
+import { IButton } from '@/app/components/form/button';
 import { cn } from '@/utils';
 import { useToggleExpend } from '@/hooks/use-toggle-expend';
 import { JsonEditor } from '@/app/components/json-editor';

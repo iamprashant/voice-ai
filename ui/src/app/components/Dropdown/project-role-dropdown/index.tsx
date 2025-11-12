@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/utils';
-import { Dropdown } from '@/app/components/Dropdown';
+import { Dropdown } from '@/app/components/dropdown';
 
 const Roles = ['super admin', 'admin', 'writer', 'reader'];
 

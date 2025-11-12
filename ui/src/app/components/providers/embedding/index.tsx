@@ -1,5 +1,5 @@
 import { Metadata, VaultCredential } from '@rapidaai/react';
-import { Dropdown } from '@/app/components/Dropdown';
+import { Dropdown } from '@/app/components/dropdown';
 import {
   EMBEDDING_PROVIDERS,
   ProviderConfig,
@@ -26,8 +26,8 @@ import {
 } from '@/app/components/providers/embedding/voyageai/constants';
 import { cn } from '@/utils';
 import { FC, useCallback } from 'react';
-import { CredentialDropdown } from '@/app/components/Dropdown/credential-dropdown';
-import { FieldSet } from '@/app/components/Form/Fieldset';
+import { CredentialDropdown } from '@/app/components/dropdown/credential-dropdown';
+import { FieldSet } from '@/app/components/form/fieldset';
 import { FormLabel } from '@/app/components/form-label';
 
 export const GetDefaultEmbeddingConfigIfInvalid = (

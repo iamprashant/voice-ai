@@ -1,6 +1,6 @@
 import { Metric } from '@rapidaai/react';
 import { BlueNoticeBlock } from '@/app/components/container/message/notice-block';
-import { Tooltip } from '@/app/components/Tooltip';
+import { Tooltip } from '@/app/components/tooltip';
 import { cn } from '@/utils';
 import { InfoIcon } from 'lucide-react';
 import { FC } from 'react';

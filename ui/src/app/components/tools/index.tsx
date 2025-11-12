@@ -1,5 +1,5 @@
 import { Metadata } from '@rapidaai/react';
-import { Dropdown } from '@/app/components/Dropdown';
+import { Dropdown } from '@/app/components/dropdown';
 import { ConfigureAPIRequest } from '@/app/components/tools/api-request';
 import {
   APIRequestToolDefintion,
@@ -32,7 +32,7 @@ import {
 } from '@/app/components/tools/put-on-hold/constant';
 import { cn } from '@/utils';
 import { FC } from 'react';
-import { FieldSet } from '@/app/components/Form/Fieldset';
+import { FieldSet } from '@/app/components/form/fieldset';
 import { FormLabel } from '@/app/components/form-label';
 
 export const BUILDIN_TOOLS = [

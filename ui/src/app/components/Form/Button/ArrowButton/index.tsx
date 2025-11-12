@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/utils';
-import { BorderButton, Button } from '@/app/components/Form/Button';
+import { BorderButton, Button } from '@/app/components/form/button';
 import { useRapidaStore } from '@/hooks';
 /**
  *

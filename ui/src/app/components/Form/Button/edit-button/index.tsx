@@ -1,4 +1,4 @@
-import { ButtonProps, IconButton } from '@/app/components/Form/Button';
+import { ButtonProps, IconButton } from '@/app/components/form/button';
 import { cn } from '@/utils';
 import { FilePenLine } from 'lucide-react';
 import { FC } from 'react';

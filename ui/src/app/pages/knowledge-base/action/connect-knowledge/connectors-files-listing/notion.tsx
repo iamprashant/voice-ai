@@ -7,22 +7,21 @@ import React, {
   useState,
 } from 'react';
 import { cn } from '@/utils';
-import { BluredWrapper } from '@/app/components/Wrapper/BluredWrapper';
-import { SearchIconInput } from '@/app/components/Form/Input/IconInput';
+import { BluredWrapper } from '@/app/components/wrapper/blured-wrapper';
+import { SearchIconInput } from '@/app/components/form/input/IconInput';
 import { Card } from '@/app/components/base/cards';
-import { TableHederWithCheckbox } from '@/app/components/Table/TableHeader';
 import { ConnectorFileContext } from '@/hooks/use-connector-file-page-store';
 import { TablePagination } from '@/app/components/base/tables/table-pagination';
 import { useCredential, useRapidaStore } from '@/hooks';
 import { Struct } from 'google-protobuf/google/protobuf/struct_pb';
 import toast from 'react-hot-toast/headless';
-import { TD } from '@/app/components/Table/TD';
-import { TR } from '@/app/components/Table/Body';
-import { IdColumn } from '@/app/components/Table/IdColumn';
-import { formatFileSize } from '@/utils/format';
-import { Spinner } from '@/app/components/Loader/Spinner';
+import { Spinner } from '@/app/components/loader/spinner';
 import { KnowledgeFileListingProps } from '@/app/pages/knowledge-base/action/connect-knowledge/connectors-files-listing';
 import { Content } from '@rapidaai/react';
+import { TableCell } from '@/app/components/base/tables/table-cell';
+import { TextCell } from '@/app/components/base/tables/text-cell';
+import { TableRow } from '@/app/components/base/tables/table-row';
+import { TableHederWithCheckbox } from '@/app/components/base/tables/table-head';
 
 export const NotionKnowledgeFileListing: FC<KnowledgeFileListingProps> = memo(
   ({ toolProvider, className, onChangeContents }) => {
@@ -202,8 +201,8 @@ export const NotionKnowledgeFileListing: FC<KnowledgeFileListingProps> = memo(
           <tbody>
             {ctx.files.map((x, idx) => {
               return (
-                <TR key={idx}>
-                  <TD>
+                <TableRow key={idx}>
+                  <TableCell>
                     <input
                       type="checkbox"
                       name="file-ids"
@@ -215,20 +214,20 @@ export const NotionKnowledgeFileListing: FC<KnowledgeFileListingProps> = memo(
                         ontoggle(x.getFieldsMap().get('id')?.getStringValue())
                       }
                     />
-                  </TD>
-                  <IdColumn to="">
+                  </TableCell>
+                  <TextCell>
                     {x.getFieldsMap().get('title_str')?.getStringValue()}
-                  </IdColumn>
-                  <IdColumn
-                    to={x.getFieldsMap().get('url')?.getStringValue()}
-                    isExternal={true}
+                  </TextCell>
+                  <TextCell
+                  // to={x.getFieldsMap().get('url')?.getStringValue()}
+                  // isExternal={true}
                   >
                     {x.getFieldsMap().get('url')?.getStringValue()}
-                  </IdColumn>
-                  <TD className="capitalize">
+                  </TextCell>
+                  <TableCell className="capitalize">
                     {x.getFieldsMap().get('object')?.getStringValue()}
-                  </TD>
-                </TR>
+                  </TableCell>
+                </TableRow>
               );
             })}
           </tbody>
@@ -255,8 +254,3 @@ export const NotionKnowledgeFileListing: FC<KnowledgeFileListingProps> = memo(
     );
   },
 );
-
-const FileSize: FC<{ size?: string }> = ({ size }) => {
-  if (size) return <TD>{formatFileSize(+size)}</TD>;
-  return <TD>{size}</TD>;
-};

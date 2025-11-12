@@ -1,8 +1,8 @@
 import { VaultCredential } from '@rapidaai/react';
-import { Dropdown } from '@/app/components/Dropdown';
+import { Dropdown } from '@/app/components/dropdown';
 import { FormLabel } from '@/app/components/form-label';
-import { IButton } from '@/app/components/Form/Button';
-import { FieldSet } from '@/app/components/Form/Fieldset';
+import { IButton } from '@/app/components/form/button';
+import { FieldSet } from '@/app/components/form/fieldset';
 import { cn } from '@/utils';
 import { Plus, RotateCcw } from 'lucide-react';
 import { FC, useCallback, useEffect, useState } from 'react';

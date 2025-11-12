@@ -1,14 +1,14 @@
-import React, { useState, useContext, useEffect, FC } from 'react';
-import { HelpPopover } from '@/app/components/Popover/HelpPopover';
-import { ProjectSelectorDropdown } from '@/app/components/Dropdown/ProjectDropdown';
+import { useState, useContext, useEffect, FC } from 'react';
+import { HelpPopover } from '@/app/components/popover/help-popover';
+import { ProjectSelectorDropdown } from '@/app/components/dropdown/project-dropdown';
 import { cn } from '@/utils';
-import { ProfilePopover } from '@/app/components/Popover/ProfilePopover';
-import { IButton } from '@/app/components/Form/Button';
+import { ProfilePopover } from '@/app/components/popover/profile-popover';
+import { IButton } from '@/app/components/form/button';
 import { useLocation } from 'react-router-dom';
 import { CustomLink } from '@/app/components/custom-link';
 import { useDarkMode } from '@/context/dark-mode-context';
 import { AuthContext } from '@/context/auth-context';
-import { TextImage } from '@/app/components/Image/TextImage';
+import { TextImage } from '@/app/components/text-image';
 import { ChevronRight, HelpCircle, Moon, Sun } from 'lucide-react';
 /**
  *

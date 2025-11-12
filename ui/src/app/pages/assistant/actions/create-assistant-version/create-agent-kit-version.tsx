@@ -2,13 +2,13 @@ import { FC, useEffect, useState } from 'react';
 import { useRapidaStore } from '@/hooks';
 import { useCredential } from '@/hooks/use-credential';
 import { useParams } from 'react-router-dom';
-import { Helmet } from '@/app/components/Helmet';
+import { Helmet } from '@/app/components/helmet';
 import {
   IBlueBGArrowButton,
   ICancelButton,
-} from '@/app/components/Form/Button';
-import { TabForm } from '@/app/components/Form/tab-form';
-import { FieldSet } from '@/app/components/Form/Fieldset';
+} from '@/app/components/form/button';
+import { TabForm } from '@/app/components/form/tab-form';
+import { FieldSet } from '@/app/components/form/fieldset';
 import { useConfirmDialog } from '@/app/pages/assistant/actions/hooks/use-confirmation';
 import { useGlobalNavigation } from '@/hooks/use-global-navigator';
 import {
@@ -19,16 +19,16 @@ import {
   GetAssistantRequest,
 } from '@rapidaai/react';
 import { FormLabel } from '@/app/components/form-label';
-import { Textarea } from '@/app/components/Form/Textarea';
+import { Textarea } from '@/app/components/form/textarea';
 import { ErrorContainer } from '@/app/components/error-container';
 import { GetAssistant } from '@rapidaai/react';
 import { connectionConfig } from '@/configs';
 import { YellowNoticeBlock } from '@/app/components/container/message/notice-block';
 import { ExternalLink, Info } from 'lucide-react';
-import { Input } from '@/app/components/Form/Input';
+import { Input } from '@/app/components/form/input';
 import { APiParameter } from '@/app/components/external-api/api-parameter';
 import { InputHelper } from '@/app/components/input-helper';
-import { CodeEditor } from '@/app/components/Form/editor/code-editor';
+import { CodeEditor } from '@/app/components/form/editor/code-editor';
 import toast from 'react-hot-toast/headless';
 
 export function CreateAgentKitVersion() {

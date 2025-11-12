@@ -1,6 +1,6 @@
 import { Card, CardDescription, CardTitle } from '@/app/components/base/cards';
-import { IBlueBGButton } from '@/app/components/Form/Button';
-import { CardOptionMenu } from '@/app/components/Menu';
+import { IBlueBGButton } from '@/app/components/form/button';
+import { CardOptionMenu } from '@/app/components/menu';
 import { useAllProviderCredentials } from '@/hooks/use-model';
 import { cn } from '@/utils';
 import { FC, HTMLAttributes, memo, useEffect, useState } from 'react';

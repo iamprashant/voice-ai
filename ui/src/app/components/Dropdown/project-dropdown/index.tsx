@@ -1,6 +1,6 @@
 import { ProjectRole } from '@rapidaai/react';
 import { cn } from '@/utils';
-import { Dropdown } from '@/app/components/Dropdown';
+import { Dropdown } from '@/app/components/dropdown';
 
 /**
  *

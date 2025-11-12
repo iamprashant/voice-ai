@@ -5,7 +5,7 @@ import {
   BlueBorderButton,
   IBlueBGButton,
   ILinkButton,
-} from '@/app/components/Form/Button';
+} from '@/app/components/form/button';
 import { ReloadIcon } from '@/app/components/Icon/Reload';
 import { CreateToolProviderCredentialDialog } from '@/app/components/base/modal/connect-tool-provider-credential-modal';
 import { cn } from '@/utils';

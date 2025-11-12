@@ -1,7 +1,7 @@
-import { Helmet } from '@/app/components/Helmet';
+import { Helmet } from '@/app/components/helmet';
 import { ProviderCard } from '@/app/components/base/cards/provider-card';
-import { BluredWrapper } from '@/app/components/Wrapper/BluredWrapper';
-import { SearchIconInput } from '@/app/components/Form/Input/IconInput';
+import { BluredWrapper } from '@/app/components/wrapper/blured-wrapper';
+import { SearchIconInput } from '@/app/components/form/input/IconInput';
 import { PageHeaderBlock } from '@/app/components/blocks/page-header-block';
 import { PageTitleBlock } from '@/app/components/blocks/page-title-block';
 import { cn } from '@/utils';

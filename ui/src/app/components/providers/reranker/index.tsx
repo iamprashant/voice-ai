@@ -1,5 +1,5 @@
 import { Metadata } from '@rapidaai/react';
-import { Dropdown } from '@/app/components/Dropdown';
+import { Dropdown } from '@/app/components/dropdown';
 import { ProviderConfig } from '@/app/components/providers';
 import { ConfigureCohereRerankerModel } from '@/app/components/providers/reranker/cohere';
 import { GetCohereRerankerDefaultOptions } from '@/app/components/providers/reranker/cohere/constants';
