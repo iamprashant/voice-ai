@@ -185,7 +185,8 @@
         "wavesurfer.js": "7.10.1",
         "web-vitals": "2.1.4",
         "zustand": "4.5.1",
-        "zustand-utils": "2.1.0"
+        "zustand-utils": "2.1.0",
+        "cross-env": "7.0.3"
     },
     "devDependencies": {
         "@commitlint/cli": "17.1.2",
