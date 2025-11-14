@@ -20,53 +20,37 @@ func WebApiRoute(
 	Redis connectors.RedisConnector,
 ) {
 	apiv1 := E.Group("/v1")
-	{
-		apiv1.POST("/auth/authenticate/", webApi.NewAuthRPC(Cfg, &Cfg.OAuthConfig, Logger, Postgres).Authenticate)
-		apiv1.POST("/auth/register-user/", webApi.NewAuthRPC(Cfg, &Cfg.OAuthConfig, Logger, Postgres).RegisterUser)
+	apiv1.POST("/auth/authenticate/", webApi.NewAuthRPC(Cfg, &Cfg.OAuthConfig, Logger, Postgres).Authenticate)
+	apiv1.POST("/auth/register-user/", webApi.NewAuthRPC(Cfg, &Cfg.OAuthConfig, Logger, Postgres).RegisterUser)
 
-	}
-	protos.RegisterAuthenticationServiceServer(S, webApi.NewAuthGRPC(Cfg, &Cfg.OAuthConfig, Logger, Postgres))
+	//
 	apiOauth := E.Group("/oauth")
 	auth := webApi.NewAuthRPC(Cfg, &Cfg.OAuthConfig, Logger, Postgres)
-	{
-		apiOauth.GET("/google/", auth.Google)
-		apiOauth.GET("/linkedin/", auth.Linkedin)
-		apiOauth.GET("/github/", auth.Github)
-	}
+	apiOauth.GET("/google/", auth.Google)
+	apiOauth.GET("/linkedin/", auth.Linkedin)
+	apiOauth.GET("/github/", auth.Github)
+
+	//
+
+	connectApi := webApi.NewConnectRPC(Cfg, &Cfg.OAuthConfig, Logger, Postgres)
+	apiv1.GET("/connect-knowledge/notion/", connectApi.NotionConnect)
+	apiv1.GET("/connect-knowledge/confluence/", connectApi.ConfluenceConnect)
+	apiv1.GET("/connect-knowledge/google-drive/", connectApi.GoogleDriveConnect)
+	apiv1.GET("/connect-knowledge/github/", connectApi.GithubCodeConnect)
+	apiv1.GET("/connect-knowledge/gitlab/", connectApi.GitlabCodeConnect)
+	apiv1.GET("/connect-knowledge/microsoft-onedrive/", connectApi.MicrosoftOnedriveConnect)
+	apiv1.GET("/connect-knowledge/sharepoint/", connectApi.MicrosoftSharepointConnect)
+	apiv1.GET("/connect-action/gmail/", connectApi.GmailActionConnect)
+	apiv1.GET("/connect-action/jira/", connectApi.JiraActionConnect)
+	apiv1.GET("/connect-action/slack/", connectApi.SlackActionConnect)
+	apiv1.GET("/connect-crm/hubspot/", connectApi.HubspotCRMConnect)
+
+	protos.RegisterAuthenticationServiceServer(S, webApi.NewAuthGRPC(Cfg, &Cfg.OAuthConfig, Logger, Postgres))
 	protos.RegisterVaultServiceServer(S, webApi.NewVaultGRPC(Cfg, &Cfg.OAuthConfig, Logger, Postgres, Redis))
 	protos.RegisterOrganizationServiceServer(S, webApi.NewOrganizationGRPC(Cfg, Logger, Postgres, Redis))
 	protos.RegisterProjectServiceServer(S, webApi.NewProjectGRPC(Cfg, Logger, Postgres, Redis))
 	protos.RegisterConnectServiceServer(S, webApi.NewConnectGRPC(Cfg, &Cfg.OAuthConfig, Logger, Postgres))
-	Logger.Info("Internal HealthCheckRoutes and Connectors added to engine.")
-
-	//
-	connectKnowledgeApi := E.Group("/connect-knowledge")
-	connectApi := webApi.NewConnectRPC(Cfg, &Cfg.OAuthConfig, Logger, Postgres)
-	{
-		// working
-		connectKnowledgeApi.GET("/notion/", connectApi.NotionConnect)
-
-		connectKnowledgeApi.GET("/confluence/", connectApi.ConfluenceConnect)
-		connectKnowledgeApi.GET("/google-drive/", connectApi.GoogleDriveConnect)
-		//
-		connectKnowledgeApi.GET("/github/", connectApi.GithubCodeConnect)
-		connectKnowledgeApi.GET("/gitlab/", connectApi.GitlabCodeConnect)
-
-		connectKnowledgeApi.GET("/microsoft-onedrive/", connectApi.MicrosoftOnedriveConnect)
-		connectKnowledgeApi.GET("/sharepoint/", connectApi.MicrosoftSharepointConnect)
-	}
-
-	actionApiv1 := E.Group("/connect-action")
-	{
-		actionApiv1.GET("/gmail/", connectApi.GmailActionConnect)
-		actionApiv1.GET("/jira/", connectApi.JiraActionConnect)
-		actionApiv1.GET("/slack/", connectApi.SlackActionConnect)
-	}
-
-	crmConnectApiv1 := E.Group("/connect-crm")
-	{
-		crmConnectApiv1.GET("/hubspot/", connectApi.HubspotCRMConnect)
-	}
+	protos.RegisterNotificationServiceServer(S, webApi.NewNotificationGRPC(Cfg, Logger, Postgres, Redis))
 
 }
 
