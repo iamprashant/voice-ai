@@ -15,7 +15,6 @@ type IntegrationConfig struct {
 	config.AppConfig `mapstructure:",squash"`
 	PostgresConfig   configs.PostgresConfig   `mapstructure:"postgres" validate:"required"`
 	RedisConfig      configs.RedisConfig      `mapstructure:"redis" validate:"required"`
-	SendgridApiKey   string                   `mapstructure:"sendgrid_api_key" validate:"required"`
 	AssetStoreConfig configs.AssetStoreConfig `mapstructure:"asset_store" validate:"required"`
 }
 
