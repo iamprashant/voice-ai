@@ -18,14 +18,6 @@ export const KnowledgeCreateKnowledgePage = lazyLoad(
   },
 );
 
-export const KnowledgeConnectKnowledgePage = lazyLoad(
-  () => import('./action/connect-knowledge'),
-  module => module.ConnectKnowledgePage,
-  {
-    fallback: <LineLoader />,
-  },
-);
-
 export const KnowledgeViewKnowledgePage = lazyLoad(
   () => import('./view'),
   module => module.ViewKnowledgePage,
@@ -41,13 +33,6 @@ export const KnowledgeAddNewKnowledgeFilePage = lazyLoad(
     fallback: <LineLoader />,
   },
 );
-export const KnowledgeAddNewKnowledgeCloudFilePage = lazyLoad(
-  () => import('./action/create-knowledge-document'),
-  module => module.CreateKnowledgeDocumentFromCloudPage,
-  {
-    fallback: <LineLoader />,
-  },
-);
 
 export const KnowledgeAddNewStructureDocumentPage = lazyLoad(
   () => import('./action/create-knowledge-document'),
@@ -56,10 +41,3 @@ export const KnowledgeAddNewStructureDocumentPage = lazyLoad(
     fallback: <LineLoader />,
   },
 );
-// export const KnowledgeDocumentSegmentPage = lazyLoad(
-//   () => import('./view/document-segments'),
-//   module => module.DocumentSegmentPage,
-//   {
-//     fallback: <LineLoader />,
-//   },
-// );

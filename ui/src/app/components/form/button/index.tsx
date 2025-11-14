@@ -389,15 +389,11 @@ export function IBlueBGButton(props: ButtonProps) {
         'bg-blue-600 hover:bg-blue-700',
         'button',
         'focus:outline-hidden',
-        props.isLoading && 'cursor-wait',
+        props.isLoading && 'cursor-wait bg-blue-500',
         props.className,
       )}
     >
-      {!props.isLoading ? (
-        props.children
-      ) : (
-        <Spinner className="w-4 h-4 border-white" />
-      )}
+      {props.children}
     </button>
   );
 }
@@ -481,9 +477,9 @@ export function IBlueBGArrowButton(props: ButtonProps) {
     >
       {props.children}
       {props.isLoading ? (
-        <Spinner className="w-5 h-5 ml-3 border-white" />
+        <Spinner className="w-4 h-4 ml-3 border-white" />
       ) : (
-        <ChevronRight className="w-5 h-5 ml-3" strokeWidth={1.5} />
+        <ChevronRight className="w-4 h-4 ml-3" strokeWidth={1.5} />
       )}
     </IBlueBGButton>
   );

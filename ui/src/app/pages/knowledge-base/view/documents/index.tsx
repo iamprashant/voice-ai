@@ -14,7 +14,10 @@ import { Spinner } from '@/app/components/loader/spinner';
 import { ActionableEmptyMessage } from '@/app/components/container/message/actionable-empty-message';
 import { ScrollableResizableTable } from '@/app/components/data-table';
 
-export function Documents(props: { currentKnowledge: Knowledge }) {
+export function Documents(props: {
+  currentKnowledge: Knowledge;
+  onAddKnowledgeDocument: () => void;
+}) {
   const [userId, token, projectId] = useCredential();
   const navigator = useNavigate();
   const rapidaContext = useRapidaStore();
@@ -92,11 +95,7 @@ export function Documents(props: { currentKnowledge: Knowledge }) {
             title="No documents"
             subtitle=" There are no documents matching with your criteria."
             action="Add New Document"
-            onActionClick={() =>
-              navigator(
-                `/knowledge/${props.currentKnowledge.getId()}/add-knowledge-file`,
-              )
-            }
+            onActionClick={() => props.onAddKnowledgeDocument()}
           />
         </div>
       ) : !rapidaContext.loading ? (
@@ -105,11 +104,7 @@ export function Documents(props: { currentKnowledge: Knowledge }) {
             title="No Documents"
             subtitle="There are no documents in knowledge to display"
             action="Add New Document"
-            onActionClick={() =>
-              navigator(
-                `/knowledge/${props.currentKnowledge.getId()}/add-knowledge-file`,
-              )
-            }
+            onActionClick={() => props.onAddKnowledgeDocument()}
           />
         </div>
       ) : (

@@ -2,7 +2,7 @@ import type { FC } from 'react';
 import React, { useRef } from 'react';
 import { useBoolean } from 'ahooks';
 import MessageTypeSelector from './message-type-selector';
-import type { PromptRole } from '@/models/debug';
+import type { PromptRole } from '@/models/prompt';
 import { DeleteIcon } from '@/app/components/Icon/delete';
 import { IButton } from '@/app/components/form/button';
 import { CloseIcon } from '@/app/components/Icon/Close';

@@ -41,8 +41,15 @@ export function SignInPage() {
    * form utils
    */
   const { register, handleSubmit } = useForm();
+
+  /**
+   * error for the page
+   */
   const [error, setError] = useState('');
 
+  /**
+   * workspace
+   */
   const workspace = useWorkspace();
   const [searchParams] = useSearchParams();
   const { next, externalValidation, code, state } = Object.fromEntries(

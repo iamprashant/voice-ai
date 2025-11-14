@@ -17,14 +17,6 @@ export const OrganizationOverviewPage = lazyLoad(
   },
 );
 
-export const OrganizationBillingPage = lazyLoad(
-  () => import('./billing'),
-  module => module.BillingPage,
-  {
-    fallback: <PageLoader />,
-  },
-);
-
 export const OrganizationUserPage = lazyLoad(
   () => import('./user'),
   module => module.UserPage,

@@ -1,8 +1,6 @@
 import { MissionBox } from '@/app/components/container/mission-box';
 import { ProtectedBox } from '@/app/components/container/protected-box';
-
 import {
-  KnowledgeAddNewKnowledgeCloudFilePage,
   KnowledgeAddNewKnowledgeFilePage,
   KnowledgeCreateKnowledgePage,
   KnowledgeViewKnowledgePage,
@@ -38,19 +36,9 @@ export const KnowledgeRoute = () => {
         />
 
         <Route
-          path={':id/add-cloud-file'}
-          element={<KnowledgeAddNewKnowledgeCloudFilePage />}
-        />
-
-        <Route
           path={':id/add-structure-file'}
           element={<KnowledgeAddNewStructureDocumentPage />}
         />
-
-        {/* <Route
-          path={':id/:knowledgeDocumentId/document-segments'}
-          element={<KnowledgeDocumentSegmentPage />}
-        /> */}
       </Route>
     </Routes>
   );

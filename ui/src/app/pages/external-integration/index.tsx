@@ -24,11 +24,3 @@ export const IntegrationPersonalCredentialPage = lazyLoad(
     fallback: <PageLoader />,
   },
 );
-
-export const IntegrationExternalToolPage = lazyLoad(
-  () => import('./external-tools'),
-  module => module.ToolPage,
-  {
-    fallback: <PageLoader />,
-  },
-);

@@ -23,19 +23,3 @@ export enum InputVarType {
   json = 'json', // obj, array
   contexts = 'contexts', // knowledge retrieval
 }
-
-export type InputVar = {
-  type: InputVarType;
-  label:
-    | string
-    | {
-        nodeName: string;
-        variable: string;
-      };
-  variable: string;
-  max_length?: number;
-  default?: string;
-  required: boolean;
-  hint?: string;
-  options?: string[];
-};

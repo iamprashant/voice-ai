@@ -104,7 +104,7 @@ export const SideTab: FC<TabProps> = ({
             return (
               <TabBody
                 key={id}
-                className={cn(ix.label === isActive ? 'block' : 'hidden')}
+                className={cn(ix.label === isActive ? 'flex ' : 'hidden')}
               >
                 {ix.element}
               </TabBody>

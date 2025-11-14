@@ -2055,6 +2055,9 @@
   .h-screen {
     height: 100vh;
   }
+  .max-h-0 {
+    max-height: calc(var(--spacing) * 0);
+  }
   .max-h-80 {
     max-height: calc(var(--spacing) * 80);
   }
@@ -3674,6 +3677,9 @@
       background-color: color-mix(in oklab, var(--color-red-600) 30%, transparent);
     }
   }
+  .bg-red-700 {
+    background-color: var(--color-red-700);
+  }
   .bg-red-800 {
     background-color: var(--color-red-800);
   }
@@ -3917,6 +3923,9 @@
   .p-8 {
     padding: calc(var(--spacing) * 8);
   }
+  .p-20 {
+    padding: calc(var(--spacing) * 20);
+  }
   .p-\[2px\] {
     padding: 2px;
   }
@@ -3970,6 +3979,9 @@
   }
   .px-16 {
     padding-inline: calc(var(--spacing) * 16);
+  }
+  .px-20 {
+    padding-inline: calc(var(--spacing) * 20);
   }
   .px-\[20px\] {
     padding-inline: 20px;

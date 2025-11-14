@@ -87,7 +87,7 @@
         "@popperjs/core": "2.11.8",
         "@protobuf-ts/plugin": "2.9.4",
         "@protobuf-ts/runtime": "2.9.4",
-        "@rapidaai/react": "1.1.42",
+        "@rapidaai/react": "1.1.43",
         "@rapidaai/react-widget": "1.0.0",
         "@reduxjs/toolkit": "1.8.5",
         "@sentry/react": "7.101.1",
@@ -107,6 +107,7 @@
         "chartjs-adapter-moment": "1.0.1",
         "chartjs-plugin-datalabels": "2.2.0",
         "clsx": "2.0.0",
+        "cross-env": "7.0.3",
         "dagre": "0.8.5",
         "dayjs": "1.11.13",
         "draft-js": "0.11.7",
@@ -185,8 +186,7 @@
         "wavesurfer.js": "7.10.1",
         "web-vitals": "2.1.4",
         "zustand": "4.5.1",
-        "zustand-utils": "2.1.0",
-        "cross-env": "7.0.3"
+        "zustand-utils": "2.1.0"
     },
     "devDependencies": {
         "@commitlint/cli": "17.1.2",

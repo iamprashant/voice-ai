@@ -91,9 +91,9 @@ export const CreateKnowledgeDocumentDialog: FC<
           onClose={() => {
             props.setModalOpen(false);
           }}
-          title={'Configure Assistant Tool'}
+          title={'Add document to knowledge'}
         >
-          <ModalTitleBlock>Configure Assistant Tool</ModalTitleBlock>
+          <ModalTitleBlock>Add document to knowledge</ModalTitleBlock>
         </ModalHeader>
         <ModalBody className="overflow-auto max-h-[80dvh]">
           <ManualFile />

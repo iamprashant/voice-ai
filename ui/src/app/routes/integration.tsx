@@ -3,9 +3,7 @@ import { ProtectedBox } from '@/app/components/container/protected-box';
 import {
   IntegrationModelPage,
   IntegrationProjectCredentialPage,
-  IntegrationExternalToolPage,
 } from '@/app/pages/external-integration';
-import React from 'react';
 import { Routes, Route, Outlet } from 'react-router-dom';
 import { IntegrationPersonalCredentialPage } from '../pages/external-integration/index';
 
@@ -34,11 +32,6 @@ export function IntegrationRoute() {
           key="personal-credential"
           path="personal-credential"
           element={<IntegrationPersonalCredentialPage />}
-        />
-        <Route
-          key="tools"
-          path="tools"
-          element={<IntegrationExternalToolPage />}
         />
       </Route>
     </Routes>

@@ -39,11 +39,6 @@ export function OrganizationRoute() {
           element={<OrganizationProjectPage />}
         />
         <Route
-          key="organization-billing-and-invoices"
-          path="billing-and-invoices"
-          element={<OrganizationBillingPage />}
-        />
-        <Route
           key="organization-security"
           path="security"
           element={<OrganizationAccessSecurityPage />}

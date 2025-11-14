@@ -193,9 +193,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({
         ? window.location.hostname
         : 'default';
     };
-
     const currentDomain = getCurrentDomain();
-
     if (currentDomain in workspaceConfigs) {
       setWorkspaceInfo(workspaceConfigs[currentDomain]);
     } else {

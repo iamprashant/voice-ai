@@ -11,7 +11,7 @@ export const PageActionButtonBlock: FC<
     <div className="absolute bottom-0 left-0 right-0 ">
       {errorMessage && (
         <RedNoticeBlock className="flex items-center space-x-2 ">
-          <AlertTriangle className="w-4 h-4" />
+          <AlertTriangle className="w-4 h-4 text-red-600" />
           <span>{errorMessage}</span>
         </RedNoticeBlock>
       )}

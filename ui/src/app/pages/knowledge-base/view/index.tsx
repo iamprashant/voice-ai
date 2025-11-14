@@ -187,12 +187,24 @@ export function ViewKnowledgePage() {
             tabs={[
               {
                 label: 'documents',
-                element: <Documents currentKnowledge={currentKnowledge} />,
+                element: (
+                  <Documents
+                    currentKnowledge={currentKnowledge}
+                    onAddKnowledgeDocument={() => {
+                      setCreateKnowledgeOpen(true);
+                    }}
+                  />
+                ),
               },
               {
                 label: 'segments',
                 element: (
-                  <DocumentSegments currentKnowledge={currentKnowledge} />
+                  <DocumentSegments
+                    currentKnowledge={currentKnowledge}
+                    onAddKnowledgeDocument={() => {
+                      setCreateKnowledgeOpen(true);
+                    }}
+                  />
                 ),
               },
             ]}

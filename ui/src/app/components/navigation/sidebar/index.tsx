@@ -30,19 +30,19 @@ export function SidebarNavigation(props: {}) {
           <Knowledge />
         </ul>
         <div className="space-y-3">
-          <SidebarLabel className="uppercase truncate pl-3 text-xs font-medium opacity-0 group-hover:opacity-100">
+          <SidebarLabel className="uppercase truncate pl-3 text-xs opacity-0 group-hover:opacity-100">
             Integrations
           </SidebarLabel>
-          <ul className="space-y-1">
+          <ul className="space-y-1 mt-2">
             <ExternalTool />
             <Vault />
           </ul>
         </div>
         <div className="space-y-3">
-          <SidebarLabel className="uppercase truncate pl-3 text-xs font-medium opacity-0 group-hover:opacity-100">
+          <SidebarLabel className="uppercase truncate pl-3 text-xs opacity-0 group-hover:opacity-100">
             Organizations
           </SidebarLabel>
-          <ul className="space-y-1">
+          <ul className="space-y-1  mt-2">
             {/* <Organization /> */}
             <Team />
             <Project />

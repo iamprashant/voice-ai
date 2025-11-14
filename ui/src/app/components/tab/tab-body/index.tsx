@@ -5,7 +5,7 @@ export function TabBody(props: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
-        'bg-transparent flex-1 grow h-full w-full',
+        'bg-transparent flex-1 grow w-full overflow-auto',
         props.className,
       )}
     >

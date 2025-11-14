@@ -1,5 +1,5 @@
 import { FC, useCallback } from 'react';
-import { PromptRole } from '@/models/debug';
+import { PromptRole } from '@/models/prompt';
 import AdvancedMessageInput from '@/app/components/configuration/config-prompt/advanced-prompt-input';
 import {
   MAX_PROMPT_MESSAGE_LENGTH,

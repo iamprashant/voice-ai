@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 import React from 'react';
 import cn from 'classnames';
-import { PromptRole } from '@/models/debug';
+import { PromptRole } from '@/models/prompt';
 import { Dropdown } from '@/app/components/dropdown';
 type Props = {
   value?: PromptRole;
@@ -9,7 +9,6 @@ type Props = {
 };
 
 const allTypes = [PromptRole.system, PromptRole.user, PromptRole.assistant];
-
 const MessageTypeSelector: FC<Props> = ({ value, onChange }) => {
   return (
     <Dropdown

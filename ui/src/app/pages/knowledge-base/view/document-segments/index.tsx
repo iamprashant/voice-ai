@@ -18,6 +18,7 @@ import { ActionableEmptyMessage } from '@/app/components/container/message/actio
 import { useGlobalNavigation } from '@/hooks/use-global-navigator';
 export const DocumentSegments: FC<{
   currentKnowledge: Knowledge;
+  onAddKnowledgeDocument: () => void;
 }> = ck => {
   const { authId, token, projectId } = useCurrentCredential();
 
@@ -178,9 +179,7 @@ export const DocumentSegments: FC<{
             title="No Documents"
             subtitle="There are no document segments in knowledge to display"
             action="Add New Document"
-            onActionClick={() =>
-              navigator.goToKnowledgeAddManualFile(ck.currentKnowledge.getId())
-            }
+            onActionClick={() => ck.onAddKnowledgeDocument()}
           />
         </div>
       )}
