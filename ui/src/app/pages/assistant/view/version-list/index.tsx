@@ -4,17 +4,19 @@ import { useRapidaStore } from '@/hooks';
 import { useCredential } from '@/hooks/use-credential';
 import { useEffect } from 'react';
 import toast from 'react-hot-toast/headless';
-import { toHumanReadableDateTime } from '@/utils/date';
 import { cn } from '@/utils';
 import { Assistant, GetAllAssistantProviderResponse } from '@rapidaai/react';
-import { CopyButton } from '@/app/components/form/button/copy-button';
 import { RevisionIndicator } from '@/app/components/indicators/revision';
 import { SectionLoader } from '@/app/components/loader/section-loader';
-import { Brain, ChevronsLeftRightEllipsis, Code, Rocket } from 'lucide-react';
+import { CircleSlash } from 'lucide-react';
 import { TableSection } from '@/app/components/sections/table-section';
 import { ScrollableResizableTable } from '@/app/components/data-table';
 import { TableRow } from '@/app/components/base/tables/table-row';
 import { TableCell } from '@/app/components/base/tables/table-cell';
+import { CopyCell } from '@/app/components/base/tables/copy-cell';
+import { AssistantProviderIndicator } from '@/app/components/indicators/assistant-provider';
+import { DateCell } from '@/app/components/base/tables/date-cell';
+import { NameCell } from '@/app/components/base/tables/name-cell';
 
 interface VersionProps {
   assistant: Assistant;
@@ -95,40 +97,27 @@ export function Version(props: VersionProps) {
               .AssistantproviderCase.ASSISTANTPROVIDERMODEL:
               return (
                 <TableRow key={idx} className="cursor-pointer" data-id={idx}>
+                  <CopyCell>
+                    {`vrsn_${apm.getAssistantprovidermodel()?.getId()}`}
+                  </CopyCell>
                   <TableCell>
-                    <div className="flex items-center space-x-2 font-mono text-sm">
-                      <span>
-                        vrsn_{apm.getAssistantprovidermodel()?.getId()}
-                      </span>
-                      <CopyButton className="border-none">
-                        {`vrsn_${apm.getAssistantprovidermodel()?.getId()}`}
-                      </CopyButton>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center">
-                      <Brain className="w-4 h-4" strokeWidth={1.5} />
-                      <span className="ml-2">LLM</span>
-                    </div>
+                    <AssistantProviderIndicator provider="provider-model" />
                   </TableCell>
                   <TableCell>
                     {apm.getAssistantprovidermodel()?.getDescription()
                       ? apm.getAssistantprovidermodel()?.getDescription()
                       : 'Initial assistant version'}
                   </TableCell>
-                  <TableCell data-id={apm.getAssistantprovidermodel()?.getId()}>
+                  <NameCell data-id={apm.getAssistantprovidermodel()?.getId()}>
                     {apm.getAssistantprovidermodel()?.getCreateduser() &&
                       apm
                         .getAssistantprovidermodel()
                         ?.getCreateduser()
                         ?.getName()!}
-                  </TableCell>
-                  <TableCell>
-                    {apm.getAssistantprovidermodel()?.getCreateddate() &&
-                      toHumanReadableDateTime(
-                        apm.getAssistantprovidermodel()?.getCreateddate()!,
-                      )}
-                  </TableCell>
+                  </NameCell>
+                  <DateCell
+                    date={apm.getAssistantprovidermodel()?.getCreateddate()}
+                  />
                   <TableCell>
                     {assistantProviderAction.assistant?.getAssistantproviderid() !==
                     apm.getAssistantprovidermodel()?.getId() ? (
@@ -138,7 +127,7 @@ export function Version(props: VersionProps) {
                           apm.getAssistantprovidermodel()?.getId()
                         }
                         className={cn(
-                          'shrink-0 rounded-[2px] h-7 text-sm font-medium px-2 bg-blue-500/10 !border-blue-500/40 border-[0.1px]',
+                          'shrink-0 !bg-blue-600/10 hover:!bg-blue-600 border-none h-8 ring-[0.5] ring-blue-600',
                         )}
                         onClick={() => {
                           deployRevision(
@@ -147,11 +136,11 @@ export function Version(props: VersionProps) {
                           );
                         }}
                       >
-                        <Rocket
+                        <CircleSlash
                           className="w-3.5 h-3.5 mr-2"
                           strokeWidth={1.5}
                         />
-                        <span>Deploy Version</span>
+                        <span>Deploy revision</span>
                       </IBlueBorderButton>
                     ) : (
                       <RevisionIndicator
@@ -170,21 +159,11 @@ export function Version(props: VersionProps) {
               .AssistantproviderCase.ASSISTANTPROVIDERAGENTKIT:
               return (
                 <TableRow key={idx} className="cursor-pointer" data-id={idx}>
+                  <CopyCell>
+                    {`vrsn_${apm.getAssistantprovideragentkit()?.getId()}`}
+                  </CopyCell>
                   <TableCell>
-                    <div className="flex space-x-2 items-center font-mono text-sm">
-                      <span className="font-mono">
-                        vrsn_{apm.getAssistantprovideragentkit()?.getId()}
-                      </span>
-                      <CopyButton className="border-none">
-                        {`vrsn_${apm.getAssistantprovideragentkit()?.getId()}`}
-                      </CopyButton>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center">
-                      <Code className="w-5 h-5" strokeWidth={1.5} />
-                      <span className="ml-2">AgentKit</span>
-                    </div>
+                    <AssistantProviderIndicator provider="agentkit" />
                   </TableCell>
                   <TableCell>
                     {apm.getAssistantprovideragentkit()?.getDescription()
@@ -192,20 +171,17 @@ export function Version(props: VersionProps) {
                       : 'Initial assistant version'}
                   </TableCell>
 
-                  <TableCell>
+                  <NameCell>
                     {
                       apm
                         .getAssistantprovideragentkit()
                         ?.getCreateduser()
                         ?.getName()!
                     }
-                  </TableCell>
-                  <TableCell>
-                    {apm.getAssistantprovideragentkit()?.getCreateddate() &&
-                      toHumanReadableDateTime(
-                        apm.getAssistantprovideragentkit()?.getCreateddate()!,
-                      )}
-                  </TableCell>
+                  </NameCell>
+                  <DateCell
+                    date={apm.getAssistantprovideragentkit()?.getCreateddate()}
+                  ></DateCell>
                   <TableCell>
                     {assistantProviderAction.assistant?.getAssistantproviderid() !==
                     apm.getAssistantprovideragentkit()?.getId() ? (
@@ -215,7 +191,7 @@ export function Version(props: VersionProps) {
                           apm.getAssistantprovideragentkit()?.getId()
                         }
                         className={cn(
-                          'shrink-0 rounded-[2px] h-7 text-sm font-medium px-2  bg-blue-500/10 !border-blue-500/40 border-[0.1px]',
+                          'shrink-0 !bg-blue-600/10 hover:!bg-blue-600 border-none h-8 ring-[0.5] ring-blue-600',
                         )}
                         onClick={() => {
                           deployRevision(
@@ -224,11 +200,11 @@ export function Version(props: VersionProps) {
                           );
                         }}
                       >
-                        <Rocket
+                        <CircleSlash
                           className="w-3.5 h-3.5 mr-2"
                           strokeWidth={1.5}
                         />
-                        <span>Deploy Version</span>
+                        <span>Deploy revision</span>
                       </IBlueBorderButton>
                     ) : (
                       <RevisionIndicator
@@ -247,45 +223,27 @@ export function Version(props: VersionProps) {
               .AssistantproviderCase.ASSISTANTPROVIDERWEBSOCKET:
               return (
                 <TableRow key={idx}>
+                  <CopyCell>
+                    {`vrsn_${apm.getAssistantproviderwebsocket()?.getId()}`}
+                  </CopyCell>
                   <TableCell>
-                    <div className="flex space-x-2 font-mono text-sm">
-                      <span>
-                        vrsn_{apm.getAssistantproviderwebsocket()?.getId()}
-                      </span>
-                      <CopyButton className="border-none">
-                        {`vrsn_${apm.getAssistantproviderwebsocket()?.getId()}`}
-                      </CopyButton>
-                    </div>
-                  </TableCell>
-
-                  <TableCell>
-                    <div className="flex">
-                      <ChevronsLeftRightEllipsis
-                        className="w-5 h-5"
-                        strokeWidth={1.5}
-                      />
-                      <span className="ml-2">Websocket</span>
-                    </div>
+                    <AssistantProviderIndicator provider="websocket" />
                   </TableCell>
                   <TableCell>
                     {apm.getAssistantproviderwebsocket()?.getDescription()
                       ? apm.getAssistantproviderwebsocket()?.getDescription()
                       : 'Initial assistant version'}
                   </TableCell>
-                  <TableCell>
+                  <NameCell>
                     {apm.getAssistantproviderwebsocket()?.getCreateduser() &&
                       apm
                         .getAssistantproviderwebsocket()
                         ?.getCreateduser()
                         ?.getName()!}
-                  </TableCell>
-                  <TableCell>
-                    {apm.getAssistantproviderwebsocket()?.getCreateddate() &&
-                      toHumanReadableDateTime(
-                        apm.getAssistantproviderwebsocket()?.getCreateddate()!,
-                      )}
-                  </TableCell>
-
+                  </NameCell>
+                  <DateCell
+                    date={apm.getAssistantproviderwebsocket()?.getCreateddate()}
+                  ></DateCell>
                   <TableCell>
                     {assistantProviderAction.assistant?.getAssistantproviderid() !==
                     apm.getAssistantproviderwebsocket()?.getId() ? (
@@ -295,7 +253,7 @@ export function Version(props: VersionProps) {
                           apm.getAssistantproviderwebsocket()?.getId()
                         }
                         className={cn(
-                          'shrink-0 rounded-[2px] h-7 text-sm font-medium px-2  bg-blue-500/10 !border-blue-500/40 border-[0.1px]',
+                          'shrink-0 !bg-blue-600/10 hover:!bg-blue-600 border-none h-8',
                         )}
                         onClick={() => {
                           deployRevision(
@@ -304,11 +262,11 @@ export function Version(props: VersionProps) {
                           );
                         }}
                       >
-                        <Rocket
+                        <CircleSlash
                           className="w-3.5 h-3.5 mr-2"
                           strokeWidth={1.5}
                         />
-                        <span>Deploy Version</span>
+                        <span>Deploy revision</span>
                       </IBlueBorderButton>
                     ) : (
                       <RevisionIndicator

@@ -52,7 +52,7 @@ func NewProjectRPC(config *config.WebAppConfig, logger commons.Logger, postgres 
 			postgres:       postgres,
 			redis:          redis,
 			projectService: internal_project_service.NewProjectService(logger, postgres),
-			emailerClient:  external_emailer.NewEmailer(&config.AppConfig, logger),
+			emailerClient:  external_emailer.NewEmailer(config.EmailerConfig, logger),
 		},
 	}
 }
@@ -66,7 +66,7 @@ func NewProjectGRPC(config *config.WebAppConfig, logger commons.Logger, postgres
 			redis:               redis,
 			projectService:      internal_project_service.NewProjectService(logger, postgres),
 			userService:         internal_user_service.NewUserService(logger, postgres),
-			emailerClient:       external_emailer.NewEmailer(&config.AppConfig, logger),
+			emailerClient:       external_emailer.NewEmailer(config.EmailerConfig, logger),
 			organizationService: internal_organization_service.NewOrganizationService(logger, postgres),
 		},
 	}

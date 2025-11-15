@@ -1,5 +1,9 @@
 import { Timestamp } from 'google-protobuf/google/protobuf/timestamp_pb';
-import { toHumanReadableDate, toHumanReadableRelativeTime } from '@/utils/date';
+import {
+  toHumanReadableDate,
+  toHumanReadableDateTime,
+  toHumanReadableRelativeTime,
+} from '@/utils/date';
 import { TableCell } from '@/app/components/base/tables/table-cell';
 
 /**
@@ -26,7 +30,7 @@ export function DateCell(props: { date?: Timestamp }) {
   return (
     <TableCell>
       <div className="font-normal text-left underline decoration-dotted">
-        {props.date && toHumanReadableDate(props.date)}
+        {props.date && toHumanReadableDateTime(props.date)}
       </div>
     </TableCell>
   );

@@ -75,7 +75,7 @@ export const SideTab: FC<TabProps> = ({
   return (
     <>
       <TabHeader className={cn(className, 'border-none')}>
-        <div className="flex flex-col border-r h-full">
+        <div className="flex flex-col border-r h-full space-y-0.5 p-1">
           {tabs.map((ix, id) => {
             return (
               <div
@@ -84,10 +84,10 @@ export const SideTab: FC<TabProps> = ({
                   setIsActive(ix.label);
                 }}
                 className={cn(
-                  'group px-2 border-r-[3px] border-transparent -ms-[0.1rem] cursor-pointer',
+                  'group px-2 border-transparent -ms-[0.1rem] cursor-pointer',
                   isActive === ix.label
-                    ? 'border-blue-500! text-blue-500 bg-blue-500/5'
-                    : '',
+                    ? 'text-blue-500 bg-blue-500/10'
+                    : 'hover:bg-blue-500/5 hover:text-blue-500',
                 )}
               >
                 <div className="capitalize px-3 py-3 font-medium  text-sm/6 gap-3 flex items-center">

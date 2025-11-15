@@ -28,7 +28,7 @@ export const AssistantManageLayout: FC<HTMLAttributes<HTMLDivElement>> = () => {
           className="w-80 border-r bg-white dark:bg-gray-900 z-1 overflow-auto shrink-0"
           aria-label="Sidebar"
         >
-          <ul className="text-sm">
+          <ul className="text-sm/6 p-1 space-y-1">
             <li>
               <SideTabLink to="deployment/" className="h-11">
                 <Package className="w-4 h-4 mr-2" strokeWidth={1.5} />{' '}

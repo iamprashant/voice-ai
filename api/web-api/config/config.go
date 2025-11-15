@@ -50,6 +50,8 @@ type WebAppConfig struct {
 	RedisConfig      configs.RedisConfig      `mapstructure:"redis" validate:"required"`
 	AssetStoreConfig configs.AssetStoreConfig `mapstructure:"asset_store" validate:"required"`
 	OAuthConfig      `mapstructure:",squash"`
+	//
+	EmailerConfig *configs.EmailerConfig `mapstructure:"emailer"`
 }
 
 // reading config and intializing configs for application

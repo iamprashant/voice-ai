@@ -1,7 +1,5 @@
 package config
 
-import "github.com/rapidaai/pkg/configs"
-
 type AppConfig struct {
 	//
 	Name     string `mapstructure:"service_name" validate:"required"`
@@ -20,8 +18,7 @@ type AppConfig struct {
 	DocumentHost    string `mapstructure:"document_host" validate:"required"`
 
 	// utility
-	UiHost        string                 `mapstructure:"ui_host" validate:"required"`
-	EmailerConfig *configs.EmailerConfig `mapstructure:"emailer"`
+	UiHost string `mapstructure:"ui_host" validate:"required"`
 }
 
 func (cfg *AppConfig) IsDevelopment() bool {

@@ -134,7 +134,7 @@ export const ConfigureAssistantDeploymentPage = () => {
           </IBlueButton>
           <Popover
             align={'bottom-end'}
-            className="w-auto"
+            className="w-72 py-0.5 px-0.5"
             open={createDeploymentPopover}
             setOpen={setCreateDeploymentPopover}
           >
@@ -143,29 +143,32 @@ export const ConfigureAssistantDeploymentPage = () => {
                 className="w-full justify-start"
                 onClick={() => navi.goToConfigureWeb(assistantId!)}
               >
-                <Globe className="w-4 h-4 mr-2" strokeWidth={1.5} /> Add to Your
-                Website
+                <Globe className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                <span className="ml-2">Add to Your Website</span>
               </IButton>
+              <hr className="w-full h-[1px] bg-gray-800" />
               <IButton
                 className="w-full justify-start"
                 onClick={() => navi.goToConfigureApi(assistantId!)}
               >
-                <Code className="w-4 h-4 mr-2" strokeWidth={1.5} /> Integrate
-                with SDK
+                <Code className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                <span className="ml-2">Integrate with SDK</span>
               </IButton>
+              <hr className="w-full h-[1px] bg-gray-800" />
               <IButton
                 className="w-full justify-start"
                 onClick={() => navi.goToConfigureCall(assistantId!)}
               >
-                <Phone className="w-4 h-4 mr-2" strokeWidth={1.5} /> Deploy on
-                Phone Call
+                <Phone className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                <span className="ml-2">Deploy on Phone Call</span>
               </IButton>
+              <hr className="w-full h-[1px] bg-gray-800" />
               <IButton
                 className="w-full justify-start"
                 onClick={() => navi.goToConfigureDebugger(assistantId!)}
               >
-                <Bug className="w-4 h-4 mr-2" strokeWidth={1.5} /> Deploy for
-                Debugging
+                <Bug className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                <span className="ml-2">Deploy for Debugging</span>
               </IButton>
             </div>
           </Popover>
@@ -758,38 +761,41 @@ export const ConfigureAssistantDeploymentPage = () => {
                   </IBlueBorderPlusButton>
                   <Popover
                     align={'bottom-end'}
-                    className="w-auto"
+                    className="w-72 py-0.5 px-0.5"
                     open={actionCreateDeploymentPopover}
                     setOpen={setActionCreateDeploymentPopover}
                   >
-                    <div className="space-y-0.5">
+                    <div className="space-y-0.5 text-sm/6">
                       <IButton
                         className="w-full justify-start"
                         onClick={() => navi.goToConfigureWeb(assistantId!)}
                       >
-                        <Globe className="w-4 h-4 mr-2" strokeWidth={1.5} /> Add
-                        to Your Website
+                        <Globe className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                        <span className="ml-2">Add to Your Website</span>
                       </IButton>
+                      <hr className="w-full h-[1px] bg-gray-800" />
                       <IButton
                         className="w-full justify-start"
                         onClick={() => navi.goToConfigureApi(assistantId!)}
                       >
-                        <Code className="w-4 h-4 mr-2" strokeWidth={1.5} />{' '}
-                        Integrate with SDK
+                        <Code className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                        <span className="ml-2">Integrate with SDK</span>
                       </IButton>
+                      <hr className="w-full h-[1px] bg-gray-800" />
                       <IButton
                         className="w-full justify-start"
                         onClick={() => navi.goToConfigureCall(assistantId!)}
                       >
-                        <Phone className="w-4 h-4 mr-2" strokeWidth={1.5} />{' '}
-                        Deploy on Phone Call
+                        <Phone className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                        <span className="ml-2">Deploy on Phone Call</span>
                       </IButton>
+                      <hr className="w-full h-[1px] bg-gray-800" />
                       <IButton
                         className="w-full justify-start"
                         onClick={() => navi.goToConfigureDebugger(assistantId!)}
                       >
-                        <Bug className="w-4 h-4 mr-2" strokeWidth={1.5} />{' '}
-                        Deploy for Debugging
+                        <Bug className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                        <span className="ml-2">Deploy for Debugging</span>
                       </IButton>
                     </div>
                   </Popover>
