@@ -33,7 +33,6 @@ const ProviderContext = createContext<{
 });
 
 export const useProviderContext = () => useContext(ProviderContext);
-
 type ProviderContextProviderProps = {
   children: React.ReactNode;
 };

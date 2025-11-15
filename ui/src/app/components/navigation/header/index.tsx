@@ -1,9 +1,17 @@
 import React, { FC, Fragment, HTMLAttributes, memo, useContext } from 'react';
 import { cn } from '@/utils';
-import { Menu, MenuItem, MenuItems, Transition } from '@headlessui/react';
+import {
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuItems,
+  Transition,
+} from '@headlessui/react';
 import { RightArrowIcon } from '@/app/components/Icon/RightArrow';
 import { AuthContext } from '@/context/auth-context';
-import { useWorkspace } from '@/context/workplace-context';
+import { useWorkspace } from '@/workspace';
+import { RapidaIcon } from '@/app/components/Icon/Rapida';
+import { RapidaTextIcon } from '@/app/components/Icon/RapidaText';
 
 interface HeaderProps extends HTMLAttributes<HTMLDivElement> {}
 export const Header: FC<HeaderProps> = memo(({ ...attr }) => {
@@ -27,27 +35,30 @@ export const Header: FC<HeaderProps> = memo(({ ...attr }) => {
 });
 
 function HeaderContent() {
-  const { isAuthenticated } = useContext(AuthContext);
   const workspace = useWorkspace();
   return (
     <div className="flex justify-between items-center">
       <div className="flex items-center justify-center space-x-1 w-fit">
-        {workspace.logo}
+        {workspace.logo ? (
+          <>
+            <img
+              src={workspace.logo.light}
+              alt={workspace.title}
+              className="h-8 block dark:hidden"
+            />
+            <img
+              src={workspace.logo.dark}
+              alt={workspace.title}
+              className="h-8 hidden dark:block"
+            />
+          </>
+        ) : (
+          <div className="flex items-center shrink-0 space-x-1.5 ml-1 text-blue-600 dark:text-blue-500">
+            <RapidaIcon className="h-8 w-8" />
+            <RapidaTextIcon className="h-6" />
+          </div>
+        )}
       </div>
-      {/* <ul className="items-center list-none space-x-2 hidden md:flex">
-        <li>
-          <a
-            href={
-              isAuthenticated && isAuthenticated()
-                ? '/dashboard'
-                : '/auth/signin'
-            }
-            className="px-3 py-2.5 leading-none outline-hidden font-medium hover:underline hover:text-blue-600 underline-offset-2"
-          >
-            {isAuthenticated && isAuthenticated() ? 'Dashboard' : 'Sign in'}
-          </a>
-        </li>
-      </ul> */}
       <MobileMenu />
     </div>
   );
@@ -59,7 +70,7 @@ function MobileMenu() {
     <Menu as="div" className="inline-block text-left md:hidden">
       {({ open }) => (
         <>
-          <Menu.Button
+          <MenuButton
             className={cn(
               'block md:hidden',
               'relative ml-auto flex w-fit items-center',
@@ -98,7 +109,7 @@ function MobileMenu() {
                 />
               </svg>
             )}
-          </Menu.Button>
+          </MenuButton>
           <Transition
             as={Fragment}
             enter="transition ease-out duration-100"

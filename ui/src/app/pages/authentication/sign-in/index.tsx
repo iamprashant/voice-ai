@@ -18,7 +18,7 @@ import { ServiceError } from '@rapidaai/react';
 import { AuthContext } from '@/context/auth-context';
 import { FormLabel } from '@/app/components/form-label';
 import { FieldSet } from '@/app/components/form/fieldset';
-import { useWorkspace } from '@/context/workplace-context';
+import { useWorkspace } from '@/workspace';
 import { connectionConfig } from '@/configs';
 /**
  *
