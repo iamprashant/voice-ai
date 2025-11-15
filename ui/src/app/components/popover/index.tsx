@@ -67,7 +67,7 @@ export function Popover(props: PopoverProps) {
           style={floatingStyles}
           {...getFloatingProps()}
           className={cn(
-            'z-12 w-80 bg-light-background dark:bg-gray-900 border shadow-lg border-t',
+            'z-12 w-80 bg-white dark:bg-gray-900 border shadow-xl dark:border-gray-800 rounded-[2px]',
             props.className,
           )}
           onFocus={() => props.setOpen(true)}
@@ -77,7 +77,7 @@ export function Popover(props: PopoverProps) {
             ref={arrowRef}
             context={context}
             staticOffset={'5%'}
-            className="w-5 h-5 fill-gray-300 dark:fill-gray-600"
+            className="w-5 h-5 fill-gray-200 dark:fill-gray-600"
           />
           {props.children}
         </div>

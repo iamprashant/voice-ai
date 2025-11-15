@@ -28,6 +28,10 @@ import { CustomLink } from '@/app/components/custom-link';
 import { getMetricValue } from '@/utils/metadata';
 import { formatNanoToReadableMinute } from '@/utils/date';
 import { ConversationDirectionIndicator } from '@/app/components/indicators/conversation-direction';
+import { CopyCell } from '@/app/components/base/tables/copy-cell';
+import { NumberCell } from '@/app/components/base/tables/number-cell';
+import { LabelCell } from '@/app/components/base/tables/label-cell';
+import { DateCell } from '@/app/components/base/tables/date-cell';
 
 interface ConversationProps {
   currentAssistant: Assistant;
@@ -339,9 +343,9 @@ export function Conversations({ currentAssistant }: ConversationProps) {
                   {assistantConversationListAction.visibleColumn(
                     'assistant_provider_model_id',
                   ) && (
-                    <TableCell>
-                      vrsn_{row.getAssistantprovidermodelid()}
-                    </TableCell>
+                    <CopyCell>
+                      {`vrsn_${row.getAssistantprovidermodelid()}`}
+                    </CopyCell>
                   )}
 
                   {assistantConversationListAction.visibleColumn(
@@ -370,11 +374,11 @@ export function Conversations({ currentAssistant }: ConversationProps) {
                   {assistantConversationListAction.visibleColumn(
                     'duration',
                   ) && (
-                    <TableCell>
+                    <LabelCell>
                       {formatNanoToReadableMinute(
                         getMetricValue(row.getMetricsList(), 'TIME_TAKEN'),
-                      )}{' '}
-                    </TableCell>
+                      )}
+                    </LabelCell>
                   )}
                   {assistantConversationListAction.visibleColumn('status') && (
                     <TableCell>
@@ -386,12 +390,7 @@ export function Conversations({ currentAssistant }: ConversationProps) {
 
                   {assistantConversationListAction.visibleColumn(
                     'created_date',
-                  ) && (
-                    <TableCell>
-                      {row.getCreateddate() &&
-                        toHumanReadableDateTime(row.getCreateddate()!)}
-                    </TableCell>
-                  )}
+                  ) && <DateCell date={row.getCreateddate()}></DateCell>}
                 </TableRow>
               ),
             )}
