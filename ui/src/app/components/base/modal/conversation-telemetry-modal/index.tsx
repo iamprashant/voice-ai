@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Info, Search, VolumeX, X } from 'lucide-react';
+import { Info, Search, X } from 'lucide-react';
 import {
   ConnectionConfig,
   Criteria,
@@ -17,18 +17,15 @@ import { IButton } from '@/app/components/form/button';
 import { ChevronRight } from 'lucide-react';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { formatNanoToReadableMilli } from '@/utils/date';
-import {
-  formatDateWithMillisecond,
-  toDate,
-  toDateWithMicroseconds,
-} from '@/utils/date';
+import { formatDateWithMillisecond, toDate } from '@/utils/date';
 import { Tooltip } from '@/app/components/base/tooltip';
 import { CodeHighlighting } from '@/app/components/code-highlighting';
 import { Timestamp } from 'google-protobuf/google/protobuf/timestamp_pb';
 import { cn } from '@/utils';
+import { TablePagination } from '@/app/components/base/tables/table-pagination';
 
 interface ConversationTelemetryDialogProps extends ModalProps {
-  criterias?: Criteria[]; // Added criteria prop to accept Criteria from parent
+  criterias?: Criteria[];
 }
 
 interface Chip {
@@ -69,7 +66,9 @@ export function ConversationTelemetryDialog(
   const [chips, setChips] = useState<Chip[]>([]); // State for chips
   const [timeline, setTimeline] = useState<SpanData[]>([]);
   const [expandedSpans, setExpandedSpans] = useState<Set<string>>(new Set());
-
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
+  const [totalItem, setTotalItem] = useState(0);
   const toggleExpand = (spanId: string) => {
     setExpandedSpans(prev => {
       const newExpandedSpans = new Set(prev);
@@ -98,8 +97,8 @@ export function ConversationTelemetryDialog(
   useEffect(() => {
     const request = new GetAllAssistantTelemetryRequest();
     const paginate = new Paginate();
-    paginate.setPage(1);
-    paginate.setPagesize(50);
+    paginate.setPage(page);
+    paginate.setPagesize(pageSize);
     request.setPaginate(paginate);
 
     const criteriaList = [
@@ -113,7 +112,6 @@ export function ConversationTelemetryDialog(
     ];
 
     request.setCriteriasList(criteriaList);
-
     GetAllAssistantTelemetry(
       connectionConfig,
       request,
@@ -126,6 +124,8 @@ export function ConversationTelemetryDialog(
       console.dir(response.toObject());
       const telemetryList = response.getDataList() || [];
       const spanMap: Record<string, any[]> = { root: [] };
+      if (response.getPaginated()?.getTotalitem())
+        setTotalItem(response.getPaginated()?.getTotalitem()!);
 
       telemetryList.forEach(telemetry => {
         const startTime = telemetry.getStarttime();
@@ -184,7 +184,7 @@ export function ConversationTelemetryDialog(
 
       setTimeline(buildHierarchy('root'));
     });
-  }, [token, authId, projectId, JSON.stringify(chips)]);
+  }, [token, authId, projectId, JSON.stringify(chips), pageSize, page]);
 
   const getTimelinePosition = (stage: SpanData) => {
     // Helper function to flatten spans and children into a flat array
@@ -326,6 +326,13 @@ export function ConversationTelemetryDialog(
               />
             </div>
             <PaginationButtonBlock>
+              <TablePagination
+                currentPage={page}
+                onChangeCurrentPage={setPage}
+                totalItem={totalItem}
+                pageSize={pageSize}
+                onChangePageSize={setPageSize}
+              />
               <IButton
                 onClick={() => {
                   props.setModalOpen(false);

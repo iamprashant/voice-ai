@@ -161,7 +161,7 @@ export const SourceIndicator: React.FC<SourceIndicatorProps> = ({
         {config.icon}
       </span>
       {withLabel && (
-        <span className={cn('border-l', config.borderColor, sizeClasses[size])}>
+        <span className={cn(config.borderColor, sizeClasses[size])}>
           {config.label}
         </span>
       )}

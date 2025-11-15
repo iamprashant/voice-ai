@@ -365,85 +365,87 @@ export function ConversationDetailPage({}) {
   };
 
   return (
-    <div className="flex-1 flex relative grow h-full overflow-hidden">
-      <aside
-        className="w-80 border-r bg-white dark:bg-gray-900 z-1 overflow-auto shrink-0"
-        aria-label="Sidebar"
-      >
-        <div className="h-full space-y-3">
-          <ul className="text-sm">
-            <li>
-              <SideTab
-                to="#"
-                onClick={() => navigator.goToAssistantSessionList(assistantId!)}
-                className="hover:text-red-600 hover:border-b hover:border-b-red-600 text-red-600 border-b h-10 flex items-center"
-              >
-                <ChevronLeft className="w-5 h-5 mr-1" strokeWidth={1.5} />
-                <span className="">Back to sessions</span>
-              </SideTab>
-            </li>
-            <li>
-              <SideTab
-                to="#"
-                className="h-11"
-                isActive={activeTab === 'messages'}
-                onClick={() => setActiveTab('messages')}
-              >
-                <MessagesSquare className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                <span className="">Messages</span>
-              </SideTab>
-            </li>
-            <li>
-              <SideTab
-                to="#"
-                className="h-11"
-                isActive={activeTab === 'context'}
-                onClick={() => setActiveTab('context')}
-              >
-                <BookText className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                <span className="">Context</span>
-              </SideTab>
-            </li>
-            <li>
-              <SideTab
-                to="#"
-                className="h-11"
-                isActive={activeTab === 'arguments'}
-                onClick={() => setActiveTab('arguments')}
-              >
-                <Parentheses className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                <span className="">Arguments</span>
-              </SideTab>
-            </li>
-            <li>
-              <SideTab
-                to="#"
-                className="h-11"
-                isActive={activeTab === 'analysis'}
-                onClick={() => setActiveTab('analysis')}
-              >
-                <ChartArea className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                <span className="">Analysis</span>
-              </SideTab>
-            </li>
-            <li>
-              <SideTab
-                to="#"
-                className="h-11"
-                isActive={activeTab === 'metrics'}
-                onClick={() => setActiveTab('metrics')}
-              >
-                <Activity className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                <span className="">Metrics</span>
-              </SideTab>
-            </li>
-          </ul>
+    <>
+      {' '}
+      <PageHeaderBlock className="border-b text-sm/6">
+        <div
+          onClick={() => navigator.goToAssistantSessionList(assistantId!)}
+          className="flex items-center gap-3 hover:text-red-600 hover:cursor-pointer"
+        >
+          <ChevronLeft className="w-5 h-5 mr-1" strokeWidth={1.5} />
+          <PageTitleBlock>Back to Assistant</PageTitleBlock>
         </div>
-      </aside>
-      <div className="flex-1 overflow-auto flex flex-col">
-        {renderContent()}
+      </PageHeaderBlock>
+      <div className="flex-1 flex relative grow h-full overflow-hidden">
+        <aside
+          className="w-80 border-r bg-white dark:bg-gray-900 z-1 overflow-auto shrink-0"
+          aria-label="Sidebar"
+        >
+          <div className="h-full space-y-3">
+            <ul className="text-sm/6 p-1 space-y-1">
+              <li>
+                <SideTab
+                  to="#"
+                  className="h-11"
+                  isActive={activeTab === 'messages'}
+                  onClick={() => setActiveTab('messages')}
+                >
+                  <MessagesSquare className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                  <span className="">Messages</span>
+                </SideTab>
+              </li>
+              <li>
+                <SideTab
+                  to="#"
+                  className="h-11"
+                  isActive={activeTab === 'context'}
+                  onClick={() => setActiveTab('context')}
+                >
+                  <BookText className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                  <span className="">Context</span>
+                </SideTab>
+              </li>
+              <li>
+                <SideTab
+                  to="#"
+                  className="h-11"
+                  isActive={activeTab === 'arguments'}
+                  onClick={() => setActiveTab('arguments')}
+                >
+                  <Parentheses className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                  <span className="">Arguments</span>
+                </SideTab>
+              </li>
+              <li>
+                <SideTab
+                  to="#"
+                  className="h-11"
+                  isActive={activeTab === 'analysis'}
+                  onClick={() => setActiveTab('analysis')}
+                >
+                  <ChartArea className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                  <span className="">Analysis</span>
+                </SideTab>
+              </li>
+              <li>
+                <SideTab
+                  to="#"
+                  className="h-11"
+                  isActive={activeTab === 'metrics'}
+                  onClick={() => setActiveTab('metrics')}
+                >
+                  <Activity className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                  <span className="">Metrics</span>
+                </SideTab>
+              </li>
+            </ul>
+          </div>
+        </aside>
+        <div className="flex-1 overflow-auto flex flex-col">
+          {renderContent()}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
