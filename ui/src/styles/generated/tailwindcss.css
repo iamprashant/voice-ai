@@ -2370,6 +2370,9 @@
   .max-w-sm {
     max-width: var(--container-sm);
   }
+  .max-w-xl {
+    max-width: var(--container-xl);
+  }
   .min-w-\(--space-9\) {
     min-width: var(--space-9);
   }
@@ -3104,6 +3107,10 @@
   .border-dashed {
     --tw-border-style: dashed;
     border-style: dashed;
+  }
+  .border-dotted {
+    --tw-border-style: dotted;
+    border-style: dotted;
   }
   .border-none {
     --tw-border-style: none;
