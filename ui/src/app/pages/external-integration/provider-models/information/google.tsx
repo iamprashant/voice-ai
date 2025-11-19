@@ -1,4 +1,4 @@
-import { FC, useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SearchIconInput } from '@/app/components/form/input/IconInput';
 import { Helmet } from '@/app/components/helmet';
 import { BluredWrapper } from '@/app/components/wrapper/blured-wrapper';
@@ -14,6 +14,7 @@ import { Check, Plus } from 'lucide-react';
 import { Tooltip } from '@/app/components/tooltip';
 import { IBlueBGButton, IButton } from '@/app/components/form/button';
 import { VoiceCard } from '@/app/pages/external-integration/provider-models/information/voice-card';
+import { useLocation } from 'react-router-dom';
 
 /**
  *
@@ -26,6 +27,32 @@ export function GoogleCloudModelInformationPage() {
   const [createProviderModalOpen, setCreateProviderModalOpen] = useState(false);
   const [viewProviderModalOpen, setViewProviderModalOpen] = useState(false);
   const [connected, setConnected] = useState(false);
+  const location = useLocation(); // Get the current URL including query params
+
+  useEffect(() => {
+    // Check for voice_id query parameter in the URL
+    const params = new URLSearchParams(location.search);
+    const voiceId = params.get('query');
+    if (voiceId) {
+      searchVoice(voiceId);
+    }
+  }, [location.search]);
+
+  const searchVoice = (v: string) => {
+    const voices = GOOGLE_CLOUD_VOICE();
+    if (v.length > 0) {
+      setFilteredVoices(
+        voices.filter(
+          voice =>
+            voice.name.toLowerCase().includes(v.toLowerCase()) ||
+            voice.ssmlGender.toLowerCase().includes(v.toLowerCase()),
+        ),
+      );
+      return;
+    }
+    setFilteredVoices(voices);
+  };
+
   useEffect(() => {
     let isFoundCredential = providerCredentials.find(
       x => x.getProvider() === provider?.code,
@@ -87,19 +114,7 @@ export function GoogleCloudModelInformationPage() {
         <SearchIconInput
           className="bg-light-background"
           onChange={t => {
-            const voices = GOOGLE_CLOUD_VOICE();
-            const v = t.target.value;
-            if (v.length > 0) {
-              setFilteredVoices(
-                voices.filter(
-                  voice =>
-                    voice.name.toLowerCase().includes(v.toLowerCase()) ||
-                    voice.ssmlGender.toLowerCase().includes(v.toLowerCase()),
-                ),
-              );
-              return;
-            }
-            setFilteredVoices(voices);
+            searchVoice(t.target.value);
           }}
         />
         <PaginationButtonBlock className="border-l divide-x">

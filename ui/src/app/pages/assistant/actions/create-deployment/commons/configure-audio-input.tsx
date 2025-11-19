@@ -97,6 +97,16 @@ export const ConfigureAudioInputProvider: React.FC<
       />
       {audioInputConfig.provider && (
         <>
+          <NoiseCancellationProvider
+            className="m-0 mt-6"
+            noiseCancellationProvider={getParamValue(
+              'microphone.noise_removal.provider',
+              'rn_noise',
+            )}
+            onChangeNoiseCancellationProvider={v => {
+              updateParameter('microphone.noise_removal.provider', v);
+            }}
+          />
           <EndOfSpeechProvider
             className="m-0 mt-6"
             endOfSpeechProvider={getParamValue(
@@ -112,16 +122,6 @@ export const ConfigureAudioInputProvider: React.FC<
             )}
             onChangeEndOfSepeechTimeout={(timeout: string) => {
               updateParameter('microphone.eos.timeout', timeout);
-            }}
-          />
-          <NoiseCancellationProvider
-            className="m-0 mt-6"
-            noiseCancellationProvider={getParamValue(
-              'microphone.noise_removal.provider',
-              'rn_noise',
-            )}
-            onChangeNoiseCancellationProvider={v => {
-              updateParameter('microphone.noise_removal.provider', v);
             }}
           />
         </>

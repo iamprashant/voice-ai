@@ -55,9 +55,14 @@ export const ValidateCartesiaOptions = (options: Metadata[]): boolean => {
   ) {
     return false;
   }
+
+  const voiceID = options.find(opt => opt.getKey() === 'speak.voice.id');
+  if (!voiceID || !voiceID.getValue() || voiceID.getValue().length === 0) {
+    return false;
+  }
+
   const validations = [
     { key: 'speak.language', validator: CARTESIA_LANGUAGE(), field: 'code' },
-    { key: 'speak.voice.id', validator: CARTESIA_VOICE(), field: 'id' },
     { key: 'speak.model', validator: CARTESIA_MODEL(), field: 'id' },
   ];
 

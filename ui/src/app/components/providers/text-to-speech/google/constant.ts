@@ -17,7 +17,7 @@ export const GetGoogleDefaultOptions = (current: Metadata[]): Metadata[] => {
   };
 
   addMetadata('rapida.credential_id');
-  addMetadata('rapida.voice.id');
+  addMetadata('speak.voice.id');
   // Only return metadata for the keys we want to keep
   return [
     ...mtds.filter(m => keysToKeep.includes(m.getKey())),
@@ -34,6 +34,10 @@ export const ValidateGoogleOptions = (options: Metadata[]): boolean => {
     !credentialID.getValue() ||
     credentialID.getValue().length === 0
   ) {
+    return false;
+  }
+  const voiceID = options.find(opt => opt.getKey() === 'speak.voice.id');
+  if (!voiceID || !voiceID.getValue() || voiceID.getValue().length === 0) {
     return false;
   }
 

@@ -19,7 +19,7 @@ export const AccountSettingPage = () => {
           }}
         >
           <ChevronLeft className="w-5 h-5 mr-1" strokeWidth={1.5} />
-          <PageTitleBlock className="text-sm/6">
+          <PageTitleBlock className="font-medium text-[14.5px]">
             Back to Dashboard
           </PageTitleBlock>
         </div>

@@ -33,5 +33,9 @@ export const ValidateDeepgramOptions = (options: Metadata[]): boolean => {
   ) {
     return false;
   }
+  const voiceID = options.find(opt => opt.getKey() === 'speak.voice.id');
+  if (!voiceID || !voiceID.getValue() || voiceID.getValue().length === 0) {
+    return false;
+  }
   return true;
 };

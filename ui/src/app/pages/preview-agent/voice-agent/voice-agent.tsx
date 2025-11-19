@@ -227,203 +227,207 @@ export const VoiceAgentDebugger: FC<{ voiceAgent: VI }> = memo(
                       )}
                     </div>
                     <InputGroup title="Arguments">
-                      <div className="text-sm leading-normal">
-                        {variables.map((x, idx) => {
-                          return (
-                            <InputVarForm
-                              key={idx}
-                              var={x}
-                              className="bg-light-background"
-                            >
-                              {x.getType() === InputVarType.textInput && (
-                                <TextTextarea
-                                  readOnly={voiceAgent.isConnected}
-                                  id={x.getName()}
-                                  defaultValue={x.getDefaultvalue()}
-                                  onChange={(
-                                    e: React.ChangeEvent<HTMLTextAreaElement>,
-                                  ) =>
-                                    onChangeArgument(
-                                      x.getName(),
-                                      e.target.value,
-                                    )
-                                  }
-                                />
-                              )}
-                              {x.getType() === InputVarType.paragraph && (
-                                <ParagraphTextarea
-                                  id={x.getName()}
-                                  readOnly={voiceAgent.isConnected}
-                                  defaultValue={x.getDefaultvalue()}
-                                  onChange={(
-                                    e: React.ChangeEvent<HTMLTextAreaElement>,
-                                  ) =>
-                                    onChangeArgument(
-                                      x.getName(),
-                                      e.target.value,
-                                    )
-                                  }
-                                />
-                              )}
-                              {x.getType() === InputVarType.number && (
-                                <NumberTextarea
-                                  readOnly={voiceAgent.isConnected}
-                                  id={x.getName()}
-                                  defaultValue={x.getDefaultvalue()}
-                                  onChange={(
-                                    e: React.ChangeEvent<HTMLTextAreaElement>,
-                                  ) =>
-                                    onChangeArgument(
-                                      x.getName(),
-                                      e.target.value,
-                                    )
-                                  }
-                                />
-                              )}
-                              {x.getType() === InputVarType.json && (
-                                <JsonTextarea
-                                  readOnly={voiceAgent.isConnected}
-                                  id={x.getName()}
-                                  defaultValue={x.getDefaultvalue()}
-                                  onChange={(
-                                    e: React.ChangeEvent<HTMLTextAreaElement>,
-                                  ) =>
-                                    onChangeArgument(
-                                      x.getName(),
-                                      e.target.value,
-                                    )
-                                  }
-                                />
-                              )}
-                              {x.getType() === InputVarType.url && (
-                                <UrlTextarea
-                                  readOnly={voiceAgent.isConnected}
-                                  id={x.getName()}
-                                  defaultValue={x.getDefaultvalue()}
-                                  onChange={(
-                                    e: React.ChangeEvent<HTMLTextAreaElement>,
-                                  ) =>
-                                    onChangeArgument(
-                                      x.getName(),
-                                      e.target.value,
-                                    )
-                                  }
-                                />
-                              )}
-                            </InputVarForm>
-                          );
-                        })}
-                      </div>
+                      {variables.length > 0 ? (
+                        <div className="text-sm leading-normal">
+                          {variables.map((x, idx) => {
+                            return (
+                              <InputVarForm
+                                key={idx}
+                                var={x}
+                                className="bg-light-background"
+                              >
+                                {x.getType() === InputVarType.textInput && (
+                                  <TextTextarea
+                                    readOnly={voiceAgent.isConnected}
+                                    id={x.getName()}
+                                    defaultValue={x.getDefaultvalue()}
+                                    onChange={(
+                                      e: React.ChangeEvent<HTMLTextAreaElement>,
+                                    ) =>
+                                      onChangeArgument(
+                                        x.getName(),
+                                        e.target.value,
+                                      )
+                                    }
+                                  />
+                                )}
+                                {x.getType() === InputVarType.paragraph && (
+                                  <ParagraphTextarea
+                                    id={x.getName()}
+                                    readOnly={voiceAgent.isConnected}
+                                    defaultValue={x.getDefaultvalue()}
+                                    onChange={(
+                                      e: React.ChangeEvent<HTMLTextAreaElement>,
+                                    ) =>
+                                      onChangeArgument(
+                                        x.getName(),
+                                        e.target.value,
+                                      )
+                                    }
+                                  />
+                                )}
+                                {x.getType() === InputVarType.number && (
+                                  <NumberTextarea
+                                    readOnly={voiceAgent.isConnected}
+                                    id={x.getName()}
+                                    defaultValue={x.getDefaultvalue()}
+                                    onChange={(
+                                      e: React.ChangeEvent<HTMLTextAreaElement>,
+                                    ) =>
+                                      onChangeArgument(
+                                        x.getName(),
+                                        e.target.value,
+                                      )
+                                    }
+                                  />
+                                )}
+                                {x.getType() === InputVarType.json && (
+                                  <JsonTextarea
+                                    readOnly={voiceAgent.isConnected}
+                                    id={x.getName()}
+                                    defaultValue={x.getDefaultvalue()}
+                                    onChange={(
+                                      e: React.ChangeEvent<HTMLTextAreaElement>,
+                                    ) =>
+                                      onChangeArgument(
+                                        x.getName(),
+                                        e.target.value,
+                                      )
+                                    }
+                                  />
+                                )}
+                                {x.getType() === InputVarType.url && (
+                                  <UrlTextarea
+                                    readOnly={voiceAgent.isConnected}
+                                    id={x.getName()}
+                                    defaultValue={x.getDefaultvalue()}
+                                    onChange={(
+                                      e: React.ChangeEvent<HTMLTextAreaElement>,
+                                    ) =>
+                                      onChangeArgument(
+                                        x.getName(),
+                                        e.target.value,
+                                      )
+                                    }
+                                  />
+                                )}
+                              </InputVarForm>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <YellowNoticeBlock>
+                          Assistant do not accept any arguments.
+                        </YellowNoticeBlock>
+                      )}
                     </InputGroup>
                     <InputGroup title="Deployment">
-                      <div className="text-sm leading-normal p-4">
-                        <div className="space-y-4">
-                          <div className="flex justify-between">
-                            <div className="text-muted-foreground">
-                              Input Mode
-                            </div>
-                            <div className="font-medium">
-                              Text
-                              {assistant
-                                ?.getDebuggerdeployment()
-                                ?.getInputaudio() && ', Audio'}
-                            </div>
+                      <div className="space-y-4">
+                        <div className="flex justify-between">
+                          <div className="text-muted-foreground">
+                            Input Mode
                           </div>
-                          <div className="flex justify-between">
-                            <div className="text-muted-foreground">
-                              Output Mode
-                            </div>
-                            <div className="font-medium">
-                              Text
-                              {assistant
-                                ?.getDebuggerdeployment()
-                                ?.getOutputaudio() && ', Audio'}
-                            </div>
+                          <div className="font-medium">
+                            Text
+                            {assistant
+                              ?.getDebuggerdeployment()
+                              ?.getInputaudio() && ', Audio'}
                           </div>
-                          {/*  */}
-                          {assistant
-                            .getDebuggerdeployment()
-                            ?.getInputaudio()
-                            ?.getAudiooptionsList() &&
-                            assistant
-                              .getDebuggerdeployment()
-                              ?.getInputaudio()
-                              ?.getAudiooptionsList().length! > 0 && (
-                              <div className="space-y-4">
-                                <div className="flex justify-between">
-                                  <div className="text-muted-foreground">
-                                    Listen.Provider
-                                  </div>
-                                  <div className="font-medium mt-1 underline underline-offset-4">
-                                    {assistant
-                                      .getDebuggerdeployment()
-                                      ?.getInputaudio()
-                                      ?.getAudioprovider()}
-                                  </div>
-                                </div>
-                                {assistant
-                                  .getDebuggerdeployment()
-                                  ?.getInputaudio()
-                                  ?.getAudiooptionsList()
-                                  .filter(d => d.getValue())
-                                  .filter(d => d.getKey().startsWith('listen.'))
-                                  .map((detail, index) => (
-                                    <div
-                                      className="flex justify-between"
-                                      key={index}
-                                    >
-                                      <div className="text-muted-foreground capitalize">
-                                        {detail.getKey()}
-                                      </div>
-                                      <div className="font-medium">
-                                        {detail.getValue()}
-                                      </div>
-                                    </div>
-                                  ))}
-                              </div>
-                            )}
-                          {assistant
-                            .getDebuggerdeployment()
-                            ?.getInputaudio()
-                            ?.getAudiooptionsList() &&
-                            assistant
-                              .getDebuggerdeployment()
-                              ?.getOutputaudio()
-                              ?.getAudiooptionsList().length! > 0 && (
-                              <div className="space-y-4">
-                                <div className="flex justify-between">
-                                  <div className="text-muted-foreground">
-                                    Listen.Provider
-                                  </div>
-                                  <div className="font-medium mt-1 underline underline-offset-4">
-                                    {assistant
-                                      .getDebuggerdeployment()
-                                      ?.getOutputaudio()
-                                      ?.getAudioprovider()}
-                                  </div>
-                                </div>
-                                {assistant
-                                  .getDebuggerdeployment()
-                                  ?.getOutputaudio()
-                                  ?.getAudiooptionsList()
-                                  .filter(d => d.getValue())
-                                  .filter(d => d.getKey().startsWith('speak.'))
-                                  .map((detail, index) => (
-                                    <div
-                                      key={index}
-                                      className="flex justify-between"
-                                    >
-                                      <div className="text-muted-foreground capitalize">
-                                        {detail.getKey()}
-                                      </div>
-                                      <div className="font-medium">
-                                        {detail.getValue()}
-                                      </div>
-                                    </div>
-                                  ))}
-                              </div>
-                            )}
                         </div>
+                        <div className="flex justify-between">
+                          <div className="text-muted-foreground">
+                            Output Mode
+                          </div>
+                          <div className="font-medium">
+                            Text
+                            {assistant
+                              ?.getDebuggerdeployment()
+                              ?.getOutputaudio() && ', Audio'}
+                          </div>
+                        </div>
+                        {/*  */}
+                        {assistant
+                          .getDebuggerdeployment()
+                          ?.getInputaudio()
+                          ?.getAudiooptionsList() &&
+                          assistant
+                            .getDebuggerdeployment()
+                            ?.getInputaudio()
+                            ?.getAudiooptionsList().length! > 0 && (
+                            <div className="space-y-4">
+                              <div className="flex justify-between">
+                                <div className="text-muted-foreground">
+                                  Listen.Provider
+                                </div>
+                                <div className="font-medium mt-1 underline underline-offset-4">
+                                  {assistant
+                                    .getDebuggerdeployment()
+                                    ?.getInputaudio()
+                                    ?.getAudioprovider()}
+                                </div>
+                              </div>
+                              {assistant
+                                .getDebuggerdeployment()
+                                ?.getInputaudio()
+                                ?.getAudiooptionsList()
+                                .filter(d => d.getValue())
+                                .filter(d => d.getKey().startsWith('listen.'))
+                                .map((detail, index) => (
+                                  <div
+                                    className="flex justify-between"
+                                    key={index}
+                                  >
+                                    <div className="text-muted-foreground capitalize">
+                                      {detail.getKey()}
+                                    </div>
+                                    <div className="font-medium">
+                                      {detail.getValue()}
+                                    </div>
+                                  </div>
+                                ))}
+                            </div>
+                          )}
+                        {assistant
+                          .getDebuggerdeployment()
+                          ?.getInputaudio()
+                          ?.getAudiooptionsList() &&
+                          assistant
+                            .getDebuggerdeployment()
+                            ?.getOutputaudio()
+                            ?.getAudiooptionsList().length! > 0 && (
+                            <div className="space-y-4">
+                              <div className="flex justify-between">
+                                <div className="text-muted-foreground">
+                                  Listen.Provider
+                                </div>
+                                <div className="font-medium mt-1 underline underline-offset-4">
+                                  {assistant
+                                    .getDebuggerdeployment()
+                                    ?.getOutputaudio()
+                                    ?.getAudioprovider()}
+                                </div>
+                              </div>
+                              {assistant
+                                .getDebuggerdeployment()
+                                ?.getOutputaudio()
+                                ?.getAudiooptionsList()
+                                .filter(d => d.getValue())
+                                .filter(d => d.getKey().startsWith('speak.'))
+                                .map((detail, index) => (
+                                  <div
+                                    key={index}
+                                    className="flex justify-between"
+                                  >
+                                    <div className="text-muted-foreground capitalize">
+                                      {detail.getKey()}
+                                    </div>
+                                    <div className="font-medium">
+                                      {detail.getValue()}
+                                    </div>
+                                  </div>
+                                ))}
+                            </div>
+                          )}
                       </div>
                     </InputGroup>
                   </div>

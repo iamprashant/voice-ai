@@ -56,7 +56,7 @@ function BreadcrumbElement(props: { label: { href: string; label: string } }) {
     <>
       <li>
         <CustomLink
-          className="capitalize hover:text-blue-600 font-medium text-sm/6"
+          className="capitalize hover:text-blue-600 font-medium"
           to={props.label.href}
         >
           {props.label.label}

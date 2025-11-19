@@ -157,7 +157,7 @@ func (client *integrationServiceClient) StreamChat(c context.Context, auth types
 		return client.openAiClient.StreamChat(client.WithAuth(c, auth), request)
 	case "anthropic":
 		return client.anthropicClient.StreamChat(client.WithAuth(c, auth), request)
-	case "google":
+	case "google", "gemini":
 		return client.googleClient.StreamChat(client.WithAuth(c, auth), request)
 	case "cohere":
 		return client.cohereClient.StreamChat(client.WithAuth(c, auth), request)
@@ -183,7 +183,7 @@ func (client *integrationServiceClient) VerifyCredential(c context.Context,
 		return client.anthropicClient.VerifyCredential(client.WithAuth(c, auth), request)
 	case "replicate":
 		return client.replicateClient.VerifyCredential(client.WithAuth(c, auth), request)
-	case "google":
+	case "google", "gemini":
 		return client.googleClient.VerifyCredential(client.WithAuth(c, auth), request)
 	case "mistral":
 		return client.mistralClient.VerifyCredential(client.WithAuth(c, auth), request)

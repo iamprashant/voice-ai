@@ -1,8 +1,4 @@
-import {
-  ELEVENLABS_LANGUAGE,
-  ELEVENLABS_MODEL,
-  ELEVENLABS_VOICE,
-} from '@/providers';
+import { ELEVENLABS_LANGUAGE, ELEVENLABS_MODEL } from '@/providers';
 import { SetMetadata } from '@/utils/metadata';
 import { Metadata } from '@rapidaai/react';
 
@@ -31,19 +27,13 @@ export const GetElevanLabDefaultOptions = (current: Metadata[]): Metadata[] => {
   addMetadata('rapida.credential_id');
 
   // Set language
-  addMetadata('speak.language', 'en', value =>
-    ELEVENLABS_LANGUAGE().some(l => l.language_id === value),
-  );
+  addMetadata('speak.language');
 
   // Set voice
-  addMetadata('speak.voice.id', '3jR9BuQAOPMWUjWpi0ll', value =>
-    ELEVENLABS_VOICE().some(v => v.voice_id === value),
-  );
+  addMetadata('speak.voice.id');
 
   // Set model
-  addMetadata('speak.model', 'eleven_multilingual_v2', value =>
-    ELEVENLABS_MODEL().some(m => m.model_id === value),
-  );
+  addMetadata('speak.model');
 
   // Only return metadata for the keys we want to keep and non-speak metadata
   return [
@@ -63,13 +53,18 @@ export const ValidateElevanLabOptions = (options: Metadata[]): boolean => {
   ) {
     return false;
   }
+
+  const voiceID = options.find(opt => opt.getKey() === 'speak.voice.id');
+  if (!voiceID || !voiceID.getValue() || voiceID.getValue().length === 0) {
+    return false;
+  }
+
   const validations = [
     {
       key: 'speak.language',
       validator: ELEVENLABS_LANGUAGE(),
       field: 'language_id',
     },
-    { key: 'speak.voice.id', validator: ELEVENLABS_VOICE(), field: 'voice_id' },
     { key: 'speak.model', validator: ELEVENLABS_MODEL(), field: 'model_id' },
   ];
 

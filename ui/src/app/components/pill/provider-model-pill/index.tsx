@@ -23,7 +23,7 @@ export const ProviderPill: FC<ProviderPillProps> = props => {
   useEffect(() => {
     if (props.provider) {
       let cModel = allProvider().find(
-        x => x.name.toLowerCase() === props.provider?.toLowerCase(),
+        x => x.code.toLowerCase() === props.provider?.toLowerCase(),
       );
       if (cModel) setcurrentProvider(cModel);
     }
