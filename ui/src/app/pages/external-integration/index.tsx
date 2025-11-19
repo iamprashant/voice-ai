@@ -9,6 +9,14 @@ export const IntegrationModelPage = lazyLoad(
   },
 );
 
+export const IntegrationModelInformationPage = lazyLoad(
+  () => import('./provider-models/information'),
+  module => module.ProviderModelInformationPage,
+  {
+    fallback: <PageLoader />,
+  },
+);
+
 export const IntegrationProjectCredentialPage = lazyLoad(
   () => import('./rapida-credentials'),
   module => module.ProjectCredentialPage,

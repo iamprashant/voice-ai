@@ -16,9 +16,13 @@ import {
   CreateAssistantDeploymentRequest,
   DeploymentAudioProvider,
   GetAssistantDeploymentRequest,
+  Metadata,
 } from '@rapidaai/react';
 import { GetAssistantDebuggerDeployment } from '@rapidaai/react';
-import { IBlueBGButton, ICancelButton } from '@/app/components/form/button';
+import {
+  IBlueBGArrowButton,
+  ICancelButton,
+} from '@/app/components/form/button';
 import toast from 'react-hot-toast/headless';
 import { Helmet } from '@/app/components/helmet';
 import {
@@ -31,10 +35,13 @@ import {
   GetDefaultTextToSpeechIfInvalid,
 } from '@/app/components/providers/text-to-speech/provider';
 import { PageActionButtonBlock } from '@/app/components/blocks/page-action-button-block';
-import { ProviderConfig } from '@/app/components/providers';
 import { connectionConfig } from '@/configs';
 import { ValidateTextToSpeechIfInvalid } from '@/app/components/providers/text-to-speech/provider';
 
+/**
+ *
+ * @returns
+ */
 export function ConfigureAssistantDebuggerDeploymentPage() {
   const { assistantId } = useParams();
   return (
@@ -46,6 +53,7 @@ export function ConfigureAssistantDebuggerDeploymentPage() {
     </>
   );
 }
+
 /**
  * Configure assistant web deployment
  * this provide a list of web deployment configuration
@@ -55,62 +63,64 @@ export function ConfigureAssistantDebuggerDeploymentPage() {
 const ConfigureAssistantDebuggerDeployment: FC<{ assistantId: string }> = ({
   assistantId,
 }) => {
+  /**
+   * global naviagtion
+   */
   const { goToDeploymentAssistant } = useGlobalNavigation();
+
+  /**
+   * global loading
+   */
   const { loading, showLoader, hideLoader } = useRapidaStore();
+
+  /**
+   * cradentials
+   */
   const { authId, projectId, token } = useCurrentCredential();
+
+  /**
+   * error messages
+   */
   const [errorMessage, setErrorMessage] = useState('');
+
+  /**
+   * voice enabled
+   */
   const [voiceInputEnable, setVoiceInputEnable] = useState(false);
+
+  /**
+   * voice output enabled
+   */
   const [voiceOutputEnable, setVoiceOutputEnable] = useState(false);
 
-  //   const [personaConfig, setPersonaConfig] = useState<PersonaConfig>({});
+  /**
+   * experience for voice
+   */
   const [experienceConfig, setExperienceConfig] = useState<ExperienceConfig>({
-    greeting: '',
-    messageOnError: '',
+    greeting: undefined,
+    messageOnError: undefined,
+    idealTimeout: '5000',
+    idealMessage: 'Are you there?',
+    maxCallDuration: '10000',
   });
 
   /**
-   * audio input
+   * input audio config
    */
-  const [audioInputConfig, setAudioInputConfig] =
-    useState<ProviderConfig | null>(null);
-
-  const onChangeAudioInputProvider = (
-    providerId: string,
-    providerName: string,
-  ) => {
-    setAudioInputConfig({
-      providerId: providerId,
-      provider: providerName,
-      parameters: GetDefaultSpeechToTextIfInvalid(
-        providerName,
-        GetDefaultMicrophoneConfig(
-          audioInputConfig?.parameters ? audioInputConfig.parameters : [],
-        ),
-      ),
-    });
-  };
-
-  /**
-   * audio output
-   */
-  const [audioOutputConfig, setAudioOutputConfig] =
-    useState<ProviderConfig | null>(null);
-
-  const onChangeAudioOuputProvider = (
-    providerId: string,
-    providerName: string,
-  ) => {
-    setAudioOutputConfig({
-      providerId: providerId,
-      provider: providerName,
-      parameters: GetDefaultTextToSpeechIfInvalid(
-        providerName,
-        GetDefaultSpeakerConfig(
-          audioOutputConfig ? audioOutputConfig.parameters : [],
-        ),
-      ),
-    });
-  };
+  const [audioInputConfig, setAudioInputConfig] = useState<{
+    provider: string;
+    parameters: Metadata[];
+  }>({
+    provider: 'deepgram',
+    parameters: GetDefaultSpeechToTextIfInvalid('deepgram', []),
+  });
+  const [audioOutputConfig, setAudioOutputConfig] = useState<{
+    provider: string;
+    parameters: Metadata[];
+  }>({
+    provider: 'cartesia',
+    parameters: GetDefaultSpeechToTextIfInvalid('cartesia', []),
+  });
 
   // Fetch existing deployment on component mount
   useEffect(() => {
@@ -131,8 +141,11 @@ const ConfigureAssistantDebuggerDeployment: FC<{ assistantId: string }> = ({
         if (response && response.getData()) {
           const deployment = response.getData();
           setExperienceConfig({
-            greeting: deployment?.getGreeting() || '',
-            messageOnError: deployment?.getMistake() || '',
+            greeting: deployment?.getGreeting(),
+            messageOnError: deployment?.getMistake(),
+            idealTimeout: deployment?.getIdealtimeout(),
+            idealMessage: deployment?.getIdealtimeoutmessage(),
+            maxCallDuration: deployment?.getMaxsessionduration(),
           });
 
           // Audio providers configuration
@@ -140,8 +153,6 @@ const ConfigureAssistantDebuggerDeployment: FC<{ assistantId: string }> = ({
             const provider = deployment.getInputaudio();
             setVoiceInputEnable(true);
             setAudioInputConfig({
-              providerId:
-                provider?.getAudioproviderid() || '2123891723608588082',
               provider: provider?.getAudioprovider() || 'deepgram',
               parameters: GetDefaultSpeechToTextIfInvalid(
                 provider?.getAudioprovider() || 'deepgram',
@@ -157,8 +168,6 @@ const ConfigureAssistantDebuggerDeployment: FC<{ assistantId: string }> = ({
             const provider = deployment?.getOutputaudio();
             setVoiceOutputEnable(true);
             setAudioOutputConfig({
-              providerId:
-                provider?.getAudioproviderid() || '2123891723608588082',
               provider: provider?.getAudioprovider() || 'cartesia',
               parameters: GetDefaultTextToSpeechIfInvalid(
                 provider?.getAudioprovider() || 'cartesia',
@@ -183,7 +192,7 @@ const ConfigureAssistantDebuggerDeployment: FC<{ assistantId: string }> = ({
     showLoader('block');
     setErrorMessage('');
     if (audioInputConfig != null) {
-      if (!audioInputConfig.provider || !audioInputConfig.providerId) {
+      if (!audioInputConfig.provider) {
         hideLoader();
         setErrorMessage(
           'Please provide a provider for interpreting input audio of user.',
@@ -204,7 +213,7 @@ const ConfigureAssistantDebuggerDeployment: FC<{ assistantId: string }> = ({
     }
 
     if (audioOutputConfig != null) {
-      if (!audioOutputConfig.provider || !audioOutputConfig.providerId) {
+      if (!audioOutputConfig.provider) {
         hideLoader();
         setErrorMessage(
           'Please provide a provider for interpreting output audio of user.',
@@ -233,31 +242,37 @@ const ConfigureAssistantDebuggerDeployment: FC<{ assistantId: string }> = ({
       deployment.setGreeting(experienceConfig.greeting);
     if (experienceConfig?.messageOnError)
       deployment.setMistake(experienceConfig?.messageOnError);
+    if (experienceConfig?.idealTimeout)
+      deployment.setIdealtimeout(experienceConfig?.idealTimeout);
+    if (experienceConfig?.idealMessage)
+      deployment.setIdealtimeoutmessage(experienceConfig?.idealMessage);
+    if (experienceConfig?.maxCallDuration)
+      deployment.setMaxsessionduration(experienceConfig?.maxCallDuration);
 
     if (audioInputConfig) {
       const inputAudioProvider = new DeploymentAudioProvider();
-      inputAudioProvider.setId(audioInputConfig.providerId);
       inputAudioProvider.setAudioprovider(audioInputConfig.provider);
       inputAudioProvider.setAudiooptionsList(audioInputConfig.parameters);
-      inputAudioProvider.setAudioproviderid(audioInputConfig.providerId);
       deployment.setInputaudio(inputAudioProvider);
     }
 
     if (audioOutputConfig) {
       const outputAudioProvider = new DeploymentAudioProvider();
-      outputAudioProvider.setId(audioOutputConfig.providerId);
       outputAudioProvider.setAudioprovider(audioOutputConfig.provider);
       outputAudioProvider.setAudiooptionsList(audioOutputConfig.parameters);
-      outputAudioProvider.setAudioproviderid(audioOutputConfig.providerId);
       deployment.setOutputaudio(outputAudioProvider);
     }
 
     req.setDebugger(deployment);
-    CreateAssistantDebuggerDeployment(connectionConfig, req, {
-      authorization: token,
-      'x-auth-id': authId,
-      'x-project-id': projectId,
-    })
+    CreateAssistantDebuggerDeployment(
+      connectionConfig,
+      req,
+      ConnectionConfig.WithDebugger({
+        authorization: token,
+        userId: authId,
+        projectId: projectId,
+      }),
+    )
       .then(response => {
         hideLoader();
         if (response?.getData() && response.getSuccess()) {
@@ -286,27 +301,25 @@ const ConfigureAssistantDebuggerDeployment: FC<{ assistantId: string }> = ({
     <form
       onSubmit={handleDeployDebugger}
       method="POST"
-      className="relative flex flex-col flex-1"
+      className="relative flex flex-col flex-1 mx-auto"
     >
-      <div className="bg-white dark:bg-gray-900 overflow-auto flex flex-col flex-1 pb-20">
+      <div className="overflow-auto flex flex-col flex-1 pb-20">
         <ConfigureExperience
           experienceConfig={experienceConfig}
           setExperienceConfig={setExperienceConfig}
         />
 
         <ConfigureAudioInputProvider
-          onChangeProvider={onChangeAudioInputProvider}
-          onChangeConfig={setAudioInputConfig}
-          config={audioInputConfig}
           voiceInputEnable={voiceInputEnable}
           onChangeVoiceInputEnable={setVoiceInputEnable}
+          audioInputConfig={audioInputConfig}
+          setAudioInputConfig={setAudioInputConfig}
         />
         <ConfigureAudioOutputProvider
-          onChangeProvider={onChangeAudioOuputProvider}
-          onChangeConfig={setAudioOutputConfig}
-          config={audioOutputConfig}
           voiceOutputEnable={voiceOutputEnable}
           onChangeVoiceOutputEnable={setVoiceOutputEnable}
+          audioOutputConfig={audioOutputConfig}
+          setAudioOutputConfig={setAudioOutputConfig}
         />
       </div>
 
@@ -319,13 +332,13 @@ const ConfigureAssistantDebuggerDeployment: FC<{ assistantId: string }> = ({
         >
           Cancel
         </ICancelButton>
-        <IBlueBGButton
+        <IBlueBGArrowButton
           type="submit"
           className="px-4 rounded-[2px]"
           isLoading={loading}
         >
           Deploy Debugger
-        </IBlueBGButton>
+        </IBlueBGArrowButton>
       </PageActionButtonBlock>
     </form>
   );

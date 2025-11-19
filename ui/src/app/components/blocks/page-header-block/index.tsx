@@ -5,7 +5,7 @@ export const PageHeaderBlock: FC<HTMLAttributes<HTMLDivElement>> = props => {
   return (
     <div
       className={cn(
-        'flex justify-between pl-4 bg-white dark:bg-gray-900 items-center min-h-10',
+        'flex justify-between pl-4 bg-white dark:bg-gray-900 items-center min-h-10 shrink-0',
         props.className,
       )}
     >

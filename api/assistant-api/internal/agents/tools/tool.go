@@ -4,7 +4,7 @@ import (
 	"context"
 
 	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters/requests"
-	internal_assistant_gorm "github.com/rapidaai/api/assistant-api/internal/gorm/assistants"
+	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
@@ -35,7 +35,7 @@ type ToolCaller interface {
 
 type toolCaller struct {
 	logger      commons.Logger
-	toolOptions *internal_assistant_gorm.AssistantTool
+	toolOptions *internal_assistant_entity.AssistantTool
 }
 
 func (executor *toolCaller) Name() string {

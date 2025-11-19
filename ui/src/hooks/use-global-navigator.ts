@@ -4,6 +4,7 @@ export const useGlobalNavigation = () => {
   const navigate = useNavigate();
 
   const goBack = () => navigate(-1);
+  const goTo = (url: string) => navigate(url);
 
   const goToDashboard = () => {
     navigate(`/dashboard`);
@@ -142,8 +143,14 @@ export const useGlobalNavigation = () => {
       `/deployment/assistant/${assistantId}/manage/configure-tool/create`,
     );
 
+  const goToModelInformation = (provider: string) => {
+    navigate(`/integration/models/${provider}`);
+  };
+
   return {
     goBack,
+    goTo,
+
     goToAssistant,
     goToDashboard,
     goToCreateAssistant,
@@ -195,5 +202,8 @@ export const useGlobalNavigation = () => {
     goToCreateAssistantKnowledge,
     goToEditAssistantKnowledge,
     goToConfigureAssistantKnowledge,
+
+    //
+    goToModelInformation,
   };
 };

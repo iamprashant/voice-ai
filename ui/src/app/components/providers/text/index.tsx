@@ -1,6 +1,6 @@
 import { Metadata, VaultCredential } from '@rapidaai/react';
 import { Dropdown } from '@/app/components/dropdown';
-import { ProviderConfig, TEXT_PROVIDERS } from '@/app/components/providers';
+import { ProviderComponentProps } from '@/app/components/providers';
 import { ConfigureAnthropicTextProviderModel } from '@/app/components/providers/text/anthropic';
 import {
   GetAnthropicTextProviderDefaultOptions,
@@ -31,7 +31,14 @@ import { FC, useCallback } from 'react';
 import { FieldSet } from '@/app/components/form/fieldset';
 import { FormLabel } from '@/app/components/form-label';
 import { CredentialDropdown } from '@/app/components/dropdown/credential-dropdown';
+import { TEXT_PROVIDERS } from '@/providers';
 
+/**
+ *
+ * @param provider
+ * @param parameters
+ * @returns
+ */
 export const GetDefaultTextProviderConfigIfInvalid = (
   provider: string,
   parameters: Metadata[],
@@ -42,7 +49,7 @@ export const GetDefaultTextProviderConfigIfInvalid = (
     case 'azure-openai':
     case 'azure':
       return GetAzureTextProviderDefaultOptions(parameters);
-    case 'google':
+    case 'gemini':
       return GetGoogleTextProviderDefaultOptions(parameters);
     case 'anthropic':
       return GetAnthropicTextProviderDefaultOptions(parameters);
@@ -53,6 +60,12 @@ export const GetDefaultTextProviderConfigIfInvalid = (
   }
 };
 
+/**
+ *
+ * @param provider
+ * @param parameters
+ * @returns
+ */
 export const ValidateTextProviderDefaultOptions = (
   provider: string,
   parameters: Metadata[],
@@ -63,7 +76,7 @@ export const ValidateTextProviderDefaultOptions = (
     case 'azure-openai':
     case 'azure':
       return ValidateAzureTextProviderDefaultOptions(parameters);
-    case 'google':
+    case 'gemini':
       return ValidateGoogleTextProviderDefaultOptions(parameters);
     case 'anthropic':
       return ValidateAnthropicTextProviderDefaultOptions(parameters);
@@ -74,55 +87,51 @@ export const ValidateTextProviderDefaultOptions = (
   }
 };
 
-const TextProviderConfigComponent: FC<{
-  config: ProviderConfig;
-  updateConfig: (config: Partial<ProviderConfig>) => void;
-}> = ({ config, updateConfig }) => {
-  switch (config.provider) {
+/**
+ *
+ * @param param0
+ * @returns
+ */
+const TextProviderConfigComponent: FC<ProviderComponentProps> = ({
+  provider,
+  parameters,
+  onChangeParameter,
+}) => {
+  switch (provider) {
     case 'openai':
       return (
         <ConfigureOpenaiTextProviderModel
-          parameters={config.parameters}
-          onParameterChange={(params: Metadata[]) =>
-            updateConfig({ parameters: params })
-          }
+          parameters={parameters}
+          onParameterChange={onChangeParameter}
         />
       );
     case 'azure':
     case 'azure-openai':
       return (
         <ConfigureAzureTextProviderModel
-          parameters={config.parameters}
-          onParameterChange={(params: Metadata[]) =>
-            updateConfig({ parameters: params })
-          }
+          parameters={parameters}
+          onParameterChange={onChangeParameter}
         />
       );
-    case 'google':
+    case 'gemini':
       return (
         <ConfigureGoogleTextProviderModel
-          parameters={config.parameters}
-          onParameterChange={(params: Metadata[]) =>
-            updateConfig({ parameters: params })
-          }
+          parameters={parameters}
+          onParameterChange={onChangeParameter}
         />
       );
     case 'anthropic':
       return (
         <ConfigureAnthropicTextProviderModel
-          parameters={config.parameters}
-          onParameterChange={(params: Metadata[]) =>
-            updateConfig({ parameters: params })
-          }
+          parameters={parameters}
+          onParameterChange={onChangeParameter}
         />
       );
     case 'cohere':
       return (
         <ConfigureCohereTextProviderModel
-          parameters={config.parameters}
-          onParameterChange={(params: Metadata[]) =>
-            updateConfig({ parameters: params })
-          }
+          parameters={parameters}
+          onParameterChange={onChangeParameter}
         />
       );
     default:
@@ -130,24 +139,22 @@ const TextProviderConfigComponent: FC<{
   }
 };
 
-export const TextProvider: React.FC<{
-  onChangeProvider: (i: string, v: string) => void;
-  onChangeConfig: (config: ProviderConfig) => void;
-  config: ProviderConfig;
-}> = ({ onChangeProvider, onChangeConfig, config }) => {
-  const updateConfig = (newConfig: Partial<ProviderConfig>) => {
-    onChangeConfig({ ...config, ...newConfig } as ProviderConfig);
-  };
-
+/**
+ *
+ * @param param0
+ * @returns
+ */
+export const TextProvider: React.FC<ProviderComponentProps> = props => {
+  const { provider, parameters, onChangeProvider, onChangeParameter } = props;
   const getParamValue = useCallback(
     (key: string) => {
-      return config.parameters?.find(p => p.getKey() === key)?.getValue() ?? '';
+      return parameters?.find(p => p.getKey() === key)?.getValue() ?? '';
     },
-    [config.parameters],
+    [JSON.stringify(parameters)],
   );
 
   const updateParameter = (key: string, value: string) => {
-    const updatedParams = [...(config.parameters || [])];
+    const updatedParams = [...(parameters || [])];
     const existingIndex = updatedParams.findIndex(p => p.getKey() === key);
     const newParam = new Metadata();
     newParam.setKey(key);
@@ -157,7 +164,7 @@ export const TextProvider: React.FC<{
     } else {
       updatedParams.push(newParam);
     }
-    updateConfig({ parameters: updatedParams });
+    onChangeParameter(updatedParams);
   };
 
   return (
@@ -178,11 +185,9 @@ export const TextProvider: React.FC<{
           <div className="w-44 relative">
             <Dropdown
               className="bg-white max-w-full dark:bg-gray-950 focus-within:border-none! outline-none! border-none! outline-hidden"
-              currentValue={TEXT_PROVIDERS.find(
-                x => x.id === config.providerId,
-              )}
+              currentValue={TEXT_PROVIDERS.find(x => x.code === provider)}
               setValue={v => {
-                onChangeProvider(v.id, v.code);
+                onChangeProvider(v.code);
               }}
               allValue={TEXT_PROVIDERS}
               placeholder="Select provider"
@@ -219,20 +224,17 @@ export const TextProvider: React.FC<{
             />
           </div>
           {/*  */}
-          <TextProviderConfigComponent
-            config={config}
-            updateConfig={updateConfig}
-          />
+          <TextProviderConfigComponent {...props} />
         </div>
       </FieldSet>
-      {config.providerId && (
+      {provider && (
         <CredentialDropdown
           className="bg-white"
           onChangeCredential={(c: VaultCredential) => {
             updateParameter('rapida.credential_id', c.getId());
           }}
+          provider={provider}
           currentCredential={getParamValue('rapida.credential_id')}
-          providerId={config.providerId}
         />
       )}
     </>

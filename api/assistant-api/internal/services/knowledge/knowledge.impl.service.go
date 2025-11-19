@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/rapidaai/api/assistant-api/config"
-	internal_knowledge_gorm "github.com/rapidaai/api/assistant-api/internal/gorm/knowledges"
+	internal_knowledge_gorm "github.com/rapidaai/api/assistant-api/internal/entity/knowledges"
 	internal_services "github.com/rapidaai/api/assistant-api/internal/services"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
@@ -123,7 +123,6 @@ func (knowledge *knowledgeService) CreateOrUpdateKnowledgeTag(ctx context.Contex
 
 func (knowledge *knowledgeService) CreateKnowledge(ctx context.Context, auth types.SimplePrinciple,
 	name string, description, visibility *string,
-	embeddingModelProviderId uint64,
 	embeddingModelProviderName string,
 	embeddingModelOptions []*protos.Metadata,
 ) (*internal_knowledge_gorm.Knowledge, error) {
@@ -140,7 +139,6 @@ func (knowledge *knowledgeService) CreateKnowledge(ctx context.Context, auth typ
 			CreatedBy: *auth.GetUserId(),
 		},
 		EmbeddingModelProviderName: embeddingModelProviderName,
-		EmbeddingModelProviderId:   embeddingModelProviderId,
 		StorageNamespace:           commons.KnowledgeIndex(knowledge.config.IsDevelopment(), *auth.GetCurrentOrganizationId(), *auth.GetCurrentProjectId(), knowledgeId),
 	}
 

@@ -1,4 +1,7 @@
-import { IBlueBGButton, ICancelButton } from '@/app/components/form/button';
+import {
+  IBlueBGArrowButton,
+  ICancelButton,
+} from '@/app/components/form/button';
 import { useRapidaStore } from '@/hooks';
 import { FC, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -10,6 +13,7 @@ import {
   CreateAssistantPhoneDeployment,
   DeploymentAudioProvider,
   GetAssistantDeploymentRequest,
+  Metadata,
 } from '@rapidaai/react';
 import { GetAssistantPhoneDeployment } from '@rapidaai/react';
 import { useCurrentCredential } from '@/hooks/use-credential';
@@ -29,11 +33,9 @@ import {
 } from '@/app/components/providers/speech-to-text/provider';
 import {
   GetDefaultSpeakerConfig,
-  GetDefaultTextToSpeechIfInvalid,
   ValidateTextToSpeechIfInvalid,
 } from '@/app/components/providers/text-to-speech/provider';
 import { PageActionButtonBlock } from '@/app/components/blocks/page-action-button-block';
-import { ProviderConfig } from '@/app/components/providers';
 import { connectionConfig } from '@/configs';
 import {
   TelephonyProvider,
@@ -63,32 +65,35 @@ const ConfigureAssistantCallDeployment: FC<{ assistantId: string }> = ({
   const { loading, showLoader, hideLoader } = useRapidaStore();
   const { authId, projectId, token } = useCurrentCredential();
   const [errorMessage, setErrorMessage] = useState('');
-  const [voiceInputEnable, setVoiceInputEnable] = useState(false);
-  const [voiceOutputEnable, setVoiceOutputEnable] = useState(false);
+
+  /**
+   * enable for voice
+   */
+  const [voiceInputEnable, setVoiceInputEnable] = useState(true);
+  const [voiceOutputEnable, setVoiceOutputEnable] = useState(true);
   const [experienceConfig, setExperienceConfig] = useState<ExperienceConfig>({
-    greeting: '',
-    messageOnError: '',
+    greeting: undefined,
+    messageOnError: undefined,
+    idealTimeout: '5000',
+    idealMessage: 'Are you there?',
+    maxCallDuration: '10000',
   });
 
-  const [telephonyConfig, setTelephonyConfig] = useState<ProviderConfig | null>(
-    null,
-  );
-  const onChangTelephonyProvider = (
-    providerId: string,
-    providerName: string,
-  ) => {
-    setTelephonyConfig({
-      providerId: providerId,
-      provider: providerName,
-      parameters: [],
-    });
-  };
+  const [telephonyConfig, setTelephonyConfig] = useState<{
+    provider: string;
+    parameters: Metadata[];
+  }>({
+    provider: 'twilio',
+    parameters: [],
+  });
 
   /**
    * audio input
    */
-  const [audioInputConfig, setAudioInputConfig] = useState<ProviderConfig>({
-    providerId: '2123891723608588082',
+  const [audioInputConfig, setAudioInputConfig] = useState<{
+    provider: string;
+    parameters: Metadata[];
+  }>({
     provider: 'deepgram',
     parameters: GetDefaultSpeechToTextIfInvalid(
       'deepgram',
@@ -96,41 +101,26 @@ const ConfigureAssistantCallDeployment: FC<{ assistantId: string }> = ({
     ),
   });
 
-  const onChangeAudioInputProvider = (
-    providerId: string,
-    providerName: string,
-  ) => {
-    setAudioInputConfig({
-      providerId: providerId,
-      provider: providerName,
-      parameters: GetDefaultSpeechToTextIfInvalid(
-        providerName,
-        GetDefaultMicrophoneConfig(audioInputConfig.parameters),
-      ),
-    });
-  };
-
   /**
    * audio output
    */
-  const [audioOutputConfig, setAudioOutputConfig] = useState<ProviderConfig>({
-    providerId: '2123891723608588082',
+  const [audioOutputConfig, setAudioOutputConfig] = useState<{
+    provider: string;
+    parameters: Metadata[];
+  }>({
     provider: 'cartesia',
     parameters: GetCartesiaDefaultOptions(GetDefaultSpeakerConfig()),
   });
 
-  const onChangeAudioOuputProvider = (
-    providerId: string,
-    providerName: string,
-  ) => {
-    setAudioOutputConfig({
-      providerId: providerId,
+  const onChangTelephonyProvider = (providerName: string) => {
+    setTelephonyConfig({
       provider: providerName,
-      parameters: GetDefaultTextToSpeechIfInvalid(
-        providerName,
-        GetDefaultSpeakerConfig(audioOutputConfig.parameters),
-      ),
+      parameters: [],
     });
+  };
+
+  const onChangeTelephonyParameter = (parameters: Metadata[]) => {
+    if (telephonyConfig) setTelephonyConfig({ ...telephonyConfig, parameters });
   };
 
   // Fetch existing deployment on component mount
@@ -152,15 +142,17 @@ const ConfigureAssistantCallDeployment: FC<{ assistantId: string }> = ({
         if (response && response.getData()) {
           const deployment = response.getData();
           setExperienceConfig({
-            greeting: deployment?.getGreeting() || '',
-            messageOnError: deployment?.getMistake() || '',
+            greeting: deployment?.getGreeting(),
+            messageOnError: deployment?.getMistake(),
+            idealTimeout: deployment?.getIdealtimeout(),
+            idealMessage: deployment?.getIdealtimeoutmessage(),
+            maxCallDuration: deployment?.getMaxsessionduration(),
           });
 
           // Audio providers configuration
 
           if (deployment && deployment.getPhoneprovidername()) {
             setTelephonyConfig({
-              providerId: deployment.getPhoneproviderid() || '',
               provider: deployment?.getPhoneprovidername() || '',
               parameters: deployment?.getPhoneoptionsList() || [],
             });
@@ -170,7 +162,6 @@ const ConfigureAssistantCallDeployment: FC<{ assistantId: string }> = ({
             const provider = deployment.getInputaudio();
             setVoiceInputEnable(true);
             setAudioInputConfig({
-              providerId: provider?.getAudioproviderid() || '',
               provider: provider?.getAudioprovider() || '',
               parameters: provider?.getAudiooptionsList() || [],
             });
@@ -180,7 +171,6 @@ const ConfigureAssistantCallDeployment: FC<{ assistantId: string }> = ({
             const provider = deployment?.getOutputaudio();
             setVoiceOutputEnable(true);
             setAudioOutputConfig({
-              providerId: provider?.getAudioproviderid() || '',
               provider: provider?.getAudioprovider() || '',
               parameters: provider?.getAudiooptionsList() || [],
             });
@@ -239,7 +229,7 @@ const ConfigureAssistantCallDeployment: FC<{ assistantId: string }> = ({
       return;
     }
 
-    if (!audioInputConfig.provider || !audioInputConfig.providerId) {
+    if (!audioInputConfig.provider) {
       hideLoader();
       setErrorMessage(
         'Please provide a provider for interpreting input audio of user.',
@@ -267,7 +257,7 @@ const ConfigureAssistantCallDeployment: FC<{ assistantId: string }> = ({
     }
 
     // audio input is set and working
-    if (!audioOutputConfig.provider || !audioOutputConfig.providerId) {
+    if (!audioOutputConfig.provider) {
       hideLoader();
       setErrorMessage(
         'Please provide a provider for interpreting output audio of user.',
@@ -289,30 +279,33 @@ const ConfigureAssistantCallDeployment: FC<{ assistantId: string }> = ({
     const req = new CreateAssistantDeploymentRequest();
     const deployment = new AssistantPhoneDeployment();
     deployment.setAssistantid(assistantId);
-    deployment.setGreeting(experienceConfig.greeting);
-    deployment.setMistake(experienceConfig.messageOnError);
+    if (experienceConfig.greeting)
+      deployment.setGreeting(experienceConfig.greeting);
+    if (experienceConfig?.messageOnError)
+      deployment.setMistake(experienceConfig?.messageOnError);
+    if (experienceConfig?.idealTimeout)
+      deployment.setIdealtimeout(experienceConfig?.idealTimeout);
+    if (experienceConfig?.idealMessage)
+      deployment.setIdealtimeoutmessage(experienceConfig?.idealMessage);
+    if (experienceConfig?.maxCallDuration)
+      deployment.setMaxsessionduration(experienceConfig?.maxCallDuration);
 
     if (telephonyConfig) {
       deployment.setPhoneoptionsList(telephonyConfig.parameters);
-      deployment.setPhoneproviderid(telephonyConfig.providerId);
       deployment.setPhoneprovidername(telephonyConfig.provider);
     }
 
     if (audioInputConfig) {
       const inputAudioProvider = new DeploymentAudioProvider();
-      inputAudioProvider.setId(audioInputConfig.providerId);
       inputAudioProvider.setAudioprovider(audioInputConfig.provider);
       inputAudioProvider.setAudiooptionsList(audioInputConfig.parameters);
-      inputAudioProvider.setAudioproviderid(audioInputConfig.providerId);
       deployment.setInputaudio(inputAudioProvider);
     }
 
     if (audioOutputConfig) {
       const outputAudioProvider = new DeploymentAudioProvider();
-      outputAudioProvider.setId(audioOutputConfig.providerId);
       outputAudioProvider.setAudioprovider(audioOutputConfig.provider);
       outputAudioProvider.setAudiooptionsList(audioOutputConfig.parameters);
-      outputAudioProvider.setAudioproviderid(audioOutputConfig.providerId);
       deployment.setOutputaudio(outputAudioProvider);
     }
 
@@ -362,11 +355,12 @@ const ConfigureAssistantCallDeployment: FC<{ assistantId: string }> = ({
       method="POST"
       className="relative flex flex-col flex-1"
     >
-      <div className="bg-white dark:bg-gray-900 overflow-auto flex flex-col flex-1 pb-20">
+      <div className="overflow-auto flex flex-col flex-1 pb-20">
         <TelephonyProvider
-          onConfigChange={setTelephonyConfig}
-          config={telephonyConfig}
+          provider={telephonyConfig.provider}
+          parameters={telephonyConfig.parameters}
           onChangeProvider={onChangTelephonyProvider}
+          onChangeParameter={onChangeTelephonyParameter}
         />
         <ConfigureExperience
           experienceConfig={experienceConfig}
@@ -374,21 +368,18 @@ const ConfigureAssistantCallDeployment: FC<{ assistantId: string }> = ({
         />
 
         <ConfigureAudioInputProvider
-          onChangeProvider={onChangeAudioInputProvider}
-          onChangeConfig={setAudioInputConfig}
-          config={audioInputConfig}
           voiceInputEnable={voiceInputEnable}
           onChangeVoiceInputEnable={setVoiceInputEnable}
+          audioInputConfig={audioInputConfig}
+          setAudioInputConfig={setAudioInputConfig}
         />
         <ConfigureAudioOutputProvider
-          onChangeProvider={onChangeAudioOuputProvider}
-          onChangeConfig={setAudioOutputConfig}
-          config={audioOutputConfig}
           voiceOutputEnable={voiceOutputEnable}
           onChangeVoiceOutputEnable={setVoiceOutputEnable}
+          audioOutputConfig={audioOutputConfig}
+          setAudioOutputConfig={setAudioOutputConfig}
         />
       </div>
-
       <PageActionButtonBlock errorMessage={errorMessage}>
         <ICancelButton
           className="px-4 rounded-[2px]"
@@ -398,14 +389,14 @@ const ConfigureAssistantCallDeployment: FC<{ assistantId: string }> = ({
         >
           Cancel
         </ICancelButton>
-        <IBlueBGButton
+        <IBlueBGArrowButton
           type="submit"
           className="px-4 rounded-[2px]"
           isLoading={loading}
           disabled={loading}
         >
           Deploy Phone
-        </IBlueBGButton>
+        </IBlueBGArrowButton>
       </PageActionButtonBlock>
     </form>
   );

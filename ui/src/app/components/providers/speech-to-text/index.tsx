@@ -2,34 +2,22 @@ import { Dropdown } from '@/app/components/dropdown';
 import { CredentialDropdown } from '@/app/components/dropdown/credential-dropdown';
 import { FormLabel } from '@/app/components/form-label';
 import { FieldSet } from '@/app/components/form/fieldset';
-import {
-  ProviderConfig,
-  SPEECH_TO_TEXT_PROVIDER,
-} from '@/app/components/providers';
+import { ProviderComponentProps } from '@/app/components/providers';
 import { SpeechToTextConfigComponent } from '@/app/components/providers/speech-to-text/provider';
+import { SPEECH_TO_TEXT_PROVIDER } from '@/providers';
 import { Metadata, VaultCredential } from '@rapidaai/react';
 import { useCallback } from 'react';
 
-export const SpeechToTextProvider: React.FC<{
-  onChangeProvider: (i: string, v: string) => void;
-  onChangeConfig: (config: ProviderConfig) => void;
-  config: ProviderConfig | null;
-}> = ({ onChangeProvider, onChangeConfig, config }) => {
-  const updateConfig = (newConfig: Partial<ProviderConfig>) => {
-    onChangeConfig({ ...config, ...newConfig } as ProviderConfig);
-  };
-
+export const SpeechToTextProvider: React.FC<ProviderComponentProps> = props => {
+  const { parameters, provider, onChangeParameter, onChangeProvider } = props;
   const getParamValue = useCallback(
     (key: string) => {
-      return (
-        config?.parameters?.find(p => p.getKey() === key)?.getValue() ?? ''
-      );
+      return parameters?.find(p => p.getKey() === key)?.getValue() ?? '';
     },
-    [config?.parameters],
+    [JSON.stringify(parameters)],
   );
-
   const updateParameter = (key: string, value: string) => {
-    const updatedParams = [...(config?.parameters || [])];
+    const updatedParams = [...(parameters || [])];
     const existingIndex = updatedParams.findIndex(p => p.getKey() === key);
     const newParam = new Metadata();
     newParam.setKey(key);
@@ -39,7 +27,7 @@ export const SpeechToTextProvider: React.FC<{
     } else {
       updatedParams.push(newParam);
     }
-    updateConfig({ parameters: updatedParams });
+    onChangeParameter(updatedParams);
   };
 
   return (
@@ -50,11 +38,10 @@ export const SpeechToTextProvider: React.FC<{
           <Dropdown
             className="bg-light-background max-w-full dark:bg-gray-950"
             currentValue={
-              SPEECH_TO_TEXT_PROVIDER.find(x => x.code === config?.provider) ||
-              null
+              SPEECH_TO_TEXT_PROVIDER.find(x => x.code === provider) || null
             }
             setValue={v => {
-              onChangeProvider(v.id, v.code);
+              onChangeProvider(v.code);
             }}
             allValue={SPEECH_TO_TEXT_PROVIDER}
             placeholder="Select voice input"
@@ -86,22 +73,19 @@ export const SpeechToTextProvider: React.FC<{
             )}
           />
         </FieldSet>
-        {config?.providerId && (
+        {provider && (
           <CredentialDropdown
             className="bg-light-background max-w-full dark:bg-gray-950"
             onChangeCredential={(c: VaultCredential) => {
               updateParameter('rapida.credential_id', c.getId());
             }}
             currentCredential={getParamValue('rapida.credential_id')}
-            providerId={config?.providerId}
+            provider={provider}
           />
         )}
-        {config && (
+        {provider && (
           <div className="grid grid-cols-3 gap-x-6 gap-y-3">
-            <SpeechToTextConfigComponent
-              config={config}
-              updateConfig={updateConfig}
-            />
+            <SpeechToTextConfigComponent {...props} />
           </div>
         )}
       </div>

@@ -6,14 +6,15 @@ import toast from 'react-hot-toast/headless';
 import { Helmet } from '@/app/components/helmet';
 import {
   IBlueBGArrowButton,
-  IBlueBGButton,
   ICancelButton,
 } from '@/app/components/form/button';
 import { TabForm } from '@/app/components/form/tab-form';
 import {
+  ConnectionConfig,
   CreateEndpointResponse,
   EndpointAttribute,
   EndpointProviderModelAttribute,
+  Metadata,
 } from '@rapidaai/react';
 import ConfirmDialog from '@/app/components/base/modal/confirm-ui';
 import { create_endpoint_success_message } from '@/utils/messages';
@@ -22,7 +23,6 @@ import {
   TextProvider,
   ValidateTextProviderDefaultOptions,
 } from '@/app/components/providers/text';
-import { ProviderConfig } from '@/app/components/providers';
 import { ConfigPrompt } from '@/app/components/configuration/config-prompt';
 import { randomMeaningfullName, randomString } from '@/utils';
 import { FieldSet } from '@/app/components/form/fieldset';
@@ -35,10 +35,7 @@ import { CreateEndpoint } from '@rapidaai/react';
 import { ServiceError } from '@rapidaai/react';
 import { ChatCompletePrompt } from '@/utils/prompt';
 import { connectionConfig } from '@/configs';
-import {
-  BlueNoticeBlock,
-  YellowNoticeBlock,
-} from '@/app/components/container/message/notice-block';
+import { YellowNoticeBlock } from '@/app/components/container/message/notice-block';
 import { ExternalLink, Info } from 'lucide-react';
 
 /**
@@ -47,39 +44,36 @@ import { ExternalLink, Info } from 'lucide-react';
  * @returns
  */
 export function CreateEndpointPage() {
+  /**
+   * authentication
+   */
   const { authId, token, projectId } = useCurrentCredential();
+
+  /**
+   * multistep form
+   */
   const [activeTab, setActiveTab] = useState('choose-model');
+
+  /**
+   * error
+   */
   const [errorMessage, setErrorMessage] = useState('');
+
+  /**
+   * global loader
+   */
   const { loading, showLoader, hideLoader } = useRapidaStore();
+
+  /**
+   * global navigator
+   */
+  const navigator = useNavigate();
+  /**
+   * form element
+   */
   const [name, setName] = useState<string>(randomMeaningfullName('endpoint'));
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState<string[]>([]);
-  const onAddTag = (newTag: string) => {
-    setTags(prevTags => [...prevTags, newTag]);
-  };
-
-  const onRemoveTag = (tagToRemove: string) => {
-    setTags(prevTags => prevTags.filter(tag => tag !== tagToRemove));
-  };
-
-  //
-  const [textProviderModel, setTextProviderModel] = useState<ProviderConfig>({
-    providerId: '198796716894742122',
-    provider: 'azure',
-    parameters: GetDefaultTextProviderConfigIfInvalid('azure', []),
-  });
-
-  const onChangeTextProvider = (providerId: string, providerName: string) => {
-    setTextProviderModel({
-      providerId: providerId,
-      provider: providerName,
-      parameters: GetDefaultTextProviderConfigIfInvalid(
-        providerName,
-        textProviderModel.parameters,
-      ),
-    });
-  };
-
   const [promptConfig, setPromptConfig] = useState<{
     prompt: { role: string; content: string }[];
     variables: { name: string; type: string; defaultvalue: string }[];
@@ -88,8 +82,35 @@ export function CreateEndpointPage() {
     variables: [],
   });
 
-  let navigator = useNavigate();
+  const [textProviderModel, setTextProviderModel] = useState<{
+    provider: string;
+    parameters: Metadata[];
+  }>({
+    provider: 'azure',
+    parameters: GetDefaultTextProviderConfigIfInvalid('azure', []),
+  });
 
+  const onChangeTextProvider = (providerName: string) => {
+    setTextProviderModel({
+      provider: providerName,
+      parameters: GetDefaultTextProviderConfigIfInvalid(
+        providerName,
+        textProviderModel.parameters,
+      ),
+    });
+  };
+
+  const onChangeTextProviderParameter = (parameters: Metadata[]) => {
+    setTextProviderModel({ ...textProviderModel, parameters });
+  };
+
+  const onAddTag = (newTag: string) => {
+    setTags(prevTags => [...prevTags, newTag]);
+  };
+
+  const onRemoveTag = (tagToRemove: string) => {
+    setTags(prevTags => prevTags.filter(tag => tag !== tagToRemove));
+  };
   /**
    *
    */
@@ -166,7 +187,6 @@ export function CreateEndpointPage() {
     showLoader('overlay');
 
     const endpointProviderModelAttr = new EndpointProviderModelAttribute();
-    endpointProviderModelAttr.setModelproviderid(textProviderModel.providerId);
     endpointProviderModelAttr.setModelprovidername(textProviderModel.provider);
     endpointProviderModelAttr.setEndpointmodeloptionsList(
       textProviderModel.parameters,
@@ -187,7 +207,11 @@ export function CreateEndpointPage() {
       endpointProviderModelAttr,
       endpointattr,
       tags,
-      { 'x-auth-id': authId, authorization: token, 'x-project-id': projectId },
+      ConnectionConfig.WithDebugger({
+        userId: authId,
+        authorization: token,
+        projectId: projectId,
+      }),
       afterCreateEndpoint,
     );
   };
@@ -251,8 +275,9 @@ export function CreateEndpointPage() {
                 <div className="space-y-6 px-8 pb-8 max-w-4xl ">
                   <TextProvider
                     onChangeProvider={onChangeTextProvider}
-                    onChangeConfig={setTextProviderModel}
-                    config={textProviderModel}
+                    onChangeParameter={onChangeTextProviderParameter}
+                    parameters={textProviderModel.parameters}
+                    provider={textProviderModel.provider}
                   />
                   <ConfigPrompt
                     instanceId={randomString(10)}

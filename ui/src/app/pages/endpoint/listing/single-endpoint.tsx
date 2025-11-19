@@ -109,9 +109,9 @@ export const SingleEndpoint: FC<SingleEndpointProps> = ({ endpoint }) => {
       {endpointAction.visibleColumn('getCurrentModel') && (
         <TableCell className="min-w-60">
           <ProviderPill
-            providerId={endpoint
+            provider={endpoint
               .getEndpointprovidermodel()
-              ?.getModelproviderid()}
+              ?.getModelprovidername()}
           />
         </TableCell>
       )}

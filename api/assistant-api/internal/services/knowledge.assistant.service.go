@@ -3,7 +3,7 @@ package internal_services
 import (
 	"context"
 
-	internal_assistant_gorm "github.com/rapidaai/api/assistant-api/internal/gorm/assistants"
+	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
 	gorm_types "github.com/rapidaai/pkg/models/gorm/types"
 	"github.com/rapidaai/pkg/types"
 	workflow_api "github.com/rapidaai/protos"
@@ -11,12 +11,12 @@ import (
 
 type AssistantKnowledgeService interface {
 	Get(ctx context.Context, auth types.SimplePrinciple,
-		assistantKnowledgeId, assistantId uint64) (*internal_assistant_gorm.AssistantKnowledge, error)
+		assistantKnowledgeId, assistantId uint64) (*internal_assistant_entity.AssistantKnowledge, error)
 	GetAll(ctx context.Context,
 		auth types.SimplePrinciple,
 		assistantId uint64,
 		criterias []*workflow_api.Criteria,
-		paginate *workflow_api.Paginate) (int64, []*internal_assistant_gorm.AssistantKnowledge, error)
+		paginate *workflow_api.Paginate) (int64, []*internal_assistant_entity.AssistantKnowledge, error)
 
 	Create(ctx context.Context,
 		auth types.SimplePrinciple,
@@ -29,7 +29,7 @@ type AssistantKnowledgeService interface {
 		rerankerProviderModelId *uint64,
 		rerankerProviderModelName *string,
 		rerankerProviderModelOptions []*workflow_api.Metadata,
-	) (*internal_assistant_gorm.AssistantKnowledge, error)
+	) (*internal_assistant_entity.AssistantKnowledge, error)
 
 	Update(ctx context.Context,
 		auth types.SimplePrinciple,
@@ -42,9 +42,9 @@ type AssistantKnowledgeService interface {
 		topK uint32,
 		rerankerProviderModelId *uint64,
 		rerankerProviderModelName *string,
-		rerankerProviderModelOptions []*workflow_api.Metadata) (*internal_assistant_gorm.AssistantKnowledge, error)
+		rerankerProviderModelOptions []*workflow_api.Metadata) (*internal_assistant_entity.AssistantKnowledge, error)
 
 	Delete(ctx context.Context,
 		auth types.SimplePrinciple,
-		assistantKnowledgeId, assistantId uint64) (*internal_assistant_gorm.AssistantKnowledge, error)
+		assistantKnowledgeId, assistantId uint64) (*internal_assistant_entity.AssistantKnowledge, error)
 }

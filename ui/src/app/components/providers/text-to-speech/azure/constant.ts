@@ -154,18 +154,6 @@ export const AZURE_LANGUAGE = [
     name: 'en-IN',
   },
 ];
-// export const AZURE_ENCODINGS = [
-//   {
-//     name: 'Raw 24Khz 16BitMono PCM',
-//     id: 'Raw24Khz16BitMonoPcm',
-//     value: 'Raw24Khz16BitMonoPcm',
-//   },
-//   {
-//     name: 'Raw 8Khz 8BitMono MULaw',
-//     id: 'Raw8Khz8BitMonoMULaw',
-//     value: 'Raw8Khz8BitMonoMULaw',
-//   },
-// ];
 
 export const GetAzureDefaultOptions = (current: Metadata[]): Metadata[] => {
   const mtds: Metadata[] = [];

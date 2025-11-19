@@ -5,13 +5,13 @@ import (
 
 	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters/requests"
 	internal_agent_tools "github.com/rapidaai/api/assistant-api/internal/agents/tools"
-	internal_assistant_gorm "github.com/rapidaai/api/assistant-api/internal/gorm/assistants"
+	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
 	"github.com/rapidaai/pkg/commons"
 )
 
 func GetToolAction(
 	logger commons.Logger,
-	toolOpts *internal_assistant_gorm.AssistantTool,
+	toolOpts *internal_assistant_entity.AssistantTool,
 	communcation internal_adapter_requests.Communication,
 ) (internal_agent_tools.ToolCaller, error) {
 	switch toolOpts.ExecutionMethod {

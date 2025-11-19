@@ -49,7 +49,7 @@ export const SideTabLink: FC<LinkTabProps> = props => {
       to={props.to}
       className={({ isActive }) =>
         cn(
-          'group px-2 border-r-[3px] border-transparent -ms-[0.1rem] cursor-pointer',
+          'group px-2 border-r-[3px] border-transparent -ms-[0.1rem] cursor-pointer text-sm/6',
           'flex items-center px-5 py-2 relative',
 
           isActive

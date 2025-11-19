@@ -1,6 +1,6 @@
 export const RAPIDA_SYSTEM_NOTIFICATION = [
   {
-    category: 'Assistant',
+    category: 'Assistant Notifications',
     items: [
       {
         id: 'assistant.created',
@@ -73,7 +73,7 @@ export const RAPIDA_SYSTEM_NOTIFICATION = [
     ],
   },
   {
-    category: 'Knowledge',
+    category: 'Knowledge Notifications',
     items: [
       {
         id: 'knowledge.source.added',
@@ -111,7 +111,7 @@ export const RAPIDA_SYSTEM_NOTIFICATION = [
     ],
   },
   {
-    category: 'Endpoint',
+    category: 'Endpoint Notifications',
     items: [
       {
         id: 'endpoint.created',
@@ -149,7 +149,7 @@ export const RAPIDA_SYSTEM_NOTIFICATION = [
     ],
   },
   {
-    category: 'Integration',
+    category: 'Integration Notifications',
     items: [
       {
         id: 'integration.connected',

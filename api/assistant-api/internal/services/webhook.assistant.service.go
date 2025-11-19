@@ -3,15 +3,15 @@ package internal_services
 import (
 	"context"
 
-	internal_assistant_gorm "github.com/rapidaai/api/assistant-api/internal/gorm/assistants"
+	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	lexatic_backend "github.com/rapidaai/protos"
 )
 
 type AssistantWebhookService interface {
-	Get(ctx context.Context, auth types.SimplePrinciple, WebhookId uint64, assistantId uint64) (*internal_assistant_gorm.AssistantWebhook, error)
-	Delete(ctx context.Context, auth types.SimplePrinciple, WebhookId uint64, assistantId uint64) (*internal_assistant_gorm.AssistantWebhook, error)
+	Get(ctx context.Context, auth types.SimplePrinciple, WebhookId uint64, assistantId uint64) (*internal_assistant_entity.AssistantWebhook, error)
+	Delete(ctx context.Context, auth types.SimplePrinciple, WebhookId uint64, assistantId uint64) (*internal_assistant_entity.AssistantWebhook, error)
 	Create(ctx context.Context,
 		auth types.SimplePrinciple,
 		assistantId uint64,
@@ -23,7 +23,7 @@ type AssistantWebhookService interface {
 		retryStatusCodes []string,
 		retryCount, executionPriority uint32,
 		description *string,
-	) (*internal_assistant_gorm.AssistantWebhook, error)
+	) (*internal_assistant_entity.AssistantWebhook, error)
 	Update(ctx context.Context,
 		auth types.SimplePrinciple,
 		assistantId uint64,
@@ -36,13 +36,13 @@ type AssistantWebhookService interface {
 		retryStatusCodes []string,
 		maxRetryCount, executionPriority uint32,
 		description *string,
-	) (*internal_assistant_gorm.AssistantWebhook, error)
+	) (*internal_assistant_entity.AssistantWebhook, error)
 
 	GetAll(ctx context.Context,
 		auth types.SimplePrinciple,
 		assistantId uint64,
 		criterias []*lexatic_backend.Criteria,
-		paginate *lexatic_backend.Paginate) (int64, []*internal_assistant_gorm.AssistantWebhook, error)
+		paginate *lexatic_backend.Paginate) (int64, []*internal_assistant_entity.AssistantWebhook, error)
 
 	CreateLog(
 		ctx context.Context,
@@ -56,7 +56,7 @@ type AssistantWebhookService interface {
 		retryCount uint32,
 		status type_enums.RecordState,
 		request, response []byte,
-	) (*internal_assistant_gorm.AssistantWebhookLog, error)
+	) (*internal_assistant_entity.AssistantWebhookLog, error)
 
 	GetAllLog(ctx context.Context,
 		auth types.SimplePrinciple,
@@ -64,12 +64,12 @@ type AssistantWebhookService interface {
 		criterias []*lexatic_backend.Criteria,
 		paginate *lexatic_backend.Paginate,
 		order *lexatic_backend.Ordering,
-	) (int64, []*internal_assistant_gorm.AssistantWebhookLog, error)
+	) (int64, []*internal_assistant_entity.AssistantWebhookLog, error)
 
 	GetLog(ctx context.Context,
 		auth types.SimplePrinciple,
 		projectId uint64,
-		webhookLogId uint64) (*internal_assistant_gorm.AssistantWebhookLog, error)
+		webhookLogId uint64) (*internal_assistant_entity.AssistantWebhookLog, error)
 	GetLogObject(
 		ctx context.Context,
 		organizationId,

@@ -1,4 +1,4 @@
-package internal_assistant_gorm
+package internal_assistant_entity
 
 // type AssistantEvaluatorOption struct {
 // 	gorm_model.Audited

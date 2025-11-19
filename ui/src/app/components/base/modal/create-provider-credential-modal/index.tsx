@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ConnectionConfig,
   CreateProviderCredentialRequest,
@@ -21,11 +21,10 @@ import { ModalFormBlock } from '@/app/components/blocks/modal-form-block';
 import { ModalHeader } from '@/app/components/base/modal/modal-header';
 import { ModalTitleBlock } from '@/app/components/blocks/modal-title-block';
 import { connectionConfig } from '@/configs';
-import { COMPLETE_PROVIDER, RapidaProvider } from '@/app/components/providers';
 import { useProviderContext } from '@/context/provider-context';
-import { Select } from '@/app/components/form/select';
 import { Textarea } from '@/app/components/form/textarea';
 import { Struct } from 'google-protobuf/google/protobuf/struct_pb';
+import { INTEGRATION_PROVIDER, RapidaProvider } from '@/providers';
 
 /**
  * creation provider key dialog props that gives ability for opening and closing modal props
@@ -34,7 +33,7 @@ interface CreateProviderCredentialDialogProps extends ModalProps {
   /**
    * exiting provider if there
    */
-  currentProviderId?: string | null;
+  currentProvider?: string | null;
 }
 /**
  *
@@ -49,9 +48,7 @@ export function CreateProviderCredentialDialog(
    *current provider
    */
   const { authId, projectId, token } = useCurrentCredential();
-
   const [provider, setProvider] = useState<RapidaProvider | null>();
-
   const providerCtx = useProviderContext();
   /**
    *
@@ -65,11 +62,11 @@ export function CreateProviderCredentialDialog(
 
   useEffect(() => {
     setProvider(
-      COMPLETE_PROVIDER.slice()
+      INTEGRATION_PROVIDER.slice()
         .reverse()
-        .find(x => x.id === props.currentProviderId),
+        .find(x => x.code === props.currentProvider),
     );
-  }, [props.currentProviderId]);
+  }, [props.currentProvider]);
 
   /**
    *
@@ -78,7 +75,7 @@ export function CreateProviderCredentialDialog(
    * @returns
    */
   const onCreateProviderKey = data => {
-    if (!props.currentProviderId) {
+    if (!props.currentProvider) {
       setError('Please select the provider which you want to create the key.');
       return;
     }
@@ -94,8 +91,7 @@ export function CreateProviderCredentialDialog(
 
     showLoader();
     const requestObject = new CreateProviderCredentialRequest();
-    requestObject.setProviderid(provider.id);
-    requestObject.setProvidername(provider.name);
+    requestObject.setProvider(provider.code);
     requestObject.setCredential(Struct.fromJavaScript(data.config));
     requestObject.setName(data.keyName);
     CreateProviderKey(
@@ -175,22 +171,11 @@ export function CreateProviderCredentialDialog(
           </FieldSet>
 
           {provider &&
-            provider.configurations.map((x, idx) => {
+            provider.configurations?.map((x, idx) => {
               return (
                 <FieldSet key={idx}>
                   <FormLabel htmlFor={`config.${x.name}`}>{x.label}</FormLabel>
-                  {x.type === 'select' ? (
-                    <Select
-                      required
-                      {...register(`config.${x.name}`)}
-                      options={
-                        x.options?.map(option => ({
-                          name: option, // Use the string as the name
-                          value: option, // Use the string as the value
-                        })) || []
-                      }
-                    ></Select>
-                  ) : x.type === 'text' ? (
+                  {x.type === 'text' ? (
                     <Textarea
                       required
                       placeholder={x.label}

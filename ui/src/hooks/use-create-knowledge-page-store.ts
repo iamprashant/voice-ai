@@ -1,11 +1,14 @@
 import { create } from 'zustand';
-import { Knowledge } from '@rapidaai/react';
+import {
+  ConnectionConfig,
+  CreateKnowledgeRequest,
+  Knowledge,
+  Metadata,
+} from '@rapidaai/react';
 import { CreateKnowledgeType } from '@/types/types.create-knowledge';
 import { CreateKnowledgeTypeProperty } from '../types/types.create-knowledge';
 import { CreateKnowledge } from '@rapidaai/react';
 import { CreateKnowledgeResponse } from '@rapidaai/react';
-import { ServiceError } from '@rapidaai/react';
-import { ProviderConfig } from '@/app/components/providers';
 import {
   GetDefaultEmbeddingConfigIfInvalid,
   ValidateEmbeddingDefaultOptions,
@@ -27,14 +30,16 @@ const initialState: CreateKnowledgeTypeProperty = {
    * name of the endpoint
    */
   name: randomMeaningfullName('knowledge'),
+
   /**
    *
    */
-  providerModel: {
-    provider: 'openai',
-    providerId: '1987967168452493312',
-    parameters: GetDefaultEmbeddingConfigIfInvalid('openai', []),
-  },
+  provider: 'openai',
+
+  /**
+   *
+   */
+  providerParamters: GetDefaultEmbeddingConfigIfInvalid('openai', []),
 
   /**
    * list of tags for endpoint
@@ -65,25 +70,17 @@ export const useCreateKnowledgePageStore = create<CreateKnowledgeType>(
 
     /**
      *
-     * @param m
      */
-    onChangeProviderModel: (m: ProviderConfig) => {
-      set({
-        providerModel: m,
-      });
+    onChangeProvider: (v: string) => {
+      set({ provider: v });
     },
 
     /**
      *
+     * @param parameters
      */
-    onChangeProvider: (i: string, v: string) => {
-      set({
-        providerModel: {
-          providerId: i,
-          provider: v,
-          parameters: [],
-        },
-      });
+    onChangeProviderParameter: (parameters: Metadata[]) => {
+      set({ providerParamters: parameters });
     },
 
     /**
@@ -127,15 +124,15 @@ export const useCreateKnowledgePageStore = create<CreateKnowledgeType>(
       onError: (err: string) => void,
     ) => {
       // validations
-      let _providerModel = get().providerModel;
+      let _providerModel = get().provider;
       if (!_providerModel) {
         onError('Please select the embedding models.');
         return;
       }
 
       let err = ValidateEmbeddingDefaultOptions(
-        _providerModel.provider,
-        _providerModel.parameters,
+        _providerModel,
+        get().providerParamters,
       );
       if (err) {
         onError(err);
@@ -153,18 +150,23 @@ export const useCreateKnowledgePageStore = create<CreateKnowledgeType>(
       }
 
       let _tags = get().tags;
+
+      const req = new CreateKnowledgeRequest();
+      req.setEmbeddingmodelprovidername(_providerModel);
+      req.setKnowledgeembeddingmodeloptionsList(get().providerParamters);
+      req.setName(_name);
+      req.setDescription(_description);
+      req.setTagsList(_tags);
       CreateKnowledge(
         connectionConfig,
-        _providerModel,
-        _name,
-        _description,
-        _tags,
-        {
+        req,
+        ConnectionConfig.WithDebugger({
           authorization: token,
-          'x-auth-id': userId,
-          'x-project-id': projectId,
-        },
-        (err: ServiceError | null, car: CreateKnowledgeResponse | null) => {
+          userId: userId,
+          projectId: projectId,
+        }),
+      )
+        .then((car: CreateKnowledgeResponse | null) => {
           if (car?.getSuccess()) {
             let assistant = car.getData();
             if (assistant) onSuccess(assistant);
@@ -179,8 +181,10 @@ export const useCreateKnowledgePageStore = create<CreateKnowledgeType>(
             onError(errorMessage);
             return;
           }
-        },
-      );
+        })
+        .catch(error => {
+          onError('Unable to create knowledge. please try again later.');
+        });
     },
 
     /**

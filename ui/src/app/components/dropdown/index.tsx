@@ -8,9 +8,9 @@ import {
 import { Spinner } from '@/app/components/loader/spinner';
 import React, { ChangeEvent, Fragment, HTMLAttributes } from 'react';
 import { cn } from '@/utils';
-import { Float } from '@headlessui-float/react';
 import { SearchIconInput } from '@/app/components/form/input/IconInput';
 import { Check, ChevronDown } from 'lucide-react';
+import { Float } from '@headlessui-float/react';
 /**
  *
  */

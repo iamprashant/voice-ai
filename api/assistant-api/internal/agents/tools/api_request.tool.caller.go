@@ -8,7 +8,7 @@ import (
 	"time"
 
 	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters/requests"
-	internal_assistant_gorm "github.com/rapidaai/api/assistant-api/internal/gorm/assistants"
+	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
 	"github.com/rapidaai/pkg/clients/rest"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
@@ -64,7 +64,7 @@ func (afkTool *apiRequestToolCaller) Call(
 
 func NewApiRequestToolCaller(
 	logger commons.Logger,
-	toolOptions *internal_assistant_gorm.AssistantTool,
+	toolOptions *internal_assistant_entity.AssistantTool,
 	communcation internal_adapter_requests.Communication,
 ) (ToolCaller, error) {
 	opts := toolOptions.GetOptions()

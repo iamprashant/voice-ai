@@ -24,7 +24,6 @@ type Knowledge struct {
 	StorageNamespace   string               `json:"storageNamespace" gorm:"type:string"`
 
 	EmbeddingModelProviderName     string                           `json:"embeddingModelProviderName" gorm:"type:string"`
-	EmbeddingModelProviderId       uint64                           `json:"embeddingModelProviderId" gorm:"type:bigint;size:20;not null"`
 	KnowledgeEmbeddingModelOptions []*KnowledgeEmbeddingModelOption `json:"knowledgeEmbeddingModelOptions" gorm:"foreignKey:KnowledgeId"`
 }
 

@@ -1,0 +1,838 @@
+[
+    {
+        "code": "aura-2-amalthea-en",
+        "name": "amalthea",
+        "audio": "https://static.deepgram.com/examples/Aura-2-amalthea.wav",
+        "gender": "feminine",
+        "age": "Young Adult",
+        "locale": "en-ph",
+        "accent": "Filipino",
+        "style": [
+            "Engaging",
+            "Natural",
+            "Cheerful"
+        ],
+        "use_case": "Casual chat"
+    },
+    {
+        "code": "aura-2-andromeda-en",
+        "name": "andromeda",
+        "audio": "https://static.deepgram.com/examples/Aura-2-andromeda.wav",
+        "gender": "feminine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Casual",
+            "Expressive",
+            "Comfortable"
+        ],
+        "use_case": "Customer service, IVR"
+    },
+    {
+        "code": "aura-2-apollo-en",
+        "name": "apollo",
+        "audio": "https://static.deepgram.com/examples/Aura-2-apollo.wav",
+        "gender": "masculine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Confident",
+            "Comfortable",
+            "Casual"
+        ],
+        "use_case": "Casual chat"
+    },
+    {
+        "code": "aura-2-arcas-en",
+        "name": "arcas",
+        "audio": "https://static.deepgram.com/examples/Aura-2-arcas.wav",
+        "gender": "masculine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Natural",
+            "Smooth",
+            "Clear",
+            "Comfortable"
+        ],
+        "use_case": "Customer service, casual chat"
+    },
+    {
+        "code": "aura-2-aries-en",
+        "name": "aries",
+        "audio": "https://static.deepgram.com/examples/Aura-2-aries.wav",
+        "gender": "masculine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Warm",
+            "Energetic",
+            "Caring"
+        ],
+        "use_case": "Casual chat"
+    },
+    {
+        "code": "aura-2-asteria-en",
+        "name": "asteria",
+        "audio": "https://static.deepgram.com/examples/Aura-2-asteria.wav",
+        "gender": "feminine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Clear",
+            "Confident",
+            "Knowledgeable",
+            "Energetic"
+        ],
+        "use_case": "Advertising"
+    },
+    {
+        "code": "aura-2-athena-en",
+        "name": "athena",
+        "audio": "https://static.deepgram.com/examples/Aura-2-athena.wav",
+        "gender": "feminine",
+        "age": "Mature",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Calm",
+            "Smooth",
+            "Professional"
+        ],
+        "use_case": "Storytelling"
+    },
+    {
+        "code": "aura-2-atlas-en",
+        "name": "atlas",
+        "audio": "https://static.deepgram.com/examples/Aura-2-atlas.wav",
+        "gender": "masculine",
+        "age": "Mature",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Enthusiastic",
+            "Confident",
+            "Approachable",
+            "Friendly"
+        ],
+        "use_case": "Advertising"
+    },
+    {
+        "code": "aura-2-aurora-en",
+        "name": "aurora",
+        "audio": "https://static.deepgram.com/examples/Aura-2-aurora.wav",
+        "gender": "feminine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Cheerful",
+            "Expressive",
+            "Energetic"
+        ],
+        "use_case": "Interview"
+    },
+    {
+        "code": "aura-2-callista-en",
+        "name": "callista",
+        "audio": "https://static.deepgram.com/examples/Aura-2-callista.wav",
+        "gender": "feminine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Clear",
+            "Energetic",
+            "Professional",
+            "Smooth"
+        ],
+        "use_case": "IVR"
+    },
+    {
+        "code": "aura-2-cora-en",
+        "name": "cora",
+        "audio": "https://static.deepgram.com/examples/Aura-2-cora.wav",
+        "gender": "feminine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Smooth",
+            "Melodic",
+            "Caring"
+        ],
+        "use_case": "Storytelling"
+    },
+    {
+        "code": "aura-2-cordelia-en",
+        "name": "cordelia",
+        "audio": "https://static.deepgram.com/examples/Aura-2-cordelia.wav",
+        "gender": "feminine",
+        "age": "Young Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Approachable",
+            "Warm",
+            "Polite"
+        ],
+        "use_case": "Storytelling"
+    },
+    {
+        "code": "aura-2-delia-en",
+        "name": "delia",
+        "audio": "https://static.deepgram.com/examples/Aura-2-delia.wav",
+        "gender": "feminine",
+        "age": "Young Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Casual",
+            "Friendly",
+            "Cheerful",
+            "Breathy"
+        ],
+        "use_case": "Interview"
+    },
+    {
+        "code": "aura-2-draco-en",
+        "name": "draco",
+        "audio": "https://static.deepgram.com/examples/Aura-2-draco.wav",
+        "gender": "masculine",
+        "age": "Adult",
+        "locale": "en-gb",
+        "accent": "British",
+        "style": [
+            "Warm",
+            "Approachable",
+            "Trustworthy",
+            "Baritone"
+        ],
+        "use_case": "Storytelling"
+    },
+    {
+        "code": "aura-2-electra-en",
+        "name": "electra",
+        "audio": "https://static.deepgram.com/examples/Aura-2-electra.wav",
+        "gender": "feminine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Professional",
+            "Engaging",
+            "Knowledgeable"
+        ],
+        "use_case": "IVR, advertising, customer service"
+    },
+    {
+        "code": "aura-2-harmonia-en",
+        "name": "harmonia",
+        "audio": "https://static.deepgram.com/examples/Aura-2-harmonia.wav",
+        "gender": "feminine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Empathetic",
+            "Clear",
+            "Calm",
+            "Confident"
+        ],
+        "use_case": "Customer service"
+    },
+    {
+        "code": "aura-2-helena-en",
+        "name": "helena",
+        "audio": "https://static.deepgram.com/examples/Aura-2-helena.wav",
+        "gender": "feminine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Caring",
+            "Natural",
+            "Positive",
+            "Friendly",
+            "Raspy"
+        ],
+        "use_case": "IVR, casual chat"
+    },
+    {
+        "code": "aura-2-hera-en",
+        "name": "hera",
+        "audio": "https://static.deepgram.com/examples/Aura-2-hera.wav",
+        "gender": "feminine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Smooth",
+            "Warm",
+            "Professional"
+        ],
+        "use_case": "Informative"
+    },
+    {
+        "code": "aura-2-hermes-en",
+        "name": "hermes",
+        "audio": "https://static.deepgram.com/examples/Aura-2-hermes.wav",
+        "gender": "masculine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Expressive",
+            "Engaging",
+            "Professional"
+        ],
+        "use_case": "Informative"
+    },
+    {
+        "code": "aura-2-hyperion-en",
+        "name": "hyperion",
+        "audio": "https://static.deepgram.com/examples/Aura-2-hyperion.wav",
+        "gender": "masculine",
+        "age": "Adult",
+        "locale": "en-au",
+        "accent": "Australian",
+        "style": [
+            "Caring",
+            "Warm",
+            "Empathetic"
+        ],
+        "use_case": "Interview"
+    },
+    {
+        "code": "aura-2-iris-en",
+        "name": "iris",
+        "audio": "https://static.deepgram.com/examples/Aura-2-iris.wav",
+        "gender": "feminine",
+        "age": "Young Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Cheerful",
+            "Positive",
+            "Approachable"
+        ],
+        "use_case": "IVR, advertising, customer service"
+    },
+    {
+        "code": "aura-2-janus-en",
+        "name": "janus",
+        "audio": "https://static.deepgram.com/examples/Aura-2-janus.wav",
+        "gender": "feminine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Southern",
+            "Smooth",
+            "Trustworthy"
+        ],
+        "use_case": "Storytelling"
+    },
+    {
+        "code": "aura-2-juno-en",
+        "name": "juno",
+        "audio": "https://static.deepgram.com/examples/Aura-2-juno.wav",
+        "gender": "feminine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Natural",
+            "Engaging",
+            "Melodic",
+            "Breathy"
+        ],
+        "use_case": "Interview"
+    },
+    {
+        "code": "aura-2-jupiter-en",
+        "name": "jupiter",
+        "audio": "https://static.deepgram.com/examples/Aura-2-jupiter.wav",
+        "gender": "masculine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Expressive",
+            "Knowledgeable",
+            "Baritone"
+        ],
+        "use_case": "Informative"
+    },
+    {
+        "code": "aura-2-luna-en",
+        "name": "luna",
+        "audio": "https://static.deepgram.com/examples/Aura-2-luna.wav",
+        "gender": "feminine",
+        "age": "Young Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Friendly",
+            "Natural",
+            "Engaging"
+        ],
+        "use_case": "IVR"
+    },
+    {
+        "code": "aura-2-mars-en",
+        "name": "mars",
+        "audio": "https://static.deepgram.com/examples/Aura-2-mars.wav",
+        "gender": "masculine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Smooth",
+            "Patient",
+            "Trustworthy",
+            "Baritone"
+        ],
+        "use_case": "Customer service"
+    },
+    {
+        "code": "aura-2-minerva-en",
+        "name": "minerva",
+        "audio": "https://static.deepgram.com/examples/Aura-2-minerva.wav",
+        "gender": "feminine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Positive",
+            "Friendly",
+            "Natural"
+        ],
+        "use_case": "Storytelling"
+    },
+    {
+        "code": "aura-2-neptune-en",
+        "name": "neptune",
+        "audio": "https://static.deepgram.com/examples/Aura-2-neptune.wav",
+        "gender": "masculine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Professional",
+            "Patient",
+            "Polite"
+        ],
+        "use_case": "Customer service"
+    },
+    {
+        "code": "aura-2-odysseus-en",
+        "name": "odysseus",
+        "audio": "https://static.deepgram.com/examples/Aura-2-odysseus.wav",
+        "gender": "masculine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Calm",
+            "Smooth",
+            "Comfortable",
+            "Professional"
+        ],
+        "use_case": "Advertising"
+    },
+    {
+        "code": "aura-2-ophelia-en",
+        "name": "ophelia",
+        "audio": "https://static.deepgram.com/examples/Aura-2-ophelia.wav",
+        "gender": "feminine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Expressive",
+            "Enthusiastic",
+            "Cheerful"
+        ],
+        "use_case": "Interview"
+    },
+    {
+        "code": "aura-2-orion-en",
+        "name": "orion",
+        "audio": "https://static.deepgram.com/examples/Aura-2-orion.wav",
+        "gender": "masculine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Approachable",
+            "Comfortable",
+            "Calm",
+            "Polite"
+        ],
+        "use_case": "Informative"
+    },
+    {
+        "code": "aura-2-orpheus-en",
+        "name": "orpheus",
+        "audio": "https://static.deepgram.com/examples/Aura-2-orpheus.wav",
+        "gender": "masculine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Professional",
+            "Clear",
+            "Confident",
+            "Trustworthy"
+        ],
+        "use_case": "Customer service, storytelling"
+    },
+    {
+        "code": "aura-2-pandora-en",
+        "name": "pandora",
+        "audio": "https://static.deepgram.com/examples/Aura-2-pandora.wav",
+        "gender": "feminine",
+        "age": "Adult",
+        "locale": "en-gb",
+        "accent": "British",
+        "style": [
+            "Smooth",
+            "Calm",
+            "Melodic",
+            "Breathy"
+        ],
+        "use_case": "IVR, informative"
+    },
+    {
+        "code": "aura-2-phoebe-en",
+        "name": "phoebe",
+        "audio": "https://static.deepgram.com/examples/Aura-2-phoebe.wav",
+        "gender": "feminine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Energetic",
+            "Warm",
+            "Casual"
+        ],
+        "use_case": "Customer service"
+    },
+    {
+        "code": "aura-2-pluto-en",
+        "name": "pluto",
+        "audio": "https://static.deepgram.com/examples/Aura-2-pluto.wav",
+        "gender": "masculine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Smooth",
+            "Calm",
+            "Empathetic",
+            "Baritone"
+        ],
+        "use_case": "Interview, storytelling"
+    },
+    {
+        "code": "aura-2-saturn-en",
+        "name": "saturn",
+        "audio": "https://static.deepgram.com/examples/Aura-2-saturn.wav",
+        "gender": "masculine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Knowledgeable",
+            "Confident",
+            "Baritone"
+        ],
+        "use_case": "Customer service"
+    },
+    {
+        "code": "aura-2-selene-en",
+        "name": "selene",
+        "audio": "https://static.deepgram.com/examples/Aura-2-selene.wav",
+        "gender": "feminine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Expressive",
+            "Engaging",
+            "Energetic"
+        ],
+        "use_case": "Informative"
+    },
+    {
+        "code": "aura-2-thalia-en",
+        "name": "thalia",
+        "audio": "https://static.deepgram.com/examples/Aura-2-thalia.wav",
+        "gender": "feminine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Clear",
+            "Confident",
+            "Energetic",
+            "Enthusiastic"
+        ],
+        "use_case": "Casual chat, customer service, IVR"
+    },
+    {
+        "code": "aura-2-theia-en",
+        "name": "theia",
+        "audio": "https://static.deepgram.com/examples/Aura-2-theia.wav",
+        "gender": "feminine",
+        "age": "Adult",
+        "locale": "en-au",
+        "accent": "Australian",
+        "style": [
+            "Expressive",
+            "Polite",
+            "Sincere"
+        ],
+        "use_case": "Informative"
+    },
+    {
+        "code": "aura-2-vesta-en",
+        "name": "vesta",
+        "audio": "https://static.deepgram.com/examples/Aura-2-vesta.wav",
+        "gender": "feminine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Natural",
+            "Expressive",
+            "Patient",
+            "Empathetic"
+        ],
+        "use_case": "Customer service, interview, storytelling"
+    },
+    {
+        "code": "aura-2-zeus-en",
+        "name": "zeus",
+        "audio": "https://static.deepgram.com/examples/Aura-2-zeus.wav",
+        "gender": "masculine",
+        "age": "Adult",
+        "locale": "en-us",
+        "accent": "American",
+        "style": [
+            "Deep",
+            "Trustworthy",
+            "Smooth"
+        ],
+        "use_case": "IVR"
+    },
+    {
+        "code": "aura-2-sirio-es",
+        "name": "sirio",
+        "audio": "https://static.deepgram.com/examples/Sirio.wav",
+        "gender": "masculine",
+        "age": "Adult",
+        "locale": "es-mx",
+        "accent": "Mexican",
+        "style": [
+            "Calm",
+            "Professional",
+            "Comfortable",
+            "Empathetic",
+            "Baritone"
+        ],
+        "use_cases": [
+            "Casual Chat",
+            "Interview"
+        ]
+    },
+    {
+        "code": "aura-2-nestor-es",
+        "name": "nestor",
+        "audio": "https://static.deepgram.com/examples/Nestor.wav",
+        "gender": "masculine",
+        "age": "Adult",
+        "locale": "es-es",
+        "accent": "Peninsular",
+        "style": [
+            "Calm",
+            "Professional",
+            "Approachable",
+            "Clear",
+            "Confident"
+        ],
+        "use_cases": [
+            "Casual Chat",
+            "Customer Service"
+        ]
+    },
+    {
+        "code": "aura-2-carina-es",
+        "name": "carina",
+        "audio": "https://static.deepgram.com/examples/Carina.wav",
+        "gender": "feminine",
+        "age": "Adult",
+        "locale": "es-es",
+        "accent": "Peninsular",
+        "style": [
+            "Professional",
+            "Raspy",
+            "Energetic",
+            "Breathy",
+            "Confident"
+        ],
+        "use_cases": [
+            "Interview",
+            "Customer Service",
+            "IVR"
+        ]
+    },
+    {
+        "code": "aura-2-celeste-es",
+        "name": "celeste",
+        "audio": "https://static.deepgram.com/examples/Celeste.wav",
+        "gender": "feminine",
+        "age": "Young Adult",
+        "locale": "es-co",
+        "accent": "Colombian",
+        "style": [
+            "Clear",
+            "Energetic",
+            "Positive",
+            "Friendly",
+            "Enthusiastic"
+        ],
+        "use_cases": [
+            "Casual Chat",
+            "Advertising",
+            "IVR"
+        ]
+    },
+    {
+        "code": "aura-2-alvaro-es",
+        "name": "alvaro",
+        "audio": "https://static.deepgram.com/examples/Alvaro.wav",
+        "gender": "masculine",
+        "age": "Adult",
+        "locale": "es-es",
+        "accent": "Peninsular",
+        "style": [
+            "Calm",
+            "Professional",
+            "Clear",
+            "Knowledgeable",
+            "Approachable"
+        ],
+        "use_cases": [
+            "Interview",
+            "Customer Service"
+        ]
+    },
+    {
+        "code": "aura-2-diana-es",
+        "name": "diana",
+        "audio": "https://static.deepgram.com/examples/Diana.wav",
+        "gender": "feminine",
+        "age": "Adult",
+        "locale": "es-es",
+        "accent": "Peninsular",
+        "style": [
+            "Professional",
+            "Confident",
+            "Expressive",
+            "Polite",
+            "Knowledgeable"
+        ],
+        "use_cases": [
+            "Storytelling",
+            "Advertising"
+        ]
+    },
+    {
+        "code": "aura-2-aquila-es",
+        "name": "aquila",
+        "audio": "https://static.deepgram.com/examples/Aquila.wav",
+        "gender": "masculine",
+        "age": "Adult",
+        "locale": "es-419",
+        "accent": "Latin American",
+        "style": [
+            "Expressive",
+            "Enthusiastic",
+            "Confident",
+            "Casual",
+            "Comfortable"
+        ],
+        "use_cases": [
+            "Casual Chat",
+            "Informative"
+        ]
+    },
+    {
+        "code": "aura-2-selena-es",
+        "name": "selena",
+        "audio": "https://static.deepgram.com/examples/Selena.wav",
+        "gender": "feminine",
+        "age": "Young Adult",
+        "locale": "es-419",
+        "accent": "Latin American",
+        "style": [
+            "Approachable",
+            "Casual",
+            "Friendly",
+            "Calm",
+            "Positive"
+        ],
+        "use_cases": [
+            "Customer Service",
+            "Informative"
+        ]
+    },
+    {
+        "code": "aura-2-estrella-es",
+        "name": "estrella",
+        "audio": "https://static.deepgram.com/examples/Estrella.wav",
+        "gender": "feminine",
+        "age": "Mature",
+        "locale": "es-mx",
+        "accent": "Mexican",
+        "style": [
+            "Approachable",
+            "Natural",
+            "Calm",
+            "Comfortable",
+            "Expressive"
+        ],
+        "use_cases": [
+            "Casual Chat",
+            "Interview"
+        ]
+    },
+    {
+        "code": "aura-2-javier-es",
+        "name": "javier",
+        "audio": "https://static.deepgram.com/examples/Javier.wav",
+        "gender": "masculine",
+        "age": "Adult",
+        "locale": "es-mx",
+        "accent": "Mexican",
+        "style": [
+            "Approachable",
+            "Professional",
+            "Friendly",
+            "Comfortable",
+            "Calm"
+        ],
+        "use_cases": [
+            "Casual Chat",
+            "IVR",
+            "Storytelling"
+        ]
+    }
+]

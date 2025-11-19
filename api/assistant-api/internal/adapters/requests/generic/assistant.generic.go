@@ -4,14 +4,14 @@ import (
 	"errors"
 
 	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters/requests"
-	internal_assistant_gorm "github.com/rapidaai/api/assistant-api/internal/gorm/assistants"
-	internal_conversation_gorm "github.com/rapidaai/api/assistant-api/internal/gorm/conversations"
+	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
+	internal_conversation_gorm "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
 	internal_services "github.com/rapidaai/api/assistant-api/internal/services"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
 )
 
-func (dm *GenericRequestor) Assistant() *internal_assistant_gorm.Assistant {
+func (dm *GenericRequestor) Assistant() *internal_assistant_entity.Assistant {
 	return dm.assistant
 }
 
@@ -20,7 +20,7 @@ func (gr *GenericRequestor) Conversation() *internal_conversation_gorm.Assistant
 }
 
 func (gr *GenericRequestor) GetSpeechToTextTransformer() (
-	*internal_assistant_gorm.AssistantDeploymentAudio,
+	*internal_assistant_entity.AssistantDeploymentAudio,
 	error,
 ) {
 	switch gr.source {
@@ -47,7 +47,7 @@ func (gr *GenericRequestor) GetSpeechToTextTransformer() (
 	return nil, errors.New("audio is not enabled for the source")
 }
 
-func (gr *GenericRequestor) GetTextToSpeechTransformer() (*internal_assistant_gorm.AssistantDeploymentAudio, error) {
+func (gr *GenericRequestor) GetTextToSpeechTransformer() (*internal_assistant_entity.AssistantDeploymentAudio, error) {
 	switch gr.source {
 	case utils.PhoneCall:
 		if a := gr.assistant; a != nil && a.AssistantPhoneDeployment != nil && a.AssistantPhoneDeployment.OuputAudio != nil {
@@ -75,7 +75,7 @@ func (gr *GenericRequestor) GetTextToSpeechTransformer() (*internal_assistant_go
 func (gr *GenericRequestor) GetAssistant(
 	auth types.SimplePrinciple,
 	assistantId uint64,
-	version string) (*internal_assistant_gorm.Assistant, error) {
+	version string) (*internal_assistant_entity.Assistant, error) {
 	versionId, err := internal_adapter_requests.GetVersionDefinition(version)
 	if err != nil {
 		gr.logger.Errorf("GenericRequestor.GetAssistant: error while getting assistant. %v", err)

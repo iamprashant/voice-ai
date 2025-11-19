@@ -8,8 +8,8 @@ import (
 	"time"
 
 	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters/requests"
-	internal_assistant_gorm "github.com/rapidaai/api/assistant-api/internal/gorm/assistants"
-	internal_knowledge_gorm "github.com/rapidaai/api/assistant-api/internal/gorm/knowledges"
+	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
+	internal_knowledge_gorm "github.com/rapidaai/api/assistant-api/internal/entity/knowledges"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
@@ -93,7 +93,7 @@ func (afkTool *knowledgeRetrievalToolCaller) Call(
 
 func NewKnowledgeRetrievalToolCaller(
 	logger commons.Logger,
-	toolOptions *internal_assistant_gorm.AssistantTool,
+	toolOptions *internal_assistant_entity.AssistantTool,
 	communcation internal_adapter_requests.Communication,
 ) (ToolCaller, error) {
 	opts := toolOptions.GetOptions()
@@ -137,7 +137,7 @@ func NewKnowledgeRetrievalToolCaller(
 		)
 
 	if err != nil {
-		logger.Errorf("error while getting provider model credentials %v for embedding provide model id %d", err, knowledge.EmbeddingModelProviderId)
+		logger.Errorf("error while getting provider model credentials %v for embedding provide model id %d", err, knowledge.EmbeddingModelProviderName)
 		return nil, err
 	}
 	return &knowledgeRetrievalToolCaller{

@@ -90,7 +90,7 @@ export const SideTab: FC<TabProps> = ({
                     : 'hover:bg-blue-500/5 hover:text-blue-500',
                 )}
               >
-                <div className="capitalize px-3 py-3 font-medium  text-sm/6 gap-3 flex items-center">
+                <div className="capitalize px-3 py-3 font-medium text-sm/6 gap-3 flex items-center">
                   {ix.labelIcon}
                   {ix.label}
                 </div>

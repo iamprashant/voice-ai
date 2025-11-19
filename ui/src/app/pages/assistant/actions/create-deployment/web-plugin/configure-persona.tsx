@@ -1,12 +1,12 @@
 import { IntArrayImage } from '@/app/components/base/images/int-array-imge';
 import { FormLabel } from '@/app/components/form-label';
+import { BlueBorderButton } from '@/app/components/form/button';
 import { FieldSet } from '@/app/components/form/fieldset';
 import { Input } from '@/app/components/form/input';
-import { Select } from '@/app/components/form/select';
 import { FileUploadIcon } from '@/app/components/Icon/file-upload';
 import { InputGroup } from '@/app/components/input-group';
 import { cn } from '@/utils';
-import { FC, useCallback, useState } from 'react';
+import { FC, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 
 /**
@@ -14,7 +14,7 @@ import { useDropzone } from 'react-dropzone';
  * an interface provide the props
  */
 export interface PersonaConfig {
-  name?: string;
+  name: string;
   role?: string;
   avatarUrl?: string;
   avatar?: {
@@ -88,9 +88,9 @@ export const ConfigurePersona: FC<{
    *
    */
   return (
-    <InputGroup title="Appearance">
-      <div className={cn('p-6 flex gap-8')}>
-        <div className="flex items-center justify-center flex-col px-8 gap-1">
+    <InputGroup title="Appearance" className="bg-white dark:bg-gray-900">
+      <div className={cn('flex')}>
+        <div className="flex items-center justify-center flex-col pr-8 gap-1">
           <div
             {...getRootProps()}
             className="group relative w-[90px] h-[90px] p-px border dark:border-gray-700 bg-gray-100 dark:bg-gray-800 overflow-hidden"
@@ -137,13 +137,13 @@ export const ConfigurePersona: FC<{
               {...getInputProps()}
             />
           </div>
-          <button
+          <BlueBorderButton
             type="button"
             onClick={open}
-            className="h-fit py-1.5 bg-white opacity-70 border hover:shadow-sm font-medium dark:bg-gray-900 text-sm w-full"
+            className="w-full h-7 text-sm/6 border-[1px]"
           >
             Choose
-          </button>
+          </BlueBorderButton>
         </div>
         <div className="grid grid-cols-1 gap-x-6 gap-y-6 md:grid-cols-2 flex-1 grow">
           <FieldSet>

@@ -220,16 +220,13 @@ export const EditAssistant: FC<{ assistantId: string }> = ({ assistantId }) => {
           </IBlueBGButton>
         </div>
         <InputGroup title="Permanent Actions" initiallyExpanded={false}>
-          <RedNoticeBlock>
-            Active connections will be terminated immediately, and the data will
-            be permanently deleted after the rolling period.
-          </RedNoticeBlock>
-          <div className="flex flex-row items-center justify-between p-6">
+          <div className="flex flex-row items-center justify-between">
             <FieldSet>
               <p className="font-semibold">Delete this assistant</p>
               <InputHelper>
-                Once you delete a assistant, there is no going back. Please be
-                certain
+                Once you delete a assistant, there is no going back. Active
+                connections will be terminated immediately, and the data will be
+                permanently deleted after the rolling period.
               </InputHelper>
             </FieldSet>
             <IRedBGButton

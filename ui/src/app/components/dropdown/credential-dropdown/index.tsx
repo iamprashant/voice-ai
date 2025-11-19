@@ -7,13 +7,13 @@ import { cn } from '@/utils';
 import { Plus, RotateCcw } from 'lucide-react';
 import { FC, useCallback, useEffect, useState } from 'react';
 import { CreateProviderCredentialDialog } from '@/app/components/base/modal/create-provider-credential-modal';
-import { COMPLETE_PROVIDER } from '@/app/components/providers';
 import { useAllProviderCredentials } from '@/hooks/use-model';
 import { useProviderContext } from '@/context/provider-context';
+import { allProvider } from '@/providers';
 
 interface CredentialDropdownProps {
   className?: string;
-  providerId?: string;
+  provider?: string;
   currentCredential?: string;
   onChangeCredential: (credential: VaultCredential) => void;
 }
@@ -29,28 +29,26 @@ export const CredentialDropdown: FC<CredentialDropdownProps> = props => {
 
   useEffect(() => {
     setCurrentProviderCredentials(
-      providerCredentials.filter(y => y.getVaulttypeid() === props.providerId),
+      providerCredentials.filter(y => y.getProvider() === props.provider),
     );
-  }, [providerCredentials, props.providerId]);
+  }, [providerCredentials, props.provider]);
   const handleSearch = useCallback(
     (q: React.ChangeEvent<HTMLInputElement>) => {
       if (q.target.value && q.target.value.trim() !== '') {
         setCurrentProviderCredentials(
           providerCredentials.filter(
             y =>
-              y.getVaulttypeid() === props.providerId &&
+              y.getProvider() === props.provider &&
               y.getName().includes(q.target.value.trim()),
           ),
         );
       } else {
         setCurrentProviderCredentials(
-          providerCredentials.filter(
-            y => y.getVaulttypeid() === props.providerId,
-          ),
+          providerCredentials.filter(y => y.getProvider() === props.provider),
         );
       }
     },
-    [providerCredentials, props.providerId],
+    [providerCredentials, props.provider],
   );
 
   return (
@@ -58,7 +56,7 @@ export const CredentialDropdown: FC<CredentialDropdownProps> = props => {
       <CreateProviderCredentialDialog
         modalOpen={createProviderModalOpen}
         setModalOpen={setCreateProviderModalOpen}
-        currentProviderId={props.providerId}
+        currentProvider={props.provider}
       />
       <FieldSet>
         <FormLabel>Credential</FormLabel>
@@ -69,7 +67,7 @@ export const CredentialDropdown: FC<CredentialDropdownProps> = props => {
             'border-b border-gray-400 dark:border-gray-600',
             'focus-within:border-transparent!',
             'transition-all duration-200 ease-in-out',
-            'flex relative',
+            'flex relative items-center',
             'bg-light-background dark:bg-gray-950',
             'pt-px pl-px',
             props.className,
@@ -91,35 +89,34 @@ export const CredentialDropdown: FC<CredentialDropdownProps> = props => {
               placeholder="Select credential"
               option={(c: VaultCredential) => {
                 return (
-                  <div className="relative overflow-hidden flex-1 flex flex-row space-x-3">
-                    <div className="flex">
-                      <span className="inline-flex items-center gap-1.5 sm:gap-2 max-w-full text-sm font-medium">
-                        <img
-                          alt={
-                            COMPLETE_PROVIDER.find(
-                              x => x.id === c.getVaulttypeid(),
-                            )?.name
-                          }
-                          loading="lazy"
-                          className="w-5 h-5 align-middle block shrink-0"
-                          src={
-                            COMPLETE_PROVIDER.find(
-                              x => x.id === c.getVaulttypeid(),
-                            )?.image
-                          }
-                        />
-                        <span className="truncate capitalize">
-                          {
-                            COMPLETE_PROVIDER.find(
-                              x => x.id === c.getVaulttypeid(),
-                            )?.name
-                          }
-                        </span>
-                        <span>/</span>
-                        <span className="font-medium">{c.getName()}</span>
+                  <div
+                    className="relative overflow-hidden flex-1 flex flex-row space-x-3 py-1"
+                    data-key={c.getId()}
+                  >
+                    <span className="inline-flex items-center gap-1.5 sm:gap-2 max-w-full text-sm font-medium">
+                      <img
+                        alt={
+                          allProvider().find(x => x.code === c.getProvider())
+                            ?.name
+                        }
+                        loading="lazy"
+                        className="w-5 h-5 align-middle block shrink-0"
+                        src={
+                          allProvider().find(x => x.code === c.getProvider())
+                            ?.image
+                        }
+                      />
+                      <span className="truncate capitalize">
+                        {
+                          allProvider().find(x => x.code === c.getProvider())
+                            ?.name
+                        }
                       </span>
-                      <span className="font-medium ml-4">[{c.getId()}]</span>
-                    </div>
+                      <span>/</span>
+                      <span className="font-medium text-sm/6">
+                        {c.getName()}
+                      </span>
+                    </span>
                   </div>
                 );
               }}
@@ -127,9 +124,9 @@ export const CredentialDropdown: FC<CredentialDropdownProps> = props => {
                 return (
                   <div className="relative overflow-hidden flex-1 flex flex-row space-x-3">
                     <div className="flex">
-                      <span className="opacity-70">Vault</span>
-                      <span className="opacity-70 px-1">/</span>
-                      <span className="font-medium">{c.getName()}</span>
+                      <span className="font-medium text-pretty text-sm/6">
+                        {c.getName()}
+                      </span>
                     </div>
                   </div>
                 );

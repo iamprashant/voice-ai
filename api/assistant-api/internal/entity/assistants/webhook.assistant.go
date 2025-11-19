@@ -1,4 +1,4 @@
-package internal_assistant_gorm
+package internal_assistant_entity
 
 import (
 	gorm_model "github.com/rapidaai/pkg/models/gorm"

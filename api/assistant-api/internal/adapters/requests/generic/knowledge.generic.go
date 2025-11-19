@@ -8,7 +8,7 @@ import (
 
 	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters/requests"
 	internal_agent_embeddings "github.com/rapidaai/api/assistant-api/internal/agents/embeddings"
-	internal_knowledge_gorm "github.com/rapidaai/api/assistant-api/internal/gorm/knowledges"
+	internal_knowledge_gorm "github.com/rapidaai/api/assistant-api/internal/entity/knowledges"
 	"github.com/rapidaai/pkg/connectors"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
@@ -84,7 +84,6 @@ func (kr *GenericRequestor) retrive(
 		embeddingOpts := &internal_agent_embeddings.TextEmbeddingOption{
 			ProviderCredential: kc.EmbeddingProviderCredential,
 			ModelProviderName:  knowledge.EmbeddingModelProviderName,
-			ModelProviderId:    knowledge.EmbeddingModelProviderId,
 			Options:            knowledge.GetOptions(),
 			AdditionalData: map[string]string{
 				"knowledge_id": fmt.Sprintf("%d", knowledge.Id),
@@ -132,7 +131,6 @@ func (kr *GenericRequestor) retrive(
 			query, &internal_agent_embeddings.TextEmbeddingOption{
 				ProviderCredential: kc.EmbeddingProviderCredential,
 				ModelProviderName:  knowledge.EmbeddingModelProviderName,
-				ModelProviderId:    knowledge.EmbeddingModelProviderId,
 				Options:            knowledge.GetOptions(),
 				AdditionalData: map[string]string{
 					"knowledge_id": fmt.Sprintf("%d", knowledge.Id),

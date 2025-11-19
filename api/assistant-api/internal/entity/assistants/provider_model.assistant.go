@@ -1,4 +1,4 @@
-package internal_assistant_gorm
+package internal_assistant_entity
 
 import (
 	"encoding/json"
@@ -69,7 +69,6 @@ type AssistantProviderModel struct {
 	Template              gorm_types.PromptMap            `json:"template" gorm:"type:jsonb"`
 	AssistantId           uint64                          `json:"assistantId" gorm:"type:bigint;size:20"`
 	ModelProviderName     string                          `json:"modelProviderName" gorm:"type:string"`
-	ModelProviderId       uint64                          `json:"modelProviderId" gorm:"type:bigint;size:20;not null"`
 	AssistantModelOptions []*AssistantProviderModelOption `json:"assistantModelOptions" gorm:"foreignKey:AssistantProviderModelId"`
 }
 

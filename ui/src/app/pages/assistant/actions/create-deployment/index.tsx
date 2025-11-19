@@ -50,10 +50,29 @@ import { useRapidaStore } from '@/hooks';
 import { cn } from '@/utils';
 
 export const ConfigureAssistantDeploymentPage = () => {
+  /**
+   * assistant ID
+   */
   const { assistantId } = useParams();
+
+  /**
+   * current assistant
+   */
   const [assistant, setAssistant] = useState<Assistant | null>(null);
+
+  /**
+   * navigation
+   */
   const navi = useGlobalNavigation();
+
+  /**
+   * authentication params
+   */
   const { token, authId, projectId } = useCurrentCredential();
+
+  /**
+   * global loading
+   */
   const { showLoader, hideLoader } = useRapidaStore();
 
   const get = useCallback(assistantId => {
@@ -94,9 +113,7 @@ export const ConfigureAssistantDeploymentPage = () => {
         });
     }
   }, []);
-  /**
-   *
-   */
+
   useEffect(() => {
     get(assistantId);
   }, [assistantId]);
@@ -106,7 +123,6 @@ export const ConfigureAssistantDeploymentPage = () => {
   const [isPhoneExpanded, setIsPhoneExpanded] = useState(false);
   const [isPhoneInboundCodeExpanded, setIsPhoneInboundCodeExpanded] =
     useState(false);
-  //
   const [isWidgetExpanded, setIsWidgetExpanded] = useState(false);
   const [isWidgetCodeExpanded, setIsWidgetCodeExpanded] = useState(false);
   const [createDeploymentPopover, setCreateDeploymentPopover] = useState(false);
@@ -146,7 +162,7 @@ export const ConfigureAssistantDeploymentPage = () => {
                 <Globe className="w-4 h-4 mr-2" strokeWidth={1.5} />
                 <span className="ml-2">Add to Your Website</span>
               </IButton>
-              <hr className="w-full h-[1px] bg-gray-800" />
+              <hr className="w-full h-[1px] bg-gray-300 dark:border-gray-800" />
               <IButton
                 className="w-full justify-start"
                 onClick={() => navi.goToConfigureApi(assistantId!)}
@@ -154,7 +170,7 @@ export const ConfigureAssistantDeploymentPage = () => {
                 <Code className="w-4 h-4 mr-2" strokeWidth={1.5} />
                 <span className="ml-2">Integrate with SDK</span>
               </IButton>
-              <hr className="w-full h-[1px] bg-gray-800" />
+              <hr className="w-full h-[1px] bg-gray-300 dark:border-gray-800" />
               <IButton
                 className="w-full justify-start"
                 onClick={() => navi.goToConfigureCall(assistantId!)}
@@ -162,7 +178,7 @@ export const ConfigureAssistantDeploymentPage = () => {
                 <Phone className="w-4 h-4 mr-2" strokeWidth={1.5} />
                 <span className="ml-2">Deploy on Phone Call</span>
               </IButton>
-              <hr className="w-full h-[1px] bg-gray-800" />
+              <hr className="w-full h-[1px] bg-gray-300 dark:border-gray-800" />
               <IButton
                 className="w-full justify-start"
                 onClick={() => navi.goToConfigureDebugger(assistantId!)}
@@ -331,14 +347,6 @@ export const ConfigureAssistantDeploymentPage = () => {
                 >
                   <span className="mr-2">Edit Api</span>
                   <Plus className="w-4 h-4 " />
-                </IButton>
-                <IButton
-                  onClick={() => {
-                    // navi.goToConfigureWeb(assistantId!);
-                  }}
-                >
-                  <span className="mr-2">Instruction</span>
-                  <Code className="w-4 h-4 " />
                 </IButton>
                 <IButton onClick={() => setIsApiExpanded(!isApiExpanded)}>
                   {isApiExpanded ? (
@@ -747,8 +755,6 @@ export const ConfigureAssistantDeploymentPage = () => {
             <ActionableEmptyMessage
               title="No Deployment"
               subtitle="There are no assistant deployments found."
-              //   action="Create deployment"
-              //   onActionClick={() => navi.goToConfigureDebugger(assistantId!)}
               actionComponent={
                 <div className="relative mt-3">
                   <IBlueBorderPlusButton
@@ -773,7 +779,7 @@ export const ConfigureAssistantDeploymentPage = () => {
                         <Globe className="w-4 h-4 mr-2" strokeWidth={1.5} />
                         <span className="ml-2">Add to Your Website</span>
                       </IButton>
-                      <hr className="w-full h-[1px] bg-gray-800" />
+                      <hr className="w-full h-[1px] bg-gray-300 dark:border-gray-800" />
                       <IButton
                         className="w-full justify-start"
                         onClick={() => navi.goToConfigureApi(assistantId!)}
@@ -781,7 +787,7 @@ export const ConfigureAssistantDeploymentPage = () => {
                         <Code className="w-4 h-4 mr-2" strokeWidth={1.5} />
                         <span className="ml-2">Integrate with SDK</span>
                       </IButton>
-                      <hr className="w-full h-[1px] bg-gray-800" />
+                      <hr className="w-full h-[1px] bg-gray-300 dark:border-gray-800" />
                       <IButton
                         className="w-full justify-start"
                         onClick={() => navi.goToConfigureCall(assistantId!)}
@@ -789,7 +795,7 @@ export const ConfigureAssistantDeploymentPage = () => {
                         <Phone className="w-4 h-4 mr-2" strokeWidth={1.5} />
                         <span className="ml-2">Deploy on Phone Call</span>
                       </IButton>
-                      <hr className="w-full h-[1px] bg-gray-800" />
+                      <hr className="w-full h-[1px] bg-gray-300 dark:border-gray-800" />
                       <IButton
                         className="w-full justify-start"
                         onClick={() => navi.goToConfigureDebugger(assistantId!)}
@@ -823,7 +829,7 @@ const VoiceInput: FC<{ deployment?: DeploymentAudioProvider }> = ({
         <div className="text-xs text-gray-500 dark:text-gray-400 py-3 px-3 space-y-6">
           <FieldSet>
             <FormLabel>Provider</FormLabel>
-            <ProviderPill providerId={deployment?.getAudioproviderid()} />
+            <ProviderPill provider={deployment?.getAudioprovider()} />
           </FieldSet>
           <div className="grid grid-cols-2 gap-4">
             {deployment
@@ -837,7 +843,6 @@ const VoiceInput: FC<{ deployment?: DeploymentAudioProvider }> = ({
                     <code className="flex-1 dark:bg-gray-900 bg-gray-100 px-3 py-2 font-mono text-xs min-w-0 overflow-hidden">
                       {detail.getValue()}
                     </code>
-
                     <div className="flex shrink-0 border divide-x">
                       <CopyButton className="h-7 w-7">
                         {detail.getValue()}
@@ -868,7 +873,7 @@ const VoiceOutput: FC<{ deployment?: DeploymentAudioProvider }> = ({
         <div className="text-xs text-gray-500 dark:text-gray-400 py-3 px-3 space-y-6">
           <FieldSet>
             <FormLabel>Provider</FormLabel>
-            <ProviderPill providerId={deployment?.getAudioproviderid()} />
+            <ProviderPill provider={deployment?.getAudioprovider()} />
           </FieldSet>
           <div className="grid grid-cols-2 gap-4">
             {deployment

@@ -13,7 +13,7 @@ import (
 	internal_entity "github.com/rapidaai/api/web-api/internal/entity"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
-	gorm_types "github.com/rapidaai/pkg/models/gorm/types"
+	gorm_models "github.com/rapidaai/pkg/models/gorm"
 	"github.com/rapidaai/pkg/types"
 	"golang.org/x/oauth2"
 )
@@ -38,20 +38,23 @@ func NewExternalConnect(cfg *config.WebAppConfig, logger commons.Logger, postgre
 }
 
 // return id that will use as state
-func (ec *ExternalConnect) EncodeState(ctx context.Context,
-	toolId uint64,
-	toolConnect string,
-	linker gorm_types.VaultLevel, linkId uint64, redirect string) (string, error) {
+func (ec *ExternalConnect) EncodeState(
+	ctx context.Context,
+	provider string,
+	projectid uint64,
+	organizationid uint64,
+	redirect string) (string, error) {
 	db := ec.postgres.DB(ctx)
 	identifier := uuid.NewString()
 
 	eConnect := &internal_entity.OAuthExternalConnect{
-		Identifier:  identifier,
-		ToolConnect: toolConnect,
-		ToolId:      toolId,
-		Linker:      linker,
-		LinkerId:    linkId,
-		RedirectTo:  redirect,
+		Organizational: gorm_models.Organizational{
+			ProjectId:      projectid,
+			OrganizationId: organizationid,
+		},
+		Identifier: identifier,
+		Provider:   provider,
+		RedirectTo: redirect,
 	}
 	tx := db.Save(eConnect)
 	if err := tx.Error; err != nil {

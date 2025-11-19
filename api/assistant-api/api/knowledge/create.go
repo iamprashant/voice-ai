@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	internal_knowledge_gorm "github.com/rapidaai/api/assistant-api/internal/gorm/knowledges"
+	internal_knowledge_gorm "github.com/rapidaai/api/assistant-api/internal/entity/knowledges"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
 	knowledge_api "github.com/rapidaai/protos"
@@ -102,7 +102,6 @@ func (knowledgeApi *knowledgeGrpcApi) CreateKnowledge(ctx context.Context, cer *
 		cer.GetName(),
 		&cer.Description,
 		&cer.Visibility,
-		cer.GetEmbeddingModelProviderId(),
 		cer.GetEmbeddingModelProviderName(),
 		cer.GetKnowledgeEmbeddingModelOptions(),
 	)

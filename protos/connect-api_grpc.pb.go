@@ -19,9 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ConnectService_KnowledgeConnect_FullMethodName  = "/connect_api.ConnectService/KnowledgeConnect"
 	ConnectService_GeneralConnect_FullMethodName    = "/connect_api.ConnectService/GeneralConnect"
-	ConnectService_ActionConnect_FullMethodName     = "/connect_api.ConnectService/ActionConnect"
 	ConnectService_GetConnectorFiles_FullMethodName = "/connect_api.ConnectService/GetConnectorFiles"
 )
 
@@ -29,9 +27,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ConnectServiceClient interface {
-	KnowledgeConnect(ctx context.Context, in *KnowledgeConnectRequest, opts ...grpc.CallOption) (*KnowledgeConnectResponse, error)
 	GeneralConnect(ctx context.Context, in *GeneralConnectRequest, opts ...grpc.CallOption) (*GeneralConnectResponse, error)
-	ActionConnect(ctx context.Context, in *ActionConnectRequest, opts ...grpc.CallOption) (*ActionConnectResponse, error)
 	GetConnectorFiles(ctx context.Context, in *GetConnectorFilesRequest, opts ...grpc.CallOption) (*GetConnectorFilesResponse, error)
 }
 
@@ -43,30 +39,10 @@ func NewConnectServiceClient(cc grpc.ClientConnInterface) ConnectServiceClient {
 	return &connectServiceClient{cc}
 }
 
-func (c *connectServiceClient) KnowledgeConnect(ctx context.Context, in *KnowledgeConnectRequest, opts ...grpc.CallOption) (*KnowledgeConnectResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(KnowledgeConnectResponse)
-	err := c.cc.Invoke(ctx, ConnectService_KnowledgeConnect_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *connectServiceClient) GeneralConnect(ctx context.Context, in *GeneralConnectRequest, opts ...grpc.CallOption) (*GeneralConnectResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GeneralConnectResponse)
 	err := c.cc.Invoke(ctx, ConnectService_GeneralConnect_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *connectServiceClient) ActionConnect(ctx context.Context, in *ActionConnectRequest, opts ...grpc.CallOption) (*ActionConnectResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ActionConnectResponse)
-	err := c.cc.Invoke(ctx, ConnectService_ActionConnect_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -87,9 +63,7 @@ func (c *connectServiceClient) GetConnectorFiles(ctx context.Context, in *GetCon
 // All implementations should embed UnimplementedConnectServiceServer
 // for forward compatibility.
 type ConnectServiceServer interface {
-	KnowledgeConnect(context.Context, *KnowledgeConnectRequest) (*KnowledgeConnectResponse, error)
 	GeneralConnect(context.Context, *GeneralConnectRequest) (*GeneralConnectResponse, error)
-	ActionConnect(context.Context, *ActionConnectRequest) (*ActionConnectResponse, error)
 	GetConnectorFiles(context.Context, *GetConnectorFilesRequest) (*GetConnectorFilesResponse, error)
 }
 
@@ -100,14 +74,8 @@ type ConnectServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedConnectServiceServer struct{}
 
-func (UnimplementedConnectServiceServer) KnowledgeConnect(context.Context, *KnowledgeConnectRequest) (*KnowledgeConnectResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method KnowledgeConnect not implemented")
-}
 func (UnimplementedConnectServiceServer) GeneralConnect(context.Context, *GeneralConnectRequest) (*GeneralConnectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GeneralConnect not implemented")
-}
-func (UnimplementedConnectServiceServer) ActionConnect(context.Context, *ActionConnectRequest) (*ActionConnectResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ActionConnect not implemented")
 }
 func (UnimplementedConnectServiceServer) GetConnectorFiles(context.Context, *GetConnectorFilesRequest) (*GetConnectorFilesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetConnectorFiles not implemented")
@@ -132,24 +100,6 @@ func RegisterConnectServiceServer(s grpc.ServiceRegistrar, srv ConnectServiceSer
 	s.RegisterService(&ConnectService_ServiceDesc, srv)
 }
 
-func _ConnectService_KnowledgeConnect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(KnowledgeConnectRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ConnectServiceServer).KnowledgeConnect(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ConnectService_KnowledgeConnect_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConnectServiceServer).KnowledgeConnect(ctx, req.(*KnowledgeConnectRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _ConnectService_GeneralConnect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GeneralConnectRequest)
 	if err := dec(in); err != nil {
@@ -164,24 +114,6 @@ func _ConnectService_GeneralConnect_Handler(srv interface{}, ctx context.Context
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ConnectServiceServer).GeneralConnect(ctx, req.(*GeneralConnectRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ConnectService_ActionConnect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ActionConnectRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ConnectServiceServer).ActionConnect(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ConnectService_ActionConnect_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConnectServiceServer).ActionConnect(ctx, req.(*ActionConnectRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -212,16 +144,8 @@ var ConnectService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*ConnectServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "KnowledgeConnect",
-			Handler:    _ConnectService_KnowledgeConnect_Handler,
-		},
-		{
 			MethodName: "GeneralConnect",
 			Handler:    _ConnectService_GeneralConnect_Handler,
-		},
-		{
-			MethodName: "ActionConnect",
-			Handler:    _ConnectService_ActionConnect_Handler,
 		},
 		{
 			MethodName: "GetConnectorFiles",

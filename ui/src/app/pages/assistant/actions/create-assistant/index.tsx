@@ -13,6 +13,7 @@ import {
   CreateAssistantProviderRequest,
   CreateAssistantRequest,
   GetAssistantResponse,
+  Metadata,
 } from '@rapidaai/react';
 import { useConfirmDialog } from '@/app/pages/assistant/actions/hooks/use-confirmation';
 import { useGlobalNavigation } from '@/hooks/use-global-navigator';
@@ -30,7 +31,6 @@ import {
   TextProvider,
   ValidateTextProviderDefaultOptions,
 } from '@/app/components/providers/text';
-import { ProviderConfig } from '@/app/components/providers';
 import { BuildinToolConfig } from '@/app/components/tools';
 import { Card, CardDescription, CardTitle } from '@/app/components/base/cards';
 import {
@@ -51,8 +51,7 @@ import { CreateAssistant } from '@rapidaai/react';
 import { CreateAssistantToolRequest } from '@rapidaai/react';
 import { Struct } from 'google-protobuf/google/protobuf/struct_pb';
 import { connectionConfig } from '@/configs';
-import { Phone, Globe } from 'lucide-react';
-import { InputGroup } from '@/app/components/input-group';
+import { Globe } from 'lucide-react';
 import { ChatCompletePrompt } from '@/utils/prompt';
 import toast from 'react-hot-toast/headless';
 
@@ -61,8 +60,16 @@ import toast from 'react-hot-toast/headless';
  * @returns
  */
 export function CreateAssistantPage() {
+  /**
+   * credentils and authentication parameters
+   */
   const { authId, token, projectId } = useCurrentCredential();
+
+  /**
+   * navigation
+   */
   const {
+    goBack,
     goToAssistant,
     goToConfigureDebugger,
     goToConfigureWeb,
@@ -71,20 +78,35 @@ export function CreateAssistantPage() {
     goToCreateAssistantAnalysis,
     goToCreateAssistantWebhook,
   } = useGlobalNavigation();
+
+  /**
+   * global reloading
+   */
+  const { loading, showLoader, hideLoader } = useRapidaStore();
+
+  /**
+   * after creation of assistant maintaining stage
+   */
   const [assistant, setAssistant] = useState<null | Assistant>(null);
+
+  /**
+   * multi step form
+   */
   const [activeTab, setActiveTab] = useState<
     'tools' | 'choose-model' | 'define-assistant' | 'deployment'
   >('choose-model');
+
+  /**
+   * Error message
+   */
   const [errorMessage, setErrorMessage] = useState('');
+
+  /**
+   * Form fields
+   */
   const [name, setName] = useState(randomMeaningfullName('assistant'));
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState<string[]>([]);
-  const onAddTag = (tag: string) => {
-    setTags([...tags, tag]);
-  };
-  const onRemoveTag = (tag: string) => {
-    setTags(tags.filter(t => t !== tag));
-  };
   const [tools, setTools] = useState<
     {
       name: string;
@@ -93,38 +115,19 @@ export function CreateAssistantPage() {
       buildinToolConfig: BuildinToolConfig;
     }[]
   >([]);
-
-  //
   const [editingTool, setEditingTool] = useState<{
     name: string;
     description: string;
     fields: string;
     buildinToolConfig: BuildinToolConfig;
   } | null>(null);
-
-  //
-  const [selectedModel, setSelectedModel] = useState<ProviderConfig>({
-    providerId: '198796716894742122',
+  const [selectedModel, setSelectedModel] = useState<{
+    provider: string;
+    parameters: Metadata[];
+  }>({
     provider: 'azure',
     parameters: GetDefaultTextProviderConfigIfInvalid('azure', []),
   });
-
-  const { showDialog, ConfirmDialogComponent } = useConfirmDialog({});
-  const [configureToolOpen, setConfigureToolOpen] = useState(false);
-
-  //
-  const onChangeProvider = (providerId: string, providerName: string) => {
-    setSelectedModel({
-      providerId: providerId,
-      provider: providerName,
-      parameters: GetDefaultTextProviderConfigIfInvalid(
-        providerName,
-        selectedModel.parameters,
-      ),
-    });
-  };
-
-  //
   const [template, setTemplate] = useState<{
     prompt: { role: string; content: string }[];
     variables: { name: string; type: string; defaultvalue: string }[];
@@ -132,18 +135,37 @@ export function CreateAssistantPage() {
     prompt: [{ role: 'system', content: '' }],
     variables: [],
   });
+  const { showDialog, ConfirmDialogComponent } = useConfirmDialog({});
+  const [configureToolOpen, setConfigureToolOpen] = useState(false);
+  const onAddTag = (tag: string) => {
+    setTags([...tags, tag]);
+  };
+  const onRemoveTag = (tag: string) => {
+    setTags(tags.filter(t => t !== tag));
+  };
+  const onChangeProvider = (providerName: string) => {
+    setSelectedModel({
+      provider: providerName,
+      parameters: GetDefaultTextProviderConfigIfInvalid(
+        providerName,
+        selectedModel.parameters,
+      ),
+    });
+  };
+  const onChangeParameter = (parameters: Metadata[]) => {
+    setSelectedModel({ ...selectedModel, parameters });
+  };
 
-  const { loading, showLoader, hideLoader } = useRapidaStore();
-  let navigator = useGlobalNavigation();
-
+  /**
+   *
+   * @returns
+   */
   const createAssistant = () => {
     showLoader('overlay');
     if (!name) {
       setErrorMessage('Please provide a valid name for assistant.');
       return false;
     }
-
-    // Create tool configuration
     const assistantToolConfig = tools.map(t => {
       const req = new CreateAssistantToolRequest();
       req.setName(t.name);
@@ -153,13 +175,10 @@ export function CreateAssistantPage() {
       req.setExecutionoptionsList(t.buildinToolConfig.parameters);
       return req;
     });
-
-    // Create assistant provider model
     const assistantProvider = new CreateAssistantProviderRequest();
     const assistantModel =
       new CreateAssistantProviderRequest.CreateAssistantProviderModel();
     assistantModel.setTemplate(ChatCompletePrompt(template));
-    assistantModel.setModelproviderid(selectedModel.providerId);
     assistantModel.setModelprovidername(selectedModel.provider);
     assistantModel.setAssistantmodeloptionsList(selectedModel.parameters);
     assistantProvider.setModel(assistantModel);
@@ -210,6 +229,10 @@ export function CreateAssistantPage() {
       });
   };
 
+  /**
+   * validate instruction
+   * @returns
+   */
   const validateInstruction = (): boolean => {
     setErrorMessage('');
     let err = ValidateTextProviderDefaultOptions(
@@ -239,6 +262,10 @@ export function CreateAssistantPage() {
     return true;
   };
 
+  /**
+   * validation of tools
+   * @returns
+   */
   const validateTool = (): boolean => {
     setErrorMessage('');
     if (tools.length === 0) {
@@ -326,9 +353,10 @@ export function CreateAssistantPage() {
                 <div className="space-y-6 px-8 py-8 max-w-4xl">
                   <div className="space-y-6">
                     <TextProvider
-                      config={selectedModel}
-                      onChangeConfig={setSelectedModel}
+                      onChangeParameter={onChangeParameter}
                       onChangeProvider={onChangeProvider}
+                      parameters={selectedModel.parameters}
+                      provider={selectedModel.provider}
                     />
                   </div>
                   <ConfigPrompt
@@ -342,7 +370,7 @@ export function CreateAssistantPage() {
             actions: [
               <ICancelButton
                 className="px-4 rounded-[2px]"
-                onClick={() => showDialog(navigator.goBack)}
+                onClick={() => showDialog(goBack)}
               >
                 Cancel
               </ICancelButton>,
@@ -443,7 +471,7 @@ export function CreateAssistantPage() {
             actions: [
               <ICancelButton
                 className="px-4 rounded-[2px]"
-                onClick={() => showDialog(navigator.goBack)}
+                onClick={() => showDialog(goBack)}
               >
                 Cancel
               </ICancelButton>,
@@ -478,7 +506,7 @@ export function CreateAssistantPage() {
             actions: [
               <ICancelButton
                 className="px-4 rounded-[2px]"
-                onClick={() => showDialog(navigator.goBack)}
+                onClick={() => showDialog(goBack)}
               >
                 Cancel
               </ICancelButton>,

@@ -42,6 +42,7 @@ export function Button(props: ButtonProps) {
     <button
       {...btnProps}
       className={cn(
+        'cursor-pointer',
         'rounded-[2px]',
         'flex h-9 leading-7 truncate w-fit justify-center items-center relative',
         'bg-blue-600 text-white hover:bg-blue-500 py-1.5 px-3',
@@ -68,6 +69,7 @@ export function BlueBorderButton(props: ButtonProps) {
     <button
       {...btnProps}
       className={cn(
+        'cursor-pointer',
         'rounded-[2px]',
         'flex h-9 truncate w-fit justify-center items-center',
         'py-1.5 px-3',
@@ -96,6 +98,7 @@ export function BorderButton(props: ButtonProps) {
       type="button"
       {...props}
       className={cn(
+        'cursor-pointer',
         'rounded-[2px]',
         'flex h-9 truncate w-fit justify-center items-center',
         'dark:text-gray-400',
@@ -118,9 +121,10 @@ export const ILinkBorderButton: FC<LinkProps> = props => {
     <a
       {...btnProps}
       className={cn(
+        'cursor-pointer',
         'rounded-[2px]',
         'flex h-9 truncate w-fit justify-center items-center',
-        'dark:hover:text-gray-400 dark:hover:text-gray-300',
+        ' dark:hover:text-gray-300',
         'py-1.5 px-3',
         'hover:bg-white dark:hover:bg-gray-950',
         'button',
@@ -148,6 +152,7 @@ export function SimpleButton(props: ButtonProps) {
     <button
       {...props}
       className={cn(
+        'cursor-pointer',
         'rounded-[2px]',
         'flex h-9 truncate w-fit justify-center items-center',
         'dark:hover:text-gray-300 hover:text-gray-900',
@@ -166,7 +171,12 @@ export function SimpleButton(props: ButtonProps) {
 export function IconButton(props: ButtonProps) {
   return (
     <SimpleButton
-      className={cn('rounded-[2px]', 'h-6! w-6! p-[4px]!', props.className)}
+      className={cn(
+        'cursor-pointer',
+        'rounded-[2px]',
+        'h-6! w-6! p-[4px]!',
+        props.className,
+      )}
       onClick={props.onClick}
       {...props}
     >
@@ -180,6 +190,7 @@ export function ILinkButton(props: LinkProps) {
     <a
       {...props}
       className={cn(
+        'cursor-pointer',
         'rounded-[2px]',
         'flex h-9 truncate w-fit justify-center items-center',
         'text-white',
@@ -203,6 +214,7 @@ export function HoverButton(props: ButtonProps) {
     <button
       {...btnProps}
       className={cn(
+        'cursor-pointer',
         'rounded-[2px]',
         'flex h-9 leading-7 truncate w-fit justify-center items-center relative border-none',
         'py-3 px-3 dark:hover:bg-gray-900 hover:bg-gray-100',
@@ -228,6 +240,7 @@ export const OutlineButton = (props: ButtonProps) => {
   return (
     <Button
       className={cn(
+        'cursor-pointer',
         'rounded-[2px]',
         'rounded-[2px] px-4 capitalize font-medium',
         className,
@@ -250,6 +263,7 @@ export function IButton(props: ButtonProps) {
       type="button"
       {...props}
       className={cn(
+        'cursor-pointer',
         'rounded-[2px]',
         'flex h-9 truncate w-fit justify-center items-center',
         'dark:hover:text-gray-400 dark:hover:text-gray-300',
@@ -275,6 +289,7 @@ export function IBlueButton(props: ButtonProps) {
       type="button"
       {...props}
       className={cn(
+        'cursor-pointer',
         'rounded-[2px]',
         'flex h-9 truncate w-fit justify-center items-center',
         'text-blue-500 hover:text-blue-600',
@@ -299,6 +314,7 @@ export function IBlueBorderPlusButton(props: ButtonProps) {
       type="button"
       {...props}
       className={cn(
+        'cursor-pointer',
         'rounded-[2px]',
         'flex h-9 truncate w-fit justify-start items-center',
         'bg-light-background dark:bg-gray-900',
@@ -328,6 +344,7 @@ export function IBlueBorderButton(props: ButtonProps) {
       type="button"
       {...props}
       className={cn(
+        'cursor-pointer',
         'rounded-[2px] cursor-pointer',
         'flex h-9 truncate w-fit justify-start items-center',
         'bg-light-background dark:bg-gray-900',
@@ -352,6 +369,7 @@ export function IBorderButton(props: ButtonProps) {
       type="button"
       {...props}
       className={cn(
+        'cursor-pointer',
         'rounded-[2px]',
         'flex h-9 truncate w-fit justify-start items-center',
         'bg-light-background dark:bg-gray-900',
@@ -381,6 +399,7 @@ export function IBlueBGButton(props: ButtonProps) {
       type="button"
       {...alt}
       className={cn(
+        'cursor-pointer',
         'rounded-[2px]',
         'flex h-9 dark:border-[1.4px] border-gray-900 truncate w-fit justify-center items-center cursor-pointer',
         'text-white',
@@ -404,6 +423,7 @@ export function ICancelButton(props: ButtonProps) {
       type="button"
       {...props}
       className={cn(
+        'cursor-pointer',
         'rounded-[2px]',
         'flex h-9 truncate w-fit justify-center items-center',
         'py-2.5 px-3',
@@ -428,6 +448,7 @@ export function IRedBGButton(props: ButtonProps) {
       type="button"
       {...props}
       className={cn(
+        'cursor-pointer',
         'rounded-[2px]',
         'flex h-9 truncate w-fit justify-center items-center',
         'text-white',
@@ -451,6 +472,7 @@ export function IRedBorderButton(props: ButtonProps) {
       type="button"
       {...btnProps}
       className={cn(
+        'cursor-pointer',
         'rounded-[2px]',
         'flex h-9 truncate w-fit justify-center items-center border',
         'text-red-600 hover:text-white',
@@ -472,7 +494,7 @@ export function IBlueBGArrowButton(props: ButtonProps) {
   return (
     <IBlueBGButton
       {...btnProps}
-      className={cn('rounded-[2px]', props.className)}
+      className={cn('cursor-pointer', 'rounded-[2px]', props.className)}
       disabled={isLoading}
     >
       {props.children}

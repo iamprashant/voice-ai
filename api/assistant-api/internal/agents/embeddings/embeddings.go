@@ -10,7 +10,6 @@ import (
 type TextEmbeddingOption struct {
 	ProviderCredential *lexatic_backend.VaultCredential
 	ModelProviderName  string
-	ModelProviderId    uint64
 	Options            map[string]interface{}
 	AdditionalData     map[string]string
 }

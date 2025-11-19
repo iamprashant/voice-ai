@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	internal_assistant_gorm "github.com/rapidaai/api/assistant-api/internal/gorm/assistants"
+	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
 	internal_services "github.com/rapidaai/api/assistant-api/internal/services"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
@@ -37,10 +37,10 @@ func NewAssistantWebhookService(
 }
 
 // Get implements internal_services.AssistantWebhookService.
-func (eService *assistantWebhookService) Get(ctx context.Context, auth types.SimplePrinciple, webhookId, assistantId uint64) (*internal_assistant_gorm.AssistantWebhook, error) {
+func (eService *assistantWebhookService) Get(ctx context.Context, auth types.SimplePrinciple, webhookId, assistantId uint64) (*internal_assistant_entity.AssistantWebhook, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
-	var Webhook *internal_assistant_gorm.AssistantWebhook
+	var Webhook *internal_assistant_entity.AssistantWebhook
 	tx := db.Where("id = ? AND assistant_id = ?", webhookId, assistantId).
 		First(&Webhook)
 	if tx.Error != nil {
@@ -64,10 +64,10 @@ func (eService *assistantWebhookService) Create(ctx context.Context,
 	maxRetryCount uint32,
 	executionPriority uint32,
 	description *string,
-) (*internal_assistant_gorm.AssistantWebhook, error) {
+) (*internal_assistant_entity.AssistantWebhook, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
-	webhook := &internal_assistant_gorm.AssistantWebhook{
+	webhook := &internal_assistant_entity.AssistantWebhook{
 		AssistantId:       assistantId,
 		Description:       *description,
 		HttpMethod:        httpMethod,
@@ -107,10 +107,10 @@ func (eService *assistantWebhookService) Update(ctx context.Context,
 	maxRetryCount uint32,
 	executionPriority uint32,
 	description *string,
-) (*internal_assistant_gorm.AssistantWebhook, error) {
+) (*internal_assistant_entity.AssistantWebhook, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
-	webhook := &internal_assistant_gorm.AssistantWebhook{
+	webhook := &internal_assistant_entity.AssistantWebhook{
 		Description:       *description,
 		HttpMethod:        httpMethod,
 		HttpUrl:           httpUrl,
@@ -141,10 +141,10 @@ func (eService *assistantWebhookService) Delete(ctx context.Context,
 	auth types.SimplePrinciple,
 	webhookId uint64,
 	assistantId uint64,
-) (*internal_assistant_gorm.AssistantWebhook, error) {
+) (*internal_assistant_entity.AssistantWebhook, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
-	webhook := &internal_assistant_gorm.AssistantWebhook{
+	webhook := &internal_assistant_entity.AssistantWebhook{
 		Mutable: gorm_models.Mutable{
 			UpdatedBy: *auth.GetUserId(),
 			Status:    type_enums.RECORD_ARCHIEVE,
@@ -167,14 +167,14 @@ func (eService *assistantWebhookService) GetAll(ctx context.Context,
 	auth types.SimplePrinciple,
 	assistantId uint64,
 	criterias []*lexatic_backend.Criteria,
-	paginate *lexatic_backend.Paginate) (int64, []*internal_assistant_gorm.AssistantWebhook, error) {
+	paginate *lexatic_backend.Paginate) (int64, []*internal_assistant_entity.AssistantWebhook, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
 	var (
-		Webhooks []*internal_assistant_gorm.AssistantWebhook
+		Webhooks []*internal_assistant_entity.AssistantWebhook
 		cnt      int64
 	)
-	qry := db.Model(internal_assistant_gorm.AssistantWebhook{})
+	qry := db.Model(internal_assistant_entity.AssistantWebhook{})
 	qry.
 		Where("assistant_id = ? AND status = ?", assistantId, type_enums.RECORD_ACTIVE)
 	for _, ct := range criterias {
@@ -214,7 +214,7 @@ func (eService *assistantWebhookService) CreateLog(
 	retryCount uint32,
 	status type_enums.RecordState,
 	request, response []byte,
-) (*internal_assistant_gorm.AssistantWebhookLog, error) {
+) (*internal_assistant_entity.AssistantWebhookLog, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
 	s3Prefix := eService.ObjectPrefix(*auth.GetCurrentOrganizationId(), *auth.GetCurrentProjectId())
@@ -229,7 +229,7 @@ func (eService *assistantWebhookService) CreateLog(
 		eService.storage.Store(ctx, key, response)
 	})
 
-	webhookLog := &internal_assistant_gorm.AssistantWebhookLog{
+	webhookLog := &internal_assistant_entity.AssistantWebhookLog{
 		Audited: gorm_models.Audited{
 			Id: _auditId,
 		},
@@ -264,10 +264,10 @@ func (eService *assistantWebhookService) GetLog(
 	ctx context.Context,
 	auth types.SimplePrinciple,
 	projectId uint64,
-	webhookLogId uint64) (*internal_assistant_gorm.AssistantWebhookLog, error) {
+	webhookLogId uint64) (*internal_assistant_entity.AssistantWebhookLog, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
-	var wkg *internal_assistant_gorm.AssistantWebhookLog
+	var wkg *internal_assistant_entity.AssistantWebhookLog
 	tx := db.Where("id = ? AND organization_id = ? AND project_id = ?", webhookLogId, *auth.GetCurrentOrganizationId(), projectId).
 		First(&wkg)
 	if tx.Error != nil {
@@ -285,14 +285,14 @@ func (eService *assistantWebhookService) GetAllLog(
 	projectId uint64,
 	criterias []*lexatic_backend.Criteria,
 	paginate *lexatic_backend.Paginate,
-	order *lexatic_backend.Ordering) (int64, []*internal_assistant_gorm.AssistantWebhookLog, error) {
+	order *lexatic_backend.Ordering) (int64, []*internal_assistant_entity.AssistantWebhookLog, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
 	var (
-		webhookLogs []*internal_assistant_gorm.AssistantWebhookLog
+		webhookLogs []*internal_assistant_entity.AssistantWebhookLog
 		cnt         int64
 	)
-	qry := db.Model(internal_assistant_gorm.AssistantWebhookLog{})
+	qry := db.Model(internal_assistant_entity.AssistantWebhookLog{})
 	qry.
 		Where("organization_id = ? AND project_id = ? ", *auth.GetCurrentOrganizationId(), projectId)
 	for _, ct := range criterias {

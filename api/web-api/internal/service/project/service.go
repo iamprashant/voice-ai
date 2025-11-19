@@ -152,10 +152,12 @@ func (pS *projectService) CreateCredential(ctx context.Context, auth types.Princ
 	db := pS.postgres.DB(ctx)
 	key := ciphers.Token("rpx_")
 	prc := &internal_entity.ProjectCredential{
-		ProjectId:      projectId,
-		OrganizationId: organizationId,
-		Name:           name,
-		Key:            key,
+		Organizational: gorm_models.Organizational{
+			ProjectId:      projectId,
+			OrganizationId: organizationId,
+		},
+		Name: name,
+		Key:  key,
 		Mutable: gorm_models.Mutable{
 			Status:    type_enums.RECORD_ACTIVE,
 			CreatedBy: auth.GetUserInfo().Id,

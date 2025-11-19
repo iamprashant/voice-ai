@@ -25,8 +25,8 @@ export function Playground(props: {
             </div>
           }
         >
-          <div className="border-t bg-white dark:bg-gray-900">
-            <p className="text-gray-600 dark:text-gray-300 py-8 px-4">
+          <div className=" bg-white dark:bg-gray-900">
+            <p className="text-gray-600 dark:text-gray-300">
               Integrate this endpoint directly into your application code using
               our SDK.
               <a
@@ -52,7 +52,7 @@ export function Playground(props: {
             </div>
           }
         >
-          <div className="border-t bg-white dark:bg-gray-900 py-8 px-4">
+          <div className=" bg-white dark:bg-gray-900">
             <p className="text-base font-normal leading-relaxed pb-4">
               Enhance your assistant's capabilities with LLM analysis using this
               endpoint.
@@ -101,7 +101,7 @@ export function Playground(props: {
             </div>
           }
         >
-          <div className="border-t bg-white dark:bg-gray-900 py-8 px-4">
+          <div className="bg-white dark:bg-gray-900">
             <p className="text-base font-normal leading-relaxed pb-4">
               Enhance your assistant's capabilities with LLM analysis using this
               endpoint.

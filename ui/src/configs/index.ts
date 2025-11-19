@@ -3,7 +3,6 @@ import { InputVarType } from '@/models/common';
 import { ConnectionConfig } from '@rapidaai/react';
 import devConfig from './config.development.json';
 import prodConfig from './config.production.json';
-import { ReactElement } from 'react';
 
 export interface SentryAnalyticsConfig {
   dsn: string;
@@ -13,7 +12,7 @@ export interface SentryAnalyticsConfig {
 export interface WorkspaceConfig {
   domain: string;
   title: string;
-  logo: {
+  logo?: {
     light: string;
     dark: string;
   };

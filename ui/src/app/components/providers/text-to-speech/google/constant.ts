@@ -81,46 +81,6 @@ export const GOOGLE_MODELS = [
   },
 ];
 
-// export const GOOGLE_SAMPLE_RATES = [
-//   {
-//     name: '8000 Hz',
-//     value: '8000',
-//   },
-//   {
-//     name: '16000 Hz',
-//     value: '16000',
-//   },
-//   {
-//     name: '24000 Hz',
-//     value: '24000',
-//   },
-//   {
-//     name: '32000 Hz',
-//     value: '32000',
-//   },
-//   {
-//     name: '48000 Hz',
-//     value: '48000',
-//   },
-// ];
-// export const GOOGLE_ENCODINGS = [
-//   {
-//     name: 'MULAW',
-//     id: 'MULAW',
-//     value: 'mulaw',
-//   },
-//   {
-//     name: 'ALAW',
-//     id: 'ALAW',
-//     value: 'alaw',
-//   },
-//   {
-//     name: 'PCM',
-//     id: 'PCM',
-//     value: 'pcm',
-//   },
-// ];
-
 export const GetGoogleDefaultOptions = (current: Metadata[]): Metadata[] => {
   const mtds: Metadata[] = [];
   // Define the keys we want to keep

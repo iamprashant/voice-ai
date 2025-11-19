@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	internal_assistant_gorm "github.com/rapidaai/api/assistant-api/internal/gorm/assistants"
+	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
 	internal_services "github.com/rapidaai/api/assistant-api/internal/services"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
@@ -29,10 +29,10 @@ func NewAssistantAnalysisService(logger commons.Logger, postgres connectors.Post
 }
 
 // Get implements internal_services.AssistantAnalysisService.
-func (eService *assistantAnalysisService) Get(ctx context.Context, auth types.SimplePrinciple, analysisId, assistantId uint64) (*internal_assistant_gorm.AssistantAnalysis, error) {
+func (eService *assistantAnalysisService) Get(ctx context.Context, auth types.SimplePrinciple, analysisId, assistantId uint64) (*internal_assistant_entity.AssistantAnalysis, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
-	var Analysis *internal_assistant_gorm.AssistantAnalysis
+	var Analysis *internal_assistant_entity.AssistantAnalysis
 	tx := db.Where("id = ? AND assistant_id = ?", analysisId, assistantId).
 		First(&Analysis)
 	if tx.Error != nil {
@@ -53,10 +53,10 @@ func (eService *assistantAnalysisService) Create(ctx context.Context,
 	endpointParameters map[string]string,
 	executionPriority uint32,
 	description *string,
-) (*internal_assistant_gorm.AssistantAnalysis, error) {
+) (*internal_assistant_entity.AssistantAnalysis, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
-	analysis := &internal_assistant_gorm.AssistantAnalysis{
+	analysis := &internal_assistant_entity.AssistantAnalysis{
 		AssistantId:        assistantId,
 		Description:        *description,
 		Name:               name,
@@ -89,10 +89,10 @@ func (eService *assistantAnalysisService) Update(ctx context.Context,
 	endpointParameters map[string]string,
 	executionPriority uint32,
 	description *string,
-) (*internal_assistant_gorm.AssistantAnalysis, error) {
+) (*internal_assistant_entity.AssistantAnalysis, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
-	analysis := &internal_assistant_gorm.AssistantAnalysis{
+	analysis := &internal_assistant_entity.AssistantAnalysis{
 		Description:        *description,
 		Name:               name,
 		EndpointId:         endpointId,
@@ -119,10 +119,10 @@ func (eService *assistantAnalysisService) Delete(ctx context.Context,
 	auth types.SimplePrinciple,
 	analysisId uint64,
 	assistantId uint64,
-) (*internal_assistant_gorm.AssistantAnalysis, error) {
+) (*internal_assistant_entity.AssistantAnalysis, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
-	analysis := &internal_assistant_gorm.AssistantAnalysis{
+	analysis := &internal_assistant_entity.AssistantAnalysis{
 		Mutable: gorm_models.Mutable{
 			Status:    type_enums.RECORD_ARCHIEVE,
 			UpdatedBy: *auth.GetUserId(),
@@ -145,14 +145,14 @@ func (eService *assistantAnalysisService) GetAll(ctx context.Context,
 	auth types.SimplePrinciple,
 	assistantId uint64,
 	criterias []*lexatic_backend.Criteria,
-	paginate *lexatic_backend.Paginate) (int64, []*internal_assistant_gorm.AssistantAnalysis, error) {
+	paginate *lexatic_backend.Paginate) (int64, []*internal_assistant_entity.AssistantAnalysis, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
 	var (
-		analysises []*internal_assistant_gorm.AssistantAnalysis
+		analysises []*internal_assistant_entity.AssistantAnalysis
 		cnt        int64
 	)
-	qry := db.Model(internal_assistant_gorm.AssistantAnalysis{})
+	qry := db.Model(internal_assistant_entity.AssistantAnalysis{})
 	qry.
 		Where("assistant_id = ? AND status = ?", assistantId, type_enums.RECORD_ACTIVE)
 	for _, ct := range criterias {

@@ -38,49 +38,51 @@ export const ConfigureFeature: React.FC<ConfigureFeatureProps> = ({
   };
 
   return (
-    <InputGroup title="Agent Features" initiallyExpanded={false}>
-      <div className={cn('p-6 flex gap-8')}>
-        <div className="grid grid-cols-1 gap-x-6 gap-y-6 md:grid-cols-2 flex-1 grow">
-          <div className="block flex-1 md:col-span-2">
-            <Label className="mb-3">Sections</Label>
-            <div className="-mt-1.5 mb-3 text-sm text-gray-500">
-              Each section offers different features and contents in the web
-              widget.
+    <InputGroup
+      title="Agent Features"
+      initiallyExpanded={false}
+      className="my-0 bg-white dark:bg-gray-900"
+    >
+      <div className="grid grid-cols-1 gap-x-6 gap-y-6 md:grid-cols-2 flex-1 grow">
+        <div className="block flex-1 md:col-span-2">
+          <Label className="mb-3">Sections</Label>
+          <div className="-mt-1.5 mb-3 text-sm text-gray-500">
+            Each section offers different features and contents in the web
+            widget.
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <InputCheckbox
+                name="q_a_listing"
+                id="q_a_listing"
+                checked={config.qAListing}
+                onChange={handleCheckboxChange}
+              />
+              <Label className="text-[0.9rem]" for="q_a_listing">
+                Help center / Q&A Listing
+              </Label>
             </div>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <InputCheckbox
-                  name="q_a_listing"
-                  id="q_a_listing"
-                  checked={config.qAListing}
-                  onChange={handleCheckboxChange}
-                />
-                <Label className="text-[0.9rem]" for="q_a_listing">
-                  Help center / Q&A Listing
-                </Label>
-              </div>
-              <div className="flex items-center gap-2">
-                <InputCheckbox
-                  name="product_catalog"
-                  id="product_catalog"
-                  checked={config.productCatalog}
-                  onChange={handleCheckboxChange}
-                />
-                <Label className="text-[0.9rem]" for="product_catalog">
-                  Product Catalog
-                </Label>
-              </div>
-              <div className="flex items-center gap-2">
-                <InputCheckbox
-                  name="blog_post"
-                  id="blog_post"
-                  checked={config.blogPost}
-                  onChange={handleCheckboxChange}
-                />
-                <Label className="text-[0.9rem]" for="blog_post">
-                  Blog Post / Articles
-                </Label>
-              </div>
+            <div className="flex items-center gap-2">
+              <InputCheckbox
+                name="product_catalog"
+                id="product_catalog"
+                checked={config.productCatalog}
+                onChange={handleCheckboxChange}
+              />
+              <Label className="text-[0.9rem]" for="product_catalog">
+                Product Catalog
+              </Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <InputCheckbox
+                name="blog_post"
+                id="blog_post"
+                checked={config.blogPost}
+                onChange={handleCheckboxChange}
+              />
+              <Label className="text-[0.9rem]" for="blog_post">
+                Blog Post / Articles
+              </Label>
             </div>
           </div>
         </div>

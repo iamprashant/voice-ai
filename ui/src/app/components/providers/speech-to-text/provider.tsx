@@ -1,5 +1,5 @@
 import { Metadata } from '@rapidaai/react';
-import { ProviderConfig } from '@/app/components/providers';
+import { ProviderComponentProps } from '@/app/components/providers';
 import {
   ConfigureAssemblyAISpeechToText,
   GetAssemblyAIDefaultOptions,
@@ -109,66 +109,55 @@ export const GetDefaultMicrophoneConfig = (
   return [...existing, ...newConfigs];
 };
 
-export const SpeechToTextConfigComponent: FC<{
-  config: ProviderConfig;
-  updateConfig: (config: Partial<ProviderConfig>) => void;
-}> = ({ config, updateConfig }) => {
-  switch (config?.provider) {
+export const SpeechToTextConfigComponent: FC<ProviderComponentProps> = ({
+  provider,
+  parameters,
+  onChangeParameter,
+}) => {
+  switch (provider) {
     case 'google':
     case 'google-cloud':
       return (
         <ConfigureGoogleSpeechToText
-          parameters={config.parameters}
-          onParameterChange={(params: Metadata[]) =>
-            updateConfig({ parameters: params })
-          }
+          parameters={parameters}
+          onParameterChange={onChangeParameter}
         />
       );
 
     case 'deepgram':
       return (
         <ConfigureDeepgramSpeechToText
-          parameters={config.parameters}
-          onParameterChange={(params: Metadata[]) =>
-            updateConfig({ parameters: params })
-          }
+          parameters={parameters}
+          onParameterChange={onChangeParameter}
         />
       );
     case 'openai':
       return (
         <ConfigureOpenAISpeechToText
-          parameters={config.parameters}
-          onParameterChange={(params: Metadata[]) =>
-            updateConfig({ parameters: params })
-          }
+          parameters={parameters}
+          onParameterChange={onChangeParameter}
         />
       );
     case 'azure':
     case 'azure-cloud':
       return (
         <ConfigureAzureSpeechToText
-          parameters={config.parameters}
-          onParameterChange={(params: Metadata[]) =>
-            updateConfig({ parameters: params })
-          }
+          parameters={parameters}
+          onParameterChange={onChangeParameter}
         />
       );
     case 'assemblyai':
       return (
         <ConfigureAssemblyAISpeechToText
-          parameters={config.parameters}
-          onParameterChange={(params: Metadata[]) =>
-            updateConfig({ parameters: params })
-          }
+          parameters={parameters}
+          onParameterChange={onChangeParameter}
         />
       );
     case 'cartesia':
       return (
         <ConfigureCartesiaSpeechToText
-          parameters={config.parameters}
-          onParameterChange={(params: Metadata[]) => {
-            updateConfig({ parameters: params });
-          }}
+          parameters={parameters}
+          onParameterChange={onChangeParameter}
         />
       );
     default:
