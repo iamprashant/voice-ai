@@ -95,13 +95,13 @@ export const NotificationSetting = () => {
 
   return (
     <form
-      className="pb-20  bg-light-background dark:bg-gray-900"
+      className="pb-20 bg-light-background dark:bg-gray-900 pt-4"
       onSubmit={handleSubmit(onSubmit)} // Use the onSubmit handler
     >
       {RAPIDA_SYSTEM_NOTIFICATION.map(notificationCategory => (
         <InputGroup
           title={notificationCategory.category}
-          className="bg-white dark:bg-gray-900"
+          className="bg-white dark:bg-gray-900 mt-0"
         >
           <div className="space-y-6 grid grid-cols-4 gap-4">
             {notificationCategory.items.map(item => (
