@@ -9,7 +9,7 @@ import { FC, useCallback, useContext, useEffect, useRef } from 'react';
 import { AssistantChatContext } from '@/hooks/use-assistant-chat';
 import { useBoolean } from 'ahooks';
 import { SectionLoader } from '@/app/components/loader/section-loader';
-import { ArrowDownToLine, RotateCw } from 'lucide-react';
+import { ArrowDownToLine, Clock, RotateCw, Zap } from 'lucide-react';
 import { IButton } from '@/app/components/form/button';
 import MarkdownPreview from '@uiw/react-markdown-preview';
 import { ActionableEmptyMessage } from '@/app/components/container/message/actionable-empty-message';
@@ -17,8 +17,16 @@ import { PageHeaderBlock } from '@/app/components/blocks/page-header-block';
 import { PageTitleBlock } from '@/app/components/blocks/page-title-block';
 import { PaginationButtonBlock } from '@/app/components/blocks/pagination-button-block';
 import { AudioPlayer } from '@/app/components/audio-player';
-import { getStatusMetric } from '@/utils/metadata';
+import {
+  getMetadataValueOrDefault,
+  getMetricValueOrDefault,
+  getStatusMetric,
+  getTimeTakenMetric,
+  getTotalTokenMetric,
+} from '@/utils/metadata';
 import { StatusIndicator } from '@/app/components/indicators/status';
+import { Pill } from '@/app/components/pill';
+import { toHumanReadableDateTime } from '@/utils/date';
 
 export const ConversationMessages: FC<{
   conversation: AssistantConversation;
@@ -147,23 +155,32 @@ export const ConversationMessages: FC<{
       {conversations.map((x, idx) => {
         return (
           <div
-            className="flex flex-col w-full  bg-white dark:bg-gray-900"
+            className="flex flex-col w-full  bg-white dark:bg-gray-900 relative "
             key={idx}
           >
             {x.getRequest() && (
-              <div className="flex items-center space-x-4 border-b-[0.5px] px-6 py-4 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 ">
+              <div className="flex items-start space-x-4 px-6 py-4  hover:bg-gray-50 dark:hover:bg-gray-900 border-b-[0.5px] dark:border-gray-800">
                 <div className="h-9 w-9 rounded-[2px] flex-shrink-0 bg-zinc-200/80 dark:bg-zinc-800/80 border-[0.5px] flex items-center justify-center dark:border-gray-700">
                   <span className="font-bold text-sm opacity-80">U</span>
                 </div>
-                <div className="text-md [&_:is([data-link],a:link,a:visited,a:hover,a:active)]:text-primary [&_:is([data-link],a:link,a:visited,a:hover,a:active):hover]:underline [&_:is(code,div[data-lang])]:font-mono [&_:is(code,div[data-lang])]:bg-overlay [&_:is(code,div[data-lang])]:rounded-[2px] [&_is:(code)]:p-0.5 [&_div[data-lang]]:p-2 [&_div[data-lang]]:overflow-auto [&_:is(p,ul,ol,dl,table,blockquote,div[data-lang],h4,h5,h6,hr):not(:first-child)]:mt-2 [&_:is(p,ul,ol,dl,table,blockquote,div[data-lang],h3,h4,h5,h6,hr):not(:last-child)]:mb-2 [&_:is(ul,ol)]:pl-5 [&_ul]:list-disc [&_ol]:list-decimal [&_ol>li>ol]:list-[lower-alpha] [&_ol>li>ol>li>ol]:list-[lower-roman] [&_ol>li>ol>li>ol>li>ol]:list-[list-decimal] [&_[data-user]]:text-primary [&_:is(strong,h1,h2,h3,h4,h5,h6)]:font-semibold [&_:is(h1)]:text-2xl [&_:is(h2)]:text-lg [&_:is(h3)]:text-md [&_h1:not(:first-child)]:mt-8 [&_h1:not(:last-child)]:mb-6 [&_h2:not(:first-child)]:mt-6 [&_h2:not(:last-child)]:mb-4 [&_h3:not(:first-child)]:mt-4 whitespace-pre-wrap break-words">
-                  {toContentText(x.getRequest()?.getContentsList())}
+                <div className="flex-1 min-w-0">
+                  <div className="text-base font-semibold mb-2 dark:text-gray-500 text-gray-600">
+                    User
+                  </div>
+                  <div className="text-md [&_:is([data-link],a:link,a:visited,a:hover,a:active)]:text-primary [&_:is([data-link],a:link,a:visited,a:hover,a:active):hover]:underline [&_:is(code,div[data-lang])]:font-mono [&_:is(code,div[data-lang])]:bg-overlay [&_:is(code,div[data-lang])]:rounded-[2px] [&_is:(code)]:p-0.5 [&_div[data-lang]]:p-2 [&_div[data-lang]]:overflow-auto [&_:is(p,ul,ol,dl,table,blockquote,div[data-lang],h4,h5,h6,hr):not(:first-child)]:mt-2 [&_:is(p,ul,ol,dl,table,blockquote,div[data-lang],h3,h4,h5,h6,hr):not(:last-child)]:mb-2 [&_:is(ul,ol)]:pl-5 [&_ul]:list-disc [&_ol]:list-decimal [&_ol>li>ol]:list-[lower-alpha] [&_ol>li>ol>li>ol]:list-[lower-roman] [&_ol>li>ol>li>ol>li>ol]:list-[list-decimal] [&_[data-user]]:text-primary [&_:is(strong,h1,h2,h3,h4,h5,h6)]:font-semibold [&_:is(h1)]:text-2xl [&_:is(h2)]:text-lg [&_:is(h3)]:text-md [&_h1:not(:first-child)]:mt-8 [&_h1:not(:last-child)]:mb-6 [&_h2:not(:first-child)]:mt-6 [&_h2:not(:last-child)]:mb-4 [&_h3:not(:first-child)]:mt-4 whitespace-pre-wrap break-words">
+                    {toContentText(x.getRequest()?.getContentsList())}
+                  </div>
                 </div>
               </div>
             )}
+
             {x.getResponse() && x.getStatus() !== 'FAILED' && (
-              <div className="flex items-center space-x-4 border-b-[0.5px] px-6 py-4 dark:border-gray-800 relative overflow-hidden hover:bg-gray-50 dark:hover:bg-gray-900">
+              <div className="flex items-start space-x-4 px-6 py-4 overflow-hidden hover:bg-gray-50 dark:hover:bg-gray-900 relative">
                 <RapidaIcon className="h-8 w-8 text-blue-600 shrink-0" />
                 <div className="flex-1 min-w-0">
+                  <div className="text-base font-semibold mb-2 dark:text-gray-500 text-gray-600">
+                    Rapida
+                  </div>
                   <MarkdownPreview
                     source={toContentText(x.getResponse()?.getContentsList())}
                     className="!text-gray-700 dark:!text-gray-400 prose prose-base break-words !max-w-none prose-img:rounded-xl prose-headings:underline prose-a:text-blue-600 prose-strong:font-bold prose-headings:font-bold dark:prose-strong:text-white dark:prose-headings:text-white"
@@ -172,6 +189,33 @@ export const ConversationMessages: FC<{
                 </div>
               </div>
             )}
+            <div className="flex justify-end items-center ">
+              <div className="mr-2 text-xs/4 ">
+                {toHumanReadableDateTime(x.getCreateddate()!)}
+              </div>
+              <div className="text-xs/4 flex items-center divide-x  border-[0.5px] dark:border-gray-800 dark:text-gray-500 text-gray-600 border-collapse">
+                <div className=" px-2 py-1 flex items-center space-x-1.5">
+                  <Zap className="w-3 h-3 text-emerald-400" />
+                  <span>{getTotalTokenMetric(x.getMetricsList())} tokens</span>
+                </div>
+                <div className="text-xs/4 px-2 py-1 flex items-center space-x-1.5">
+                  <Clock className="w-3 h-3 text-purple-400" />{' '}
+                  <span>{getTotalTokenMetric(x.getMetricsList())} ms</span>
+                </div>
+                <div className="text-xs/4 px-2 py-1">
+                  <span className="capitalize">
+                    {getMetadataValueOrDefault(
+                      x.getMetadataList(),
+                      'mode',
+                      'text',
+                    )}
+                  </span>
+                </div>
+                <div className="text-xs/4 px-2 py-1">
+                  <span>{getStatusMetric(x.getMetricsList())}</span>
+                </div>
+              </div>
+            </div>
           </div>
         );
       })}
