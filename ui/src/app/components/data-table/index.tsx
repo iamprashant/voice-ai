@@ -1,4 +1,5 @@
 import { TableCell } from '@/app/components/base/tables/table-cell';
+import { TableRow } from '@/app/components/base/tables/table-row';
 import {
   useState,
   useCallback,
@@ -67,7 +68,7 @@ export const ScrollableResizableTable: FC<ScrollableResizableTableProps> = ({
       >
         <table className="w-full border-collapse bg-white dark:bg-gray-900">
           <thead className="">
-            <tr className="bg-gray-100 dark:bg-gray-950 border-y dark:border-gray-800">
+            <TableRow className="bg-gray-100 dark:bg-gray-950">
               {isActionable && (
                 <TableCell className="w-8 h-8 ">
                   <div className="w-8 h-8 flex justify-center items-center">
@@ -122,7 +123,7 @@ export const ScrollableResizableTable: FC<ScrollableResizableTableProps> = ({
               ))}
 
               {isOptionable && <TableCell className="w-10 h-10"></TableCell>}
-            </tr>
+            </TableRow>
           </thead>
           <tbody>{children}</tbody>
         </table>

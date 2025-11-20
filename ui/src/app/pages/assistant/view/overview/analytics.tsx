@@ -21,24 +21,12 @@ import {
   ValueType,
 } from 'recharts/types/component/DefaultTooltipContent';
 import { ContentType } from 'recharts/types/component/Tooltip';
-import {
-  Activity,
-  BarChart3,
-  BookOpen,
-  Cpu,
-  Globe2,
-  PhoneCall,
-  Waves,
-  Webhook,
-} from 'lucide-react';
-
 interface AnalyticsProps {
   data: AssistantConversationMessage[];
 }
 
 export const Analytics = ({ data }: AnalyticsProps) => {
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
-  // Group messages by conversation
   const conversationsMap = data.reduce((acc, message) => {
     const conversationId = message.getAssistantconversationid();
     if (!acc.has(conversationId)) {
@@ -185,7 +173,7 @@ export const Analytics = ({ data }: AnalyticsProps) => {
   return (
     <div className="w-full">
       {/* <section className=""> */}
-      <section className="bg-white dark:bg-gray-950 border-y relative grid grid-cols-1  md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 ">
+      <section className="bg-white dark:bg-gray-950 border-b relative grid grid-cols-1  md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 ">
         {metricsData.map((metric, index) => (
           <div
             key={index}

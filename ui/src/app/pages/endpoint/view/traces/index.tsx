@@ -99,7 +99,7 @@ export const EndpointTraces: FC<{ currentEndpoint: Endpoint }> = props => {
   return (
     <div className="flex flex-1 flex-col">
       <Helmet title="Endpoint Logs" />
-      <BluredWrapper className="p-0">
+      <BluredWrapper className="p-0 border-t-0">
         <div className="flex justify-center items-center">
           <SearchIconInput className="bg-light-background" />
           <Datepicker
@@ -131,6 +131,7 @@ export const EndpointTraces: FC<{ currentEndpoint: Endpoint }> = props => {
 
       {endpointLogs && endpointLogs.length > 0 ? (
         <ScrollableResizableTable
+          className="border-t-0"
           isExpandable={true}
           isActionable={false}
           clms={columns.filter(x => {
