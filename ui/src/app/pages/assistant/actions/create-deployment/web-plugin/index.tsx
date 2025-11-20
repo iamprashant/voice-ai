@@ -9,7 +9,6 @@ import { useGlobalNavigation } from '@/hooks/use-global-navigator';
 import {
   AssistantWebpluginDeployment,
   ConnectionConfig,
-  Content,
   CreateAssistantDeploymentRequest,
   DeploymentAudioProvider,
   GetAssistantDeploymentRequest,
@@ -18,10 +17,6 @@ import {
 import { GetAssistantWebpluginDeployment } from '@rapidaai/react';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { CreateAssistantWebpluginDeployment } from '@rapidaai/react';
-import {
-  ConfigurePersona,
-  PersonaConfig,
-} from '@/app/pages/assistant/actions/create-deployment/web-plugin/configure-persona';
 import {
   ConfigureExperience,
   WebWidgetExperienceConfig,
@@ -121,12 +116,6 @@ const ConfigureAssistantWebDeployment: FC<{ assistantId: string }> = ({
     ),
   });
 
-  /**
-   * persona and experience
-   */
-  const [personaConfig, setPersonaConfig] = useState<PersonaConfig>({
-    name: '',
-  });
   const [experienceConfig, setExperienceConfig] =
     useState<WebWidgetExperienceConfig>({
       greeting: undefined,
@@ -168,12 +157,6 @@ const ConfigureAssistantWebDeployment: FC<{ assistantId: string }> = ({
             idealTimeout: deployment?.getIdealtimeout(),
             idealMessage: deployment?.getIdealtimeoutmessage(),
             maxCallDuration: deployment?.getMaxsessionduration(),
-          });
-
-          // Persona configuration
-          setPersonaConfig({
-            name: deployment?.getName() || '',
-            avatarUrl: deployment?.getUrl(),
           });
 
           // Audio providers configuration
@@ -221,12 +204,6 @@ const ConfigureAssistantWebDeployment: FC<{ assistantId: string }> = ({
     showLoader('block');
     // setting error message to be empty when there is no data to submit
     setErrorMessage('');
-
-    if (!personaConfig.avatar?.file && !personaConfig.avatarUrl) {
-      hideLoader();
-      setErrorMessage('Please provide a valid icon for the web plugin.');
-      return;
-    }
     // validation
 
     if (!experienceConfig?.greeting) {
@@ -279,7 +256,6 @@ const ConfigureAssistantWebDeployment: FC<{ assistantId: string }> = ({
     const req = new CreateAssistantDeploymentRequest();
     const webDeployment = new AssistantWebpluginDeployment();
     webDeployment.setAssistantid(assistantId);
-    webDeployment.setName(personaConfig.name);
     if (experienceConfig.greeting)
       webDeployment.setGreeting(experienceConfig.greeting);
     if (experienceConfig?.messageOnError)
@@ -311,15 +287,6 @@ const ConfigureAssistantWebDeployment: FC<{ assistantId: string }> = ({
       webDeployment.setOutputaudio(outputAudioProvider);
     }
 
-    if (personaConfig.avatar && personaConfig.avatar.file) {
-      const cntn = new Content();
-      cntn.setContent(personaConfig.avatar.file);
-      cntn.setName(personaConfig.avatar.name);
-      cntn.setContenttype(personaConfig.avatar.type);
-      webDeployment.setRaw(cntn);
-    } else if (personaConfig.avatarUrl) {
-      webDeployment.setUrl(personaConfig.avatarUrl);
-    }
     req.setPlugin(webDeployment);
     CreateAssistantWebpluginDeployment(
       connectionConfig,
@@ -375,11 +342,6 @@ const ConfigureAssistantWebDeployment: FC<{ assistantId: string }> = ({
         modalOpen={showInstruction}
       />
       <div className="overflow-auto flex flex-col flex-1 pb-20">
-        <ConfigurePersona
-          onChangePersona={setPersonaConfig}
-          personaConfig={personaConfig}
-        />
-
         <ConfigureExperience
           experienceConfig={experienceConfig}
           setExperienceConfig={setExperienceConfig}

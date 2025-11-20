@@ -29,11 +29,6 @@ func (deploymentApi *assistantDeploymentGrpcApi) GetAssistantWebpluginDeployment
 	if err != nil {
 		deploymentApi.logger.Warnf("unable to cast the web plugin deployment model to the response object")
 	}
-
-	out.Icon = &lexatic_backend.AssistantWebpluginDeployment_Url{
-		Url: webpluginDeployment.Icon,
-	}
-	deploymentApi.logger.Debugf("responding %+v", out)
 	return &lexatic_backend.GetAssistantWebpluginDeploymentResponse{
 		Data:    out,
 		Success: true,

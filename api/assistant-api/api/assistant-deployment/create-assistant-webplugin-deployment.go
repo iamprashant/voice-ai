@@ -26,27 +26,10 @@ func (deploymentApi *assistantDeploymentApi) CreateAssistantWebpluginDeployment(
 			"Please check and provide valid deployment request for webplugin.",
 		)
 	}
-	iconPath := "https://cdn-01.rapida.ai/partners/rapida.png"
-	switch icon := deployment.GetPlugin().GetIcon().(type) {
-	case *assistant_api.AssistantWebpluginDeployment_Raw:
-		so := deploymentApi.storage.Store(ctx,
-			icon.Raw.GetName(),
-			icon.Raw.GetContent(),
-		)
-		if so.Error != nil {
-			deploymentApi.logger.Errorf("error while uploading the image to cdn %+v", so.Error)
-			break
-		}
-		iconPath = so.CompletePath
-	case *assistant_api.AssistantWebpluginDeployment_Url:
-		iconPath = icon.Url
-		break
-	}
 
 	wpDeployment, err := deploymentApi.deploymentService.CreateWebPluginDeployment(ctx,
 		iAuth, deployment.GetPlugin().GetAssistantId(),
 		deployment.GetPlugin().GetName(),
-		iconPath,
 		deployment.GetPlugin().Greeting,
 		deployment.GetPlugin().Mistake,
 		&deployment.GetPlugin().IdealTimeout,
