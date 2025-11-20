@@ -8,7 +8,6 @@ import { KnowledgeDocument } from '@rapidaai/react';
 import { useKnowledgeDocumentPageStore } from '@/hooks/use-knowledge-document-page-store';
 import { TablePagination } from '@/app/components/base/tables/table-pagination';
 import { SingleDocument } from '@/app/pages/knowledge-base/view/documents/single-document';
-import { useNavigate } from 'react-router-dom';
 import { Knowledge } from '@rapidaai/react';
 import { Spinner } from '@/app/components/loader/spinner';
 import { ActionableEmptyMessage } from '@/app/components/container/message/actionable-empty-message';
@@ -19,7 +18,6 @@ export function Documents(props: {
   onAddKnowledgeDocument: () => void;
 }) {
   const [userId, token, projectId] = useCredential();
-  const navigator = useNavigate();
   const rapidaContext = useRapidaStore();
   const knowledgeDocumentAction = useKnowledgeDocumentPageStore();
 
