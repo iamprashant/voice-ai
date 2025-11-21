@@ -102,7 +102,7 @@ export const ConfigureAPIRequest: React.FC<{
         </div>
       </InputGroup>
       <InputGroup title="Tool Definition">
-        <YellowNoticeBlock className="flex items-center">
+        <YellowNoticeBlock className="flex items-center -mx-6 -mt-6">
           <Info className="shrink-0 w-4 h-4" />
           <div className="ms-3 text-sm font-medium">
             Know more about knowledge tool definiation that can be supported by
