@@ -23,7 +23,7 @@ export const InputCheckbox = forwardRef<HTMLInputElement, InputCheckboxProps>(
           className={cn(
             'outline-solid outline-[1.5px] outline-transparent',
             'focus-within:outline-blue-600 focus:outline-blue-600 outline-offset-[-1.5px]',
-            'border-[0.5px] border-gray-400 dark:border-gray-600',
+            'border-[0.5px] border-gray-400 dark:border-gray-700',
             'dark:focus:border-blue-600 focus:border-blue-600',
             'dark:hover:border-blue-600 hover:border-blue-600',
             'transition-all duration-200 ease-in-out',

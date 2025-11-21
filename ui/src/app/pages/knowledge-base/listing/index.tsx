@@ -123,19 +123,23 @@ export function KnowledgePage() {
           })}
         </div>
       ) : knowledgeActions.criteria.length > 0 ? (
-        <ActionableEmptyMessage
-          title="No Knowledge"
-          subtitle="There are no knowledges matching with your criteria to display"
-          action="Create new knowledge"
-          onActionClick={goToCreateKnowledge}
-        />
+        <div className="flex flex-col h-full flex-1 items-center justify-center">
+          <ActionableEmptyMessage
+            title="No Knowledge"
+            subtitle="There are no knowledges matching with your criteria to display"
+            action="Create new knowledge"
+            onActionClick={goToCreateKnowledge}
+          />
+        </div>
       ) : !loading ? (
-        <ActionableEmptyMessage
-          title="No Knowledge"
-          subtitle="There are no knowledges to display"
-          action="Create new knowledge"
-          onActionClick={goToCreateKnowledge}
-        />
+        <div className="flex flex-col h-full flex-1 items-center justify-center">
+          <ActionableEmptyMessage
+            title="No Knowledge"
+            subtitle="There are no knowledges to display"
+            action="Create new knowledge"
+            onActionClick={goToCreateKnowledge}
+          />
+        </div>
       ) : (
         <div className="h-full flex justify-center items-center">
           <Spinner size="md" />

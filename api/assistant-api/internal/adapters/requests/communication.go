@@ -3,9 +3,9 @@ package internal_adapter_requests
 import (
 	"context"
 
-	internal_assistant_gorm "github.com/rapidaai/api/assistant-api/internal/gorm/assistants"
-	internal_conversation_gorm "github.com/rapidaai/api/assistant-api/internal/gorm/conversations"
-	internal_knowledge_gorm "github.com/rapidaai/api/assistant-api/internal/gorm/knowledges"
+	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
+	internal_conversation_gorm "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
+	internal_knowledge_gorm "github.com/rapidaai/api/assistant-api/internal/entity/knowledges"
 	internal_adapter_tracing "github.com/rapidaai/api/assistant-api/internal/telemetry"
 	endpoint_client "github.com/rapidaai/pkg/clients/endpoint"
 	integration_client "github.com/rapidaai/pkg/clients/integration"
@@ -89,7 +89,7 @@ type Communication interface {
 	Tracer() internal_adapter_tracing.VoiceAgentTracer
 
 	// current assistant
-	Assistant() *internal_assistant_gorm.Assistant
+	Assistant() *internal_assistant_entity.Assistant
 
 	// current conversation
 	Conversation() *internal_conversation_gorm.AssistantConversation

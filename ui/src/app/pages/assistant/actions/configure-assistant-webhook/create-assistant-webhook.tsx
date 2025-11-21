@@ -5,6 +5,7 @@ import {
   IBlueBGArrowButton,
   IBlueBorderButton,
   ICancelButton,
+  IRedBorderButton,
 } from '@/app/components/form/button';
 import { InputGroup } from '@/app/components/input-group';
 import { cn } from '@/utils';
@@ -277,7 +278,7 @@ export const CreateAssistantWebhook: FC<{ assistantId: string }> = ({
               {headers.map((header, index) => (
                 <div
                   key={index}
-                  className="grid grid-cols-2 border-b border-gray-400 dark:border-gray-600"
+                  className="grid grid-cols-2 border-b border-gray-300 dark:border-gray-700"
                 >
                   <div className="flex col-span-1 items-center border-r">
                     <Input
@@ -296,15 +297,15 @@ export const CreateAssistantWebhook: FC<{ assistantId: string }> = ({
                       placeholder="Value"
                       className=" w-full border-none"
                     />
-                    <ICancelButton
-                      className="border-none outline-hidden dark:bg-gray-950"
+                    <IRedBorderButton
+                      className="border-none outline-hidden dark:bg-gray-950 h-10"
                       onClick={() =>
                         setHeaders(headers.filter((_, i) => i !== index))
                       }
                       type="button"
                     >
                       <Trash2 className="w-4 h-4" strokeWidth={1.5} />
-                    </ICancelButton>
+                    </IRedBorderButton>
                   </div>
                 </div>
               ))}
@@ -323,7 +324,7 @@ export const CreateAssistantWebhook: FC<{ assistantId: string }> = ({
               {parameters.map((params, index) => (
                 <div
                   key={index}
-                  className="grid grid-cols-2 border-b border-gray-400 dark:border-gray-600"
+                  className="grid grid-cols-2 border-b border-gray-300 dark:border-gray-700"
                 >
                   <div className="flex col-span-1 items-center">
                     <Select
@@ -359,7 +360,7 @@ export const CreateAssistantWebhook: FC<{ assistantId: string }> = ({
                       value={params.key}
                       onChange={newKey => updateParameter(index, 'key', newKey)}
                     />
-                    <div className=" dark:bg-gray-950 bg-white h-full flex items-center justify-center">
+                    <div className="dark:bg-gray-950 bg-light-background h-full flex items-center justify-center">
                       <ArrowRight strokeWidth={1.5} className="w-4 h-4" />
                     </div>
                   </div>
@@ -372,15 +373,15 @@ export const CreateAssistantWebhook: FC<{ assistantId: string }> = ({
                       placeholder="Value"
                       className=" w-full border-none"
                     />
-                    <ICancelButton
-                      className="border-none outline-hidden "
+                    <IRedBorderButton
+                      className="border-none outline-hidden h-10"
                       onClick={() =>
                         setParameters(parameters.filter((_, i) => i !== index))
                       }
                       type="button"
                     >
                       <Trash2 className="w-4 h-4" strokeWidth={1.5} />
-                    </ICancelButton>
+                    </IRedBorderButton>
                   </div>
                 </div>
               ))}

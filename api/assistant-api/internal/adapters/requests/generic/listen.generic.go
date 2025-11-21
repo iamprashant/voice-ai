@@ -9,9 +9,9 @@ import (
 	"time"
 
 	internal_analyzers "github.com/rapidaai/api/assistant-api/internal/analyzers"
+	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
 	internal_analyzer_factories "github.com/rapidaai/api/assistant-api/internal/factories/analyzers"
 	internal_adapter_transformer_factories "github.com/rapidaai/api/assistant-api/internal/factories/transformers"
-	internal_assistant_gorm "github.com/rapidaai/api/assistant-api/internal/gorm/assistants"
 	internal_telemetry "github.com/rapidaai/api/assistant-api/internal/telemetry"
 	internal_transformers "github.com/rapidaai/api/assistant-api/internal/transformers"
 	"github.com/rapidaai/pkg/utils"
@@ -87,7 +87,7 @@ func (lis *GenericRequestor) listenTranscript(
 }
 
 func (lis *GenericRequestor) initSpeechToTextTransformer(
-	transformerConfig *internal_assistant_gorm.AssistantDeploymentAudio) error {
+	transformerConfig *internal_assistant_entity.AssistantDeploymentAudio) error {
 	start := time.Now()
 	atransformer, err := internal_adapter_transformer_factories.
 		GetSpeechToTextTransformer(
@@ -229,7 +229,7 @@ func (lis *GenericRequestor) initTextUtteranceEndAnalyzer(
 
 func (lis *GenericRequestor) initVoiceUtteranceStartAnalyzer(
 	ctx context.Context,
-	transformerConfig *internal_assistant_gorm.AssistantDeploymentAudio,
+	transformerConfig *internal_assistant_entity.AssistantDeploymentAudio,
 ) error {
 	start := time.Now()
 	opts := &internal_analyzers.VoiceAnalyzerOptions{

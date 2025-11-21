@@ -6,14 +6,14 @@ import (
 	"strings"
 
 	internal_adapter_request_customizers "github.com/rapidaai/api/assistant-api/internal/adapters/requests/customizers"
-	internal_assistant_gorm "github.com/rapidaai/api/assistant-api/internal/gorm/assistants"
+	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
 	lexatic_backend "github.com/rapidaai/protos"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func (gr *GenericRequestor) GetBehavior() (*internal_assistant_gorm.AssistantDeploymentBehavior, error) {
+func (gr *GenericRequestor) GetBehavior() (*internal_assistant_entity.AssistantDeploymentBehavior, error) {
 	switch gr.source {
 	case utils.PhoneCall:
 		if a := gr.assistant; a != nil && a.AssistantPhoneDeployment != nil {
@@ -37,7 +37,6 @@ func (gr *GenericRequestor) GetBehavior() (*internal_assistant_gorm.AssistantDep
 		}
 	}
 	return nil, errors.New("deployment is not enabled for source")
-
 }
 
 // start Mocked message

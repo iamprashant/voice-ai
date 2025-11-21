@@ -1,5 +1,5 @@
 import React, { FC, useCallback, useEffect, useState } from 'react';
-import { ConnectionConfig, Provider } from '@rapidaai/react';
+import { ConnectionConfig } from '@rapidaai/react';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { DeleteProviderKey } from '@rapidaai/react';
 import { GetCredentialResponse, VaultCredential } from '@rapidaai/react';
@@ -23,7 +23,7 @@ import { ModalFitHeightBlock } from '@/app/components/blocks/modal-fit-height-bl
 import { ModalHeader } from '@/app/components/base/modal/modal-header';
 import { ModalTitleBlock } from '@/app/components/blocks/modal-title-block';
 import { connectionConfig } from '@/configs';
-import { RapidaProvider } from '@/app/components/providers';
+import { RapidaProvider } from '@/providers';
 
 /**
  * creation provider key dialog props that gives ability for opening and closing modal props
@@ -68,7 +68,7 @@ export const ViewProviderCredentialDialog: FC<
   useEffect(() => {
     setCurrentProviderCredentials(
       providerCredentials.filter(
-        y => y.getVaulttypeid() === props.currentProvider.id,
+        y => y.getProvider() === props.currentProvider.code,
       ),
     );
   }, [providerCredentials, props.currentProvider]);

@@ -267,7 +267,7 @@ export const UpdateAssistantAnalysis: FC<{ assistantId: string }> = ({
               {parameters.map((param, index) => (
                 <div
                   key={index}
-                  className="grid grid-cols-2 border-b border-gray-400 dark:border-gray-600"
+                  className="grid grid-cols-2 border-b border-gray-300 dark:border-gray-700"
                 >
                   <div className="flex col-span-1 items-center">
                     <Select
@@ -290,7 +290,7 @@ export const UpdateAssistantAnalysis: FC<{ assistantId: string }> = ({
                       value={param.key}
                       onChange={newKey => updateParameter(index, 'key', newKey)}
                     />
-                    <div className="bg-white dark:bg-gray-950 h-full flex items-center justify-center">
+                    <div className="bg-light-background dark:bg-gray-950 h-full flex items-center justify-center">
                       <ArrowRight strokeWidth={1.5} className="w-4 h-4" />
                     </div>
                   </div>

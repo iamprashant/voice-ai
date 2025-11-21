@@ -28,7 +28,6 @@ type googleIntegrationGRPCApi struct {
 func (googAi *googleIntegrationGRPCApi) Embedding(c context.Context, irRequest *integration_api.EmbeddingRequest) (*integration_api.EmbeddingResponse, error) {
 	return googAi.integrationApi.Embedding(
 		c, irRequest,
-
 		"GOOGLE",
 		internal_google_callers.NewEmbeddingCaller(googAi.logger, irRequest.GetCredential()),
 	)
@@ -65,7 +64,7 @@ func (googleGRPc *googleIntegrationGRPCApi) StreamChat(irRequest *integration_ap
 		irRequest,
 
 		stream.Context(),
-		"GOOGLE",
+		"GEMINI",
 		internal_google_callers.NewLargeLanguageCaller(googleGRPc.logger, irRequest.GetCredential()),
 		stream.Send,
 	)
@@ -75,7 +74,7 @@ func (googleGRPc *googleIntegrationGRPCApi) StreamChat(irRequest *integration_ap
 func (googAi *googleIntegrationGRPCApi) Chat(c context.Context, irRequest *integration_api.ChatRequest) (*integration_api.ChatResponse, error) {
 	return googAi.integrationApi.Chat(
 		c, irRequest,
-		"GOOGLE",
+		"GEMINI",
 		internal_google_callers.NewLargeLanguageCaller(googAi.logger, irRequest.GetCredential()),
 	)
 }

@@ -1,0 +1,118 @@
+[
+    {
+        "language_id": "en",
+        "name": "English"
+    },
+    {
+        "language_id": "ja",
+        "name": "Japanese"
+    },
+    {
+        "language_id": "zh",
+        "name": "Chinese"
+    },
+    {
+        "language_id": "de",
+        "name": "German"
+    },
+    {
+        "language_id": "hi",
+        "name": "Hindi"
+    },
+    {
+        "language_id": "fr",
+        "name": "French"
+    },
+    {
+        "language_id": "ko",
+        "name": "Korean"
+    },
+    {
+        "language_id": "pt",
+        "name": "Portuguese"
+    },
+    {
+        "language_id": "it",
+        "name": "Italian"
+    },
+    {
+        "language_id": "es",
+        "name": "Spanish"
+    },
+    {
+        "language_id": "id",
+        "name": "Indonesian"
+    },
+    {
+        "language_id": "nl",
+        "name": "Dutch"
+    },
+    {
+        "language_id": "tr",
+        "name": "Turkish"
+    },
+    {
+        "language_id": "fil",
+        "name": "Filipino"
+    },
+    {
+        "language_id": "pl",
+        "name": "Polish"
+    },
+    {
+        "language_id": "sv",
+        "name": "Swedish"
+    },
+    {
+        "language_id": "bg",
+        "name": "Bulgarian"
+    },
+    {
+        "language_id": "ro",
+        "name": "Romanian"
+    },
+    {
+        "language_id": "ar",
+        "name": "Arabic"
+    },
+    {
+        "language_id": "cs",
+        "name": "Czech"
+    },
+    {
+        "language_id": "el",
+        "name": "Greek"
+    },
+    {
+        "language_id": "fi",
+        "name": "Finnish"
+    },
+    {
+        "language_id": "hr",
+        "name": "Croatian"
+    },
+    {
+        "language_id": "ms",
+        "name": "Malay"
+    },
+    {
+        "language_id": "sk",
+        "name": "Slovak"
+    },
+    {
+        "language_id": "da",
+        "name": "Danish"
+    },
+    {
+        "language_id": "ta",
+        "name": "Tamil"
+    },
+    {
+        "language_id": "uk",
+        "name": "Ukrainian"
+    },
+    {
+        "language_id": "ru",
+        "name": "Russian"
+    }
+]

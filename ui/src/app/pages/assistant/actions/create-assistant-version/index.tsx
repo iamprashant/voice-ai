@@ -1,6 +1,6 @@
 import { FC, useEffect, useState } from 'react';
 import { useRapidaStore } from '@/hooks';
-import { useCredential } from '@/hooks/use-credential';
+import { useCurrentCredential } from '@/hooks/use-credential';
 import { useParams } from 'react-router-dom';
 import { Helmet } from '@/app/components/helmet';
 import {
@@ -18,12 +18,13 @@ import {
   GetAssistant,
   CreateAssistantProviderRequest,
   AssistantDefinition,
+  Metadata,
+  ConnectionConfig,
 } from '@rapidaai/react';
 import { FormLabel } from '@/app/components/form-label';
 import { Textarea } from '@/app/components/form/textarea';
 import { ConfigPrompt } from '@/app/components/configuration/config-prompt';
 import { ErrorContainer } from '@/app/components/error-container';
-import { ProviderConfig } from '@/app/components/providers';
 import { ChatCompletePrompt, Prompt } from '@/utils/prompt';
 import {
   GetDefaultTextProviderConfigIfInvalid,
@@ -35,10 +36,14 @@ import { connectionConfig } from '@/configs';
 import { YellowNoticeBlock } from '@/app/components/container/message/notice-block';
 import { ExternalLink, Info } from 'lucide-react';
 import toast from 'react-hot-toast/headless';
+
+/**
+ *
+ * @returns
+ */
 export function CreateVersionAssistantPage() {
   const { assistantId } = useParams();
   const { goToAssistantListing } = useGlobalNavigation();
-
   if (!assistantId)
     return (
       <div className="flex flex-1">
@@ -51,36 +56,46 @@ export function CreateVersionAssistantPage() {
         />
       </div>
     );
-
   return <CreateNewVersion assistantId={assistantId!} />;
 }
+
 /**
  *
  * @param props
  * @returns
  */
 const CreateNewVersion: FC<{ assistantId: string }> = ({ assistantId }) => {
-  const [userId, token, projectId] = useCredential();
+  /**
+   *
+   */
+  const { authId, token, projectId } = useCurrentCredential();
+  /**
+   * Multistep form stage
+   */
   const [activeTab, setActiveTab] = useState('change-assistant');
   const navigator = useGlobalNavigation();
+  /**
+   * error message
+   */
   const [errorMessage, setErrorMessage] = useState('');
+  /**
+   * confirmation dialog
+   */
   const { showDialog, ConfirmDialogComponent } = useConfirmDialog({});
-  const [selectedModel, setSelectedModel] = useState<ProviderConfig>({
-    providerId: '198796716894742122',
+  /**
+   * selected model and parameters
+   */
+  const [selectedModel, setSelectedModel] = useState<{
+    provider: string;
+    parameters: Metadata[];
+  }>({
     provider: 'azure',
     parameters: GetDefaultTextProviderConfigIfInvalid('azure', []),
   });
-  const onChangeProvider = (providerId: string, providerName: string) => {
-    setSelectedModel({
-      providerId: providerId,
-      provider: providerName,
-      parameters: GetDefaultTextProviderConfigIfInvalid(
-        providerName,
-        selectedModel.parameters,
-      ),
-    });
-  };
 
+  /**
+   * prompt template
+   */
   const [template, setTemplate] = useState<{
     prompt: { role: string; content: string }[];
     variables: { name: string; type: string; defaultvalue: string }[];
@@ -89,11 +104,31 @@ const CreateNewVersion: FC<{ assistantId: string }> = ({ assistantId }) => {
     variables: [],
   });
 
-  const currentDate = new Date().toLocaleDateString();
+  /**
+   * current data curernt used as commit message
+   */
   const [versionMessage, setVersionMessage] = useState(
-    `Changed on ${currentDate}`,
+    `Changed on ${new Date().toLocaleDateString()}`,
   );
+
+  /**
+   * global loader
+   */
   const { loading, showLoader, hideLoader } = useRapidaStore();
+
+  const onChangeProvider = (providerName: string) => {
+    setSelectedModel({
+      provider: providerName,
+      parameters: GetDefaultTextProviderConfigIfInvalid(
+        providerName,
+        selectedModel.parameters,
+      ),
+    });
+  };
+
+  const onChangeProviderParameter = (parameters: Metadata[]) => {
+    setSelectedModel({ ...selectedModel, parameters });
+  };
 
   const validateInstruction = (): boolean => {
     setErrorMessage('');
@@ -136,17 +171,20 @@ const CreateNewVersion: FC<{ assistantId: string }> = ({ assistantId }) => {
       new CreateAssistantProviderRequest.CreateAssistantProviderModel();
     model.setAssistantmodeloptionsList(selectedModel.parameters);
     model.setTemplate(ChatCompletePrompt(template));
-
-    model.setModelproviderid(selectedModel.providerId);
     model.setModelprovidername(selectedModel.provider);
     request.setModel(model);
     request.setAssistantid(assistantId);
     request.setDescription(versionMessage);
-    CreateAssistantProvider(connectionConfig, request, {
-      authorization: token,
-      'x-auth-id': userId,
-      'x-project-id': projectId,
-    })
+    //
+    CreateAssistantProvider(
+      connectionConfig,
+      request,
+      ConnectionConfig.WithDebugger({
+        authorization: token,
+        userId: authId,
+        projectId: projectId,
+      }),
+    )
       .then((car: GetAssistantProviderResponse) => {
         hideLoader();
         if (car?.getSuccess()) {
@@ -180,11 +218,15 @@ const CreateNewVersion: FC<{ assistantId: string }> = ({ assistantId }) => {
     const assistantDef = new AssistantDefinition();
     assistantDef.setAssistantid(assistantId);
     request.setAssistantdefinition(assistantDef);
-    GetAssistant(connectionConfig, request, {
-      authorization: token,
-      'x-auth-id': userId,
-      'x-project-id': projectId,
-    })
+    GetAssistant(
+      connectionConfig,
+      request,
+      ConnectionConfig.WithDebugger({
+        authorization: token,
+        userId: authId,
+        projectId: projectId,
+      }),
+    )
       .then(response => {
         hideLoader();
         if (response?.getSuccess()) {
@@ -199,7 +241,6 @@ const CreateNewVersion: FC<{ assistantId: string }> = ({ assistantId }) => {
                 assistantProvider.getAssistantmodeloptionsList(),
               ),
               provider: assistantProvider.getModelprovidername(),
-              providerId: assistantProvider.getModelproviderid(),
             });
           }
           return;
@@ -277,9 +318,10 @@ const CreateNewVersion: FC<{ assistantId: string }> = ({ assistantId }) => {
                 </YellowNoticeBlock>
                 <div className="space-y-6 px-8 max-w-4xl">
                   <TextProvider
-                    config={selectedModel}
-                    onChangeConfig={setSelectedModel}
+                    onChangeParameter={onChangeProviderParameter}
                     onChangeProvider={onChangeProvider}
+                    parameters={selectedModel.parameters}
+                    provider={selectedModel.provider}
                   />
 
                   <ConfigPrompt

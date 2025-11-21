@@ -17,7 +17,7 @@ export const ConditionalInputGroup: FC<ConditionalInputGroupProps> = ({
   return (
     <section
       {...props}
-      className={cn('border-t last:border-b', props.className)}
+      className={cn('border m-4 rounded-[2px]', props.className)}
     >
       <div
         onClick={() => {
@@ -26,25 +26,26 @@ export const ConditionalInputGroup: FC<ConditionalInputGroupProps> = ({
         className={cn(
           'outline-solid outline-[1.5px] outline-transparent',
           'focus-within:outline-blue-600 focus:outline-blue-600 outline-offset-[-1.5px]',
-          'px-4 group flex justify-between w-full items-center py-3 text-left text-base leading-tight hover:bg-white dark:hover:bg-gray-950',
+          !enable && 'rounded-b-[2px] !border-b-0',
+          'px-4 group flex justify-between w-full items-center py-3 text-left rounded-t-[2px] border-b hover:bg-white dark:hover:bg-gray-950',
         )}
       >
         <div className="mr-3.5 flex items-center">
-          <div className="flex-none font-medium">{props.title}</div>
+          <div className="flex-none font-semibold text-sm/6">{props.title}</div>
         </div>
         <Switch
           checked={enable}
           onChange={onChangeEnable}
           className={cn(
             enable ? 'bg-blue-600 justify-end' : 'bg-gray-500 justify-start',
-            'relative inline-flex shrink-0 cursor-pointer rounded-[2px] items-center border-2 border-transparent transition-all duration-200 ease-in-out focus:outline-hidden focus-visible:ring-2  focus-visible:ring-white/75',
+            'relative inline-flex shrink-0 cursor-pointer rounded-full items-center border-2 border-transparent transition-all duration-200 ease-in-out focus:outline-hidden focus-visible:ring-2  focus-visible:ring-white/75',
             'w-12 h-7', // Slightly increased size to accommodate the icons
           )}
         >
           <span className="sr-only">Switch</span>
           <span
             className={cn(
-              'pointer-events-none inline-flex items-center justify-center h-6 w-6 transform rounded-[2px] bg-white shadow-lg ring-0 transition-transform',
+              'pointer-events-none inline-flex items-center justify-center h-6 w-6 transform rounded-full bg-white shadow-lg ring-0 transition-transform',
             )}
           >
             {enable ? (
@@ -57,6 +58,7 @@ export const ConditionalInputGroup: FC<ConditionalInputGroupProps> = ({
       </div>
       <AnimatePresence>
         <motion.div
+          className="p-6"
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}

@@ -50,10 +50,29 @@ import { useRapidaStore } from '@/hooks';
 import { cn } from '@/utils';
 
 export const ConfigureAssistantDeploymentPage = () => {
+  /**
+   * assistant ID
+   */
   const { assistantId } = useParams();
+
+  /**
+   * current assistant
+   */
   const [assistant, setAssistant] = useState<Assistant | null>(null);
+
+  /**
+   * navigation
+   */
   const navi = useGlobalNavigation();
+
+  /**
+   * authentication params
+   */
   const { token, authId, projectId } = useCurrentCredential();
+
+  /**
+   * global loading
+   */
   const { showLoader, hideLoader } = useRapidaStore();
 
   const get = useCallback(assistantId => {
@@ -94,9 +113,7 @@ export const ConfigureAssistantDeploymentPage = () => {
         });
     }
   }, []);
-  /**
-   *
-   */
+
   useEffect(() => {
     get(assistantId);
   }, [assistantId]);
@@ -106,7 +123,6 @@ export const ConfigureAssistantDeploymentPage = () => {
   const [isPhoneExpanded, setIsPhoneExpanded] = useState(false);
   const [isPhoneInboundCodeExpanded, setIsPhoneInboundCodeExpanded] =
     useState(false);
-  //
   const [isWidgetExpanded, setIsWidgetExpanded] = useState(false);
   const [isWidgetCodeExpanded, setIsWidgetCodeExpanded] = useState(false);
   const [createDeploymentPopover, setCreateDeploymentPopover] = useState(false);
@@ -146,7 +162,7 @@ export const ConfigureAssistantDeploymentPage = () => {
                 <Globe className="w-4 h-4 mr-2" strokeWidth={1.5} />
                 <span className="ml-2">Add to Your Website</span>
               </IButton>
-              <hr className="w-full h-[1px] bg-gray-800" />
+              <hr className="w-full h-[1px] bg-gray-300 dark:border-gray-800" />
               <IButton
                 className="w-full justify-start"
                 onClick={() => navi.goToConfigureApi(assistantId!)}
@@ -154,7 +170,7 @@ export const ConfigureAssistantDeploymentPage = () => {
                 <Code className="w-4 h-4 mr-2" strokeWidth={1.5} />
                 <span className="ml-2">Integrate with SDK</span>
               </IButton>
-              <hr className="w-full h-[1px] bg-gray-800" />
+              <hr className="w-full h-[1px] bg-gray-300 dark:border-gray-800" />
               <IButton
                 className="w-full justify-start"
                 onClick={() => navi.goToConfigureCall(assistantId!)}
@@ -162,7 +178,7 @@ export const ConfigureAssistantDeploymentPage = () => {
                 <Phone className="w-4 h-4 mr-2" strokeWidth={1.5} />
                 <span className="ml-2">Deploy on Phone Call</span>
               </IButton>
-              <hr className="w-full h-[1px] bg-gray-800" />
+              <hr className="w-full h-[1px] bg-gray-300 dark:border-gray-800" />
               <IButton
                 className="w-full justify-start"
                 onClick={() => navi.goToConfigureDebugger(assistantId!)}
@@ -200,7 +216,7 @@ export const ConfigureAssistantDeploymentPage = () => {
       <div className="flex flex-col gap-2 p-4">
         {/* debugger */}
         {assistant?.hasDebuggerdeployment() && (
-          <div className="bg-white dark:bg-gray-950 border">
+          <div className="border">
             <div className="flex items-center justify-between border-b">
               <div className="flex items-center gap-2 justify-between px-4">
                 <h3 className="font-semibold truncate">Debugger</h3>
@@ -235,7 +251,7 @@ export const ConfigureAssistantDeploymentPage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-6 text-sm px-4 py-4">
+            <div className="grid grid-cols-2 gap-6 text-sm px-4 py-4 text-muted">
               <FieldSet className="col-span-2">
                 <FormLabel>Public Url</FormLabel>
                 <div className="flex items-center gap-2">
@@ -296,7 +312,7 @@ export const ConfigureAssistantDeploymentPage = () => {
                 initial={{ height: 0 }} // h-10 is 0px in most Tailwind configurations
                 animate={{ height: isExpanded ? 'auto' : 0 }}
                 transition={{ duration: 0.3 }}
-                className="grid grid-cols-2 divide-x border-t overflow-hidden"
+                className="grid grid-cols-2 divide-x border-t overflow-hidden text-muted"
               >
                 <VoiceInput
                   deployment={assistant
@@ -332,14 +348,6 @@ export const ConfigureAssistantDeploymentPage = () => {
                   <span className="mr-2">Edit Api</span>
                   <Plus className="w-4 h-4 " />
                 </IButton>
-                <IButton
-                  onClick={() => {
-                    // navi.goToConfigureWeb(assistantId!);
-                  }}
-                >
-                  <span className="mr-2">Instruction</span>
-                  <Code className="w-4 h-4 " />
-                </IButton>
                 <IButton onClick={() => setIsApiExpanded(!isApiExpanded)}>
                   {isApiExpanded ? (
                     <ChevronUp className="w-4 h-4" />
@@ -349,7 +357,7 @@ export const ConfigureAssistantDeploymentPage = () => {
                 </IButton>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-6 text-sm px-4 py-4">
+            <div className="grid grid-cols-2 gap-6 text-sm px-4 py-4 text-muted">
               <div className="space-y-4">
                 <div>
                   <div className="text-muted-foreground">SDK</div>
@@ -416,7 +424,7 @@ export const ConfigureAssistantDeploymentPage = () => {
                 initial={{ height: 0 }} // h-10 is 40px in most Tailwind configurations
                 animate={{ height: isApiExpanded ? 'auto' : 0 }}
                 transition={{ duration: 0.3 }}
-                className="grid grid-cols-2 divide-x border-t overflow-hidden"
+                className="grid grid-cols-2 divide-x border-t overflow-hidden text-muted"
               >
                 <VoiceInput
                   deployment={assistant.getApideployment()?.getInputaudio()}
@@ -474,7 +482,7 @@ export const ConfigureAssistantDeploymentPage = () => {
               </div>
             </div>
             {/*  */}
-            <div className="grid grid-cols-2 gap-6 text-sm px-4 py-4">
+            <div className="grid grid-cols-2 gap-6 text-sm px-4 py-4 text-muted">
               <div className="space-y-4">
                 <div>
                   <div className="text-muted-foreground">Telephony</div>
@@ -539,7 +547,7 @@ export const ConfigureAssistantDeploymentPage = () => {
                 }}
                 transition={{ duration: 0.3 }}
                 className={cn(
-                  'overflow-hidden',
+                  'overflow-hidden text-muted',
                   isPhoneInboundCodeExpanded && 'space-y-6 p-4 border-t',
                 )}
               >
@@ -618,7 +626,7 @@ export const ConfigureAssistantDeploymentPage = () => {
                 </IButton>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-6 text-sm px-4 py-4">
+            <div className="grid grid-cols-2 gap-6 text-sm px-4 py-4 text-muted">
               <div className="space-y-4">
                 <div>
                   <div className="text-muted-foreground">SDK</div>
@@ -686,7 +694,9 @@ export const ConfigureAssistantDeploymentPage = () => {
                   opacity: isWidgetCodeExpanded ? 1 : 0,
                 }}
                 transition={{ duration: 0.3 }}
-                className={cn(isWidgetCodeExpanded && 'space-y-6 p-4 border-t')}
+                className={cn(
+                  isWidgetCodeExpanded && 'space-y-6 p-4 border-t text-muted',
+                )}
               >
                 <FieldSet>
                   <div className="text-muted-foreground">
@@ -747,8 +757,6 @@ export const ConfigureAssistantDeploymentPage = () => {
             <ActionableEmptyMessage
               title="No Deployment"
               subtitle="There are no assistant deployments found."
-              //   action="Create deployment"
-              //   onActionClick={() => navi.goToConfigureDebugger(assistantId!)}
               actionComponent={
                 <div className="relative mt-3">
                   <IBlueBorderPlusButton
@@ -773,7 +781,7 @@ export const ConfigureAssistantDeploymentPage = () => {
                         <Globe className="w-4 h-4 mr-2" strokeWidth={1.5} />
                         <span className="ml-2">Add to Your Website</span>
                       </IButton>
-                      <hr className="w-full h-[1px] bg-gray-800" />
+                      <hr className="w-full h-[1px] bg-gray-300 dark:border-gray-800" />
                       <IButton
                         className="w-full justify-start"
                         onClick={() => navi.goToConfigureApi(assistantId!)}
@@ -781,7 +789,7 @@ export const ConfigureAssistantDeploymentPage = () => {
                         <Code className="w-4 h-4 mr-2" strokeWidth={1.5} />
                         <span className="ml-2">Integrate with SDK</span>
                       </IButton>
-                      <hr className="w-full h-[1px] bg-gray-800" />
+                      <hr className="w-full h-[1px] bg-gray-300 dark:border-gray-800" />
                       <IButton
                         className="w-full justify-start"
                         onClick={() => navi.goToConfigureCall(assistantId!)}
@@ -789,7 +797,7 @@ export const ConfigureAssistantDeploymentPage = () => {
                         <Phone className="w-4 h-4 mr-2" strokeWidth={1.5} />
                         <span className="ml-2">Deploy on Phone Call</span>
                       </IButton>
-                      <hr className="w-full h-[1px] bg-gray-800" />
+                      <hr className="w-full h-[1px] bg-gray-300 dark:border-gray-800" />
                       <IButton
                         className="w-full justify-start"
                         onClick={() => navi.goToConfigureDebugger(assistantId!)}
@@ -823,7 +831,7 @@ const VoiceInput: FC<{ deployment?: DeploymentAudioProvider }> = ({
         <div className="text-xs text-gray-500 dark:text-gray-400 py-3 px-3 space-y-6">
           <FieldSet>
             <FormLabel>Provider</FormLabel>
-            <ProviderPill providerId={deployment?.getAudioproviderid()} />
+            <ProviderPill provider={deployment?.getAudioprovider()} />
           </FieldSet>
           <div className="grid grid-cols-2 gap-4">
             {deployment
@@ -837,7 +845,6 @@ const VoiceInput: FC<{ deployment?: DeploymentAudioProvider }> = ({
                     <code className="flex-1 dark:bg-gray-900 bg-gray-100 px-3 py-2 font-mono text-xs min-w-0 overflow-hidden">
                       {detail.getValue()}
                     </code>
-
                     <div className="flex shrink-0 border divide-x">
                       <CopyButton className="h-7 w-7">
                         {detail.getValue()}
@@ -868,7 +875,7 @@ const VoiceOutput: FC<{ deployment?: DeploymentAudioProvider }> = ({
         <div className="text-xs text-gray-500 dark:text-gray-400 py-3 px-3 space-y-6">
           <FieldSet>
             <FormLabel>Provider</FormLabel>
-            <ProviderPill providerId={deployment?.getAudioproviderid()} />
+            <ProviderPill provider={deployment?.getAudioprovider()} />
           </FieldSet>
           <div className="grid grid-cols-2 gap-4">
             {deployment

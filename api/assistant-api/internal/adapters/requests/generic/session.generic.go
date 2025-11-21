@@ -8,7 +8,7 @@ import (
 
 	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters/requests"
 	internal_adapter_request_customizers "github.com/rapidaai/api/assistant-api/internal/adapters/requests/customizers"
-	internal_assistant_gorm "github.com/rapidaai/api/assistant-api/internal/gorm/assistants"
+	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
 	internal_telemetry "github.com/rapidaai/api/assistant-api/internal/telemetry"
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
@@ -145,7 +145,7 @@ func (talking *GenericRequestor) Connect(
 
 func (talking *GenericRequestor) OnCreateSession(
 	ctx context.Context,
-	assistant *internal_assistant_gorm.Assistant,
+	assistant *internal_assistant_entity.Assistant,
 	identifier string,
 	customization internal_adapter_requests.Customization,
 ) error {
@@ -278,7 +278,7 @@ func (talking *GenericRequestor) OnCreateSession(
 
 func (talking *GenericRequestor) OnResumeSession(
 	ctx context.Context,
-	assistant *internal_assistant_gorm.Assistant,
+	assistant *internal_assistant_entity.Assistant,
 	identifier string,
 	assistantConversationId uint64,
 	customization internal_adapter_requests.Customization) error {

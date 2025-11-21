@@ -1,12 +1,11 @@
 import { Metadata } from '@rapidaai/react';
-import { Dropdown } from '@/app/components/dropdown';
 import { FormLabel } from '@/app/components/form-label';
 import { FieldSet } from '@/app/components/form/fieldset';
-import {
-  GOOGLE_LANGUAGE,
-  GOOGLE_MODELS,
-  GOOGLE_VOICES,
-} from '@/app/components/providers/text-to-speech/google/constant';
+import { GOOGLE_CLOUD_VOICE } from '@/providers';
+import { useState } from 'react';
+import { CustomValueDropdown } from '@/app/components/dropdown/custom-value-dropdown';
+import { ILinkBorderButton } from '@/app/components/form/button';
+import { ExternalLink } from 'lucide-react';
 export { GetGoogleDefaultOptions, ValidateGoogleOptions } from './constant';
 
 const renderOption = (c: { icon: React.ReactNode; name: string }) => (
@@ -20,6 +19,17 @@ export const ConfigureGoogleTextToSpeech: React.FC<{
   onParameterChange: (parameters: Metadata[]) => void;
   parameters: Metadata[] | null;
 }> = ({ onParameterChange, parameters }) => {
+  const allVoices = GOOGLE_CLOUD_VOICE();
+  /**
+   *
+   */
+  const [filteredVoices, setFilteredVoices] = useState(allVoices);
+
+  /**
+   *
+   * @param key
+   * @returns
+   */
   const getParamValue = (key: string) =>
     parameters?.find(p => p.getKey() === key)?.getValue() ?? '';
 
@@ -38,52 +48,51 @@ export const ConfigureGoogleTextToSpeech: React.FC<{
     onParameterChange(updatedParams);
   };
 
-  const configItems = [
-    {
-      label: 'Voice',
-      key: 'speak.voice.id',
-      options: GOOGLE_VOICES,
-      findMatch: (val: string) => GOOGLE_VOICES.find(x => x.name === val),
-      onChange: (v: { name: string }) => {
-        updateParameter('speak.voice.id', v.name);
-      },
-    },
-    {
-      label: 'Language',
-      key: 'speak.language',
-      options: GOOGLE_LANGUAGE,
-      findMatch: (val: string) => GOOGLE_LANGUAGE.find(x => x.code === val),
-      onChange: (v: { code: string }) => {
-        updateParameter('speak.language', v.code);
-      },
-    },
-    {
-      label: 'Model',
-      key: 'speak.model',
-      options: GOOGLE_MODELS,
-      findMatch: (val: string) => GOOGLE_MODELS.find(x => x.id === val),
-      onChange: (v: { id: string }) => {
-        updateParameter('speak.model', v.id);
-      },
-    },
-  ];
-
   return (
-    <>
-      {configItems.map(({ label, key, options, findMatch, onChange }) => (
-        <FieldSet className="col-span-1" key={key}>
-          <FormLabel>{label}</FormLabel>
-          <Dropdown
-            className="bg-light-background max-w-full dark:bg-gray-950"
-            currentValue={findMatch(getParamValue(key))}
-            setValue={onChange}
-            allValue={options}
-            placeholder={`Select ${label.toLowerCase()}`}
-            option={renderOption}
-            label={renderOption}
-          />
-        </FieldSet>
-      ))}
-    </>
+    <FieldSet className="col-span-1" key="speak.voice.id">
+      <FormLabel>Voice</FormLabel>
+      <div className="flex">
+        <CustomValueDropdown
+          searchable
+          className="bg-light-background max-w-full dark:bg-gray-950"
+          currentValue={filteredVoices.find(
+            x => x.name === getParamValue('speak.voice.id'),
+          )}
+          setValue={(v: { name: string }) =>
+            updateParameter('speak.voice.id', v.name)
+          }
+          allValue={filteredVoices}
+          customValue
+          onSearching={t => {
+            const voices = allVoices;
+            const v = t.target.value;
+            if (v.length > 0) {
+              setFilteredVoices(
+                voices.filter(
+                  voice =>
+                    voice.name.toLowerCase().includes(v.toLowerCase()) ||
+                    voice.ssmlGender.toLowerCase().includes(v.toLowerCase()),
+                ),
+              );
+              return;
+            }
+            setFilteredVoices(voices);
+          }}
+          onAddCustomValue={vl => {
+            updateParameter('speak.voice.id', vl);
+          }}
+          placeholder="Select voice"
+          option={renderOption}
+          label={renderOption}
+        />
+        <ILinkBorderButton
+          target="_blank"
+          href={`/integration/models/google-cloud?query=${getParamValue('speak.voice.id')}`}
+          className="h-10 text-sm p-2 px-3 bg-light-background max-w-full dark:bg-gray-950 border-b"
+        >
+          <ExternalLink className="w-4 h-4" strokeWidth={1.5} />
+        </ILinkBorderButton>
+      </div>
+    </FieldSet>
   );
 };

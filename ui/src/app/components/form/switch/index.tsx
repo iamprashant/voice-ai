@@ -56,7 +56,7 @@ export const SwitchWithLabel: FC<{
 
         'outline-solid outline-[1.5px] outline-transparent',
         'hover:outline-blue-600 focus:outline-blue-600 outline-offset-[-1.5px]',
-        'border-b border-gray-400 dark:border-gray-600',
+        'border-b border-gray-300 dark:border-gray-700',
         'dark:hover:border-blue-600 hover:border-blue-600',
         'transition-all duration-200 ease-in-out',
 

@@ -3,12 +3,16 @@ import { Dropdown } from '@/app/components/dropdown';
 import { FormLabel } from '@/app/components/form-label';
 import { FieldSet } from '@/app/components/form/fieldset';
 import {
+  CARTESIA_EMOTION_LEVEL_COMBINATION,
   CARTESIA_LANGUAGE,
-  CARTESIA_MODELS,
+  CARTESIA_MODEL,
+  CARTESIA_SPEED_OPTION,
   CARTESIA_VOICE,
-  EMOTION_LEVEL_COMBINATIONS,
-  SPEED_OPTIONS,
-} from '@/app/components/providers/text-to-speech/cartesia/constant';
+} from '@/providers';
+import { ILinkBorderButton } from '@/app/components/form/button';
+import { useState } from 'react';
+import { CustomValueDropdown } from '@/app/components/dropdown/custom-value-dropdown';
+import { ExternalLink } from 'lucide-react';
 export { GetCartesiaDefaultOptions, ValidateCartesiaOptions } from './constant';
 
 const renderOption = c => (
@@ -22,7 +26,16 @@ export const ConfigureCartesiaTextToSpeech: React.FC<{
   onParameterChange: (parameters: Metadata[]) => void;
   parameters: Metadata[] | null;
 }> = ({ onParameterChange, parameters }) => {
-  //
+  /**
+   *
+   */
+  const [filteredVoices, setFilteredVoices] = useState(CARTESIA_VOICE());
+
+  /**
+   *
+   * @param key
+   * @returns
+   */
   const getParamValue = (key: string) => {
     return parameters?.find(p => p.getKey() === key)?.getValue() ?? '';
   };
@@ -41,64 +54,107 @@ export const ConfigureCartesiaTextToSpeech: React.FC<{
     }
     onParameterChange(updatedParams);
   };
-  const configItems = [
-    {
-      label: 'Voice',
-      key: 'speak.voice.id',
-      options: CARTESIA_VOICE,
-      findMatch: (val: string) => CARTESIA_VOICE.find(x => x.id === val),
-      onChange: v => {
-        updateParameter('speak.voice.id', v.id);
-      },
-    },
-    {
-      label: 'Language',
-      key: 'speak.language',
-      options: CARTESIA_LANGUAGE,
-      findMatch: (val: string) => CARTESIA_LANGUAGE.find(x => x.code === val),
-      onChange: v => {
-        updateParameter('speak.language', v.code);
-      },
-    },
-    {
-      label: 'Models',
-      key: 'speak.model',
-      options: CARTESIA_MODELS,
-      findMatch: (val: string) => CARTESIA_MODELS.find(x => x.id === val),
-      onChange: v => {
-        updateParameter('speak.model', v.id);
-      },
-    },
-
-    {
-      label: 'Speed (Experimental)',
-      key: 'speak.voice.__experimental_controls.speed',
-      options: SPEED_OPTIONS,
-      findMatch: (val: string) => {
-        return SPEED_OPTIONS.find(x => x.id === val) || '';
-      },
-      onChange: v => {
-        updateParameter('speak.voice.__experimental_controls.speed', v.id);
-      },
-    },
-  ];
 
   return (
     <>
-      {configItems.map(({ label, key, options, findMatch, onChange }) => (
-        <FieldSet className="col-span-1" key={key}>
-          <FormLabel>{label}</FormLabel>
-          <Dropdown
+      <FieldSet className="col-span-1">
+        <FormLabel>Model</FormLabel>
+        <Dropdown
+          className="bg-light-background max-w-full dark:bg-gray-950"
+          currentValue={CARTESIA_MODEL().find(
+            x => x.id === getParamValue('speak.model'),
+          )}
+          setValue={v => {
+            updateParameter('speak.model', v.id);
+          }}
+          allValue={CARTESIA_MODEL()}
+          placeholder={`Select model`}
+          option={renderOption}
+          label={renderOption}
+        />
+      </FieldSet>
+      <FieldSet className="col-span-2">
+        <FormLabel>Voice</FormLabel>
+        <div className="flex">
+          <CustomValueDropdown
+            searchable
             className="bg-light-background max-w-full dark:bg-gray-950"
-            currentValue={findMatch(getParamValue(key))}
-            setValue={onChange || (() => {})}
-            allValue={options}
-            placeholder={`Select ${label.toLowerCase()}`}
+            currentValue={CARTESIA_VOICE().find(
+              x => x.id === getParamValue('speak.voice.id'),
+            )}
+            setValue={(v: { id: string }) => {
+              updateParameter('speak.voice.id', v.id);
+            }}
+            allValue={filteredVoices}
+            placeholder={`Select voice`}
             option={renderOption}
             label={renderOption}
+            customValue
+            onSearching={t => {
+              const voices = CARTESIA_VOICE();
+              const v = t.target.value;
+              if (v.length > 0) {
+                setFilteredVoices(
+                  voices.filter(
+                    voice =>
+                      voice.name.toLowerCase().includes(v.toLowerCase()) ||
+                      voice.id.toLowerCase().includes(v.toLowerCase()) ||
+                      voice.language?.toLowerCase().includes(v.toLowerCase()),
+                  ),
+                );
+                return;
+              }
+              setFilteredVoices(voices);
+            }}
+            onAddCustomValue={vl => {
+              updateParameter('speak.voice.id', vl);
+            }}
           />
-        </FieldSet>
-      ))}
+          <ILinkBorderButton
+            target="_blank"
+            href={`/integration/models/cartesia?query=${getParamValue('speak.voice.id')}`}
+            className="h-10 text-sm p-2 px-3 bg-light-background max-w-full dark:bg-gray-950 border-b"
+          >
+            <ExternalLink className="w-4 h-4" strokeWidth={1.5} />
+          </ILinkBorderButton>
+        </div>
+      </FieldSet>
+
+      <FieldSet className="col-span-1">
+        <FormLabel>Language</FormLabel>
+        <Dropdown
+          className="bg-light-background max-w-full dark:bg-gray-950"
+          currentValue={CARTESIA_LANGUAGE().find(
+            x => x.code === getParamValue('speak.language'),
+          )}
+          setValue={v => {
+            updateParameter('speak.language', v.code);
+          }}
+          allValue={CARTESIA_LANGUAGE()}
+          placeholder={`Select languages`}
+          option={renderOption}
+          label={renderOption}
+        />
+      </FieldSet>
+      <FieldSet className="col-span-1">
+        <FormLabel>Speed (Experimental)</FormLabel>
+        <Dropdown
+          className="bg-light-background max-w-full dark:bg-gray-950"
+          currentValue={CARTESIA_SPEED_OPTION().find(
+            x =>
+              x.id ===
+              getParamValue('speak.voice.__experimental_controls.speed'),
+          )}
+          setValue={v => {
+            updateParameter('speak.voice.__experimental_controls.speed', v.id);
+          }}
+          allValue={CARTESIA_SPEED_OPTION()}
+          placeholder={`Select Speed`}
+          option={renderOption}
+          label={renderOption}
+        />
+      </FieldSet>
+
       <FieldSet className="relative col-span-2">
         <FormLabel>Emotion (Experimental)</FormLabel>
         <Dropdown
@@ -113,7 +169,7 @@ export const ConfigureCartesiaTextToSpeech: React.FC<{
               v.join('<|||>'),
             );
           }}
-          allValue={EMOTION_LEVEL_COMBINATIONS}
+          allValue={CARTESIA_EMOTION_LEVEL_COMBINATION}
           placeholder="Select all that applies"
           option={c => {
             return (

@@ -109,9 +109,9 @@ export const SingleEndpoint: FC<SingleEndpointProps> = ({ endpoint }) => {
       {endpointAction.visibleColumn('getCurrentModel') && (
         <TableCell className="min-w-60">
           <ProviderPill
-            providerId={endpoint
+            provider={endpoint
               .getEndpointprovidermodel()
-              ?.getModelproviderid()}
+              ?.getModelprovidername()}
           />
         </TableCell>
       )}
@@ -128,12 +128,12 @@ export const SingleEndpoint: FC<SingleEndpointProps> = ({ endpoint }) => {
       )}
       {endpointAction.visibleColumn('getP50') && (
         <TextCell>
-          {nanoToMilli(endpoint.getEndpointanalytics()?.getP50latency())}
+          {nanoToMilli(endpoint.getEndpointanalytics()?.getP50latency())}ms
         </TextCell>
       )}
       {endpointAction.visibleColumn('getP99') && (
         <TextCell>
-          {nanoToMilli(endpoint.getEndpointanalytics()?.getP99latency())}
+          {nanoToMilli(endpoint.getEndpointanalytics()?.getP99latency())}ms
         </TextCell>
       )}
       {endpointAction.visibleColumn('getMRR') &&

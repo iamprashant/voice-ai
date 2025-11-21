@@ -1,9 +1,6 @@
 import { Metadata, VaultCredential } from '@rapidaai/react';
 import { Dropdown } from '@/app/components/dropdown';
-import {
-  EMBEDDING_PROVIDERS,
-  ProviderConfig,
-} from '@/app/components/providers';
+import { ProviderComponentProps } from '@/app/components/providers';
 import { ConfigureCohereEmbeddingModel } from '@/app/components/providers/embedding/cohere';
 import {
   GetCohereEmbeddingDefaultOptions,
@@ -29,7 +26,14 @@ import { FC, useCallback } from 'react';
 import { CredentialDropdown } from '@/app/components/dropdown/credential-dropdown';
 import { FieldSet } from '@/app/components/form/fieldset';
 import { FormLabel } from '@/app/components/form-label';
+import { EMBEDDING_PROVIDERS } from '@/providers';
 
+/**
+ *
+ * @param provider
+ * @param parameters
+ * @returns
+ */
 export const GetDefaultEmbeddingConfigIfInvalid = (
   provider: string,
   parameters: Metadata[],
@@ -48,6 +52,12 @@ export const GetDefaultEmbeddingConfigIfInvalid = (
   }
 };
 
+/**
+ *
+ * @param provider
+ * @param parameters
+ * @returns
+ */
 export const ValidateEmbeddingDefaultOptions = (
   provider: string,
   parameters: Metadata[],
@@ -66,45 +76,43 @@ export const ValidateEmbeddingDefaultOptions = (
   }
 };
 
-export const EmbeddingConfigComponent: FC<{
-  config: ProviderConfig;
-  updateConfig: (config: Partial<ProviderConfig>) => void;
-}> = ({ config, updateConfig }) => {
-  switch (config.provider) {
+/**
+ *
+ * @param param0
+ * @returns
+ */
+export const EmbeddingConfigComponent: FC<ProviderComponentProps> = ({
+  provider,
+  parameters,
+  onChangeParameter,
+}) => {
+  switch (provider) {
     case 'cohere':
       return (
         <ConfigureCohereEmbeddingModel
-          parameters={config.parameters}
-          onParameterChange={(params: Metadata[]) =>
-            updateConfig({ parameters: params })
-          }
+          parameters={parameters}
+          onParameterChange={onChangeParameter}
         />
       );
     case 'openai':
       return (
         <ConfigureOpenaiEmbeddingModel
-          parameters={config.parameters}
-          onParameterChange={(params: Metadata[]) =>
-            updateConfig({ parameters: params })
-          }
+          parameters={parameters}
+          onParameterChange={onChangeParameter}
         />
       );
     case 'voyageai':
       return (
         <ConfigureVoyageEmbeddingModel
-          parameters={config.parameters}
-          onParameterChange={(params: Metadata[]) =>
-            updateConfig({ parameters: params })
-          }
+          parameters={parameters}
+          onParameterChange={onChangeParameter}
         />
       );
-    case 'google':
+    case 'gemini':
       return (
         <ConfigureGoogleEmbeddingModel
-          parameters={config.parameters}
-          onParameterChange={(params: Metadata[]) =>
-            updateConfig({ parameters: params })
-          }
+          parameters={parameters}
+          onParameterChange={onChangeParameter}
         />
       );
     default:
@@ -112,24 +120,33 @@ export const EmbeddingConfigComponent: FC<{
   }
 };
 
-export const EmbeddingProvider: React.FC<{
-  onChangeProvider: (i: string, v: string) => void;
-  onChangeConfig: (config: ProviderConfig) => void;
-  config: ProviderConfig;
-}> = ({ onChangeProvider, onChangeConfig, config }) => {
-  const updateConfig = (newConfig: Partial<ProviderConfig>) => {
-    onChangeConfig({ ...config, ...newConfig } as ProviderConfig);
-  };
-
+/**
+ *
+ * @param props
+ * @returns
+ */
+export const EmbeddingProvider: React.FC<ProviderComponentProps> = props => {
+  /**
+   * all the parameters
+   */
+  const { provider, parameters, onChangeProvider, onChangeParameter } = props;
+  /**
+   * getter from paramerters
+   */
   const getParamValue = useCallback(
     (key: string) => {
-      return config.parameters?.find(p => p.getKey() === key)?.getValue() ?? '';
+      return parameters?.find(p => p.getKey() === key)?.getValue() ?? '';
     },
-    [config.parameters],
+    [JSON.stringify(parameters)],
   );
 
+  /**
+   *
+   * @param key
+   * @param value
+   */
   const updateParameter = (key: string, value: string) => {
-    const updatedParams = [...(config.parameters || [])];
+    const updatedParams = [...(parameters || [])];
     const existingIndex = updatedParams.findIndex(p => p.getKey() === key);
     const newParam = new Metadata();
     newParam.setKey(key);
@@ -139,8 +156,12 @@ export const EmbeddingProvider: React.FC<{
     } else {
       updatedParams.push(newParam);
     }
-    updateConfig({ parameters: updatedParams });
+    onChangeParameter(updatedParams);
   };
+
+  /**
+   *
+   */
   return (
     <>
       <FieldSet>
@@ -150,20 +171,20 @@ export const EmbeddingProvider: React.FC<{
             'p-px',
             'outline-solid outline-transparent',
             'focus-within:outline-blue-600 focus:outline-blue-600 -outline-offset-1',
-            'border-b border-gray-400 dark:border-gray-600',
+            'border-b border-gray-300 dark:border-gray-700',
             'dark:focus-within:border-blue-600 focus-within:border-blue-600',
             'transition-all duration-200 ease-in-out',
+            'bg-light-background dark:bg-gray-950',
+            'divide-x',
             'flex relative',
           )}
         >
           <div className="w-44 relative">
             <Dropdown
-              className="bg-white max-w-full dark:bg-gray-950 focus-within:border-none! focus-within:outline-hidden! border-none! outline-hidden"
-              currentValue={EMBEDDING_PROVIDERS.find(
-                x => x.id === config.providerId,
-              )}
+              className="max-w-full focus-within:border-none! focus-within:outline-hidden! border-none! outline-hidden"
+              currentValue={EMBEDDING_PROVIDERS.find(x => x.code === provider)}
               setValue={v => {
-                onChangeProvider(v.id, v.code);
+                onChangeProvider(v.code);
               }}
               allValue={EMBEDDING_PROVIDERS}
               placeholder="Select provider"
@@ -199,21 +220,17 @@ export const EmbeddingProvider: React.FC<{
               }}
             />
           </div>
-
-          <EmbeddingConfigComponent
-            config={config}
-            updateConfig={updateConfig}
-          />
+          <EmbeddingConfigComponent {...props} />
         </div>
       </FieldSet>
-      {config.providerId && (
+      {props && (
         <CredentialDropdown
           className="bg-white"
           onChangeCredential={(c: VaultCredential) => {
             updateParameter('rapida.credential_id', c.getId());
           }}
           currentCredential={getParamValue('rapida.credential_id')}
-          providerId={config.providerId}
+          provider={provider}
         />
       )}
     </>

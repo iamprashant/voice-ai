@@ -1,4 +1,7 @@
-import { IBlueBGButton, ICancelButton } from '@/app/components/form/button';
+import {
+  IBlueBGArrowButton,
+  ICancelButton,
+} from '@/app/components/form/button';
 import { useRapidaStore } from '@/hooks';
 import { FC, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -6,21 +9,17 @@ import { useGlobalNavigation } from '@/hooks/use-global-navigator';
 import {
   AssistantWebpluginDeployment,
   ConnectionConfig,
-  Content,
   CreateAssistantDeploymentRequest,
   DeploymentAudioProvider,
   GetAssistantDeploymentRequest,
+  Metadata,
 } from '@rapidaai/react';
 import { GetAssistantWebpluginDeployment } from '@rapidaai/react';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { CreateAssistantWebpluginDeployment } from '@rapidaai/react';
 import {
-  ConfigurePersona,
-  PersonaConfig,
-} from '@/app/pages/assistant/actions/create-deployment/web-plugin/configure-persona';
-import {
   ConfigureExperience,
-  ExperienceConfig,
+  WebWidgetExperienceConfig,
 } from '@/app/pages/assistant/actions/create-deployment/web-plugin/configure-experience';
 import { ConfigureAudioOutputProvider } from '@/app/pages/assistant/actions/create-deployment/commons/configure-audio-output';
 import { ConfigureAudioInputProvider } from '@/app/pages/assistant/actions/create-deployment/commons/configure-audio-input';
@@ -30,22 +29,20 @@ import {
 } from '@/app/pages/assistant/actions/create-deployment/web-plugin/configure-feature';
 import toast from 'react-hot-toast/headless';
 import { Helmet } from '@/app/components/helmet';
-import {
-  GetDefaultSpeakerConfig,
-  GetDefaultTextToSpeechIfInvalid,
-  ValidateTextToSpeechIfInvalid,
-} from '@/app/components/providers/text-to-speech/provider';
+import { ValidateTextToSpeechIfInvalid } from '@/app/components/providers/text-to-speech/provider';
 import {
   GetDefaultMicrophoneConfig,
   GetDefaultSpeechToTextIfInvalid,
   ValidateSpeechToTextIfInvalid,
 } from '@/app/components/providers/speech-to-text/provider';
 import { PageActionButtonBlock } from '@/app/components/blocks/page-action-button-block';
-import { ProviderConfig } from '@/app/components/providers';
 import { connectionConfig } from '@/configs';
-import { Rocket } from 'lucide-react';
 import { AssistantWebwidgetDeploymentDialog } from '@/app/components/base/modal/assistant-instruction-modal';
 
+/**
+ *
+ * @returns
+ */
 export function ConfigureAssistantWebDeploymentPage() {
   const { assistantId } = useParams();
   return (
@@ -67,62 +64,67 @@ export function ConfigureAssistantWebDeploymentPage() {
 const ConfigureAssistantWebDeployment: FC<{ assistantId: string }> = ({
   assistantId,
 }) => {
-  const { goBack, goToDeploymentAssistant } = useGlobalNavigation();
+  /**
+   * global navigation
+   */
+  const { goToDeploymentAssistant } = useGlobalNavigation();
+
+  /**
+   * global loading state
+   */
   const { loading, showLoader, hideLoader } = useRapidaStore();
+
+  /**
+   * authentication
+   */
   const { authId, projectId, token } = useCurrentCredential();
+
+  /**
+   * error message
+   */
   const [errorMessage, setErrorMessage] = useState('');
+
+  /**
+   * Post create instruction
+   */
+  const [showInstruction, setShowInstruction] = useState(false);
+  const [deploymentId, setDeploymentId] = useState<string | null>(null);
+  /**
+   * voice io
+   */
   const [voiceInputEnable, setVoiceInputEnable] = useState(false);
   const [voiceOutputEnable, setVoiceOutputEnable] = useState(false);
-  const [showInstruction, setShowInstruction] = useState(false);
-  //   data
-  //   id of deployment
-  const [deploymentId, setDeploymentId] = useState<string | null>(null);
-  const [personaConfig, setPersonaConfig] = useState<PersonaConfig>({});
-  const [experienceConfig, setExperienceConfig] = useState<ExperienceConfig>({
-    greeting: '',
-    suggestions: [],
-    messageOnError: '',
+
+  const [audioInputConfig, setAudioInputConfig] = useState<{
+    provider: string;
+    parameters: Metadata[];
+  }>({
+    provider: 'deepgram',
+    parameters: GetDefaultSpeechToTextIfInvalid(
+      'deepgram',
+      GetDefaultMicrophoneConfig(),
+    ),
+  });
+  const [audioOutputConfig, setAudioOutputConfig] = useState<{
+    provider: string;
+    parameters: Metadata[];
+  }>({
+    provider: 'cartesia',
+    parameters: GetDefaultSpeechToTextIfInvalid(
+      'cartesia',
+      GetDefaultMicrophoneConfig(),
+    ),
   });
 
-  /**
-   * audio input
-   */
-  const [audioInputConfig, setAudioInputConfig] =
-    useState<ProviderConfig | null>(null);
-
-  const onChangeAudioInputProvider = (
-    providerId: string,
-    providerName: string,
-  ) => {
-    setAudioInputConfig({
-      providerId: providerId,
-      provider: providerName,
-      parameters: GetDefaultSpeechToTextIfInvalid(
-        providerName,
-        GetDefaultMicrophoneConfig(audioInputConfig?.parameters),
-      ),
+  const [experienceConfig, setExperienceConfig] =
+    useState<WebWidgetExperienceConfig>({
+      greeting: undefined,
+      messageOnError: undefined,
+      idealTimeout: '5000',
+      idealMessage: 'Are you there?',
+      maxCallDuration: '10000',
+      suggestions: [],
     });
-  };
-
-  /**
-   * audio output
-   */
-  const [audioOutputConfig, setAudioOutputConfig] =
-    useState<ProviderConfig | null>(null);
-
-  const onChangeAudioOuputProvider = (
-    providerId: string,
-    providerName: string,
-  ) => {
-    setAudioOutputConfig({
-      providerId: providerId,
-      provider: providerName,
-      parameters: GetDefaultTextToSpeechIfInvalid(
-        providerName,
-        GetDefaultSpeakerConfig(audioOutputConfig?.parameters),
-      ),
-    });
-  };
 
   const [featureConfig, setFeatureConfig] = useState<FeatureConfig>({
     qAListing: false,
@@ -145,20 +147,16 @@ const ConfigureAssistantWebDeployment: FC<{ assistantId: string }> = ({
     )
       .then(response => {
         hideLoader();
-
         if (response && response.getData()) {
           const deployment = response.getData();
           setDeploymentId(deployment?.getId()!);
           setExperienceConfig({
-            greeting: deployment?.getGreeting() || '',
+            greeting: deployment?.getGreeting(),
             suggestions: deployment?.getSuggestionList() || [],
-            messageOnError: deployment?.getMistake() || '',
-          });
-
-          // Persona configuration
-          setPersonaConfig({
-            name: deployment?.getName(),
-            avatarUrl: deployment?.getUrl(),
+            messageOnError: deployment?.getMistake(),
+            idealTimeout: deployment?.getIdealtimeout(),
+            idealMessage: deployment?.getIdealtimeoutmessage(),
+            maxCallDuration: deployment?.getMaxsessionduration(),
           });
 
           // Audio providers configuration
@@ -166,7 +164,6 @@ const ConfigureAssistantWebDeployment: FC<{ assistantId: string }> = ({
           if (deployment && deployment.getInputaudio()) {
             const provider = deployment.getInputaudio();
             setAudioInputConfig({
-              providerId: provider?.getAudioproviderid() || '',
               provider: provider?.getAudioprovider() || '',
               parameters: provider?.getAudiooptionsList() || [],
             });
@@ -175,7 +172,6 @@ const ConfigureAssistantWebDeployment: FC<{ assistantId: string }> = ({
           if (deployment && deployment.getOutputaudio()) {
             const provider = deployment?.getOutputaudio();
             setAudioOutputConfig({
-              providerId: provider?.getAudioproviderid() || '',
               provider: provider?.getAudioprovider() || '',
               parameters: provider?.getAudiooptionsList() || [],
             });
@@ -208,12 +204,6 @@ const ConfigureAssistantWebDeployment: FC<{ assistantId: string }> = ({
     showLoader('block');
     // setting error message to be empty when there is no data to submit
     setErrorMessage('');
-
-    if (!personaConfig.avatar?.file && !personaConfig.avatarUrl) {
-      hideLoader();
-      setErrorMessage('Please provide a valid icon for the web plugin.');
-      return;
-    }
     // validation
 
     if (!experienceConfig?.greeting) {
@@ -222,86 +212,85 @@ const ConfigureAssistantWebDeployment: FC<{ assistantId: string }> = ({
       return;
     }
 
-    if (audioInputConfig != null) {
-      if (!audioInputConfig.provider || !audioInputConfig.providerId) {
-        hideLoader();
-        setErrorMessage(
-          'Please provide a provider for interpreting input audio of user.',
-        );
-        return;
+    // voice input can be disabled for web widget
+    if (voiceInputEnable)
+      if (audioInputConfig != null) {
+        if (!audioInputConfig.provider) {
+          hideLoader();
+          setErrorMessage(
+            'Please provide a provider for interpreting input audio of user.',
+          );
+          return;
+        }
+
+        if (
+          !ValidateSpeechToTextIfInvalid(
+            audioInputConfig.provider,
+            audioInputConfig.parameters,
+          )
+        ) {
+          hideLoader();
+          setErrorMessage('Please provide a valid speech to text options.');
+          return;
+        }
       }
 
-      if (
-        !ValidateSpeechToTextIfInvalid(
-          audioInputConfig.provider,
-          audioInputConfig.parameters,
-        )
-      ) {
-        hideLoader();
-        setErrorMessage('Please provide a valid speech to text options.');
-        return;
-      }
-    }
+    //   voice output can be disabled for web widget
+    if (voiceOutputEnable)
+      if (audioOutputConfig != null) {
+        if (!audioOutputConfig.provider) {
+          hideLoader();
+          setErrorMessage(
+            'Please provide a provider for interpreting output audio of user.',
+          );
+          return;
+        }
 
-    if (audioOutputConfig != null) {
-      if (!audioOutputConfig.provider || !audioOutputConfig.providerId) {
-        hideLoader();
-        setErrorMessage(
-          'Please provide a provider for interpreting output audio of user.',
-        );
-        return;
+        if (
+          !ValidateTextToSpeechIfInvalid(
+            audioOutputConfig.provider,
+            audioOutputConfig.parameters,
+          )
+        ) {
+          hideLoader();
+          setErrorMessage('Please provide a valid text to speech options.');
+          return;
+        }
       }
-
-      if (
-        !ValidateTextToSpeechIfInvalid(
-          audioOutputConfig.provider,
-          audioOutputConfig.parameters,
-        )
-      ) {
-        hideLoader();
-        setErrorMessage('Please provide a valid text to speech options.');
-        return;
-      }
-    }
     const req = new CreateAssistantDeploymentRequest();
     const webDeployment = new AssistantWebpluginDeployment();
     webDeployment.setAssistantid(assistantId);
-    webDeployment.setName(personaConfig.name || '');
-    webDeployment.setGreeting(experienceConfig.greeting);
-    webDeployment.setMistake(experienceConfig.messageOnError);
+    if (experienceConfig.greeting)
+      webDeployment.setGreeting(experienceConfig.greeting);
+    if (experienceConfig?.messageOnError)
+      webDeployment.setMistake(experienceConfig?.messageOnError);
+    if (experienceConfig?.idealTimeout)
+      webDeployment.setIdealtimeout(experienceConfig?.idealTimeout);
+    if (experienceConfig?.idealMessage)
+      webDeployment.setIdealtimeoutmessage(experienceConfig?.idealMessage);
+    if (experienceConfig?.maxCallDuration)
+      webDeployment.setMaxsessionduration(experienceConfig?.maxCallDuration);
+
     webDeployment.setSuggestionList(experienceConfig.suggestions);
     webDeployment.setHelpcenterenabled(featureConfig.qAListing);
     webDeployment.setProductcatalogenabled(featureConfig.productCatalog);
     webDeployment.setArticlecatalogenabled(featureConfig.blogPost);
     webDeployment.setUploadfileenabled(false); // Not provided in the input, set to false by default
 
-    if (audioInputConfig) {
+    if (voiceInputEnable && audioInputConfig) {
       const inputAudioProvider = new DeploymentAudioProvider();
-      inputAudioProvider.setId(audioInputConfig.providerId);
       inputAudioProvider.setAudioprovider(audioInputConfig.provider);
       inputAudioProvider.setAudiooptionsList(audioInputConfig.parameters);
-      inputAudioProvider.setAudioproviderid(audioInputConfig.providerId);
       webDeployment.setInputaudio(inputAudioProvider);
     }
 
-    if (audioOutputConfig) {
+    if (voiceOutputEnable && audioOutputConfig) {
       const outputAudioProvider = new DeploymentAudioProvider();
-      outputAudioProvider.setId(audioOutputConfig.providerId);
       outputAudioProvider.setAudioprovider(audioOutputConfig.provider);
       outputAudioProvider.setAudiooptionsList(audioOutputConfig.parameters);
-      outputAudioProvider.setAudioproviderid(audioOutputConfig.providerId);
       webDeployment.setOutputaudio(outputAudioProvider);
     }
 
-    if (personaConfig.avatar && personaConfig.avatar.file) {
-      const cntn = new Content();
-      cntn.setContent(personaConfig.avatar.file);
-      cntn.setName(personaConfig.avatar.name);
-      cntn.setContenttype(personaConfig.avatar.type);
-      webDeployment.setRaw(cntn);
-    } else if (personaConfig.avatarUrl) {
-      webDeployment.setUrl(personaConfig.avatarUrl);
-    }
     req.setPlugin(webDeployment);
     CreateAssistantWebpluginDeployment(
       connectionConfig,
@@ -356,30 +345,23 @@ const ConfigureAssistantWebDeployment: FC<{ assistantId: string }> = ({
         }}
         modalOpen={showInstruction}
       />
-      <div className="overflow-auto flex flex-col flex-1 pb-20 bg-white dark:bg-gray-900">
-        <ConfigurePersona
-          onChangePersona={setPersonaConfig}
-          personaConfig={personaConfig}
-        />
-
+      <div className="overflow-auto flex flex-col flex-1 pb-20">
         <ConfigureExperience
           experienceConfig={experienceConfig}
           setExperienceConfig={setExperienceConfig}
         />
 
         <ConfigureAudioInputProvider
-          onChangeProvider={onChangeAudioInputProvider}
-          onChangeConfig={setAudioInputConfig}
-          config={audioInputConfig}
           voiceInputEnable={voiceInputEnable}
           onChangeVoiceInputEnable={setVoiceInputEnable}
+          audioInputConfig={audioInputConfig}
+          setAudioInputConfig={setAudioInputConfig}
         />
         <ConfigureAudioOutputProvider
-          onChangeProvider={onChangeAudioOuputProvider}
-          onChangeConfig={setAudioOutputConfig}
-          config={audioOutputConfig}
           voiceOutputEnable={voiceOutputEnable}
           onChangeVoiceOutputEnable={setVoiceOutputEnable}
+          audioOutputConfig={audioOutputConfig}
+          setAudioOutputConfig={setAudioOutputConfig}
         />
         <ConfigureFeature
           onConfigChange={setFeatureConfig}
@@ -397,14 +379,13 @@ const ConfigureAssistantWebDeployment: FC<{ assistantId: string }> = ({
         >
           Cancel
         </ICancelButton>
-        <IBlueBGButton
+        <IBlueBGArrowButton
           type="submit"
           className="px-4 rounded-[2px]"
           isLoading={loading}
         >
           Deploy web widget
-          <Rocket className="w-4 h-4 ml-2" strokeWidth={1.5} />
-        </IBlueBGButton>
+        </IBlueBGArrowButton>
       </PageActionButtonBlock>
     </form>
   );

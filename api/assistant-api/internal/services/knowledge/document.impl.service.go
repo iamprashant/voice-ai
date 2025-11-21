@@ -11,7 +11,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/rapidaai/api/assistant-api/config"
-	internal_knowledge_gorm "github.com/rapidaai/api/assistant-api/internal/gorm/knowledges"
+	internal_knowledge_gorm "github.com/rapidaai/api/assistant-api/internal/entity/knowledges"
 	internal_services "github.com/rapidaai/api/assistant-api/internal/services"
 	"github.com/rapidaai/pkg/ciphers"
 	"github.com/rapidaai/pkg/commons"

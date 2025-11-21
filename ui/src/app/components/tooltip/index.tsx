@@ -4,7 +4,7 @@ import { cn } from '@/utils';
 
 export function Tooltip(props: { children: any; icon: React.ReactElement }) {
   const colorClasses = () => {
-    return 'bg-white border-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600';
+    return 'bg-white border-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-700';
   };
   return (
     <TP

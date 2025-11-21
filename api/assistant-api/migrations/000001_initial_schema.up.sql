@@ -867,3 +867,40 @@ CREATE INDEX idx_knowledges_id ON public.knowledges USING btree (id);
 CREATE INDEX idx_knowledges_id_status ON public.knowledges USING btree (id, status);
 CREATE INDEX idx_knowledges_status ON public.knowledges USING btree (status);
 CREATE INDEX idx_recordings_conversation_id ON public.assistant_conversation_recordings USING btree (assistant_conversation_id);
+
+
+ALTER TABLE assistant_debugger_deployments 
+ADD COLUMN ideal_timeout BIGINT, 
+ADD COLUMN ideal_timeout_message CHARACTER VARYING(200), 
+ADD COLUMN max_session_duration BIGINT;
+ALTER TABLE assistant_debugger_deployments DROP COLUMN name;
+
+ALTER TABLE assistant_api_deployments 
+ADD COLUMN ideal_timeout BIGINT, 
+ADD COLUMN ideal_timeout_message CHARACTER VARYING(200), 
+ADD COLUMN max_session_duration BIGINT;
+ALTER TABLE assistant_api_deployments DROP COLUMN name;
+
+ALTER TABLE assistant_web_plugin_deployments 
+ADD COLUMN ideal_timeout BIGINT, 
+ADD COLUMN ideal_timeout_message CHARACTER VARYING(200), 
+ADD COLUMN max_session_duration BIGINT;
+
+
+
+
+ALTER TABLE assistant_whatsapp_deployments 
+ADD COLUMN ideal_timeout BIGINT, 
+ADD COLUMN ideal_timeout_message CHARACTER VARYING(200), 
+ADD COLUMN max_session_duration BIGINT;
+ALTER TABLE assistant_whatsapp_deployments  DROP COLUMN whatsapp_provider_id;
+ALTER TABLE assistant_whatsapp_deployments DROP COLUMN name;
+
+ALTER TABLE assistant_phone_deployments 
+ADD COLUMN ideal_timeout BIGINT, 
+ADD COLUMN ideal_timeout_message CHARACTER VARYING(200), 
+ADD COLUMN max_session_duration BIGINT;
+ALTER TABLE assistant_phone_deployments  DROP COLUMN telephony_provider_id;
+ALTER TABLE assistant_phone_deployments DROP COLUMN name;
+
+ALTER TABLE public.assistant_deployment_audios  DROP COLUMN audio_provider_id;

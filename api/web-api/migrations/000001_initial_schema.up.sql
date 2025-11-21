@@ -209,12 +209,14 @@ CREATE TABLE public.vaults (
     id bigint NOT NULL,
     created_date timestamp without time zone DEFAULT now() NOT NULL,
     updated_date timestamp without time zone,
-    vault_type character varying(200) NOT NULL,
-    vault_type_id bigint NOT NULL,
-    vault_level character varying(200) NOT NULL,
-    vault_level_id bigint NOT NULL,
+    project_id bigint NOT NULL,
+    organization_id bigint NOT NULL,
+
+    
+    provider character varying(200) NOT NULL,
     name character varying(200) NOT NULL,
     value json NOT NULL,
+
     status character varying(50) DEFAULT 'ACTIVE'::character varying NOT NULL,
     created_by bigint NOT NULL,
     updated_by bigint NOT NULL
@@ -303,7 +305,9 @@ ALTER TABLE ONLY public.user_socials
 ALTER TABLE ONLY public.vaults
     ADD CONSTRAINT vaults_pkey PRIMARY KEY (id);
 
-
+CREATE INDEX idx_vlts_provider ON public.vaults USING btree (provider);
+CREATE INDEX idx_vlts_project_id ON public.vaults USING btree (project_id);
+CREATE INDEX idx_vlts_organization_id ON public.vaults USING btree (organization_id);
 
 
 --

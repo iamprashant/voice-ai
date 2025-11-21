@@ -1,7 +1,7 @@
 import { PageHeaderBlock } from '@/app/components/blocks/page-header-block';
 import { PageTitleBlock } from '@/app/components/blocks/page-title-block';
 import { ToolIcon } from '@/app/components/Icon/tool';
-import { SideTab, SideTabLink } from '@/app/components/tab-link';
+import { SideTabLink } from '@/app/components/tab-link';
 import { useGlobalNavigation } from '@/hooks/use-global-navigator';
 import { BarChart, Bolt, ChevronLeft, Package, Webhook } from 'lucide-react';
 import { FC, HTMLAttributes } from 'react';
@@ -12,7 +12,7 @@ export const AssistantManageLayout: FC<HTMLAttributes<HTMLDivElement>> = () => {
   const { goToAssistant } = useGlobalNavigation();
   return (
     <>
-      <PageHeaderBlock className="border-b text-sm/6">
+      <PageHeaderBlock className="border-b">
         <div
           onClick={() => {
             goToAssistant(assistantId!);
@@ -25,10 +25,10 @@ export const AssistantManageLayout: FC<HTMLAttributes<HTMLDivElement>> = () => {
       </PageHeaderBlock>
       <div className="flex-1 flex relative grow h-full overflow-hidden">
         <aside
-          className="w-80 border-r bg-white dark:bg-gray-900 z-1 overflow-auto shrink-0"
+          className="w-80 border-r z-1 overflow-auto shrink-0 dark:text-gray-400"
           aria-label="Sidebar"
         >
-          <ul className="text-sm/6 p-1 space-y-1">
+          <ul className="p-1 space-y-1">
             <li>
               <SideTabLink to="deployment/" className="h-11">
                 <Package className="w-4 h-4 mr-2" strokeWidth={1.5} />{' '}

@@ -1,4 +1,4 @@
-import { ProviderConfig } from '@/app/components/providers';
+import { Metadata } from '@rapidaai/react';
 
 export type CreateKnowledgeTypeProperty = {
   /**
@@ -11,7 +11,12 @@ export type CreateKnowledgeTypeProperty = {
   /**
    *
    */
-  providerModel: ProviderConfig;
+  provider: string;
+
+  /**
+   *
+   */
+  providerParamters: Metadata[];
 
   /**
    * endpoint name
@@ -33,19 +38,20 @@ export type CreateKnowledgeTypeAction = {
   onChangeDescription: (s: string) => void;
 
   /**
-   * on Change of model
-   * @param md
-   * @returns
-   */
-  onChangeProviderModel: (providerConfig: ProviderConfig) => void;
-
-  /**
    *
    * @param i
    * @param v
    * @returns
    */
-  onChangeProvider: (i: string, v: string) => void;
+  onChangeProvider: (v: string) => void;
+
+  /**
+   *
+   * @param s
+   * @returns
+   */
+  onChangeProviderParameter: (parameters: Metadata[]) => void;
+
   /**
    * set name
    */

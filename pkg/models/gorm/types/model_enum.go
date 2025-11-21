@@ -22,36 +22,6 @@ func (c RetrievalMethod) Value() (driver.Value, error) {
 	return string(c), nil
 }
 
-type VaultType string
-
-const (
-	VAULT_TYPE_PROVIDER VaultType = "provider-vault"
-	VAULT_TYPE_TOOL     VaultType = "tool-vault"
-)
-
-func (c VaultType) MarshalJSON() ([]byte, error) {
-	return json.Marshal(string(c))
-}
-
-func (c VaultType) Value() (driver.Value, error) {
-	return string(c), nil
-}
-
-type VaultLevel string
-
-const (
-	VAULT_LEVEL_ORGANIZATION VaultLevel = "organization"
-	VAULT_LEVEL_USER         VaultLevel = "user"
-)
-
-func (c VaultLevel) MarshalJSON() ([]byte, error) {
-	return json.Marshal(string(c))
-}
-
-func (c VaultLevel) Value() (driver.Value, error) {
-	return string(c), nil
-}
-
 type DocumentSource string
 type ManualDocumentSource string
 

@@ -47,11 +47,11 @@ export const CodeEditor: FC<CodeEditorProps> = ({
         'group',
         'outline-solid outline-[1.5px] outline-transparent',
         'focus-within:outline-blue-600 focus:outline-blue-600 outline-offset-[-1.5px]',
-        'border-b border-gray-400 dark:border-gray-600',
+        'border-b border-gray-300 dark:border-gray-700',
         'dark:focus:border-blue-600 focus:border-blue-600',
         'transition-all duration-200 ease-in-out',
         'relative',
-        'bg-white dark:bg-gray-950',
+        'bg-light-background dark:bg-gray-950',
         isFocus && 'border-blue-600! outline-blue-600! ',
         isExpand
           ? 'fixed top-0 bottom-0 right-0 left-0 h-full z-50 m-0! p-0!'

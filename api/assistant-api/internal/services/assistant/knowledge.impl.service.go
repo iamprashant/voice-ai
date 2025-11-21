@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	internal_assistant_gorm "github.com/rapidaai/api/assistant-api/internal/gorm/assistants"
+	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
 	internal_services "github.com/rapidaai/api/assistant-api/internal/services"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
@@ -31,11 +31,11 @@ func (eService *assistantKnowledgeService) Create(ctx context.Context, auth type
 	retrievalMethod gorm_types.RetrievalMethod,
 	rerankEnabled bool, scoreThreshold float32, topK uint32, rerankerProviderModelId *uint64,
 	rerankerProviderModelName *string,
-	rerankerProviderModelOptions []*lexatic_backend.Metadata) (*internal_assistant_gorm.AssistantKnowledge, error) {
+	rerankerProviderModelOptions []*lexatic_backend.Metadata) (*internal_assistant_entity.AssistantKnowledge, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
 
-	var existingAk internal_assistant_gorm.AssistantKnowledge
+	var existingAk internal_assistant_entity.AssistantKnowledge
 	result := db.Where("assistant_id = ? AND knowledge_id = ? AND status = ?", assistantId, knowledgeId, type_enums.RECORD_ACTIVE).First(&existingAk)
 	if result.Error == nil {
 		eService.logger.Errorf("Knowledge already exists for assistant %d", assistantId)
@@ -45,7 +45,7 @@ func (eService *assistantKnowledgeService) Create(ctx context.Context, auth type
 		return nil, result.Error
 	}
 
-	assistantKnowledgeConfig := &internal_assistant_gorm.AssistantKnowledge{
+	assistantKnowledgeConfig := &internal_assistant_entity.AssistantKnowledge{
 		AssistantId:     assistantId,
 		KnowledgeId:     knowledgeId,
 		RetrievalMethod: retrievalMethod,
@@ -75,9 +75,9 @@ func (eService *assistantKnowledgeService) Create(ctx context.Context, auth type
 	}
 
 	//
-	modelOptions := make([]*internal_assistant_gorm.AssistantKnowledgeRerankerOption, 0)
+	modelOptions := make([]*internal_assistant_entity.AssistantKnowledgeRerankerOption, 0)
 	for _, v := range rerankerProviderModelOptions {
-		modelOptions = append(modelOptions, &internal_assistant_gorm.AssistantKnowledgeRerankerOption{
+		modelOptions = append(modelOptions, &internal_assistant_entity.AssistantKnowledgeRerankerOption{
 			AssistantKnowledgeId: assistantKnowledgeConfig.Id,
 			Mutable: gorm_models.Mutable{
 				CreatedBy: *auth.GetUserId(),
@@ -106,10 +106,10 @@ func (eService *assistantKnowledgeService) Create(ctx context.Context, auth type
 }
 
 // DeleteAssistantKnowledge implements internal_services.AssistantKnowledgeService.
-func (eService *assistantKnowledgeService) Delete(ctx context.Context, auth types.SimplePrinciple, akId uint64, assistantId uint64) (*internal_assistant_gorm.AssistantKnowledge, error) {
+func (eService *assistantKnowledgeService) Delete(ctx context.Context, auth types.SimplePrinciple, akId uint64, assistantId uint64) (*internal_assistant_entity.AssistantKnowledge, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
-	aK := &internal_assistant_gorm.AssistantKnowledge{
+	aK := &internal_assistant_entity.AssistantKnowledge{
 		Mutable: gorm_models.Mutable{
 			Status:    type_enums.RECORD_ARCHIEVE,
 			UpdatedBy: *auth.GetUserId(),
@@ -128,14 +128,14 @@ func (eService *assistantKnowledgeService) Delete(ctx context.Context, auth type
 }
 
 // GetAllAssistantKnowledge implements internal_services.AssistantKnowledgeService.
-func (eService *assistantKnowledgeService) GetAll(ctx context.Context, auth types.SimplePrinciple, assistantId uint64, criterias []*lexatic_backend.Criteria, paginate *lexatic_backend.Paginate) (int64, []*internal_assistant_gorm.AssistantKnowledge, error) {
+func (eService *assistantKnowledgeService) GetAll(ctx context.Context, auth types.SimplePrinciple, assistantId uint64, criterias []*lexatic_backend.Criteria, paginate *lexatic_backend.Paginate) (int64, []*internal_assistant_entity.AssistantKnowledge, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
 	var (
-		analysises []*internal_assistant_gorm.AssistantKnowledge
+		analysises []*internal_assistant_entity.AssistantKnowledge
 		cnt        int64
 	)
-	qry := db.Model(internal_assistant_gorm.AssistantKnowledge{})
+	qry := db.Model(internal_assistant_entity.AssistantKnowledge{})
 	qry = qry.
 		Preload("Knowledge").
 		Preload("AssistantKnowledgeRerankerOptions").
@@ -165,10 +165,10 @@ func (eService *assistantKnowledgeService) GetAll(ctx context.Context, auth type
 }
 
 // GetAssistantKnowledge implements internal_services.AssistantKnowledgeService.
-func (eService *assistantKnowledgeService) Get(ctx context.Context, auth types.SimplePrinciple, akId, assistantId uint64) (*internal_assistant_gorm.AssistantKnowledge, error) {
+func (eService *assistantKnowledgeService) Get(ctx context.Context, auth types.SimplePrinciple, akId, assistantId uint64) (*internal_assistant_entity.AssistantKnowledge, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
-	var aK *internal_assistant_gorm.AssistantKnowledge
+	var aK *internal_assistant_entity.AssistantKnowledge
 	tx := db.
 		Preload("Knowledge").
 		Preload("AssistantKnowledgeRerankerOptions").
@@ -184,11 +184,11 @@ func (eService *assistantKnowledgeService) Get(ctx context.Context, auth types.S
 }
 
 // UpdateAssistantKnowledge implements internal_services.AssistantKnowledgeService.
-func (eService *assistantKnowledgeService) Update(ctx context.Context, auth types.SimplePrinciple, akId uint64, assistantId uint64, knowledgeId uint64, retrievalMethod gorm_types.RetrievalMethod, rerankEnabled bool, scoreThreshold float32, topK uint32, rerankerProviderModelId *uint64, rerankerProviderModelName *string, rerankerProviderModelOptions []*lexatic_backend.Metadata) (*internal_assistant_gorm.AssistantKnowledge, error) {
+func (eService *assistantKnowledgeService) Update(ctx context.Context, auth types.SimplePrinciple, akId uint64, assistantId uint64, knowledgeId uint64, retrievalMethod gorm_types.RetrievalMethod, rerankEnabled bool, scoreThreshold float32, topK uint32, rerankerProviderModelId *uint64, rerankerProviderModelName *string, rerankerProviderModelOptions []*lexatic_backend.Metadata) (*internal_assistant_entity.AssistantKnowledge, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
 
-	var existingAk internal_assistant_gorm.AssistantKnowledge
+	var existingAk internal_assistant_entity.AssistantKnowledge
 	result := db.Where("assistant_id = ? AND knowledge_id = ? AND status = ? AND id != ?", assistantId, knowledgeId, type_enums.RECORD_ACTIVE, akId).First(&existingAk)
 	if result.Error == nil {
 		eService.logger.Errorf("Knowledge already exists for assistant %d", assistantId)
@@ -198,7 +198,7 @@ func (eService *assistantKnowledgeService) Update(ctx context.Context, auth type
 		return nil, result.Error
 	}
 
-	aK := &internal_assistant_gorm.AssistantKnowledge{
+	aK := &internal_assistant_entity.AssistantKnowledge{
 		KnowledgeId:     knowledgeId,
 		RetrievalMethod: retrievalMethod,
 		ScoreThreshold:  scoreThreshold,

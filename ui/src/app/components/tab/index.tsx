@@ -33,10 +33,12 @@ export const Tab: FC<TabProps> = ({
                 }}
                 className={cn(
                   'group cursor-pointer hover:bg-gray-500/10',
-                  isActive === ix.label ? 'bg-gray-500/10 text-blue-500' : '',
+                  isActive === ix.label
+                    ? 'text-blue-500 bg-blue-500/10'
+                    : 'hover:bg-blue-500/5 hover:text-blue-500',
                 )}
               >
-                <div className="px-6 py-2 font-semibold whitespace-nowrap tracking-wide text-pretty capitalize gap-3 flex items-center">
+                <div className="px-6 py-2 font-medium text-[14.5px] whitespace-nowrap tracking-wide text-pretty capitalize gap-3 flex items-center">
                   {ix.labelIcon}
                   {ix.label}
                 </div>
@@ -90,7 +92,7 @@ export const SideTab: FC<TabProps> = ({
                     : 'hover:bg-blue-500/5 hover:text-blue-500',
                 )}
               >
-                <div className="capitalize px-3 py-3 font-medium  text-sm/6 gap-3 flex items-center">
+                <div className="capitalize px-3 py-3 font-medium text-[14.5px] whitespace-nowrap tracking-wide text-pretty gap-3 flex items-center">
                   {ix.labelIcon}
                   {ix.label}
                 </div>

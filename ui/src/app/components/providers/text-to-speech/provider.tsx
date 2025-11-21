@@ -19,7 +19,7 @@ import {
   ConfigureElevanLabTextToSpeech,
   GetElevanLabDefaultOptions,
   ValidateElevanLabOptions,
-} from '@/app/components/providers/text-to-speech/elevanlabs';
+} from '@/app/components/providers/text-to-speech/elevenlabs';
 import {
   ConfigureGoogleTextToSpeech,
   GetGoogleDefaultOptions,
@@ -35,7 +35,7 @@ import {
   GetPlayHTDefaultOptions,
   ValidatePlayHTOptions,
 } from '@/app/components/providers/text-to-speech/playht';
-import { ProviderConfig } from '@/app/components/providers';
+import { ProviderComponentProps } from '@/app/components/providers';
 
 /**
  *
@@ -118,7 +118,6 @@ export const GetDefaultSpeakerConfig = (
   ];
 
   const result = [...existing];
-
   defaultConfig.forEach(item => {
     if (!existing.some(e => e.getKey() === item.key)) {
       const metadata = new Metadata();
@@ -127,7 +126,6 @@ export const GetDefaultSpeakerConfig = (
       result.push(metadata);
     }
   });
-
   return result;
 };
 
@@ -181,73 +179,60 @@ export const ValidateTextToSpeechIfInvalid = (
   }
 };
 
-export const TextToSpeechConfigComponent: FC<{
-  config: ProviderConfig;
-  updateConfig: (config: Partial<ProviderConfig>) => void;
-}> = ({ config, updateConfig }) => {
-  switch (config?.provider) {
+export const TextToSpeechConfigComponent: FC<ProviderComponentProps> = ({
+  provider,
+  parameters,
+  onChangeParameter,
+}) => {
+  switch (provider) {
     case 'google':
     case 'google-cloud':
       return (
         <ConfigureGoogleTextToSpeech
-          parameters={config.parameters}
-          onParameterChange={(params: Metadata[]) =>
-            updateConfig({ parameters: params })
-          }
+          parameters={parameters}
+          onParameterChange={onChangeParameter}
         />
       );
     case 'elevenlabs':
       return (
         <ConfigureElevanLabTextToSpeech
-          parameters={config.parameters}
-          onParameterChange={(params: Metadata[]) =>
-            updateConfig({ parameters: params })
-          }
+          parameters={parameters}
+          onParameterChange={onChangeParameter}
         />
       );
     case 'playht':
       return (
         <ConfigurePlayhtTextToSpeech
-          parameters={config.parameters}
-          onParameterChange={(params: Metadata[]) => {
-            updateConfig({ parameters: params });
-          }}
+          parameters={parameters}
+          onParameterChange={onChangeParameter}
         />
       );
     case 'deepgram':
       return (
         <ConfigureDeepgramTextToSpeech
-          parameters={config.parameters}
-          onParameterChange={(params: Metadata[]) =>
-            updateConfig({ parameters: params })
-          }
+          parameters={parameters}
+          onParameterChange={onChangeParameter}
         />
       );
     case 'openai':
       return (
         <ConfigureOpenAITextToSpeech
-          parameters={config.parameters}
-          onParameterChange={(params: Metadata[]) =>
-            updateConfig({ parameters: params })
-          }
+          parameters={parameters}
+          onParameterChange={onChangeParameter}
         />
       );
     case 'azure':
       return (
         <ConfigureAzureTextToSpeech
-          parameters={config.parameters}
-          onParameterChange={(params: Metadata[]) =>
-            updateConfig({ parameters: params })
-          }
+          parameters={parameters}
+          onParameterChange={onChangeParameter}
         />
       );
     case 'cartesia':
       return (
         <ConfigureCartesiaTextToSpeech
-          parameters={config.parameters}
-          onParameterChange={(params: Metadata[]) => {
-            updateConfig({ parameters: params });
-          }}
+          parameters={parameters}
+          onParameterChange={onChangeParameter}
         />
       );
     default:

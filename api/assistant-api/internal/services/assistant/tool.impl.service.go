@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	internal_assistant_gorm "github.com/rapidaai/api/assistant-api/internal/gorm/assistants"
+	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
 	internal_services "github.com/rapidaai/api/assistant-api/internal/services"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
@@ -29,11 +29,11 @@ type assistantToolService struct {
 
 // CreateAssistantTool implements internal_services.AssistantToolService.
 func (eService *assistantToolService) Create(ctx context.Context, auth types.SimplePrinciple, assistantId uint64,
-	name string, description string, fields map[string]interface{}, executionMethod string, options []*lexatic_backend.Metadata) (*internal_assistant_gorm.AssistantTool, error) {
+	name string, description string, fields map[string]interface{}, executionMethod string, options []*lexatic_backend.Metadata) (*internal_assistant_entity.AssistantTool, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
 
-	var existingTool internal_assistant_gorm.AssistantTool
+	var existingTool internal_assistant_entity.AssistantTool
 	result := db.
 		Where("assistant_id = ? AND name = ? AND status = ?", assistantId, name, type_enums.RECORD_ACTIVE).
 		First(&existingTool)
@@ -45,7 +45,7 @@ func (eService *assistantToolService) Create(ctx context.Context, auth types.Sim
 		return nil, result.Error
 	}
 
-	aTool := &internal_assistant_gorm.AssistantTool{
+	aTool := &internal_assistant_entity.AssistantTool{
 		Mutable: gorm_models.Mutable{
 			CreatedBy: *auth.GetUserId(),
 		},
@@ -74,10 +74,10 @@ func (eService *assistantToolService) Create(ctx context.Context, auth types.Sim
 }
 
 // DeleteAssistantTool implements internal_services.AssistantToolService.
-func (eService *assistantToolService) Delete(ctx context.Context, auth types.SimplePrinciple, toolId uint64, assistantId uint64) (*internal_assistant_gorm.AssistantTool, error) {
+func (eService *assistantToolService) Delete(ctx context.Context, auth types.SimplePrinciple, toolId uint64, assistantId uint64) (*internal_assistant_entity.AssistantTool, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
-	aK := &internal_assistant_gorm.AssistantTool{
+	aK := &internal_assistant_entity.AssistantTool{
 		Mutable: gorm_models.Mutable{
 			Status:    type_enums.RECORD_ARCHIEVE,
 			UpdatedBy: *auth.GetUserId(),
@@ -96,14 +96,14 @@ func (eService *assistantToolService) Delete(ctx context.Context, auth types.Sim
 }
 
 // GetAllAssistantTool implements internal_services.AssistantToolService.
-func (eService *assistantToolService) GetAll(ctx context.Context, auth types.SimplePrinciple, assistantId uint64, criterias []*lexatic_backend.Criteria, paginate *lexatic_backend.Paginate) (int64, []*internal_assistant_gorm.AssistantTool, error) {
+func (eService *assistantToolService) GetAll(ctx context.Context, auth types.SimplePrinciple, assistantId uint64, criterias []*lexatic_backend.Criteria, paginate *lexatic_backend.Paginate) (int64, []*internal_assistant_entity.AssistantTool, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
 	var (
-		aTools []*internal_assistant_gorm.AssistantTool
+		aTools []*internal_assistant_entity.AssistantTool
 		cnt    int64
 	)
-	qry := db.Model(internal_assistant_gorm.AssistantTool{})
+	qry := db.Model(internal_assistant_entity.AssistantTool{})
 	qry = qry.
 		Preload("ExecutionOptions", "status = ?", type_enums.RECORD_ACTIVE).
 		Where("assistant_id = ? AND status = ?", assistantId, type_enums.RECORD_ACTIVE)
@@ -132,10 +132,10 @@ func (eService *assistantToolService) GetAll(ctx context.Context, auth types.Sim
 }
 
 // GetAssistantTool implements internal_services.AssistantToolService.
-func (eService *assistantToolService) Get(ctx context.Context, auth types.SimplePrinciple, toolId uint64, assistantId uint64) (*internal_assistant_gorm.AssistantTool, error) {
+func (eService *assistantToolService) Get(ctx context.Context, auth types.SimplePrinciple, toolId uint64, assistantId uint64) (*internal_assistant_entity.AssistantTool, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
-	var aK *internal_assistant_gorm.AssistantTool
+	var aK *internal_assistant_entity.AssistantTool
 	tx := db.
 		Preload("ExecutionOptions", "status = ?", type_enums.RECORD_ACTIVE).
 		Where("id = ? AND assistant_id = ?", toolId, assistantId).
@@ -152,12 +152,12 @@ func (eService *assistantToolService) Get(ctx context.Context, auth types.Simple
 // UpdateAssistantTool implements internal_services.AssistantToolService.
 func (eService *assistantToolService) Update(ctx context.Context, auth types.SimplePrinciple,
 	toolId uint64,
-	assistantId uint64, name string, description string, fields map[string]interface{}, executionMethod string, options []*lexatic_backend.Metadata) (*internal_assistant_gorm.AssistantTool, error) {
+	assistantId uint64, name string, description string, fields map[string]interface{}, executionMethod string, options []*lexatic_backend.Metadata) (*internal_assistant_entity.AssistantTool, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
 
 	eService.logger.Debugf("id = %d AND assistantId = %d", toolId, assistantId)
-	var existingTool internal_assistant_gorm.AssistantTool
+	var existingTool internal_assistant_entity.AssistantTool
 	result := db.Where("assistant_id = ? AND name = ? AND status = ? AND id != ?", assistantId, name, type_enums.RECORD_ACTIVE, toolId).First(&existingTool)
 	if result.Error == nil {
 		eService.logger.Errorf("Tool with name %s already exists for assistant %d", name, assistantId)
@@ -168,7 +168,7 @@ func (eService *assistantToolService) Update(ctx context.Context, auth types.Sim
 	}
 
 	//
-	aTool := &internal_assistant_gorm.AssistantTool{
+	aTool := &internal_assistant_entity.AssistantTool{
 		Mutable: gorm_models.Mutable{
 			UpdatedBy: *auth.GetUserId(),
 		},
@@ -212,7 +212,7 @@ func (eService *assistantToolService) MarkAllOptionsAsDeleted(
 ) error {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
-	tOptions := &internal_assistant_gorm.AssistantToolOption{
+	tOptions := &internal_assistant_entity.AssistantToolOption{
 		Mutable: gorm_models.Mutable{
 			Status:    type_enums.RECORD_ARCHIEVE,
 			UpdatedBy: *auth.GetUserId(),
@@ -236,12 +236,12 @@ func (eService *assistantToolService) CreateOrUpdateExecutionOption(
 	auth types.SimplePrinciple,
 	assistantToolId uint64,
 	metadata []*lexatic_backend.Metadata,
-) ([]*internal_assistant_gorm.AssistantToolOption, error) {
+) ([]*internal_assistant_entity.AssistantToolOption, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
-	mtrs := make([]*internal_assistant_gorm.AssistantToolOption, 0)
+	mtrs := make([]*internal_assistant_entity.AssistantToolOption, 0)
 	for _, mtr := range metadata {
-		_mtr := &internal_assistant_gorm.AssistantToolOption{
+		_mtr := &internal_assistant_entity.AssistantToolOption{
 			Metadata: gorm_models.Metadata{
 				Key:   mtr.GetKey(),
 				Value: mtr.GetValue(),
@@ -292,7 +292,7 @@ func (eService *assistantToolService) CreateLog(
 	executionMethod string,
 	status type_enums.RecordState,
 	request, response []byte,
-) (*internal_assistant_gorm.AssistantToolLog, error) {
+) (*internal_assistant_entity.AssistantToolLog, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
 	s3Prefix := eService.ObjectPrefix(*auth.GetCurrentOrganizationId(), *auth.GetCurrentProjectId())
@@ -307,7 +307,7 @@ func (eService *assistantToolService) CreateLog(
 		eService.storage.Store(ctx, key, response)
 	})
 
-	toolLog := &internal_assistant_gorm.AssistantToolLog{
+	toolLog := &internal_assistant_entity.AssistantToolLog{
 		Audited: gorm_models.Audited{
 			Id: _auditId,
 		},
@@ -341,10 +341,10 @@ func (eService *assistantToolService) GetLog(
 	ctx context.Context,
 	auth types.SimplePrinciple,
 	projectId uint64,
-	toolLogId uint64) (*internal_assistant_gorm.AssistantToolLog, error) {
+	toolLogId uint64) (*internal_assistant_entity.AssistantToolLog, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
-	var wkg *internal_assistant_gorm.AssistantToolLog
+	var wkg *internal_assistant_entity.AssistantToolLog
 	tx := db.
 		Where("id = ? AND organization_id = ? AND project_id = ?", toolLogId, *auth.GetCurrentOrganizationId(), projectId).
 		Preload("AssistantTool").
@@ -365,14 +365,14 @@ func (eService *assistantToolService) GetAllLog(
 	projectId uint64,
 	criterias []*lexatic_backend.Criteria,
 	paginate *lexatic_backend.Paginate,
-	order *lexatic_backend.Ordering) (int64, []*internal_assistant_gorm.AssistantToolLog, error) {
+	order *lexatic_backend.Ordering) (int64, []*internal_assistant_entity.AssistantToolLog, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
 	var (
-		toolLogs []*internal_assistant_gorm.AssistantToolLog
+		toolLogs []*internal_assistant_entity.AssistantToolLog
 		cnt      int64
 	)
-	qry := db.Model(internal_assistant_gorm.AssistantToolLog{})
+	qry := db.Model(internal_assistant_entity.AssistantToolLog{})
 	qry.
 		Where("organization_id = ? AND project_id = ? ", *auth.GetCurrentOrganizationId(), projectId)
 	for _, ct := range criterias {

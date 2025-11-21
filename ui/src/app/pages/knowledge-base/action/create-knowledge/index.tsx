@@ -31,6 +31,9 @@ import { ExternalLink, Info } from 'lucide-react';
  * @returns
  */
 export function CreateKnowledgePage() {
+  /**
+   * tab management for multistep form
+   */
   const [activeTab, setActiveTab] = useState('create-knowledge');
   const [errorMessage, setErrorMessage] = useState('');
   const { goToKnowledge } = useGlobalNavigation();
@@ -44,9 +47,10 @@ export function CreateKnowledgePage() {
     onAddTag,
     onRemoveTag,
     onCreateKnowledge,
-    providerModel,
+    provider,
     onChangeProvider,
-    onChangeProviderModel,
+    providerParamters,
+    onChangeProviderParameter,
   } = useCreateKnowledgePageStore();
 
   /**
@@ -189,9 +193,10 @@ export function CreateKnowledgePage() {
                 </YellowNoticeBlock>
                 <div className="px-8 pb-8 space-y-6 max-w-3xl">
                   <EmbeddingProvider
-                    config={providerModel}
-                    onChangeConfig={onChangeProviderModel}
+                    onChangeParameter={onChangeProviderParameter}
                     onChangeProvider={onChangeProvider}
+                    parameters={providerParamters}
+                    provider={provider}
                   />
                   <FieldSet>
                     <FormLabel>Name</FormLabel>

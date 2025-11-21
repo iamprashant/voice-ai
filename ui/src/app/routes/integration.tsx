@@ -2,6 +2,7 @@ import { MissionBox } from '@/app/components/container/mission-box';
 import { ProtectedBox } from '@/app/components/container/protected-box';
 import {
   IntegrationModelPage,
+  IntegrationModelInformationPage,
   IntegrationProjectCredentialPage,
 } from '@/app/pages/external-integration';
 import { Routes, Route, Outlet } from 'react-router-dom';
@@ -23,6 +24,10 @@ export function IntegrationRoute() {
       >
         <Route path="" element={<IntegrationModelPage />} />
         <Route path="models" element={<IntegrationModelPage />} />
+        <Route
+          path="models/:provider"
+          element={<IntegrationModelInformationPage />}
+        />
         <Route
           key="project-credential"
           path="project-credential"

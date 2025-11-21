@@ -39,7 +39,6 @@ type EndpointProviderModel struct {
 	Request     gorm_types.PromptMap `json:"chatCompletePrompt" gorm:"type:jsonb"`
 
 	ModelProviderName            string                         `json:"modelProviderName" gorm:"type:string"`
-	ModelProviderId              uint64                         `json:"modelProviderId" gorm:"type:bigint;size:20;not null"`
 	EndpointProviderModelOptions []*EndpointProviderModelOption `json:"endpointModelOptions" gorm:"foreignKey:EndpointProviderModelId"`
 }
 

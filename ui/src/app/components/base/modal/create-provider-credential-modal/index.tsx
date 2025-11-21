@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ConnectionConfig,
   CreateProviderCredentialRequest,
 } from '@rapidaai/react';
-import { useForm } from 'react-hook-form';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { CreateProviderKey } from '@rapidaai/react';
 import { Input } from '@/app/components/form/input';
@@ -13,19 +12,21 @@ import { useRapidaStore } from '@/hooks';
 import toast from 'react-hot-toast/headless';
 import { GenericModal, ModalProps } from '@/app/components/base/modal';
 import { FieldSet } from '@/app/components/form/fieldset';
-import { IBlueBGButton, ICancelButton } from '@/app/components/form/button';
+import {
+  IBlueBGArrowButton,
+  ICancelButton,
+} from '@/app/components/form/button';
 import { ModalFooter } from '@/app/components/base/modal/modal-footer';
 import { ModalBody } from '@/app/components/base/modal/modal-body';
 import { FormLabel } from '@/app/components/form-label';
-import { ModalFormBlock } from '@/app/components/blocks/modal-form-block';
 import { ModalHeader } from '@/app/components/base/modal/modal-header';
 import { ModalTitleBlock } from '@/app/components/blocks/modal-title-block';
 import { connectionConfig } from '@/configs';
-import { COMPLETE_PROVIDER, RapidaProvider } from '@/app/components/providers';
 import { useProviderContext } from '@/context/provider-context';
-import { Select } from '@/app/components/form/select';
 import { Textarea } from '@/app/components/form/textarea';
 import { Struct } from 'google-protobuf/google/protobuf/struct_pb';
+import { INTEGRATION_PROVIDER, RapidaProvider } from '@/providers';
+import { ModalFitHeightBlock } from '@/app/components/blocks/modal-fit-height-block';
 
 /**
  * creation provider key dialog props that gives ability for opening and closing modal props
@@ -34,7 +35,7 @@ interface CreateProviderCredentialDialogProps extends ModalProps {
   /**
    * exiting provider if there
    */
-  currentProviderId?: string | null;
+  currentProvider?: string | null;
 }
 /**
  *
@@ -42,62 +43,77 @@ interface CreateProviderCredentialDialogProps extends ModalProps {
  * @param props
  * @returns
  */
+
 export function CreateProviderCredentialDialog(
   props: CreateProviderCredentialDialogProps,
 ) {
-  /**
-   *current provider
-   */
   const { authId, projectId, token } = useCurrentCredential();
-
   const [provider, setProvider] = useState<RapidaProvider | null>();
-
   const providerCtx = useProviderContext();
-  /**
-   *
-   */
+
   const { loading, showLoader, hideLoader } = useRapidaStore();
-  /**
-   * form controlling
-   */
-  const { register, handleSubmit, reset } = useForm();
   const [error, setError] = useState('');
+  const [keyName, setKeyName] = useState('');
+  const [config, setConfig] = useState<Record<string, string>>({});
 
   useEffect(() => {
     setProvider(
-      COMPLETE_PROVIDER.slice()
+      INTEGRATION_PROVIDER.slice()
         .reverse()
-        .find(x => x.id === props.currentProviderId),
+        .find(x => x.code === props.currentProvider),
     );
-  }, [props.currentProviderId]);
+  }, [props.currentProvider]);
 
-  /**
-   *
-   * @param provider
-   * @param data
-   * @returns
-   */
-  const onCreateProviderKey = data => {
-    if (!props.currentProviderId) {
+  const handleInputChange = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = event.target;
+    if (name.startsWith('config.')) {
+      setConfig(prev => ({
+        ...prev,
+        [name.replace('config.', '')]: value,
+      }));
+    } else if (name === 'keyName') {
+      setKeyName(value);
+    }
+  };
+
+  const validateAndSubmit = () => {
+    if (!props.currentProvider) {
       setError('Please select the provider which you want to create the key.');
       return;
     }
+
     if (!provider) {
       setError('Please select the provider which you want to create the key.');
       return;
     }
 
-    if (!data.keyName) {
+    if (!keyName.trim()) {
       setError('Please provide a valid key name for the credential.');
       return;
     }
 
+    const missingFields = provider.configurations?.filter(
+      configOption => !config[configOption.name]?.trim(),
+    );
+
+    if (missingFields && missingFields.length > 0) {
+      setError(
+        `Please fill out the following fields: ${missingFields
+          .map(field => field.label)
+          .join(', ')}`,
+      );
+      return;
+    }
+
+    // Proceed with creating the provider key
     showLoader();
     const requestObject = new CreateProviderCredentialRequest();
-    requestObject.setProviderid(provider.id);
-    requestObject.setProvidername(provider.name);
-    requestObject.setCredential(Struct.fromJavaScript(data.config));
-    requestObject.setName(data.keyName);
+    requestObject.setProvider(provider.code);
+    requestObject.setCredential(Struct.fromJavaScript(config));
+    requestObject.setName(keyName);
+
     CreateProviderKey(
       connectionConfig,
       requestObject,
@@ -116,34 +132,27 @@ export function CreateProviderCredentialDialog(
           providerCtx.reloadProviderCredentials();
           props.setModalOpen(false);
           setError('');
-          reset();
+          setKeyName('');
+          setConfig({});
         } else {
           let errorMessage = cpkr?.getError();
-          if (errorMessage) {
-            setError(errorMessage.getHumanmessage());
-            return;
-          } else
-            setError('Unable to process your request. please try again later.');
-          return;
+          setError(
+            errorMessage?.getHumanmessage() ??
+              'Unable to process your request. Please try again later.',
+          );
         }
       })
-      .catch(err => {
+      .catch(() => {
         hideLoader();
         toast.error(
           'Unable to create provider credential, please try again later.',
         );
       });
   };
-  /**
-   *
-   */
+
   return (
     <GenericModal modalOpen={props.modalOpen} setModalOpen={props.setModalOpen}>
-      <ModalFormBlock
-        onSubmit={e => {
-          e.preventDefault();
-        }}
-      >
+      <ModalFitHeightBlock>
         <ModalHeader
           onClose={() => {
             props.setModalOpen(false);
@@ -158,55 +167,49 @@ export function CreateProviderCredentialDialog(
               currentProvider={provider ? provider : undefined}
               setCurrentProvider={p => {
                 setError('');
-                reset();
+                setKeyName('');
+                setConfig({});
                 setProvider(p);
               }}
-            ></ProviderDropdown>
+            />
           </FieldSet>
 
           <FieldSet>
             <FormLabel>Key Name</FormLabel>
             <Input
               type="text"
-              {...register('keyName')}
+              name="keyName"
+              value={keyName}
               required
               placeholder="Assign a unique name to this provider key for easy identification."
-            ></Input>
+              onChange={handleInputChange}
+            />
           </FieldSet>
 
           {provider &&
-            provider.configurations.map((x, idx) => {
-              return (
-                <FieldSet key={idx}>
-                  <FormLabel htmlFor={`config.${x.name}`}>{x.label}</FormLabel>
-                  {x.type === 'select' ? (
-                    <Select
-                      required
-                      {...register(`config.${x.name}`)}
-                      options={
-                        x.options?.map(option => ({
-                          name: option, // Use the string as the name
-                          value: option, // Use the string as the value
-                        })) || []
-                      }
-                    ></Select>
-                  ) : x.type === 'text' ? (
-                    <Textarea
-                      required
-                      placeholder={x.label}
-                      {...register(`config.${x.name}`)}
-                    />
-                  ) : (
-                    <Input
-                      type={'text'}
-                      required
-                      placeholder={x.label}
-                      {...register(`config.${x.name}`)}
-                    />
-                  )}
-                </FieldSet>
-              );
-            })}
+            provider.configurations?.map((x, idx) => (
+              <FieldSet key={idx}>
+                <FormLabel htmlFor={`config.${x.name}`}>{x.label}</FormLabel>
+                {x.type === 'text' ? (
+                  <Textarea
+                    required
+                    name={`config.${x.name}`}
+                    placeholder={x.label}
+                    value={config[x.name] || ''}
+                    onChange={handleInputChange}
+                  />
+                ) : (
+                  <Input
+                    type="text"
+                    required
+                    name={`config.${x.name}`}
+                    placeholder={x.label}
+                    value={config[x.name] || ''}
+                    onChange={handleInputChange}
+                  />
+                )}
+              </FieldSet>
+            ))}
 
           <ErrorMessage message={error} />
         </ModalBody>
@@ -219,15 +222,15 @@ export function CreateProviderCredentialDialog(
           >
             Cancel
           </ICancelButton>
-          <IBlueBGButton
+          <IBlueBGArrowButton
             className="px-4 rounded-[2px]"
-            onClick={handleSubmit(onCreateProviderKey)}
+            onClick={validateAndSubmit}
             isLoading={loading}
           >
             Configure
-          </IBlueBGButton>
+          </IBlueBGArrowButton>
         </ModalFooter>
-      </ModalFormBlock>
+      </ModalFitHeightBlock>
     </GenericModal>
   );
 }

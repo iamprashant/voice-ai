@@ -70,16 +70,17 @@ export const KnowledgeDropdown: FC<KnowledgeDropdownProps> = props => {
         className={cn(
           'outline-solid outline-transparent',
           'focus-within:outline-blue-600 focus:outline-blue-600',
-          'border-b border-gray-400 dark:border-gray-600',
+          'border-b border-gray-300 dark:border-gray-700',
           'focus-within:border-transparent!',
           'transition-all duration-200 ease-in-out',
           'flex relative',
           'bg-light-background dark:bg-gray-950',
           'pt-px pl-px',
+          'divide-x',
           props.className,
         )}
       >
-        <div className="w-full relative p-px pb-0">
+        <div className="w-full relative p-px pb-0 items-center">
           <Dropdown
             searchable
             className=" max-w-full dark:bg-gray-950 focus-within:border-none! focus-within:outline-hidden! border-none! outline-hidden"
@@ -130,13 +131,18 @@ export const KnowledgeDropdown: FC<KnowledgeDropdownProps> = props => {
           />
         </div>
         <IButton
+          className="h-10"
           onClick={() => {
             getKnowledges(projectId, token, userId);
           }}
         >
           <RotateCcw className={cn('w-4 h-4')} strokeWidth={1.5} />
         </IButton>
-        <ILinkBorderButton href="/knowledge/create-knowledge" target="_blank">
+        <ILinkBorderButton
+          className="h-10"
+          href="/knowledge/create-knowledge"
+          target="_blank"
+        >
           <ExternalLink className={cn('w-4 h-4')} strokeWidth={1.5} />
         </ILinkBorderButton>
       </div>

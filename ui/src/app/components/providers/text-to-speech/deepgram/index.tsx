@@ -1,12 +1,11 @@
 import { Metadata } from '@rapidaai/react';
-import { Dropdown } from '@/app/components/dropdown';
 import { FormLabel } from '@/app/components/form-label';
 import { FieldSet } from '@/app/components/form/fieldset';
-import {
-  DEEPGRAM_MODELS,
-  DEEPGRAM_VOICES,
-  DEEPGRAM_LANGUAGES,
-} from '@/app/components/providers/text-to-speech/deepgram/constant';
+import { DEEPGRAM_VOICE } from '@/providers';
+import { ILinkBorderButton } from '@/app/components/form/button';
+import { ExternalLink } from 'lucide-react';
+import { useState } from 'react';
+import { CustomValueDropdown } from '@/app/components/dropdown/custom-value-dropdown';
 export { GetDeepgramDefaultOptions } from './constant';
 
 const renderOption = (c: { icon: React.ReactNode; name: string }) => (
@@ -20,10 +19,24 @@ export const ConfigureDeepgramTextToSpeech: React.FC<{
   onParameterChange: (parameters: Metadata[]) => void;
   parameters: Metadata[] | null;
 }> = ({ onParameterChange, parameters }) => {
+  /**
+   *
+   */
+  const [filteredVoices, setFilteredVoices] = useState(DEEPGRAM_VOICE());
+
+  /**
+   *
+   * @param key
+   * @returns
+   */
   const getParamValue = (key: string) =>
     parameters?.find(p => p.getKey() === key)?.getValue() ?? '';
 
-  //
+  /**
+   *
+   * @param key
+   * @param value
+   */
   const updateParameter = (key: string, value: string) => {
     const updatedParams = [...(parameters || [])];
     const existingIndex = updatedParams.findIndex(p => p.getKey() === key);
@@ -38,52 +51,59 @@ export const ConfigureDeepgramTextToSpeech: React.FC<{
     onParameterChange(updatedParams);
   };
 
-  const configItems = [
-    {
-      label: 'Voice',
-      key: 'speak.voice.id',
-      options: DEEPGRAM_VOICES,
-      findMatch: (val: string) => DEEPGRAM_VOICES.find(x => x.id === val),
-      onChange: (v: { id: string }) => {
-        updateParameter('speak.voice.id', v.id);
-      },
-    },
-    {
-      label: 'Model',
-      key: 'speak.model',
-      options: DEEPGRAM_MODELS,
-      findMatch: (val: string) => DEEPGRAM_MODELS.find(x => x.id === val),
-      onChange: (v: { id: string }) => {
-        updateParameter('speak.model', v.id);
-      },
-    },
-    {
-      label: 'Language',
-      key: 'speak.language',
-      options: DEEPGRAM_LANGUAGES,
-      findMatch: (val: string) => DEEPGRAM_LANGUAGES.find(x => x.code === val),
-      onChange: v => {
-        updateParameter('speak.language', v.value);
-      },
-    },
-  ];
-
+  /**
+   *
+   */
   return (
     <>
-      {configItems.map(({ label, key, options, findMatch, onChange }) => (
-        <FieldSet className="col-span-1" key={key}>
-          <FormLabel>{label}</FormLabel>
-          <Dropdown
+      <FieldSet className="col-span-2">
+        <FormLabel>Voice</FormLabel>
+        <div className="flex">
+          <CustomValueDropdown
+            searchable
             className="bg-light-background max-w-full dark:bg-gray-950"
-            currentValue={findMatch(getParamValue(key))}
-            setValue={onChange}
-            allValue={options}
-            placeholder={`Select ${label.toLowerCase()}`}
+            currentValue={DEEPGRAM_VOICE().find(
+              x => x.code === getParamValue('speak.voice.id'),
+            )}
+            setValue={(v: { code: string }) => {
+              updateParameter('speak.voice.id', v.code);
+            }}
+            allValue={filteredVoices}
+            placeholder={`Select voice`}
             option={renderOption}
             label={renderOption}
+            customValue
+            onSearching={t => {
+              const voices = DEEPGRAM_VOICE();
+              const v = t.target.value;
+              if (v.length > 0) {
+                setFilteredVoices(
+                  voices.filter(
+                    voice =>
+                      voice.name.toLowerCase().includes(v.toLowerCase()) ||
+                      voice.code?.toLowerCase().includes(v.toLowerCase()) ||
+                      voice.age?.toLowerCase().includes(v.toLowerCase()) ||
+                      voice.accent?.toLowerCase().includes(v.toLowerCase()) ||
+                      voice.gender?.toLowerCase().includes(v.toLowerCase()),
+                  ),
+                );
+                return;
+              }
+              setFilteredVoices(voices);
+            }}
+            onAddCustomValue={vl => {
+              updateParameter('speak.voice.id', vl);
+            }}
           />
-        </FieldSet>
-      ))}
+          <ILinkBorderButton
+            target="_blank"
+            href={`/integration/models/deepgram?query=${getParamValue('speak.voice.id')}`}
+            className="h-10 text-sm p-2 px-3 bg-light-background max-w-full dark:bg-gray-950 border-b"
+          >
+            <ExternalLink className="w-4 h-4" strokeWidth={1.5} />
+          </ILinkBorderButton>
+        </div>
+      </FieldSet>
     </>
   );
 };

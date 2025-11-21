@@ -90,9 +90,11 @@ export const AccountSetting = () => {
   return (
     <div className="w-full flex flex-col flex-1">
       <div className="overflow-auto flex flex-col flex-1 pb-20">
-        <InputGroup title="Account Information" className="border-none">
-          <hr className="border-t" />
-          <div className="p-5 space-y-6 max-w-md">
+        <InputGroup
+          title="Account Information"
+          className="bg-white dark:bg-gray-900"
+        >
+          <div className="space-y-6 max-w-md">
             <FieldSet>
               <FormLabel>Name</FormLabel>
               <Input
@@ -113,9 +115,9 @@ export const AccountSetting = () => {
             </FieldSet>
           </div>
         </InputGroup>
-        <InputGroup title="Password">
+        <InputGroup title="Password" className="bg-white dark:bg-gray-900">
           <form
-            className="p-5 space-y-6 max-w-lg"
+            className="space-y-6 max-w-lg"
             onSubmit={handleSubmit(onChangePassword)}
           >
             <FieldSet>

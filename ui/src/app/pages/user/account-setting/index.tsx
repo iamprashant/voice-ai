@@ -19,12 +19,12 @@ export const AccountSettingPage = () => {
           }}
         >
           <ChevronLeft className="w-5 h-5 mr-1" strokeWidth={1.5} />
-          <PageTitleBlock className="text-sm/6">
+          <PageTitleBlock className="font-medium text-[14.5px]">
             Back to Dashboard
           </PageTitleBlock>
         </div>
       </PageHeaderBlock>
-      <div className="flex-1 flex bg-white dark:bg-gray-900 h-full">
+      <div className="flex-1 flex h-full">
         <SideTab
           strict={false}
           active="Account"

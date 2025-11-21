@@ -1,10 +1,38 @@
 /* eslint-disable import/no-mutable-exports */
 import { InputVarType } from '@/models/common';
 import { ConnectionConfig } from '@rapidaai/react';
+import devConfig from './config.development.json';
+import prodConfig from './config.production.json';
 
 export interface SentryAnalyticsConfig {
   dsn: string;
-  tracePropagationTargets: RegExp[];
+  tracePropagationTargets: string[];
+}
+
+export interface WorkspaceConfig {
+  domain: string;
+  title: string;
+  logo?: {
+    light: string;
+    dark: string;
+  };
+  authentication: {
+    signIn: {
+      enable: boolean;
+      providers: Record<'password' | 'google' | 'linkedin' | 'github', boolean>;
+    };
+    signUp: {
+      enable: boolean;
+      providers: Record<'password' | 'google' | 'linkedin' | 'github', boolean>;
+    };
+    passwordRules?: {
+      minLength?: number;
+      requireUppercase?: boolean;
+      requireLowercase?: boolean;
+      requireNumber?: boolean;
+      requireSpecialChar?: boolean;
+    };
+  };
 }
 
 export interface RapidaConfig {
@@ -14,29 +42,11 @@ export interface RapidaConfig {
     endpoint: string;
   };
   analytics?: SentryAnalyticsConfig;
+  workspace: WorkspaceConfig;
 }
-
 export const getConfig = (): RapidaConfig => {
-  if (process.env.NODE_ENV === 'production') {
-    return {
-      connection: {
-        assistant: 'https://assistant-01.rapida.ai',
-        web: 'https://api.rapida.ai',
-        endpoint: 'https://api.rapida.ai',
-      },
-      analytics: {
-        dsn: 'https://15153cb4befe6a0ae4249f10ff87c0b6@o4506771747831808.ingest.sentry.io/4506771748945920',
-        tracePropagationTargets: [/^https:\/\/rapida\.ai\/api/],
-      },
-    };
-  }
-  return {
-    connection: {
-      assistant: 'http://assistant.rapida.local',
-      web: 'http://dev.rapida.local',
-      endpoint: 'http://dev.rapida.local',
-    },
-  };
+  const env = process.env.NODE_ENV || 'development';
+  return env === 'production' ? prodConfig : devConfig;
 };
 
 export const CONFIG = getConfig();

@@ -10,11 +10,11 @@ import (
 	internal_agent_embeddings "github.com/rapidaai/api/assistant-api/internal/agents/embeddings"
 	internal_agent_rerankers "github.com/rapidaai/api/assistant-api/internal/agents/rerankers"
 	internal_analyzers "github.com/rapidaai/api/assistant-api/internal/analyzers"
+	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
+	internal_conversation_gorm "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
+	internal_knowledge_gorm "github.com/rapidaai/api/assistant-api/internal/entity/knowledges"
 	internal_executors "github.com/rapidaai/api/assistant-api/internal/executors"
 	internal_assistant_executors "github.com/rapidaai/api/assistant-api/internal/executors/assistant"
-	internal_assistant_gorm "github.com/rapidaai/api/assistant-api/internal/gorm/assistants"
-	internal_conversation_gorm "github.com/rapidaai/api/assistant-api/internal/gorm/conversations"
-	internal_knowledge_gorm "github.com/rapidaai/api/assistant-api/internal/gorm/knowledges"
 	internal_services "github.com/rapidaai/api/assistant-api/internal/services"
 	internal_assistant_service "github.com/rapidaai/api/assistant-api/internal/services/assistant"
 	internal_knowledge_service "github.com/rapidaai/api/assistant-api/internal/services/knowledge"
@@ -87,7 +87,7 @@ type GenericRequestor struct {
 	// executor
 	assistantExecutor internal_executors.AssistantExecutor
 	// states
-	assistant             *internal_assistant_gorm.Assistant
+	assistant             *internal_assistant_entity.Assistant
 	assistantConversation *internal_conversation_gorm.AssistantConversation
 	histories             []*types.Message
 	metrics               []*types.Metric
@@ -384,7 +384,7 @@ func (gr *GenericRequestor) CreateConversationOption(auth types.SimplePrinciple,
 
 func (talking *GenericRequestor) BeginConversation(
 	auth types.SimplePrinciple,
-	assistant *internal_assistant_gorm.Assistant,
+	assistant *internal_assistant_entity.Assistant,
 	direction type_enums.ConversationDirection,
 	identifier string,
 	argument, metadata, options map[string]interface{}) (*internal_conversation_gorm.AssistantConversation, error) {
@@ -416,7 +416,7 @@ func (talking *GenericRequestor) BeginConversation(
 
 func (talking *GenericRequestor) ResumeConversation(
 	auth types.SimplePrinciple,
-	assistant *internal_assistant_gorm.Assistant,
+	assistant *internal_assistant_entity.Assistant,
 	conversationId uint64,
 	identifier string) (*internal_conversation_gorm.AssistantConversation, error) {
 	start := time.Now()

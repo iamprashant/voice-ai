@@ -207,7 +207,7 @@ export function ListingPage() {
                 {visibleColumn('Provider Name') && (
                   <TableCell>
                     <ProviderPill
-                      providerName={getMetadataValue(
+                      provider={getMetadataValue(
                         at.getExternalauditmetadatasList(),
                         'provider_name',
                       )}

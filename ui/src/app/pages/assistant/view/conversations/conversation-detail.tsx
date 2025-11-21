@@ -382,7 +382,7 @@ export function ConversationDetailPage({}) {
           aria-label="Sidebar"
         >
           <div className="h-full space-y-3">
-            <ul className="text-sm/6 p-1 space-y-1">
+            <ul className="p-1 space-y-1">
               <li>
                 <SideTab
                   to="#"

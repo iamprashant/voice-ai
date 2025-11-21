@@ -1,0 +1,31 @@
+{
+    "connection": {
+        "assistant": "http://assistant.rapida.local",
+        "web": "http://dev.rapida.local",
+        "endpoint": "http://dev.rapida.local"
+    },
+    "workspace": {
+        "domain": "rapida.ai",
+        "title": "Rapida Ai",
+        "authentication": {
+            "signIn": {
+                "enable": true,
+                "providers": {
+                    "password": true,
+                    "google": true,
+                    "linkedin": true,
+                    "github": true
+                }
+            },
+            "signUp": {
+                "enable": true,
+                "providers": {
+                    "password": true,
+                    "google": true,
+                    "linkedin": true,
+                    "github": true
+                }
+            }
+        }
+    }
+}

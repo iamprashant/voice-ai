@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/rapidaai/api/assistant-api/config"
-	internal_assistant_gorm "github.com/rapidaai/api/assistant-api/internal/gorm/assistants"
+	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
 	internal_services "github.com/rapidaai/api/assistant-api/internal/services"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
@@ -44,11 +44,11 @@ func (eService *assistantService) CreateAssistantProviderWebsocket(ctx context.C
 	url string,
 	headers map[string]string,
 	parameters map[string]string,
-) (*internal_assistant_gorm.AssistantProviderWebsocket, error) {
+) (*internal_assistant_entity.AssistantProviderWebsocket, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
-	epm := &internal_assistant_gorm.AssistantProviderWebsocket{
-		AssistantProvider: internal_assistant_gorm.AssistantProvider{
+	epm := &internal_assistant_entity.AssistantProviderWebsocket{
+		AssistantProvider: internal_assistant_entity.AssistantProvider{
 			Description: description,
 			CreatedBy:   *auth.GetUserId(),
 			AssistantId: assistantId,
@@ -74,11 +74,11 @@ func (eService *assistantService) CreateAssistantProviderAgentkit(ctx context.Co
 	url string,
 	certificate string,
 	metadata map[string]string,
-) (*internal_assistant_gorm.AssistantProviderAgentkit, error) {
+) (*internal_assistant_entity.AssistantProviderAgentkit, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
-	epm := &internal_assistant_gorm.AssistantProviderAgentkit{
-		AssistantProvider: internal_assistant_gorm.AssistantProvider{
+	epm := &internal_assistant_entity.AssistantProviderAgentkit{
+		AssistantProvider: internal_assistant_entity.AssistantProvider{
 			Description: description,
 			CreatedBy:   *auth.GetUserId(),
 			AssistantId: assistantId,
@@ -97,10 +97,10 @@ func (eService *assistantService) CreateAssistantProviderAgentkit(ctx context.Co
 	return epm, nil
 }
 
-func (eService *assistantService) DeleteAssistant(ctx context.Context, auth types.SimplePrinciple, assistantId uint64) (*internal_assistant_gorm.Assistant, error) {
+func (eService *assistantService) DeleteAssistant(ctx context.Context, auth types.SimplePrinciple, assistantId uint64) (*internal_assistant_entity.Assistant, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
-	ed := &internal_assistant_gorm.Assistant{
+	ed := &internal_assistant_entity.Assistant{
 		Mutable: gorm_models.Mutable{
 			UpdatedBy: *auth.GetUserId(),
 			Status:    type_enums.RECORD_ARCHIEVE,
@@ -119,14 +119,14 @@ func (eService *assistantService) DeleteAssistant(ctx context.Context, auth type
 	return ed, nil
 }
 
-func (eService *assistantService) GetAllAssistantTool(ctx context.Context, auth types.SimplePrinciple, assistantId uint64, criterias []*assistant_grpc_api.Criteria, paginate *assistant_grpc_api.Paginate) (int64, []*internal_assistant_gorm.AssistantTool, error) {
+func (eService *assistantService) GetAllAssistantTool(ctx context.Context, auth types.SimplePrinciple, assistantId uint64, criterias []*assistant_grpc_api.Criteria, paginate *assistant_grpc_api.Paginate) (int64, []*internal_assistant_entity.AssistantTool, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
 	var (
-		assistantTools []*internal_assistant_gorm.AssistantTool
+		assistantTools []*internal_assistant_entity.AssistantTool
 		cnt            int64
 	)
-	qry := db.Model(internal_assistant_gorm.AssistantTool{})
+	qry := db.Model(internal_assistant_entity.AssistantTool{})
 	qry.
 		Preload("Tool").
 		Where("organization_id = ? AND project_id = ? AND assistant_id = ? AND status = ?", *auth.GetCurrentOrganizationId(), *auth.GetCurrentProjectId(), assistantId, type_enums.RECORD_ACTIVE.String())
@@ -161,12 +161,12 @@ func (eService *assistantService) Get(ctx context.Context,
 	auth types.SimplePrinciple,
 	assistantId uint64,
 	assistantProviderId *uint64,
-	opts *internal_services.GetAssistantOption) (*internal_assistant_gorm.Assistant, error) {
+	opts *internal_services.GetAssistantOption) (*internal_assistant_entity.Assistant, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
 
 	// call assistant get the details
-	var assistant *internal_assistant_gorm.Assistant
+	var assistant *internal_assistant_entity.Assistant
 	tx := db.Where("assistants.id = ? AND status = ?", assistantId, type_enums.RECORD_ACTIVE.String()).First(&assistant)
 	if tx.Error != nil {
 		return nil, tx.Error
@@ -185,7 +185,7 @@ func (eService *assistantService) Get(ctx context.Context,
 		utils.Go(ctx,
 			func() {
 				defer wg.Done()
-				var tag *internal_assistant_gorm.AssistantTag
+				var tag *internal_assistant_entity.AssistantTag
 				tx := db.Where("assistant_id = ?", assistantId).First(&tag)
 				if tx.Error != nil {
 					eService.logger.Warnf("unable to find assistant tag with error %+v", tx.Error)
@@ -200,7 +200,7 @@ func (eService *assistantService) Get(ctx context.Context,
 		utils.Go(ctx,
 			func() {
 				defer wg.Done()
-				var knowledgeConfigs []*internal_assistant_gorm.AssistantKnowledge
+				var knowledgeConfigs []*internal_assistant_entity.AssistantKnowledge
 				tx := db.
 					Preload("Knowledge").
 					Preload("Knowledge.KnowledgeEmbeddingModelOptions").
@@ -219,7 +219,7 @@ func (eService *assistantService) Get(ctx context.Context,
 		utils.Go(ctx,
 			func() {
 				defer wg.Done()
-				var assistantTools []*internal_assistant_gorm.AssistantTool
+				var assistantTools []*internal_assistant_entity.AssistantTool
 				tx := db.
 					Preload("ExecutionOptions", "status = ?", type_enums.RECORD_ACTIVE).
 					Where("assistant_id = ? AND status = ?", assistantId, type_enums.RECORD_ACTIVE.String()).
@@ -240,7 +240,7 @@ func (eService *assistantService) Get(ctx context.Context,
 		utils.Go(ctx,
 			func() {
 				defer wg.Done()
-				var deployment *internal_assistant_gorm.AssistantApiDeployment
+				var deployment *internal_assistant_entity.AssistantApiDeployment
 				tx := db.
 					Preload("InputAudio", "audio_type = ?", "input").
 					Preload("OuputAudio", "audio_type = ?", "output").
@@ -263,7 +263,7 @@ func (eService *assistantService) Get(ctx context.Context,
 		utils.Go(ctx,
 			func() {
 				defer wg.Done()
-				var deployment *internal_assistant_gorm.AssistantDebuggerDeployment
+				var deployment *internal_assistant_entity.AssistantDebuggerDeployment
 				tx := db.
 					Preload("InputAudio", "audio_type = ?", "input").
 					Preload("OuputAudio", "audio_type = ?", "output").
@@ -287,7 +287,7 @@ func (eService *assistantService) Get(ctx context.Context,
 		utils.Go(ctx,
 			func() {
 				defer wg.Done()
-				var deployment *internal_assistant_gorm.AssistantWebPluginDeployment
+				var deployment *internal_assistant_entity.AssistantWebPluginDeployment
 				tx := db.
 					Preload("InputAudio", "audio_type = ?", "input").
 					Preload("OuputAudio", "audio_type = ?", "output").
@@ -310,7 +310,7 @@ func (eService *assistantService) Get(ctx context.Context,
 		utils.Go(ctx,
 			func() {
 				defer wg.Done()
-				var deployment *internal_assistant_gorm.AssistantWhatsappDeployment
+				var deployment *internal_assistant_entity.AssistantWhatsappDeployment
 				tx := db.
 					Where("assistant_id = ?", assistantId).First(&deployment)
 				if tx.Error != nil {
@@ -325,7 +325,7 @@ func (eService *assistantService) Get(ctx context.Context,
 		utils.Go(ctx,
 			func() {
 				defer wg.Done()
-				var deployment *internal_assistant_gorm.AssistantPhoneDeployment
+				var deployment *internal_assistant_entity.AssistantPhoneDeployment
 				tx := db.Debug().
 					Preload("InputAudio", "audio_type = ?", "input").
 					Preload("OuputAudio", "audio_type = ?", "output").
@@ -357,7 +357,7 @@ func (eService *assistantService) Get(ctx context.Context,
 		utils.Go(ctx,
 			func() {
 				defer wg.Done()
-				var providerModel *internal_assistant_gorm.AssistantProviderModel
+				var providerModel *internal_assistant_entity.AssistantProviderModel
 				tx := db.
 					Preload("AssistantModelOptions").
 					Where("assistant_id = ? AND id = ?",
@@ -375,7 +375,7 @@ func (eService *assistantService) Get(ctx context.Context,
 		utils.Go(ctx,
 			func() {
 				defer wg.Done()
-				var websocket *internal_assistant_gorm.AssistantProviderWebsocket
+				var websocket *internal_assistant_entity.AssistantProviderWebsocket
 				tx := db.
 					Where("assistant_id = ? AND id = ?",
 						assistantId,
@@ -392,7 +392,7 @@ func (eService *assistantService) Get(ctx context.Context,
 		utils.Go(ctx,
 			func() {
 				defer wg.Done()
-				var agentkit *internal_assistant_gorm.AssistantProviderAgentkit
+				var agentkit *internal_assistant_entity.AssistantProviderAgentkit
 				tx := db.
 					Where("assistant_id = ? AND id = ?",
 						assistantId,
@@ -411,7 +411,7 @@ func (eService *assistantService) Get(ctx context.Context,
 		utils.Go(ctx,
 			func() {
 				defer wg.Done()
-				var webhooks []*internal_assistant_gorm.AssistantWebhook
+				var webhooks []*internal_assistant_entity.AssistantWebhook
 				tx := db.
 					Where("assistant_id = ? AND status = ?", assistantId, type_enums.RECORD_ACTIVE.String()).
 					Find(&webhooks).
@@ -429,7 +429,7 @@ func (eService *assistantService) Get(ctx context.Context,
 		utils.Go(ctx,
 			func() {
 				defer wg.Done()
-				var analysis []*internal_assistant_gorm.AssistantAnalysis
+				var analysis []*internal_assistant_entity.AssistantAnalysis
 				tx := db.
 					Where("assistant_id = ? AND status = ?", assistantId, type_enums.RECORD_ACTIVE.String()).
 					Find(&analysis).
@@ -450,10 +450,10 @@ func (eService *assistantService) UpdateAssistantVersion(ctx context.Context,
 	auth types.SimplePrinciple,
 	assistantId uint64,
 	assistantProvider type_enums.AssistantProvider,
-	assistantProviderId uint64) (*internal_assistant_gorm.Assistant, error) {
+	assistantProviderId uint64) (*internal_assistant_entity.Assistant, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
-	ed := &internal_assistant_gorm.Assistant{
+	ed := &internal_assistant_entity.Assistant{
 		Mutable: gorm_models.Mutable{
 			UpdatedBy: *auth.GetUserId(),
 		},
@@ -473,14 +473,14 @@ func (eService *assistantService) UpdateAssistantVersion(ctx context.Context,
 	return ed, nil
 }
 
-func (eService *assistantService) GetAll(ctx context.Context, auth types.SimplePrinciple, criterias []*assistant_grpc_api.Criteria, paginate *assistant_grpc_api.Paginate, opts *internal_services.GetAssistantOption) (int64, []*internal_assistant_gorm.Assistant, error) {
+func (eService *assistantService) GetAll(ctx context.Context, auth types.SimplePrinciple, criterias []*assistant_grpc_api.Criteria, paginate *assistant_grpc_api.Paginate, opts *internal_services.GetAssistantOption) (int64, []*internal_assistant_entity.Assistant, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
 	var (
-		assistants []*internal_assistant_gorm.Assistant
+		assistants []*internal_assistant_entity.Assistant
 		cnt        int64
 	)
-	qry := db.Model(internal_assistant_gorm.Assistant{})
+	qry := db.Model(internal_assistant_entity.Assistant{})
 	qry = qry.
 		Preload("AssistantTag").
 		Preload("AssistantProviderModel")
@@ -549,16 +549,16 @@ func (eService *assistantService) GetAllAssistantProviderModel(
 	ctx context.Context,
 	auth types.SimplePrinciple,
 	assistantId uint64, criterias []*assistant_grpc_api.Criteria,
-	paginate *assistant_grpc_api.Paginate) (int64, []*internal_assistant_gorm.AssistantProviderModel, error) {
+	paginate *assistant_grpc_api.Paginate) (int64, []*internal_assistant_entity.AssistantProviderModel, error) {
 
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
 	var (
-		epms []*internal_assistant_gorm.AssistantProviderModel
+		epms []*internal_assistant_entity.AssistantProviderModel
 		cnt  int64
 	)
 	// use projectId and orgId to validate that he has access to the assistant
-	qry := db.Model(internal_assistant_gorm.AssistantProviderModel{})
+	qry := db.Model(internal_assistant_entity.AssistantProviderModel{})
 	qry.
 		Preload("AssistantModelOptions").
 		Where("assistant_id = ? ", assistantId)
@@ -591,16 +591,16 @@ func (eService *assistantService) GetAllAssistantProviderAgentkit(
 	ctx context.Context,
 	auth types.SimplePrinciple,
 	assistantId uint64, criterias []*assistant_grpc_api.Criteria,
-	paginate *assistant_grpc_api.Paginate) (int64, []*internal_assistant_gorm.AssistantProviderAgentkit, error) {
+	paginate *assistant_grpc_api.Paginate) (int64, []*internal_assistant_entity.AssistantProviderAgentkit, error) {
 
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
 	var (
-		epms []*internal_assistant_gorm.AssistantProviderAgentkit
+		epms []*internal_assistant_entity.AssistantProviderAgentkit
 		cnt  int64
 	)
 	// use projectId and orgId to validate that he has access to the assistant
-	qry := db.Model(internal_assistant_gorm.AssistantProviderAgentkit{})
+	qry := db.Model(internal_assistant_entity.AssistantProviderAgentkit{})
 	qry.
 		Where("assistant_id = ? ", assistantId)
 	for _, ct := range criterias {
@@ -632,16 +632,16 @@ func (eService *assistantService) GetAllAssistantProviderWebsocket(
 	ctx context.Context,
 	auth types.SimplePrinciple,
 	assistantId uint64, criterias []*assistant_grpc_api.Criteria,
-	paginate *assistant_grpc_api.Paginate) (int64, []*internal_assistant_gorm.AssistantProviderWebsocket, error) {
+	paginate *assistant_grpc_api.Paginate) (int64, []*internal_assistant_entity.AssistantProviderWebsocket, error) {
 
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
 	var (
-		epms []*internal_assistant_gorm.AssistantProviderWebsocket
+		epms []*internal_assistant_entity.AssistantProviderWebsocket
 		cnt  int64
 	)
 	// use projectId and orgId to validate that he has access to the assistant
-	qry := db.Model(internal_assistant_gorm.AssistantProviderWebsocket{})
+	qry := db.Model(internal_assistant_entity.AssistantProviderWebsocket{})
 	qry.
 		Where("assistant_id = ? ", assistantId)
 	for _, ct := range criterias {
@@ -675,10 +675,10 @@ func (eService *assistantService) CreateAssistant(ctx context.Context,
 	visibility string,
 	source string,
 	sourceIdentifier *uint64,
-	language string) (*internal_assistant_gorm.Assistant, error) {
+	language string) (*internal_assistant_entity.Assistant, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
-	ep := &internal_assistant_gorm.Assistant{
+	ep := &internal_assistant_entity.Assistant{
 		Mutable: gorm_models.Mutable{
 			CreatedBy: *auth.GetUserId(),
 			Status:    type_enums.RECORD_ACTIVE,
@@ -710,10 +710,10 @@ func (eService *assistantService) CreateAssistant(ctx context.Context,
 func (eService *assistantService) UpdateAssistantDetail(ctx context.Context,
 	auth types.SimplePrinciple,
 	assistantId uint64,
-	name, description string) (*internal_assistant_gorm.Assistant, error) {
+	name, description string) (*internal_assistant_entity.Assistant, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
-	ed := &internal_assistant_gorm.Assistant{
+	ed := &internal_assistant_entity.Assistant{
 		Mutable: gorm_models.Mutable{
 			UpdatedBy: *auth.GetUserId(),
 		},
@@ -739,20 +739,18 @@ func (eService *assistantService) CreateAssistantProviderModel(
 	assistantId uint64,
 	description string,
 	promptRequest string,
-	modelProviderId uint64,
 	modelProviderName string,
 	options []*lexatic_backend.Metadata,
-) (*internal_assistant_gorm.AssistantProviderModel, error) {
+) (*internal_assistant_entity.AssistantProviderModel, error) {
 	start := time.Now()
 
 	db := eService.postgres.DB(ctx)
-	epm := &internal_assistant_gorm.AssistantProviderModel{
-		AssistantProvider: internal_assistant_gorm.AssistantProvider{
+	epm := &internal_assistant_entity.AssistantProviderModel{
+		AssistantProvider: internal_assistant_entity.AssistantProvider{
 			Description: description,
 			CreatedBy:   *auth.GetUserId(),
 		},
 		AssistantId:       assistantId,
-		ModelProviderId:   modelProviderId,
 		ModelProviderName: modelProviderName,
 	}
 	epm.SetPrompt(promptRequest)
@@ -766,9 +764,9 @@ func (eService *assistantService) CreateAssistantProviderModel(
 	if len(options) == 0 {
 		return epm, nil
 	}
-	modelOptions := make([]*internal_assistant_gorm.AssistantProviderModelOption, 0)
+	modelOptions := make([]*internal_assistant_entity.AssistantProviderModelOption, 0)
 	for _, v := range options {
-		modelOptions = append(modelOptions, &internal_assistant_gorm.AssistantProviderModelOption{
+		modelOptions = append(modelOptions, &internal_assistant_entity.AssistantProviderModelOption{
 			AssistantProviderModelId: epm.Id,
 			Mutable: gorm_models.Mutable{
 				CreatedBy: *auth.GetUserId(),
@@ -800,10 +798,10 @@ func (eService *assistantService) AttachProviderModelToAssistant(ctx context.Con
 	auth types.SimplePrinciple,
 	assistantId uint64,
 	providerType type_enums.AssistantProvider,
-	assistantProviderId uint64) (*internal_assistant_gorm.Assistant, error) {
+	assistantProviderId uint64) (*internal_assistant_entity.Assistant, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
-	ed := &internal_assistant_gorm.Assistant{
+	ed := &internal_assistant_entity.Assistant{
 		AssistantProvider:   providerType,
 		AssistantProviderId: assistantProviderId,
 		Mutable:             gorm_models.Mutable{UpdatedBy: *auth.GetUserId()},
@@ -825,11 +823,11 @@ func (eService *assistantService) CreateOrUpdateAssistantTag(ctx context.Context
 	auth types.SimplePrinciple,
 	assistantId uint64,
 	tags []string,
-) (*internal_assistant_gorm.AssistantTag, error) {
+) (*internal_assistant_entity.AssistantTag, error) {
 	start := time.Now()
 
 	db := eService.postgres.DB(ctx)
-	assistantTag := &internal_assistant_gorm.AssistantTag{
+	assistantTag := &internal_assistant_entity.AssistantTag{
 		AssistantId: assistantId,
 		Tag:         tags,
 		CreatedBy:   *auth.GetUserId(),

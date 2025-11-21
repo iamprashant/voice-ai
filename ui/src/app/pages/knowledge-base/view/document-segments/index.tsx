@@ -15,14 +15,11 @@ import { useCurrentCredential } from '@/hooks/use-credential';
 import { EditKnowledgeDocumentSegmentDialog } from '@/app/components/base/modal/edit-knowledge-document-segment-modal';
 import { DeleteKnowledgeDocumentSegmentDialog } from '@/app/components/base/modal/delete-knowledge-document-segment-modal';
 import { ActionableEmptyMessage } from '@/app/components/container/message/actionable-empty-message';
-import { useGlobalNavigation } from '@/hooks/use-global-navigator';
 export const DocumentSegments: FC<{
   currentKnowledge: Knowledge;
   onAddKnowledgeDocument: () => void;
 }> = ck => {
   const { authId, token, projectId } = useCurrentCredential();
-
-  const navigator = useGlobalNavigation();
   const knowledgeDocumentActions = useKnowledgeDocumentSegmentPageStore();
   const { showLoader, hideLoader } = useRapidaStore();
   const onError = useCallback((err: string) => {
@@ -174,7 +171,7 @@ export const DocumentSegments: FC<{
           )}
         </>
       ) : (
-        <div className="flex flex-col items-center justify-center">
+        <div className="flex flex-col h-full flex-1 items-center justify-center">
           <ActionableEmptyMessage
             title="No Documents"
             subtitle="There are no document segments in knowledge to display"

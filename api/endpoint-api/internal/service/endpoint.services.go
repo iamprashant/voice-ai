@@ -56,7 +56,6 @@ type EndpointService interface {
 		auth types.SimplePrinciple,
 		endpointId uint64,
 		description string,
-		providerId uint64,
 		providerName string,
 		promptRequest string,
 		options []*endpoint_grpc_api.Metadata,

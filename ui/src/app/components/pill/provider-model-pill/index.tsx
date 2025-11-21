@@ -1,11 +1,19 @@
+import { allProvider, RapidaProvider } from '@/providers';
 import { cn } from '@/utils';
 import { FC, HTMLAttributes, useEffect, useState } from 'react';
-import { COMPLETE_PROVIDER, RapidaProvider } from '@/app/components/providers';
 
+/**
+ *
+ */
 interface ProviderPillProps extends HTMLAttributes<HTMLSpanElement> {
-  providerId?: string;
-  providerName?: string;
+  provider?: string;
 }
+
+/**
+ *
+ * @param props
+ * @returns
+ */
 export const ProviderPill: FC<ProviderPillProps> = props => {
   //
   const [currentProvider, setcurrentProvider] = useState<RapidaProvider | null>(
@@ -13,18 +21,13 @@ export const ProviderPill: FC<ProviderPillProps> = props => {
   );
 
   useEffect(() => {
-    if (props.providerId) {
-      let cModel = COMPLETE_PROVIDER.find(x => x.id === props.providerId);
-      if (cModel) setcurrentProvider(cModel);
-    }
-
-    if (props.providerName) {
-      let cModel = COMPLETE_PROVIDER.find(
-        x => x.name.toLowerCase() === props.providerName?.toLowerCase(),
+    if (props.provider) {
+      let cModel = allProvider().find(
+        x => x.code.toLowerCase() === props.provider?.toLowerCase(),
       );
       if (cModel) setcurrentProvider(cModel);
     }
-  }, [props.providerId, COMPLETE_PROVIDER, props.providerName]);
+  }, [props.provider]);
 
   return (
     <span

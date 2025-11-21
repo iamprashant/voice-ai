@@ -45,17 +45,14 @@ export const APiParameter: FC<{
         {initialValues.map((parameter, index) => (
           <div
             key={`param-${index}`}
-            className="grid grid-cols-2 border-b border-gray-400 dark:border-gray-600"
+            className="grid grid-cols-2 border-b border-gray-300 dark:border-gray-700"
           >
             <div className="flex col-span-1 items-center border-r">
               <Input
                 value={parameter.key}
                 onChange={e => updateParameter(index, 'key', e.target.value)}
                 placeholder="Key"
-                className={cn(
-                  'bg-light-background w-full border-none',
-                  inputClass,
-                )}
+                className={cn('w-full border-none', inputClass)}
               />
             </div>
             <div className="col-span-1 flex">
@@ -63,14 +60,11 @@ export const APiParameter: FC<{
                 value={parameter.value}
                 onChange={e => updateParameter(index, 'value', e.target.value)}
                 placeholder="Value"
-                className={cn(
-                  'bg-light-background w-full border-none',
-                  inputClass,
-                )}
+                className={cn('w-full border-none', inputClass)}
               />
               <ICancelButton
                 className={cn(
-                  '!border-transparent hover:!border-red-600 outline-hidden cursor-pointer hover:!text-red-600',
+                  '!border-transparent hover:!border-red-600 outline-hidden cursor-pointer hover:!text-red-600 h-10',
                   inputClass,
                 )}
                 onClick={() => removeParameter(index)}

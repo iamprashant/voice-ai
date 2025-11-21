@@ -171,15 +171,6 @@ func (orgG *webOrganizationGRPCApi) CreateOrganization(c context.Context, irRequ
 			}}, nil
 	}
 
-	// only for limited time
-
-	// Create all the default vault
-	//
-	_, err = orgG.vaultService.CreateRapidaProviderCredential(c, aOrg.Id)
-	if err != nil {
-		orgG.logger.Errorf("unable to create default keys for organization err %v", err)
-	}
-
 	org := &protos.Organization{}
 	orgRole := &protos.OrganizationRole{}
 	err = utils.Cast(aOrg, org)

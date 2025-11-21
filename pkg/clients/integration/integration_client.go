@@ -100,7 +100,7 @@ func (client *integrationServiceClient) Embedding(c context.Context,
 		return client.bedrockClient.Embedding(client.WithAuth(c, auth), request)
 	case "azure":
 		return client.azureAiClient.Embedding(client.WithAuth(c, auth), request)
-	case "google":
+	case "google", "gemini":
 		return client.googleClient.Embedding(client.WithAuth(c, auth), request)
 	// case "mistral":
 	// return client.mistralClient.Embedding(client.WithAuth(c, auth), request)
@@ -132,7 +132,7 @@ func (client *integrationServiceClient) Chat(c context.Context,
 		return client.anthropicClient.Chat(client.WithAuth(c, auth), request)
 	case "replicate":
 		return client.replicateClient.Chat(client.WithAuth(c, auth), request)
-	case "google":
+	case "google", "gemini":
 		return client.googleClient.Chat(client.WithAuth(c, auth), request)
 	case "mistral":
 		return client.mistralClient.Chat(client.WithAuth(c, auth), request)
@@ -142,9 +142,7 @@ func (client *integrationServiceClient) Chat(c context.Context,
 		return client.openAiClient.Chat(client.WithAuth(c, auth), request)
 	case "aws-bedrock":
 		return client.bedrockClient.Chat(client.WithAuth(c, auth), request)
-	case "azure-openai":
-		return client.azureAiClient.Chat(client.WithAuth(c, auth), request)
-	case "azure":
+	case "azure-openai", "azure":
 		return client.azureAiClient.Chat(client.WithAuth(c, auth), request)
 	default:
 		return nil, errors.New("illegal provider for chat request")
@@ -157,15 +155,13 @@ func (client *integrationServiceClient) StreamChat(c context.Context, auth types
 	switch providerName := strings.ToLower(providerName); providerName {
 	case "openai":
 		return client.openAiClient.StreamChat(client.WithAuth(c, auth), request)
-	case "azure-openai":
-		return client.azureAiClient.StreamChat(client.WithAuth(c, auth), request)
 	case "anthropic":
 		return client.anthropicClient.StreamChat(client.WithAuth(c, auth), request)
-	case "google":
+	case "google", "gemini":
 		return client.googleClient.StreamChat(client.WithAuth(c, auth), request)
 	case "cohere":
 		return client.cohereClient.StreamChat(client.WithAuth(c, auth), request)
-	case "azure":
+	case "azure-openai", "azure":
 		return client.azureAiClient.StreamChat(client.WithAuth(c, auth), request)
 	default:
 		return nil, errors.New("illegal provider for chat request")
@@ -187,7 +183,7 @@ func (client *integrationServiceClient) VerifyCredential(c context.Context,
 		return client.anthropicClient.VerifyCredential(client.WithAuth(c, auth), request)
 	case "replicate":
 		return client.replicateClient.VerifyCredential(client.WithAuth(c, auth), request)
-	case "google":
+	case "google", "gemini":
 		return client.googleClient.VerifyCredential(client.WithAuth(c, auth), request)
 	case "mistral":
 		return client.mistralClient.VerifyCredential(client.WithAuth(c, auth), request)

@@ -3,7 +3,7 @@ package internal_services
 import (
 	"context"
 
-	internal_knowledge_gorm "github.com/rapidaai/api/assistant-api/internal/gorm/knowledges"
+	internal_knowledge_gorm "github.com/rapidaai/api/assistant-api/internal/entity/knowledges"
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	workflow_api "github.com/rapidaai/protos"
@@ -14,7 +14,6 @@ type KnowledgeService interface {
 	Get(ctx context.Context, auth types.SimplePrinciple, knowledgeId uint64) (*internal_knowledge_gorm.Knowledge, error)
 	CreateKnowledge(ctx context.Context, auth types.SimplePrinciple,
 		name string, description, visibility *string,
-		embeddingProviderModelId uint64,
 		embeddingProviderModelName string,
 		embeddingProviderModelOptions []*workflow_api.Metadata,
 	) (*internal_knowledge_gorm.Knowledge, error)

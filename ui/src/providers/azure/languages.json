@@ -1,0 +1,1514 @@
+[
+    {
+        "code": "convaf-ZA",
+        "name": "Afrikaans (South Africa)",
+        "supported": true,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "am-ET",
+        "name": "Amharic (Ethiopia)",
+        "supported": true,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "ar-AE",
+        "name": "Arabic (United Arab Emirates)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text"
+        ]
+    },
+    {
+        "code": "ar-BH",
+        "name": "Arabic (Bahrain)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text"
+        ]
+    },
+    {
+        "code": "ar-DZ",
+        "name": "Arabic (Algeria)",
+        "supported": false,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text"
+        ]
+    },
+    {
+        "code": "ar-EG",
+        "name": "Arabic (Egypt)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text"
+        ]
+    },
+    {
+        "code": "ar-IL",
+        "name": "Arabic (Israel)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text"
+        ]
+    },
+    {
+        "code": "ar-IQ",
+        "name": "Arabic (Iraq)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text"
+        ]
+    },
+    {
+        "code": "ar-JO",
+        "name": "Arabic (Jordan)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text"
+        ]
+    },
+    {
+        "code": "ar-KW",
+        "name": "Arabic (Kuwait)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text"
+        ]
+    },
+    {
+        "code": "ar-LB",
+        "name": "Arabic (Lebanon)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text"
+        ]
+    },
+    {
+        "code": "ar-LY",
+        "name": "Arabic (Libya)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text"
+        ]
+    },
+    {
+        "code": "ar-MA",
+        "name": "Arabic (Morocco)",
+        "supported": false,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text"
+        ]
+    },
+    {
+        "code": "ar-OM",
+        "name": "Arabic (Oman)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text"
+        ]
+    },
+    {
+        "code": "ar-PS",
+        "name": "Arabic (Palestinian Authority)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text"
+        ]
+    },
+    {
+        "code": "ar-QA",
+        "name": "Arabic (Qatar)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text"
+        ]
+    },
+    {
+        "code": "ar-SA",
+        "name": "Arabic (Saudi Arabia)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text"
+        ]
+    },
+    {
+        "code": "ar-SY",
+        "name": "Arabic (Syria)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "ar-TN",
+        "name": "Arabic (Tunisia)",
+        "supported": false,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text"
+        ]
+    },
+    {
+        "code": "ar-YE",
+        "name": "Arabic (Yemen)",
+        "supported": false,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text"
+        ]
+    },
+    {
+        "code": "as-IN",
+        "name": "Assamese (India)",
+        "supported": false,
+        "features": [
+            "Audio",
+            "Human-labeled transcript"
+        ]
+    },
+    {
+        "code": "az-AZ",
+        "name": "Azerbaijani (Latin, Azerbaijan)",
+        "supported": true,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "bg-BG",
+        "name": "Bulgarian (Bulgaria)",
+        "supported": false,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "bn-IN",
+        "name": "Bengali (India)",
+        "supported": true,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "bs-BA",
+        "name": "Bosnian (Bosnia and Herzegovina)",
+        "supported": false,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "ca-ES",
+        "name": "Catalan",
+        "supported": false,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "cs-CZ",
+        "name": "Czech (Czechia)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "cy-GB",
+        "name": "Welsh (United Kingdom)",
+        "supported": false,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "da-DK",
+        "name": "Danish (Denmark)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Output format",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "de-AT",
+        "name": "German (Austria)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "de-CH",
+        "name": "German (Switzerland)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Pronunciation",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "de-DE",
+        "name": "German (Germany)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Output format",
+            "Pronunciation",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "el-GR",
+        "name": "Greek (Greece)",
+        "supported": false,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text"
+        ]
+    },
+    {
+        "code": "en-AU",
+        "name": "English (Australia)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Audio + human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Output format",
+            "Pronunciation",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "en-CA",
+        "name": "English (Canada)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Output format",
+            "Pronunciation",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "en-GB",
+        "name": "English (United Kingdom)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Output format",
+            "Pronunciation",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "en-GH",
+        "name": "English (Ghana)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Plain text",
+            "Structured text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "en-HK",
+        "name": "English (Hong Kong SAR)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Output format",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "en-IE",
+        "name": "English (Ireland)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Output format",
+            "Pronunciation",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "en-IN",
+        "name": "English (India)",
+        "supported": true,
+        "features": [
+            "Plain text",
+            "Structured text",
+            "Output format",
+            "Pronunciation",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "en-KE",
+        "name": "English (Kenya)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Plain text",
+            "Structured text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "en-NG",
+        "name": "English (Nigeria)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Output format"
+        ]
+    },
+    {
+        "code": "en-NZ",
+        "name": "English (New Zealand)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Output format"
+        ]
+    },
+    {
+        "code": "en-PH",
+        "name": "English (Philippines)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Output format"
+        ]
+    },
+    {
+        "code": "en-SG",
+        "name": "English (Singapore)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Output format"
+        ]
+    },
+    {
+        "code": "en-TZ",
+        "name": "English (Tanzania)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "en-US",
+        "name": "English (United States)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Output format",
+            "Pronunciation",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "en-ZA",
+        "name": "English (South Africa)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Pronunciation",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "es-AR",
+        "name": "Spanish (Argentina)",
+        "supported": true,
+        "features": [
+            "Plain text",
+            "Structured text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "es-BO",
+        "name": "Spanish (Bolivia)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "es-CL",
+        "name": "Spanish (Chile)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "es-CO",
+        "name": "Spanish (Colombia)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "es-CR",
+        "name": "Spanish (Costa Rica)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "es-CU",
+        "name": "Spanish (Cuba)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "es-DO",
+        "name": "Spanish (Dominican Republic)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "es-EC",
+        "name": "Spanish (Ecuador)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "es-ES",
+        "name": "Spanish (Spain)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Output format",
+            "Pronunciation",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "es-GQ",
+        "name": "Spanish (Equatorial Guinea)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text"
+        ]
+    },
+    {
+        "code": "es-GT",
+        "name": "Spanish (Guatemala)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "es-HN",
+        "name": "Spanish (Honduras)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "es-MX",
+        "name": "Spanish (Mexico)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Output format",
+            "Pronunciation",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "es-NI",
+        "name": "Spanish (Nicaragua)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "es-PA",
+        "name": "Spanish (Panama)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "es-PE",
+        "name": "Spanish (Peru)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "es-PR",
+        "name": "Spanish (Puerto Rico)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "es-PY",
+        "name": "Spanish (Paraguay)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "es-SV",
+        "name": "Spanish (El Salvador)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "es-US",
+        "name": "Spanish (United States)",
+        "supported": true,
+        "features": [
+            "Plain text",
+            "Structured text",
+            "Pronunciation",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "es-UY",
+        "name": "Spanish (Uruguay)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "es-VE",
+        "name": "Spanish (Venezuela)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "et-EE",
+        "name": "Estonian (Estonia)",
+        "supported": true,
+        "features": [
+            "Plain text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "eu-ES",
+        "name": "Basque",
+        "supported": true,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "fa-IR",
+        "name": "Persian (Iran)",
+        "supported": false,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "fi-FI",
+        "name": "Finnish (Finland)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Output format",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "fil-PH",
+        "name": "Filipino (Philippines)",
+        "supported": true,
+        "features": [
+            "Plain text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "fr-BE",
+        "name": "French (Belgium)",
+        "supported": false,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "fr-CA",
+        "name": "French (Canada)",
+        "supported": false,
+        "features": [
+            "Plain text",
+            "Structured text",
+            "Output format",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "fr-CH",
+        "name": "French (Switzerland)",
+        "supported": false,
+        "features": [
+            "Plain text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "fr-FR",
+        "name": "French (France)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Output format",
+            "Pronunciation",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "ga-IE",
+        "name": "Irish (Ireland)",
+        "supported": true,
+        "features": [
+            "Plain text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "gl-ES",
+        "name": "Galician",
+        "supported": true,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "gu-IN",
+        "name": "Gujarati (India)",
+        "supported": false,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "he-IL",
+        "name": "Hebrew (Israel)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text"
+        ]
+    },
+    {
+        "code": "hi-IN",
+        "name": "Hindi (India)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Output format",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "hr-HR",
+        "name": "Croatian (Croatia)",
+        "supported": false,
+        "features": [
+            "Plain text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "hu-HU",
+        "name": "Hungarian (Hungary)",
+        "supported": false,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "hy-AM",
+        "name": "Armenian (Armenia)",
+        "supported": true,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "id-ID",
+        "name": "Indonesian (Indonesia)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Pronunciation",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "is-IS",
+        "name": "Icelandic (Iceland)",
+        "supported": true,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "it-CH",
+        "name": "Italian (Switzerland)",
+        "supported": false,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "it-IT",
+        "name": "Italian (Italy)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Output format",
+            "Pronunciation",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "ja-JP",
+        "name": "Japanese (Japan)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Output format",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "jv-ID",
+        "name": "Javanese (Latin, Indonesia)",
+        "supported": true,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "ka-GE",
+        "name": "Georgian (Georgia)",
+        "supported": true,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "kk-KZ",
+        "name": "Kazakh (Kazakhstan)",
+        "supported": true,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "km-KH",
+        "name": "Khmer (Cambodia)",
+        "supported": false,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "kn-IN",
+        "name": "Kannada (India)",
+        "supported": false,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "ko-KR",
+        "name": "Korean (Korea)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Output format",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "lo-LA",
+        "name": "Lao (Laos)",
+        "supported": true,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "lt-LT",
+        "name": "Lithuanian (Lithuania)",
+        "supported": true,
+        "features": [
+            "Plain text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "lv-LV",
+        "name": "Latvian (Latvia)",
+        "supported": false,
+        "features": [
+            "Plain text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "mk-MK",
+        "name": "Macedonian (North Macedonia)",
+        "supported": true,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "ml-IN",
+        "name": "Malayalam (India)",
+        "supported": true,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "mn-MN",
+        "name": "Mongolian (Mongolia)",
+        "supported": true,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "mr-IN",
+        "name": "Marathi (India)",
+        "supported": false,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text"
+        ]
+    },
+    {
+        "code": "ms-MY",
+        "name": "Malay (Malaysia)",
+        "supported": false,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "mt-MT",
+        "name": "Maltese (Malta)",
+        "supported": true,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "my-MM",
+        "name": "Burmese (Myanmar)",
+        "supported": true,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "nb-NO",
+        "name": "Norwegian Bokmål (Norway)",
+        "supported": false,
+        "features": [
+            "Plain text",
+            "Output format"
+        ]
+    },
+    {
+        "code": "ne-NP",
+        "name": "Nepali (Nepal)",
+        "supported": false,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "nl-BE",
+        "name": "Dutch (Belgium)",
+        "supported": false,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "nl-NL",
+        "name": "Dutch (Netherlands)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Output format",
+            "Pronunciation",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "or-IN",
+        "name": "Odia (India)",
+        "supported": false,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text"
+        ]
+    },
+    {
+        "code": "pa-IN",
+        "name": "Punjabi (India)",
+        "supported": false,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text"
+        ]
+    },
+    {
+        "code": "pl-PL",
+        "name": "Polish (Poland)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Output format",
+            "Pronunciation",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "ps-AF",
+        "name": "Pashto (Afghanistan)",
+        "supported": true,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "pt-BR",
+        "name": "Portuguese (Brazil)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Output format",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "pt-PT",
+        "name": "Portuguese (Portugal)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Output format",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "ro-RO",
+        "name": "Romanian (Romania)",
+        "supported": false,
+        "features": [
+            "Plain text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "ru-RU",
+        "name": "Russian (Russia)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "si-LK",
+        "name": "Sinhala (Sri Lanka)",
+        "supported": false,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "sk-SK",
+        "name": "Slovak (Slovakia)",
+        "supported": false,
+        "features": [
+            "Plain text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "sl-SI",
+        "name": "Slovenian (Slovenia)",
+        "supported": false,
+        "features": [
+            "Plain text",
+            "Pronunciation"
+        ]
+    },
+    {
+        "code": "so-SO",
+        "name": "Somali (Somalia)",
+        "supported": true,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "sq-AL",
+        "name": "Albanian (Albania)",
+        "supported": true,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "sr-RS",
+        "name": "Serbian (Cyrillic, Serbia)",
+        "supported": true,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "sv-SE",
+        "name": "Swedish (Sweden)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Output format",
+            "Pronunciation",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "sw-KE",
+        "name": "Kiswahili (Kenya)",
+        "supported": true,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "sw-TZ",
+        "name": "Kiswahili (Tanzania)",
+        "supported": false,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "ta-IN",
+        "name": "Tamil (India)",
+        "supported": false,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text"
+        ]
+    },
+    {
+        "code": "te-IN",
+        "name": "Telugu (India)",
+        "supported": false,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text"
+        ]
+    },
+    {
+        "code": "th-TH",
+        "name": "Thai (Thailand)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Output format",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "tr-TR",
+        "name": "Turkish (Türkiye)",
+        "supported": true,
+        "features": [
+            "Plain text",
+            "Structured text",
+            "Output format"
+        ]
+    },
+    {
+        "code": "uk-UA",
+        "name": "Ukrainian (Ukraine)",
+        "supported": false,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text"
+        ]
+    },
+    {
+        "code": "ur-IN",
+        "name": "Urdu (India)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text"
+        ]
+    },
+    {
+        "code": "uz-UZ",
+        "name": "Uzbek (Latin, Uzbekistan)",
+        "supported": true,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "vi-VN",
+        "name": "Vietnamese (Vietnam)",
+        "supported": false,
+        "features": [
+            "Plain text",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "wuu-CN",
+        "name": "Chinese (Wu, Simplified)",
+        "supported": false,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "yue-CN",
+        "name": "Chinese (Cantonese, Simplified)",
+        "supported": false,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "zh-CN",
+        "name": "Chinese (Mandarin, Simplified)",
+        "supported": true,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Output format",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "zh-CN-shandong",
+        "name": "Chinese (Jilu Mandarin, Simplified)",
+        "supported": false,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "zh-CN-sichuan",
+        "name": "Chinese (Southwestern Mandarin, Simplified)",
+        "supported": false,
+        "features": [
+            "Plain text"
+        ]
+    },
+    {
+        "code": "zh-HK",
+        "name": "Chinese (Cantonese, Traditional)",
+        "supported": false,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Output format",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "zh-TW",
+        "name": "Chinese (Taiwanese Mandarin, Traditional)",
+        "supported": false,
+        "features": [
+            "Audio",
+            "Human-labeled transcript",
+            "Plain text",
+            "Structured text",
+            "Output format",
+            "Phrase list"
+        ]
+    },
+    {
+        "code": "zu-ZA",
+        "name": "isiZulu (South Africa)",
+        "supported": true,
+        "features": [
+            "Plain text"
+        ]
+    }
+]

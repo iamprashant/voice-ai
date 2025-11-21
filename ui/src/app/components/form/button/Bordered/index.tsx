@@ -17,7 +17,7 @@ export function BorderedButton(props: {
   const clrClz = (color: 'gray' | 'red' | 'blue' | undefined) => {
     if (color === 'red')
       return 'focus-visible:outline-red-500 border-red-500 hover:border-red-600  text-red-600';
-    return 'focus-visible:outline-gray-700 border-gray-300 hover:border-gray-400 dark:border-gray-600 ';
+    return 'focus-visible:outline-gray-700 border-gray-300 hover:border-gray-400 dark:border-gray-700 ';
   };
 
   const widthClz = (width: 'w-full' | 'w-fit' | undefined) => {

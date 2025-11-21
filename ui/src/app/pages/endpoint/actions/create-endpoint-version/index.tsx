@@ -9,14 +9,18 @@ import { TabForm } from '@/app/components/form/tab-form';
 import ConfirmDialog from '@/app/components/base/modal/confirm-ui';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { useRapidaStore } from '@/hooks';
-import { ProviderConfig } from '@/app/components/providers';
 import {
   GetDefaultTextProviderConfigIfInvalid,
   TextProvider,
   ValidateTextProviderDefaultOptions,
 } from '@/app/components/providers/text';
 import { useNavigate, useParams } from 'react-router-dom';
-import { CreateEndpointProviderModel, GetEndpoint } from '@rapidaai/react';
+import {
+  ConnectionConfig,
+  CreateEndpointProviderModel,
+  GetEndpoint,
+  Metadata,
+} from '@rapidaai/react';
 import { ConfigPrompt } from '@/app/components/configuration/config-prompt';
 import {
   EndpointProviderModelAttribute,
@@ -35,38 +39,42 @@ import { ExternalLink, Info } from 'lucide-react';
 import { InputHelper } from '@/app/components/input-helper';
 
 export const CreateNewVersionEndpointPage: FC = () => {
+  /**
+   * current endpointID for which the version is getting created
+   */
   const { endpointId } = useParams();
+
+  /**
+   * authentication
+   */
   const { authId, token, projectId } = useCurrentCredential();
+
+  /**
+   * mutli step form
+   */
   const [activeTab, setActiveTab] = useState('choose-model');
 
-  //
+  /**
+   * Global navigator
+   */
+  const navigator = useNavigate();
 
-  const currentDate = new Date().toLocaleDateString();
-  const [commitMessage, setCommitMessage] = useState(
-    `Changed on ${currentDate}`,
-  );
-  //
+  /**
+   * error message
+   */
   const [errorMessage, setErrorMessage] = useState('');
+
+  /**
+   * global loading
+   */
   const { loading, showLoader, hideLoader } = useRapidaStore();
 
-  //
-  const [textProviderModel, setTextProviderModel] = useState<ProviderConfig>({
-    providerId: '198796716894742122',
-    provider: 'azure-openai',
-    parameters: GetDefaultTextProviderConfigIfInvalid('azure-openai', []),
-  });
-
-  const onChangeTextProvider = (providerId: string, providerName: string) => {
-    setTextProviderModel({
-      providerId: providerId,
-      provider: providerName,
-      parameters: GetDefaultTextProviderConfigIfInvalid(
-        providerName,
-        textProviderModel.parameters,
-      ),
-    });
-  };
-
+  /**
+   * form
+   */
+  const [commitMessage, setCommitMessage] = useState(
+    `Changed on ${new Date().toLocaleDateString()}`,
+  );
   const [promptConfig, setPromptConfig] = useState<{
     prompt: { role: string; content: string }[];
     variables: { name: string; type: string; defaultvalue: string }[];
@@ -74,8 +82,25 @@ export const CreateNewVersionEndpointPage: FC = () => {
     prompt: [],
     variables: [],
   });
-
-  let navigator = useNavigate();
+  const [textProviderModel, setTextProviderModel] = useState<{
+    provider: string;
+    parameters: Metadata[];
+  }>({
+    provider: 'azure-openai',
+    parameters: GetDefaultTextProviderConfigIfInvalid('azure-openai', []),
+  });
+  const onChangeTextProvider = (providerName: string) => {
+    setTextProviderModel({
+      provider: providerName,
+      parameters: GetDefaultTextProviderConfigIfInvalid(
+        providerName,
+        textProviderModel.parameters,
+      ),
+    });
+  };
+  const onChangeTextProviderParameter = (parameters: Metadata[]) => {
+    setTextProviderModel({ ...textProviderModel, parameters });
+  };
 
   /**
    *
@@ -153,7 +178,6 @@ export const CreateNewVersionEndpointPage: FC = () => {
     setErrorMessage('');
     showLoader('overlay');
     const endpointProviderModelAttr = new EndpointProviderModelAttribute();
-    endpointProviderModelAttr.setModelproviderid(textProviderModel.providerId);
     endpointProviderModelAttr.setModelprovidername(textProviderModel.provider);
     endpointProviderModelAttr.setEndpointmodeloptionsList(
       textProviderModel.parameters,
@@ -166,7 +190,11 @@ export const CreateNewVersionEndpointPage: FC = () => {
       connectionConfig,
       endpointId!,
       endpointProviderModelAttr,
-      { 'x-auth-id': authId, authorization: token, 'x-project-id': projectId },
+      ConnectionConfig.WithDebugger({
+        userId: authId,
+        authorization: token,
+        projectId: projectId,
+      }),
       afterCreateEndpointProviderModel,
     );
   };
@@ -197,7 +225,6 @@ export const CreateNewVersionEndpointPage: FC = () => {
               ?.getEndpointprovidermodel();
             if (endpointProvider) {
               setTextProviderModel({
-                providerId: endpointProvider.getModelproviderid(),
                 provider: endpointProvider.getModelprovidername(),
                 parameters: GetDefaultTextProviderConfigIfInvalid(
                   endpointProvider.getModelprovidername(),
@@ -286,8 +313,9 @@ export const CreateNewVersionEndpointPage: FC = () => {
                 <div className="space-y-6 px-8 pb-8 max-w-4xl ">
                   <TextProvider
                     onChangeProvider={onChangeTextProvider}
-                    onChangeConfig={setTextProviderModel}
-                    config={textProviderModel}
+                    parameters={textProviderModel.parameters}
+                    provider={textProviderModel.provider}
+                    onChangeParameter={onChangeTextProviderParameter}
                   />
                   <ConfigPrompt
                     instanceId={randomString(10)}

@@ -103,7 +103,7 @@ export function LLMLogDialog(props: LLMLogModalProps) {
         <ChevronRight size={18} className="mx-2" />
         <div className="font-medium text-base">{props.currentActivityId}</div>
       </div>
-      <div className="relative overflow-auto h-[calc(100vh-50px)]">
+      <div className="relative overflow-auto h-[calc(100vh-50px)] flex flex-col flex-1">
         <Tab
           active="Metadata"
           className={cn(

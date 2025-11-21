@@ -5,9 +5,9 @@ import { useAllProviderCredentials } from '@/hooks/use-model';
 import { cn } from '@/utils';
 import { FC, HTMLAttributes, memo, useEffect, useState } from 'react';
 import { StatusIndicator } from '@/app/components/indicators/status';
-import { IntegrationProvider } from '@/app/components/providers';
 import { CreateProviderCredentialDialog } from '@/app/components/base/modal/create-provider-credential-modal';
 import { ViewProviderCredentialDialog } from '@/app/components/base/modal/view-provider-credential-modal';
+import { IntegrationProvider } from '@/providers';
 
 interface ExternalIntegrationProviderCardProps
   extends HTMLAttributes<HTMLDivElement> {
@@ -23,7 +23,7 @@ export const ExternalIntegrationProviderCard: FC<ExternalIntegrationProviderCard
     const [connected, setConnected] = useState(false);
     useEffect(() => {
       let isFoundCredential = providerCredentials.find(
-        x => x.getVaulttypeid() === provider.id,
+        x => x.getProvider() === provider.code,
       );
       if (isFoundCredential) setConnected(true);
     }, [JSON.stringify(provider), JSON.stringify(providerCredentials)]);
@@ -33,7 +33,7 @@ export const ExternalIntegrationProviderCard: FC<ExternalIntegrationProviderCard
         <CreateProviderCredentialDialog
           modalOpen={createProviderModalOpen}
           setModalOpen={setCreateProviderModalOpen}
-          currentProviderId={provider.id}
+          currentProvider={provider.code}
         ></CreateProviderCredentialDialog>
         <ViewProviderCredentialDialog
           modalOpen={viewProviderModalOpen}
@@ -49,7 +49,7 @@ export const ExternalIntegrationProviderCard: FC<ExternalIntegrationProviderCard
             'shadow-sm group flex flex-col rounded-[2px]',
             className,
           )}
-          data-id={provider.id}
+          data-id={provider.code}
         >
           <header className="flex justify-between">
             <div className="rounded-[2px] flex items-center justify-center shrink-0 h-9 w-9 dark:bg-gray-600 border dark:border-gray-700">

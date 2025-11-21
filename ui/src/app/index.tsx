@@ -12,7 +12,6 @@ import { GA } from '@/app/components/ga';
 import React from 'react';
 import { StaticPageNotFoundPage } from '@/app/pages/static-pages';
 import { AuthProvider } from '@/context/auth-context';
-import { useWorkspace } from '@/context/workplace-context';
 import { Helmet } from '@/app/components/helmet';
 
 /**
@@ -20,7 +19,6 @@ import { Helmet } from '@/app/components/helmet';
  * @returns
  */
 export function App() {
-  const workspace = useWorkspace();
   return (
     <React.Fragment>
       <Helmet title="Home" />

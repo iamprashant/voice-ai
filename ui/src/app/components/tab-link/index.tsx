@@ -16,7 +16,9 @@ export const Tab: FC<TabProps> = ({ isActive, children, ...props }) => {
       {...props}
       className={cn(
         'group px-2 border-b-[3px] border-transparent -mb-[0.2rem] cursor-pointer',
-        isActive ? 'border-blue-500! text-blue-500' : '',
+        isActive
+          ? 'text-blue-500 bg-blue-500/10'
+          : 'hover:bg-blue-500/5 hover:text-blue-500',
       )}
     >
       <div className="capitalize px-3 py-3 group-hover:bg-blue-600/5 dark:group-hover:bg-blue-950/50">
@@ -33,7 +35,9 @@ export const TabLink: FC<LinkTabProps> = ({ to, children }) => {
       className={({ isActive }) => {
         return cn(
           'group cursor-pointer hover:bg-gray-500/10',
-          isActive ? 'bg-gray-500/10 text-blue-500' : '',
+          isActive
+            ? 'text-blue-500 bg-blue-500/10'
+            : 'hover:bg-blue-500/5 hover:text-blue-500',
         );
       }}
     >
@@ -49,7 +53,7 @@ export const SideTabLink: FC<LinkTabProps> = props => {
       to={props.to}
       className={({ isActive }) =>
         cn(
-          'group px-2 border-r-[3px] border-transparent -ms-[0.1rem] cursor-pointer',
+          'group px-2 border-r-[3px] border-transparent -ms-[0.1rem] cursor-pointer font-medium text-[14.5px] whitespace-nowrap tracking-wide text-pretty',
           'flex items-center px-5 py-2 relative',
 
           isActive
@@ -69,7 +73,7 @@ export const SideTab: FC<LinkTabProps> = props => {
     <div
       onClick={props.onClick}
       className={cn(
-        'group px-2 border-r-[3px] border-transparent -ms-[0.1rem] cursor-pointer',
+        'group px-2 border-r-[3px] border-transparent -ms-[0.1rem] cursor-pointer font-medium text-[14.5px] whitespace-nowrap tracking-wide text-pretty',
         'flex items-center px-5 py-2 relative',
         props.className,
         props.isActive === true

@@ -95,44 +95,35 @@ export const NotificationSetting = () => {
 
   return (
     <form
-      className="pb-20"
+      className="pb-20 pt-4"
       onSubmit={handleSubmit(onSubmit)} // Use the onSubmit handler
     >
-      <InputGroup title="Alert and Notifications" className="border-none">
-        <hr className="border-t" />
-        {RAPIDA_SYSTEM_NOTIFICATION.map(notificationCategory => (
-          <div className="p-5 space-y-6" key={notificationCategory.category}>
-            <div>
-              <legend className="font-semibold ">
-                {notificationCategory.category} notifications
-              </legend>
-              <p className="mt-1 text-sm/6">
-                We'll always let you know about important changes, but you pick
-                what else you want to hear about.
-              </p>
-            </div>
-            <div className="mt-6 space-y-6 grid grid-cols-4 gap-4">
-              {notificationCategory.items.map(item => (
-                <div className="flex gap-3" key={item.id}>
-                  <div className="flex h-6 shrink-0 items-center">
-                    {/* Bind the checkbox with `register` */}
-                    <InputCheckbox
-                      {...register(item.id)} // Register the field
-                      checked={item.default} // Optional initial value
-                    />
-                  </div>
-                  <FieldSet className="text-sm/6">
-                    <FormLabel htmlFor={item.id}>{item.label}</FormLabel>
-                    <InputHelper id={`${item.id}-description`}>
-                      {item.description}
-                    </InputHelper>
-                  </FieldSet>
+      {RAPIDA_SYSTEM_NOTIFICATION.map(notificationCategory => (
+        <InputGroup
+          title={notificationCategory.category}
+          className="bg-white dark:bg-gray-900 mt-0"
+        >
+          <div className="space-y-6 grid grid-cols-4 gap-4">
+            {notificationCategory.items.map(item => (
+              <div className="flex gap-3" key={item.id}>
+                <div className="flex h-6 shrink-0 items-center">
+                  {/* Bind the checkbox with `register` */}
+                  <InputCheckbox
+                    {...register(item.id)} // Register the field
+                    checked={item.default} // Optional initial value
+                  />
                 </div>
-              ))}
-            </div>
+                <FieldSet className="text-sm/6">
+                  <FormLabel htmlFor={item.id}>{item.label}</FormLabel>
+                  <InputHelper id={`${item.id}-description`}>
+                    {item.description}
+                  </InputHelper>
+                </FieldSet>
+              </div>
+            ))}
           </div>
-        ))}
-      </InputGroup>
+        </InputGroup>
+      ))}
       <PageActionButtonBlock errorMessage={error}>
         <IBlueBGArrowButton
           type="submit"

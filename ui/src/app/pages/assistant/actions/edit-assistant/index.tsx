@@ -177,40 +177,38 @@ export const EditAssistant: FC<{ assistantId: string }> = ({ assistantId }) => {
       </PageHeaderBlock>
       <div className="overflow-auto flex flex-col flex-1 pb-20 bg-white dark:bg-gray-900">
         <div className="p-5 space-y-6">
-          <div className="grid grid-cols-3 gap-6">
-            <FieldSet>
-              <FormLabel>ID</FormLabel>
-              <CopyInput
-                name="id"
-                disabled
-                value={assistantId}
-                className="cursor-copy bg-light-background"
-                placeholder="eg: your emotion detector"
-              ></CopyInput>
-            </FieldSet>
-            <FieldSet>
-              <FormLabel>Name</FormLabel>
-              <Input
-                name="usecase"
-                className="bg-light-background"
-                onChange={e => {
-                  setName(e.target.value);
-                }}
-                value={name}
-                placeholder="eg: your emotion detector"
-              ></Input>
-            </FieldSet>
-            <FieldSet className="col-span-2">
-              <FormLabel>Description</FormLabel>
-              <Textarea
-                row={5}
-                className="bg-light-background"
-                value={description}
-                placeholder={"What's the purpose of the assistant?"}
-                onChange={t => setDescription(t.target.value)}
-              />
-            </FieldSet>
-          </div>
+          <FieldSet className="max-w-md">
+            <FormLabel>Assistant ID</FormLabel>
+            <CopyInput
+              name="id"
+              disabled
+              value={assistantId}
+              className="bg-white dark:bg-gray-900 border-dashed"
+              placeholder="eg: your emotion detector"
+            ></CopyInput>
+          </FieldSet>
+          <FieldSet>
+            <FormLabel>Name</FormLabel>
+            <Input
+              name="usecase"
+              className="bg-light-background max-w-md"
+              onChange={e => {
+                setName(e.target.value);
+              }}
+              value={name}
+              placeholder="eg: your emotion detector"
+            ></Input>
+          </FieldSet>
+          <FieldSet className="col-span-2">
+            <FormLabel>Description</FormLabel>
+            <Textarea
+              row={5}
+              className="bg-light-background max-w-xl"
+              value={description}
+              placeholder={"What's the purpose of the assistant?"}
+              onChange={t => setDescription(t.target.value)}
+            />
+          </FieldSet>
           <ErrorMessage message={errorMessage} />
           <IBlueBGButton
             type="button"
@@ -222,16 +220,13 @@ export const EditAssistant: FC<{ assistantId: string }> = ({ assistantId }) => {
           </IBlueBGButton>
         </div>
         <InputGroup title="Permanent Actions" initiallyExpanded={false}>
-          <RedNoticeBlock>
-            Active connections will be terminated immediately, and the data will
-            be permanently deleted after the rolling period.
-          </RedNoticeBlock>
-          <div className="flex flex-row items-center justify-between p-6">
+          <div className="flex flex-row items-center justify-between">
             <FieldSet>
               <p className="font-semibold">Delete this assistant</p>
-              <InputHelper className="-mt-2">
-                Once you delete a assistant, there is no going back. Please be
-                certain
+              <InputHelper>
+                Once you delete a assistant, there is no going back. Active
+                connections will be terminated immediately, and the data will be
+                permanently deleted after the rolling period.
               </InputHelper>
             </FieldSet>
             <IRedBGButton

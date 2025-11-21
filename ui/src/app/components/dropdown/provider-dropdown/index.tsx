@@ -1,17 +1,21 @@
 import { Dropdown } from '@/app/components/dropdown';
-import { COMPLETE_PROVIDER, RapidaProvider } from '@/app/components/providers';
+import { INTEGRATION_PROVIDER, RapidaProvider } from '@/providers';
+import { FC } from 'react';
 
-export function ProviderDropdown(props: {
+/**
+ * all the props for dropdown
+ */
+interface ProviderDropdownProps {
   currentProvider?: RapidaProvider;
   setCurrentProvider: (v: RapidaProvider) => void;
-}) {
-  //   const { modelProviders } = useAllProviders();
-  //   const [providers, setProviders] = useState<Provider[]>(modelProviders);
+}
 
-  //   useEffect(() => {
-  //     setProviders(modelProviders);
-  //   }, [modelProviders]);
-
+/**
+ *
+ * @param props
+ * @returns
+ */
+export const ProviderDropdown: FC<ProviderDropdownProps> = props => {
   const dropdownItem = (p: RapidaProvider) => {
     return (
       <span className="inline-flex items-center gap-1.5 sm:gap-2 max-w-full text-sm font-medium">
@@ -29,11 +33,11 @@ export function ProviderDropdown(props: {
     <Dropdown
       currentValue={props.currentProvider}
       setValue={props.setCurrentProvider}
-      allValue={COMPLETE_PROVIDER}
-      className="bg-white dark:bg-gray-950"
+      allValue={INTEGRATION_PROVIDER}
+      className="bg-light-background dark:bg-gray-950"
       placeholder="Select the provider"
       label={dropdownItem}
       option={dropdownItem}
     />
   );
-}
+};

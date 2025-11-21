@@ -8,9 +8,9 @@ import {
 import { Spinner } from '@/app/components/loader/spinner';
 import React, { ChangeEvent, Fragment, HTMLAttributes } from 'react';
 import { cn } from '@/utils';
-import { Float } from '@headlessui-float/react';
 import { SearchIconInput } from '@/app/components/form/input/IconInput';
 import { Check, ChevronDown } from 'lucide-react';
+import { Float } from '@headlessui-float/react';
 /**
  *
  */
@@ -60,7 +60,7 @@ export function Dropdown(props: DropdownProps<any>) {
                 'py-2 pl-3 pr-10 text-left',
                 'outline-solid outline-transparent border-collapse',
                 'focus-within:outline-blue-600 focus:outline-blue-600 ',
-                'border-b border-gray-400 dark:border-gray-600',
+                'border-b border-gray-300 dark:border-gray-700',
                 'dark:focus:border-blue-600 focus:border-blue-600',
                 'transition-all duration-200 ease-in-out',
                 'dark:text-gray-300 text-gray-600',
@@ -107,7 +107,7 @@ export function Dropdown(props: DropdownProps<any>) {
                 className={cn(
                   'shadow-lg relative',
                   'z-50 max-h-96 w-full border overflow-y-scroll',
-                  'bg-light-background dark:bg-gray-900 dark:border-gray-700',
+                  'bg-light-background dark:bg-gray-900 dark:border-gray-800',
                   'dark:text-gray-300 text-gray-600',
                   'divide-y divide-gray-200 dark:divide-gray-800',
                   'outline-hidden',
@@ -116,6 +116,7 @@ export function Dropdown(props: DropdownProps<any>) {
                 {props.searchable && (
                   <div className="px-3 py-3 sticky top-0 bg-light-background dark:bg-gray-900 z-10  border-b">
                     <SearchIconInput
+                      className="bg-white dark:bg-gray-950"
                       wrapperClassName="w-full!"
                       onChange={props.onSearching}
                     />

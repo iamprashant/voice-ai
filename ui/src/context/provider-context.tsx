@@ -1,39 +1,31 @@
 import { createContext, useContext } from 'use-context-selector';
 import { useCallback, useEffect, useState } from 'react';
-import { ServiceError } from '@rapidaai/react';
+import { ConnectionConfig, ServiceError } from '@rapidaai/react';
 import {
   GetAllOrganizationCredentialResponse,
   VaultCredential,
 } from '@rapidaai/react';
-import { useCredential } from '@/hooks';
 import { GetAllOrganizationCredential } from '@rapidaai/react';
 
 import {
   LOCAL_STORAGE_PROVIDER_CREDENTIALS,
-  LOCAL_STORAGE_TOOL_CREDENTIALS,
   serializeProto,
   useLocalStorageSync,
 } from '@/hooks/use-storage-sync';
 import { connectionConfig } from '@/configs';
+import { useCurrentCredential } from '@/hooks/use-credential';
 
 const ProviderContext = createContext<{
   providerCredentials: VaultCredential[];
-  toolProviderCredentials: VaultCredential[];
   reloadProviderCredentials: () => void;
-  reloadToolCredentials: () => void;
 }>({
   providerCredentials: [],
-  toolProviderCredentials: [],
   reloadProviderCredentials: () => {
-    throw new Error('Function not implemented.');
-  },
-  reloadToolCredentials: () => {
     throw new Error('Function not implemented.');
   },
 });
 
 export const useProviderContext = () => useContext(ProviderContext);
-
 type ProviderContextProviderProps = {
   children: React.ReactNode;
 };
@@ -44,19 +36,10 @@ export const ProviderContextProvider = ({
   const [providerCredentials, setProviderCredentials] = useState<
     VaultCredential[]
   >([]);
-  const [toolProviderCredentials, setToolProviderCredentials] = useState<
-    VaultCredential[]
-  >([]);
-  const [userId, token] = useCredential();
-
+  const { authId, projectId, token } = useCurrentCredential();
   useLocalStorageSync(
     LOCAL_STORAGE_PROVIDER_CREDENTIALS,
     setProviderCredentials,
-    VaultCredential,
-  );
-  useLocalStorageSync(
-    LOCAL_STORAGE_TOOL_CREDENTIALS,
-    setToolProviderCredentials,
     VaultCredential,
   );
 
@@ -64,10 +47,10 @@ export const ProviderContextProvider = ({
    *
    */
   useEffect(() => {
-    if (token && userId) {
+    if (token && authId && projectId) {
       getAllOrganizationCredential();
     }
-  }, [token, userId]);
+  }, [token, authId, projectId]);
 
   /**
    * after getting all the credentials to store in the local storage
@@ -79,24 +62,9 @@ export const ProviderContextProvider = ({
     ) => {
       if (gapcr?.getSuccess()) {
         const credentials = gapcr.getDataList();
-        setProviderCredentials(
-          credentials.filter(
-            (x: VaultCredential) => x.getVaulttype() === 'provider-vault',
-          ),
-        );
-        setToolProviderCredentials(
-          credentials.filter(
-            (x: VaultCredential) => x.getVaulttype() === 'tool-vault',
-          ),
-        );
+        setProviderCredentials(credentials);
         localStorage.setItem(
           LOCAL_STORAGE_PROVIDER_CREDENTIALS,
-          JSON.stringify(
-            credentials.map((cred: any) => Array.from(serializeProto(cred))),
-          ),
-        );
-        localStorage.setItem(
-          LOCAL_STORAGE_TOOL_CREDENTIALS,
           JSON.stringify(
             credentials.map((cred: any) => Array.from(serializeProto(cred))),
           ),
@@ -116,10 +84,11 @@ export const ProviderContextProvider = ({
       50,
       [],
       afterGettingAllCredential,
-      {
+      ConnectionConfig.WithDebugger({
         authorization: token,
-        'x-auth-id': userId,
-      },
+        userId: authId,
+        projectId: projectId,
+      }),
     );
   };
 
@@ -130,20 +99,11 @@ export const ProviderContextProvider = ({
     getAllOrganizationCredential();
   };
 
-  /**
-   * reloading the tool credentials
-   */
-  const reloadToolCredentials = () => {
-    getAllOrganizationCredential();
-  };
-
   return (
     <ProviderContext.Provider
       value={{
         providerCredentials,
-        toolProviderCredentials,
         reloadProviderCredentials,
-        reloadToolCredentials,
       }}
     >
       {children}

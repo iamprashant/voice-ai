@@ -59,7 +59,6 @@ func (endpointGRPCApi *endpointGRPCApi) createEndpointProviderModel(ctx context.
 		iAuth,
 		endpoint.Id,
 		ea.GetDescription(),
-		ea.GetModelProviderId(),
 		ea.GetModelProviderName(),
 		prompt,
 		ea.GetEndpointModelOptions(),

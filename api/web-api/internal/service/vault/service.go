@@ -9,7 +9,6 @@ import (
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	gorm_models "github.com/rapidaai/pkg/models/gorm"
-	gorm_types "github.com/rapidaai/pkg/models/gorm/types"
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	web_api "github.com/rapidaai/protos"
@@ -28,54 +27,23 @@ func NewVaultService(logger commons.Logger, postgres connectors.PostgresConnecto
 	}
 }
 
-func (vS *vaultService) CreateOrganizationToolCredential(ctx context.Context,
-	auth types.Principle,
-	toolId uint64,
-	name string, credential map[string]interface{}) (*internal_entity.Vault, error) {
-	return vS.createCredential(ctx, *auth.GetUserId(), name, credential, gorm_types.VAULT_TYPE_TOOL,
-		toolId, gorm_types.VAULT_LEVEL_ORGANIZATION, *auth.GetCurrentOrganizationId())
-}
-
-func (vS *vaultService) CreateOrganizationProviderCredential(ctx context.Context,
+func (vs *vaultService) Create(ctx context.Context,
 	auth types.SimplePrinciple,
-	providerId uint64,
+	provider string,
 	name string, credential map[string]interface{}) (*internal_entity.Vault, error) {
-	return vS.createCredential(ctx, *auth.GetUserId(), name, credential, gorm_types.VAULT_TYPE_PROVIDER,
-		providerId, gorm_types.VAULT_LEVEL_ORGANIZATION, *auth.GetCurrentOrganizationId())
 
-}
-
-func (vS *vaultService) CreateUserToolCredential(ctx context.Context,
-	auth types.Principle,
-	toolId uint64,
-	name string,
-	credential map[string]interface{},
-) (*internal_entity.Vault, error) {
-	return vS.createCredential(ctx, *auth.GetUserId(), name,
-		credential,
-		gorm_types.VAULT_TYPE_TOOL,
-		toolId,
-		gorm_types.VAULT_LEVEL_USER,
-		*auth.GetUserId())
-}
-
-func (vs *vaultService) createCredential(ctx context.Context,
-	userId uint64,
-	name string,
-	credential map[string]interface{},
-	vaultType gorm_types.VaultType,
-	vaultTypeId uint64, level gorm_types.VaultLevel, levelId uint64) (*internal_entity.Vault, error) {
 	db := vs.postgres.DB(ctx)
 	vlt := &internal_entity.Vault{
 		Mutable: gorm_models.Mutable{
-			CreatedBy: userId,
+			CreatedBy: *auth.GetUserId(),
 		},
-		Name:         name,
-		VaultType:    vaultType,
-		VaultTypeId:  vaultTypeId,
-		Value:        credential,
-		VaultLevel:   level,
-		VaultLevelId: levelId,
+		Organizational: gorm_models.Organizational{
+			OrganizationId: *auth.GetCurrentOrganizationId(),
+			ProjectId:      *auth.GetCurrentProjectId(),
+		},
+		Name:     name,
+		Provider: provider,
+		Value:    credential,
 	}
 
 	tx := db.Save(vlt)
@@ -84,6 +52,7 @@ func (vs *vaultService) createCredential(ctx context.Context,
 		return nil, err
 	}
 	return vlt, nil
+
 }
 
 func (vS *vaultService) Delete(ctx context.Context, auth types.Principle, vaultId uint64) (*internal_entity.Vault, error) {
@@ -94,7 +63,7 @@ func (vS *vaultService) Delete(ctx context.Context, auth types.Principle, vaultI
 			UpdatedBy: *auth.GetUserId(),
 		},
 	}
-	tx := db.Where("id = ? and vault_level = ? AND vault_level_id = ?", vaultId, gorm_types.VAULT_LEVEL_ORGANIZATION, *auth.GetCurrentOrganizationId()).Clauses(clause.Returning{}).Updates(vlt)
+	tx := db.Where("id = ? AND organization_id = ? AND project_id = ?", vaultId, *auth.GetCurrentOrganizationId(), *auth.GetCurrentProjectId()).Clauses(clause.Returning{}).Updates(vlt)
 	if err := tx.Error; err != nil {
 		vS.logger.Debugf("unable to delete vault %v")
 		return nil, err
@@ -109,7 +78,7 @@ func (vS *vaultService) GetAllOrganizationCredential(ctx context.Context, auth t
 
 	qry := db.Debug().Model(internal_entity.Vault{})
 	qry.
-		Where("vault_level = ? AND vault_level_id = ? AND status = ?", gorm_types.VAULT_LEVEL_ORGANIZATION, *auth.GetCurrentOrganizationId(), type_enums.RECORD_ACTIVE)
+		Where("organization_id = ? AND project_id = ? AND status = ?", *auth.GetCurrentOrganizationId(), *auth.GetCurrentProjectId(), type_enums.RECORD_ACTIVE)
 	for _, ct := range criterias {
 		switch ct.GetLogic() {
 		case "or":
@@ -144,10 +113,25 @@ func (vS *vaultService) GetAllOrganizationCredential(ctx context.Context, auth t
 func (vS *vaultService) Get(ctx context.Context, auth types.SimplePrinciple, id uint64) (*internal_entity.Vault, error) {
 	db := vS.postgres.DB(ctx)
 	var vault internal_entity.Vault
-	tx := db.Where("id = ? AND status = ? AND vault_level = ? AND vault_level_id = ?",
+	tx := db.Where("id = ? AND status = ? AND organization_id = ? AND project_id = ?",
 		id,
 		type_enums.RECORD_ACTIVE.String(),
-		string(gorm_types.VAULT_LEVEL_ORGANIZATION),
+		*auth.GetCurrentOrganizationId(),
+		*auth.GetCurrentProjectId(),
+	).Last(&vault)
+	if tx.Error != nil {
+		vS.logger.Errorf("get credential error  %v", tx.Error)
+		return nil, tx.Error
+	}
+	return &vault, nil
+}
+
+func (vS *vaultService) GetProviderCredential(ctx context.Context, auth types.SimplePrinciple, provider string) (*internal_entity.Vault, error) {
+	db := vS.postgres.DB(ctx)
+	var vault internal_entity.Vault
+	tx := db.Where("provider = ? AND status = ? AND organization_id = ?",
+		provider,
+		type_enums.RECORD_ACTIVE.String(),
 		*auth.GetCurrentOrganizationId(),
 	).Last(&vault)
 	if tx.Error != nil {
@@ -155,94 +139,4 @@ func (vS *vaultService) Get(ctx context.Context, auth types.SimplePrinciple, id 
 		return nil, tx.Error
 	}
 	return &vault, nil
-}
-
-// gorm_types.VAULT_TYPE_PROVIDER,
-// rapidaProviderId,
-func (vS *vaultService) GetProviderCredential(ctx context.Context,
-	auth types.SimplePrinciple,
-	providerId uint64) (*internal_entity.Vault, error) {
-	db := vS.postgres.DB(ctx)
-	var vault internal_entity.Vault
-
-	tx := db.Where("status = ? and vault_type = ? and vault_type_id = ? and vault_level = ? and vault_level_id = ?",
-		type_enums.RECORD_ACTIVE.String(),
-		string(gorm_types.VAULT_TYPE_PROVIDER),
-		providerId,
-		string(gorm_types.VAULT_LEVEL_ORGANIZATION),
-		*auth.GetCurrentOrganizationId(),
-	).Last(&vault)
-	if tx.Error != nil {
-		vS.logger.Errorf("get credential error  %v", tx.Error)
-		return nil, tx.Error
-	}
-	return &vault, nil
-}
-
-func (vS *vaultService) GetUserToolCredential(ctx context.Context,
-	auth types.SimplePrinciple,
-	toolId uint64) (*internal_entity.Vault, error) {
-	db := vS.postgres.DB(ctx)
-	var vault internal_entity.Vault
-
-	tx := db.Where("status = ? and vault_type = ? and vault_type_id = ? and vault_level = ? and vault_level_id = ?",
-		type_enums.RECORD_ACTIVE.String(),
-		string(gorm_types.VAULT_TYPE_TOOL),
-		toolId,
-		string(gorm_types.VAULT_LEVEL_USER),
-		*auth.GetUserId(),
-	).Last(&vault)
-	if tx.Error != nil {
-		vS.logger.Errorf("get credential error  %v", tx.Error)
-		return nil, tx.Error
-	}
-	return &vault, nil
-}
-
-func (vS *vaultService) CreateRapidaProviderCredential(ctx context.Context,
-	organizationId uint64) (*internal_entity.Vault, error) {
-
-	rapidaProviderId := uint64(8298870085084815298)
-	return vS.createCredential(
-		ctx,
-		99,
-		"default-rapida-credentials",
-		// this is mistral key
-		// mistral
-		// EOruCAkjnW8O6M3a0VSKXPKUzLraQ5Gv
-		// stability
-		// sk-1aVQO9ElyaXhxuROVMFeRqQgCPBL5WJQyMNL7wzxkR27kFSw
-		// replicate
-		// r8_FvPKVcfvtL3NifEKEUvi7q2uEpNYUsm3MUpMN
-		map[string]interface{}{
-			"1987967168347635712": map[string]string{
-				"key": "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",
-			},
-			"5212367370329048775": map[string]string{
-				"key": "pa-f2E7NuNmZrC9ADFKE6KjnyZgxUH8_xliK3C0CAKVG00",
-			},
-			"198796716894742120": map[string]string{
-				"key": "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",
-			},
-			"198796716894742119": map[string]string{
-				"key": "pskpIUoGzlLvzuxczSpLaJpxuFhZiWzy",
-			},
-			"198796716894742118": map[string]string{
-				"key": "AIzaSyBI19ykmjj-wsA_hR3rt-UrPkFtwQQ3hhY",
-			},
-			"1987967168452493312": map[string]string{
-				"key": "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",
-			},
-			"1987967168435716096": map[string]string{
-				"key": "nHuteTe84dihnImlgpwiD7Tk9cmAHP1qxHocstf5",
-			},
-			"1987967168431521792": map[string]string{
-				"key": "r8_FvPKVcfvtL3NifEKEUvi7q2uEpNYUsm3MUpMN",
-			},
-		},
-		gorm_types.VAULT_TYPE_PROVIDER,
-		rapidaProviderId,
-		gorm_types.VAULT_LEVEL_ORGANIZATION,
-		organizationId,
-	)
 }

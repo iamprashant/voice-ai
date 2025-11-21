@@ -1,5 +1,4 @@
-import { useWorkspace } from '@/context/workplace-context';
-import React from 'react';
+import { useWorkspace } from '@/workspace';
 import { Helmet as HM } from 'react-helmet-async';
 
 /**
@@ -20,7 +19,7 @@ export function Helmet(props: HelmetProps) {
   return (
     <HM>
       <title>
-        {props.title} - {workspace.domain}
+        {props.title} - {workspace.title || 'RapidaAi'}
       </title>
       {props.meta &&
         props.meta.map((mt, idx) => {

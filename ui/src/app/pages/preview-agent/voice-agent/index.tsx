@@ -35,6 +35,11 @@ import {
 } from '@rapidaai/react';
 import { useEffect, useState } from 'react';
 import { Navigate, useParams, useSearchParams } from 'react-router-dom';
+
+/**
+ *
+ * @returns
+ */
 export const PublicPreviewVoiceAgent = () => {
   const [searchParams] = useSearchParams();
   const { assistantId } = useParams();
@@ -347,7 +352,7 @@ export const PreviewPhoneAgent = () => {
                 'text-sm!',
                 'outline-solid outline-transparent',
                 'focus-within:outline-blue-600 focus:outline-blue-600 -outline-offset-1',
-                'border-b border-gray-400 dark:border-gray-600',
+                'border-b border-gray-300 dark:border-gray-700',
                 'dark:focus-within:border-blue-600 focus-within:border-blue-600',
                 'transition-all duration-200 ease-in-out',
                 'flex relative',
@@ -469,107 +474,100 @@ export const PreviewPhoneAgent = () => {
             </div>
           </InputGroup>
           <InputGroup title="Deployment">
-            <div className="px-4 py-4 space-y-px text-sm leading-normal ">
-              <div className="space-y-4">
-                <div className="flex justify-between">
-                  <div className="-foreground">Input Mode</div>
-                  <div className="font-medium">
-                    Text
-                    {assistant?.getPhonedeployment()?.getInputaudio() &&
-                      ', Audio'}
-                  </div>
+            <div className="space-y-4">
+              <div className="flex justify-between">
+                <div className="-foreground">Input Mode</div>
+                <div className="font-medium">
+                  Text
+                  {assistant?.getPhonedeployment()?.getInputaudio() &&
+                    ', Audio'}
                 </div>
+              </div>
 
-                {/*  */}
-                {assistant
+              {/*  */}
+              {assistant
+                .getPhonedeployment()
+                ?.getInputaudio()
+                ?.getAudiooptionsList() &&
+                assistant
                   .getPhonedeployment()
                   ?.getInputaudio()
-                  ?.getAudiooptionsList() &&
-                  assistant
-                    .getPhonedeployment()
-                    ?.getInputaudio()
-                    ?.getAudiooptionsList().length! > 0 && (
-                    <div className="space-y-4">
-                      <div className="flex justify-between">
-                        <div className="-foreground">Listen.Provider</div>
-                        <div className="font-medium mt-1 ">
-                          {assistant
-                            .getPhonedeployment()
-                            ?.getInputaudio()
-                            ?.getAudioprovider()}
-                        </div>
+                  ?.getAudiooptionsList().length! > 0 && (
+                  <div className="space-y-4">
+                    <div className="flex justify-between">
+                      <div className="-foreground">Listen.Provider</div>
+                      <div className="font-medium mt-1 ">
+                        {assistant
+                          .getPhonedeployment()
+                          ?.getInputaudio()
+                          ?.getAudioprovider()}
                       </div>
-                      {assistant
-                        .getPhonedeployment()
-                        ?.getInputaudio()
-                        ?.getAudiooptionsList()
-                        .filter(d => d.getValue())
-                        .filter(d => d.getKey().startsWith('listen.'))
-                        .map((detail, index) => (
-                          <div className="flex justify-between" key={index}>
-                            <div className="-foreground capitalize">
-                              {detail.getKey()}
-                            </div>
-                            <div className="font-medium">
-                              {detail.getValue()}
-                            </div>
-                          </div>
-                        ))}
                     </div>
-                  )}
-                <div className="flex justify-between">
-                  <div className="-foreground">Output Mode</div>
-                  <div className="font-medium">
-                    Text
-                    {assistant?.getPhonedeployment()?.getOutputaudio() &&
-                      ', Audio'}
+                    {assistant
+                      .getPhonedeployment()
+                      ?.getInputaudio()
+                      ?.getAudiooptionsList()
+                      .filter(d => d.getValue())
+                      .filter(d => d.getKey().startsWith('listen.'))
+                      .map((detail, index) => (
+                        <div className="flex justify-between" key={index}>
+                          <div className="-foreground capitalize">
+                            {detail.getKey()}
+                          </div>
+                          <div className="font-medium">{detail.getValue()}</div>
+                        </div>
+                      ))}
                   </div>
+                )}
+              <div className="flex justify-between">
+                <div className="-foreground">Output Mode</div>
+                <div className="font-medium">
+                  Text
+                  {assistant?.getPhonedeployment()?.getOutputaudio() &&
+                    ', Audio'}
                 </div>
-                {assistant
+              </div>
+              {assistant
+                .getPhonedeployment()
+                ?.getOutputaudio()
+                ?.getAudiooptionsList() &&
+                assistant
                   .getPhonedeployment()
                   ?.getOutputaudio()
-                  ?.getAudiooptionsList() &&
-                  assistant
-                    .getPhonedeployment()
-                    ?.getOutputaudio()
-                    ?.getAudiooptionsList().length! > 0 && (
-                    <div className="space-y-4">
-                      <div className="flex justify-between">
-                        <div className="-foreground">Speak.Provider</div>
-                        <div className="font-medium mt-1 ">
-                          {assistant
-                            .getPhonedeployment()
-                            ?.getOutputaudio()
-                            ?.getAudioprovider()}
-                        </div>
+                  ?.getAudiooptionsList().length! > 0 && (
+                  <div className="space-y-4">
+                    <div className="flex justify-between">
+                      <div className="-foreground">Speak.Provider</div>
+                      <div className="font-medium mt-1 ">
+                        {assistant
+                          .getPhonedeployment()
+                          ?.getOutputaudio()
+                          ?.getAudioprovider()}
                       </div>
-                      {assistant
-                        .getPhonedeployment()
-                        ?.getOutputaudio()
-                        ?.getAudiooptionsList()
-                        .filter(d => d.getValue())
-                        .filter(d => d.getKey().startsWith('speak.'))
-                        .map((detail, index) => (
-                          <div
-                            key={index}
-                            className="flex justify-between gap-8"
-                          >
-                            <div className="-foreground capitalize">
-                              {detail.getKey()}
-                            </div>
-                            <div className="font-medium truncate">
-                              {detail.getValue()}
-                            </div>
-                          </div>
-                        ))}
                     </div>
-                  )}
-
-                <div className="flex justify-between">
-                  <div className="-foreground">Telephony</div>
-                  <div className="font-medium">
-                    {assistant?.getPhonedeployment()?.getPhoneprovidername()}
+                    {assistant
+                      .getPhonedeployment()
+                      ?.getOutputaudio()
+                      ?.getAudiooptionsList()
+                      .filter(d => d.getValue())
+                      .filter(d => d.getKey().startsWith('speak.'))
+                      .map((detail, index) => (
+                        <div key={index} className="flex justify-between gap-8">
+                          <div className="-foreground capitalize">
+                            {detail.getKey()}
+                          </div>
+                          <div className="font-medium truncate">
+                            {detail.getValue()}
+                          </div>
+                        </div>
+                      ))}
                   </div>
+                )}
+
+              <div className="flex justify-between">
+                <div className="-foreground">Telephony</div>
+                <div className="font-medium">
+                  {assistant?.getPhonedeployment()?.getPhoneprovidername()}
                 </div>
               </div>
             </div>
