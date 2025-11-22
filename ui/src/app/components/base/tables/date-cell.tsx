@@ -1,6 +1,5 @@
 import { Timestamp } from 'google-protobuf/google/protobuf/timestamp_pb';
 import {
-  toHumanReadableDate,
   toHumanReadableDateTime,
   toHumanReadableRelativeTime,
 } from '@/utils/date';

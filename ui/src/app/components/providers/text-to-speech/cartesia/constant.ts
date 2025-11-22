@@ -1,4 +1,4 @@
-import { CARTESIA_LANGUAGE, CARTESIA_MODEL, CARTESIA_VOICE } from '@/providers';
+import { CARTESIA_LANGUAGE, CARTESIA_MODEL } from '@/providers';
 import { SetMetadata } from '@/utils/metadata';
 import { Metadata } from '@rapidaai/react';
 

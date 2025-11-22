@@ -2,7 +2,6 @@ import { Metadata } from '@rapidaai/react';
 import { FormLabel } from '@/app/components/form-label';
 import {
   IBlueBorderButton,
-  ICancelButton,
   IRedBorderButton,
 } from '@/app/components/form/button';
 import { FieldSet } from '@/app/components/form/fieldset';

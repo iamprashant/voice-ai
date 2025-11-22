@@ -6,7 +6,7 @@ import { FieldSet } from '@/app/components/form/fieldset';
 import { Popover } from '@/app/components/popover';
 import { AZURE_TEXT_MODEL } from '@/app/components/providers/text/azure/constants';
 import { cn } from '@/utils';
-import { Bolt, Settings, X } from 'lucide-react';
+import { Bolt, X } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { Input } from '@/app/components/form/input';
 import { Slider } from '@/app/components/form/slider';

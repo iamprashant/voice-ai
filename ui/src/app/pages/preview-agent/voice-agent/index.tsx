@@ -14,6 +14,7 @@ import {
 import { InputGroup } from '@/app/components/input-group';
 import { InputVarForm } from '@/app/pages/endpoint/view/try-playground/experiment-prompt/components/input-var-form';
 import { VoiceAgent } from '@/app/pages/preview-agent/voice-agent/voice-agent';
+import { CONFIG } from '@/configs';
 import { useRapidaStore } from '@/hooks';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { InputVarType } from '@/models/common';
@@ -82,18 +83,13 @@ export const PreviewVoiceAgent = () => {
   return (
     <VoiceAgent
       //   agentCallback={agentCallback}
-      connectConfig={
-        ConnectionConfig.DefaultConnectionConfig(
-          ConnectionConfig.WithDebugger({
-            authorization: token,
-            userId: authId,
-            projectId: projectId,
-          }),
-        ).withLocal()
-        // .withCustomEndpoint({
-        //   assistant: 'https://integral-presently-cub.ngrok-free.app',
-        // })
-      }
+      connectConfig={ConnectionConfig.DefaultConnectionConfig(
+        ConnectionConfig.WithDebugger({
+          authorization: token,
+          userId: authId,
+          projectId: projectId,
+        }),
+      ).withCustomEndpoint(CONFIG.connection)}
       agentConfig={new AgentConfig(
         assistantId,
         new InputOptions([Channel.Audio, Channel.Text], Channel.Text),
@@ -115,9 +111,7 @@ export const PreviewPhoneAgent = () => {
       AuthId: authId,
       ProjectId: projectId,
     }),
-  );
-  //   .withLocal();
-  //   .withLocal();
+  ).withCustomEndpoint(CONFIG.connection);
 
   const { showLoader, hideLoader, loading } = useRapidaStore();
   const { assistantId } = useParams();

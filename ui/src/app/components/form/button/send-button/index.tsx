@@ -3,7 +3,6 @@ import { cn } from '@/utils';
 import { Button } from '@/app/components/form/button';
 import { useRapidaStore } from '@/hooks';
 import { Spinner } from '@/app/components/loader/spinner';
-import { ArrowUpIcon } from '@heroicons/react/24/solid';
 import { UpArrowIcon } from '@/app/components/Icon/up-arrow';
 /**
  *

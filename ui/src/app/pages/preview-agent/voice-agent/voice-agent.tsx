@@ -23,7 +23,6 @@ import {
 import { InputVarForm } from '@/app/pages/endpoint/view/try-playground/experiment-prompt/components/input-var-form';
 import { InputVarType } from '@/models/common';
 import { InputGroup } from '@/app/components/input-group';
-import { TickIcon } from '../../../components/Icon/Tick';
 import { Check, CheckCheck } from 'lucide-react';
 
 export const VoiceAgent: FC<{
@@ -226,7 +225,7 @@ export const VoiceAgentDebugger: FC<{ voiceAgent: VI }> = memo(
                         </>
                       )}
                     </div>
-                    <InputGroup title="Arguments">
+                    <InputGroup title="Arguments" childClass="!p-0">
                       {variables.length > 0 ? (
                         <div className="text-sm leading-normal">
                           {variables.map((x, idx) => {
@@ -321,7 +320,7 @@ export const VoiceAgentDebugger: FC<{ voiceAgent: VI }> = memo(
                         </YellowNoticeBlock>
                       )}
                     </InputGroup>
-                    <InputGroup title="Deployment">
+                    <InputGroup title="Deployment" childClass="p-3 text-muted">
                       <div className="space-y-4">
                         <div className="flex justify-between">
                           <div className="text-muted-foreground">

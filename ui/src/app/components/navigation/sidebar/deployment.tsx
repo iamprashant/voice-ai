@@ -1,17 +1,13 @@
 import { memo, useState } from 'react';
-import { ChevronDownIcon } from '@/app/components/Icon/ChevronDown';
 import { Disclosure } from '@/app/components/disclosure';
-import { ChevronUpIcon } from '@/app/components/Icon/ChevronUp';
 import { cn } from '@/utils';
-import { EndpointIcon } from '@/app/components/Icon/Endpoint';
-import { AssistantIcon } from '@/app/components/Icon/Assistant';
 import { SidebarIconWrapper } from '@/app/components/navigation/sidebar/sidebar-icon-wrapper';
 import { SidebarLabel } from '@/app/components/navigation/sidebar/sidebar-label';
 import { SidebarSimpleListItem } from '@/app/components/navigation/sidebar/sidebar-simple-list-item';
 import { useLocation } from 'react-router-dom';
 import { Tooltip } from '@/app/components/tooltip';
 import { BetaIcon } from '@/app/components/Icon/Beta';
-import { BotMessageSquare, Box, Route } from 'lucide-react';
+import { BotMessageSquare, Box, ChevronDown, Route } from 'lucide-react';
 
 export const Deployment = memo(() => {
   const location = useLocation();
@@ -35,7 +31,12 @@ export const Deployment = memo(() => {
           <SidebarLabel>Deployment</SidebarLabel>
         </div>
         <SidebarIconWrapper className="opacity-0 group-hover:opacity-100 transition-all duration-100">
-          {open ? <ChevronUpIcon /> : <ChevronDownIcon />}
+          <ChevronDown
+            className={cn(
+              'w-5 h-5 opacity-70 transition-all duration-200',
+              open && 'rotate-180',
+            )}
+          />
         </SidebarIconWrapper>
       </SidebarSimpleListItem>
       <Disclosure open={open}>

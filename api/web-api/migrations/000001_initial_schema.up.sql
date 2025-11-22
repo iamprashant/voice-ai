@@ -338,33 +338,6 @@ CREATE INDEX idx_user_project_roles_project_id ON public.user_project_roles USIN
 CREATE INDEX idx_user_project_roles_user_auth_id_status ON public.user_project_roles USING btree (user_auth_id, status);
 
 
---
--- Name: idx_vault_level; Type: INDEX;
---
-
-CREATE INDEX idx_vault_level ON public.vaults USING btree (vault_level);
-
-
---
--- Name: idx_vault_level_id; Type: INDEX;
---
-
-CREATE INDEX idx_vault_level_id ON public.vaults USING btree (vault_level_id);
-
-
---
--- Name: idx_vault_type; Type: INDEX;
---
-
-CREATE INDEX idx_vault_type ON public.vaults USING btree (vault_type);
-
-
---
--- Name: idx_vault_type_id; Type: INDEX;
---
-
-CREATE INDEX idx_vault_type_id ON public.vaults USING btree (vault_type_id);
-
 
 --
 -- Name: ua_idx_email; Type: INDEX;

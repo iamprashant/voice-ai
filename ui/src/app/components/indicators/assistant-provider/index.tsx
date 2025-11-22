@@ -1,5 +1,5 @@
-import React, { FC } from 'react';
-import { Brain, Check, Clock, MinusCircle } from 'lucide-react';
+import { FC } from 'react';
+import { Brain, Check, MinusCircle } from 'lucide-react';
 
 export const AssistantProviderIndicator: FC<{
   provider: 'websocket' | 'agentkit' | 'provider-model';

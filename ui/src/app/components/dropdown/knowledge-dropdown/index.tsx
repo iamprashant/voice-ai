@@ -20,7 +20,7 @@ interface KnowledgeDropdownProps {
 export const KnowledgeDropdown: FC<KnowledgeDropdownProps> = props => {
   const [userId, token, projectId] = useCredential();
   const knowledgeActions = useKnowledgePageStore();
-  const [loading, setLoading] = useState(false);
+  const [_, setLoading] = useState(false);
 
   const showLoader = () => setLoading(true);
   const hideLoader = () => setLoading(false);

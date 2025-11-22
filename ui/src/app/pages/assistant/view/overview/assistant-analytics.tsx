@@ -12,7 +12,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  Legend,
   Bar,
   BarChart,
   YAxis,

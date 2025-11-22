@@ -1,7 +1,5 @@
 import { memo, useState } from 'react';
-import { ChevronDownIcon } from '@/app/components/Icon/ChevronDown';
 import { Disclosure } from '@/app/components/disclosure';
-import { ChevronUpIcon } from '@/app/components/Icon/ChevronUp';
 import { cn } from '@/utils';
 import { SidebarIconWrapper } from '@/app/components/navigation/sidebar/sidebar-icon-wrapper';
 import { SidebarLabel } from '@/app/components/navigation/sidebar/sidebar-label';
@@ -9,7 +7,13 @@ import { SidebarSimpleListItem } from '@/app/components/navigation/sidebar/sideb
 import { useLocation } from 'react-router-dom';
 
 import { ObservabilityIcon } from '@/app/components/Icon/Observability';
-import { Activity, Database, MessageSquareIcon, Webhook } from 'lucide-react';
+import {
+  Activity,
+  ChevronDown,
+  Database,
+  MessageSquareIcon,
+  Webhook,
+} from 'lucide-react';
 import { ToolIcon } from '@/app/components/Icon/tool';
 
 export const Observability = memo(() => {
@@ -34,7 +38,12 @@ export const Observability = memo(() => {
           <SidebarLabel>Logs</SidebarLabel>
         </div>
         <SidebarIconWrapper className="opacity-0 group-hover:opacity-100 transition-all duration-100">
-          {open ? <ChevronUpIcon /> : <ChevronDownIcon />}
+          <ChevronDown
+            className={cn(
+              'w-5 h-5 opacity-70 transition-all duration-200',
+              open && 'rotate-180',
+            )}
+          />
         </SidebarIconWrapper>
       </SidebarSimpleListItem>
       <Disclosure open={open}>

@@ -1,9 +1,8 @@
-import React, { FC } from 'react';
+import { FC } from 'react';
 import { GenericModal, ModalProps } from '@/app/components/base/modal';
 import { HowItWorks } from '@/app/components/base/modal/how-it-works-modal';
 import { IBlueBGButton } from '@/app/components/form/button';
 import { Check } from 'lucide-react';
-import { cn } from '@/utils';
 import { ModalFooter } from '@/app/components/base/modal/modal-footer';
 import { ModalFitHeightBlock } from '@/app/components/blocks/modal-fit-height-block';
 import { ModalHeader } from '@/app/components/base/modal/modal-header';

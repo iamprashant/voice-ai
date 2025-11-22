@@ -29,7 +29,6 @@ import { getMetricValue } from '@/utils/metadata';
 import { formatNanoToReadableMinute } from '@/utils/date';
 import { ConversationDirectionIndicator } from '@/app/components/indicators/conversation-direction';
 import { CopyCell } from '@/app/components/base/tables/copy-cell';
-import { NumberCell } from '@/app/components/base/tables/number-cell';
 import { LabelCell } from '@/app/components/base/tables/label-cell';
 import { DateCell } from '@/app/components/base/tables/date-cell';
 

@@ -4,12 +4,9 @@ import { ClickableCard } from '@/app/components/base/cards';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { KnowledgeIcon } from '@/app/components/Icon/knowledge';
 import { EndpointIcon } from '@/app/components/Icon/Endpoint';
-import { DeploymentIcon } from '@/app/components/Icon/Deployment';
 import { AssistantIcon } from '@/app/components/Icon/Assistant';
-import { ToolIcon } from '@/app/components/Icon/tool';
 import { ModelIcon } from '@/app/components/Icon/Model';
 import { useProviderContext } from '@/context/provider-context';
-import { IBlueBorderButton } from '@/app/components/form/button';
 
 export const HomePage = () => {
   const coreFeatures = [

@@ -12,19 +12,6 @@ export const ConfigureCohereRerankerModel: React.FC<{
   const getParamValue = (key: string) =>
     parameters?.find(p => p.getKey() === key)?.getValue() ?? '';
 
-  const updateParameter = (key: string, value: string) => {
-    const updatedParams = [...(parameters || [])];
-    const existingIndex = updatedParams.findIndex(p => p.getKey() === key);
-    const newParam = new Metadata();
-    newParam.setKey(key);
-    newParam.setValue(value);
-    if (existingIndex >= 0) {
-      updatedParams[existingIndex] = newParam;
-    } else {
-      updatedParams.push(newParam);
-    }
-    onParameterChange(updatedParams);
-  };
   return (
     <div className="flex-1 flex">
       <Dropdown

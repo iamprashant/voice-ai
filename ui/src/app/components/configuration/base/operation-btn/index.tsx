@@ -1,8 +1,8 @@
 import type { FC } from 'react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { PlusIcon } from '@heroicons/react/20/solid';
 import cn from 'classnames';
+import { PlusIcon } from 'lucide-react';
 
 export type IOperationBtnProps = {
   className?: string;

@@ -4,7 +4,6 @@ import {
   OrganizationOverviewPage,
   OrganizationUserPage,
   OrganizationProjectPage,
-  OrganizationBillingPage,
   OrganizationAccessSecurityPage,
 } from '@/app/pages/workspace';
 import { Routes, Route, Outlet } from 'react-router-dom';

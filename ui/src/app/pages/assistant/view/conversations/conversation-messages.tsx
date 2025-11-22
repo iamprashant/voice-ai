@@ -19,13 +19,10 @@ import { PaginationButtonBlock } from '@/app/components/blocks/pagination-button
 import { AudioPlayer } from '@/app/components/audio-player';
 import {
   getMetadataValueOrDefault,
-  getMetricValueOrDefault,
   getStatusMetric,
-  getTimeTakenMetric,
   getTotalTokenMetric,
 } from '@/utils/metadata';
 import { StatusIndicator } from '@/app/components/indicators/status';
-import { Pill } from '@/app/components/pill';
 import { toHumanReadableDateTime } from '@/utils/date';
 
 export const ConversationMessages: FC<{

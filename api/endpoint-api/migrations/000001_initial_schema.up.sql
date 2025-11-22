@@ -121,7 +121,6 @@ CREATE TABLE public.endpoint_provider_models (
     endpoint_id bigint,
     created_by bigint,
     request jsonb,
-    model_provider_id bigint,
     description text,
     model_provider_name character varying(200) DEFAULT 'azure-openai'::character varying NOT NULL,
     updated_by bigint
@@ -174,8 +173,8 @@ CREATE TABLE public.endpoints (
     id bigint NOT NULL,
     created_date timestamp without time zone DEFAULT now() NOT NULL,
     updated_date timestamp without time zone,
-    status character varying(50) DEFAULT 'active'::character varying NOT NULL,
-    visibility character varying(50) DEFAULT 'private'::character varying NOT NULL,
+    status character varying(50) DEFAULT 'ACTIVE'::character varying NOT NULL,
+    visibility character varying(50) DEFAULT 'PRIVATE'::character varying NOT NULL,
     project_id bigint NOT NULL,
     organization_id bigint NOT NULL,
     endpoint_provider_model_id bigint,

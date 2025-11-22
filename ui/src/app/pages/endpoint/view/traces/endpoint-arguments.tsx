@@ -1,4 +1,4 @@
-import { Argument, Metadata } from '@rapidaai/react';
+import { Argument } from '@rapidaai/react';
 import { Table } from '@/app/components/base/tables/table';
 import { TableBody } from '@/app/components/base/tables/table-body';
 import { TableCell } from '@/app/components/base/tables/table-cell';

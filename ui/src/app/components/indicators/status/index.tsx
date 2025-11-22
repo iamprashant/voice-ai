@@ -1,6 +1,4 @@
-import React from 'react';
 import {
-  CheckCircle,
   Clock,
   Archive,
   X,
