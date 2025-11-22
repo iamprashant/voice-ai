@@ -137,6 +137,7 @@
             "tts",
             "external"
         ],
+        "url": "/integration/models/google-cloud",
         "configurations": [
             {
                 "name": "project_id",
@@ -156,6 +157,7 @@
         "name": "Azure",
         "description": "Azure AI Foundry Service enables to access all the cognitive apis like openai, stt, tts",
         "image": "https://rapida-assets-01.s3.ap-south-1.amazonaws.com/providers/198796716894742122.png",
+        "url": "/integration/models/azure",
         "featureList": [
             "text",
             "stt",
@@ -204,7 +206,8 @@
         "featureList": [
             "text",
             "embedding",
-            "external"
+            "external",
+            "reranker"
         ],
         "configurations": [
             {
@@ -301,6 +304,7 @@
             "tts",
             "external"
         ],
+        "url": "/integration/models/deepgram",
         "configurations": [
             {
                 "name": "key",
@@ -315,6 +319,7 @@
         "name": "Cartesia",
         "description": "Advanced Text-to-Speech and Speech-to-Text solutions",
         "image": "https://rapida-assets-01.s3.ap-south-1.amazonaws.com/providers/cartesia.jpg",
+        "url": "/integration/models/cartesia",
         "featureList": [
             "stt",
             "tts",
@@ -334,6 +339,7 @@
         "name": "ElevenLabs",
         "description": "ElevenLabs offers state-of-the-art AI voice technology, providing high-quality text-to-speech synthesis with natural-sounding voices and customization options.",
         "image": "https://rapida-assets-01.s3.ap-south-1.amazonaws.com/providers/11labs.png",
+        "url": "/integration/models/elevenlabs",
         "featureList": [
             "tts",
             "external"
