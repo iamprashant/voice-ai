@@ -18,7 +18,7 @@
                 }
             },
             "signUp": {
-                "enable": false,
+                "enable": true,
                 "providers": {
                     "password": true,
                     "google": true,

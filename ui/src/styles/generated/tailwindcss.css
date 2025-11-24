@@ -3909,9 +3909,6 @@
   .p-\[4px\]\! {
     padding: 4px !important;
   }
-  .p-\[14px\] {
-    padding: 14px;
-  }
   .p-px {
     padding: 1px;
   }
@@ -4133,9 +4130,6 @@
   }
   .pl-\[0\.8rem\] {
     padding-left: 0.8rem;
-  }
-  .pl-\[20px\] {
-    padding-left: 20px;
   }
   .pl-px {
     padding-left: 1px;
@@ -6912,6 +6906,11 @@
   .lg\:grid-cols-4 {
     @media (width >= 64rem) {
       grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+  .lg\:grid-cols-5 {
+    @media (width >= 64rem) {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
     }
   }
   .lg\:px-6 {

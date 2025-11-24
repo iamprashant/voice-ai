@@ -1,5 +1,9 @@
-import React from 'react';
-import { ChevronRight, MessageSquare, TestTube } from 'lucide-react';
+import {
+  ChevronRight,
+  ExternalLink,
+  MessageSquare,
+  TestTube,
+} from 'lucide-react';
 import { ClickableCard } from '@/app/components/base/cards';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { KnowledgeIcon } from '@/app/components/Icon/knowledge';
@@ -7,6 +11,7 @@ import { EndpointIcon } from '@/app/components/Icon/Endpoint';
 import { AssistantIcon } from '@/app/components/Icon/Assistant';
 import { ModelIcon } from '@/app/components/Icon/Model';
 import { useProviderContext } from '@/context/provider-context';
+import { ILinkButton } from '@/app/components/form/button';
 
 export const HomePage = () => {
   const coreFeatures = [
@@ -62,37 +67,46 @@ export const HomePage = () => {
   const { user } = useCurrentCredential();
   const { providerCredentials } = useProviderContext();
   return (
-    <div className="flex-1 overflow-auto flex flex-col max-w-6xl mx-auto border-x">
-      <div className="border-y mt-12 bg-white dark:bg-gray-900 p-4">
-        <h1 className="text-2xl font-semibold">
-          Good afternoon, {user?.name?.split(/\s+/)[0] || user?.name}{' '}
+    <div className="flex-1 overflow-auto flex flex-col">
+      {/* Core Platform Features */}
+      <div className="p-4">
+        <h2 className="text-xl font-semibold text-foreground mb-1">
+          Get Started
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Complete these steps to set up your workspace
+        </p>
+      </div>
+      <div className="border-y p-3">
+        {providerCredentials.length === 0 && (
+          <div className="flex justify-between border bg-light-background dark:bg-gray-950 items-center rounded-xl">
+            <div className="p-4">
+              <h1 className="text-base font-semibold">
+                Connect your ai providers
+              </h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                Set up the language model, speech-to-text, and text-to-speech
+                services you want to use.
+              </p>
+            </div>
+            <ILinkButton
+              href="/integration/models"
+              className="p-0 px-2 pl-4 mr-4"
+            >
+              Connect
+              <ExternalLink className="w-4 h-4 ml-2" strokeWidth={1.5} />
+            </ILinkButton>
+          </div>
+        )}
+      </div>
+
+      <div className="border-b bg-white dark:bg-gray-900 p-4">
+        <h1 className="text-xl font-semibold">
+          Welcome, {user?.name?.split(/\s+/)[0] || user?.name}{' '}
         </h1>
       </div>
-      {providerCredentials.length === 0 && (
-        <>
-          <div className="px-4 py-8 bg-white dark:bg-gray-900">
-            <h1 className="text-xl font-medium">Connect your ai providers</h1>
-            <p className="mt-2 text-base/6 text-gray-600 dark:text-gray-500">
-              Set up the language model, speech-to-text, and text-to-speech
-              services you want to use. This helps your AI agent understand,
-              think, and respond accurately. You can choose any provider you
-              prefer.
-            </p>
-          </div>
-          <div className="flex whitespace-nowrap border-y px-2 sm:px-0 justify-end bg-white dark:bg-gray-900">
-            <a
-              className="flex p-[14px] bg-blue-600 text-base/6 text-white pl-[20px] font-semibold py-2 cursor-pointer"
-              href="/integration/models"
-            >
-              Connect your provider
-              <ChevronRight className="w-5 ml-2" />
-            </a>
-          </div>
-        </>
-      )}
       <main className="px-6 py-6 bg-white dark:bg-gray-900">
-        {/* Core Platform Features */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           {coreFeatures.map((feature, index) => (
             <ClickableCard
               to={feature.route}
@@ -102,19 +116,17 @@ export const HomePage = () => {
               <div className="flex flex-col space-y-4">
                 <div className="flex items-center justify-between">
                   <div
-                    className={`w-12 h-12 ${feature.color} flex items-center justify-center group-hover:scale-110 transition-transform`}
+                    className={`w-10 h-10 ${feature.color} flex items-center justify-center group-hover:scale-110 transition-transform`}
                   >
                     <feature.icon
-                      className="h-6 w-6 text-white"
+                      className="h-5 w-5 text-white"
                       strokeWidth={1.5}
                     />
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">
-                    {feature.title}
-                  </h3>
-                  <p className="text-[0.95rem] text-gray-600 dark:text-gray-500">
+                  <h3 className="text-lg font-semibold">{feature.title}</h3>
+                  <p className="text-[0.95rem] text-gray-600 dark:text-gray-500 mt-2">
                     {feature.description}
                   </p>
                 </div>
