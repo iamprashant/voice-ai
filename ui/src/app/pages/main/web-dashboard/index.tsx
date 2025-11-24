@@ -69,36 +69,38 @@ export const HomePage = () => {
   return (
     <div className="flex-1 overflow-auto flex flex-col">
       {/* Core Platform Features */}
-      <div className="p-4">
-        <h2 className="text-xl font-semibold text-foreground mb-1">
-          Get Started
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Complete these steps to set up your workspace
-        </p>
-      </div>
-      <div className="border-y p-3">
-        {providerCredentials.length === 0 && (
-          <div className="flex justify-between border bg-light-background dark:bg-gray-950 items-center rounded-xl">
-            <div className="p-4">
-              <h1 className="text-base font-semibold">
-                Connect your ai providers
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Set up the language model, speech-to-text, and text-to-speech
-                services you want to use.
-              </p>
-            </div>
-            <ILinkButton
-              href="/integration/models"
-              className="p-0 px-2 pl-4 mr-4"
-            >
-              Connect
-              <ExternalLink className="w-4 h-4 ml-2" strokeWidth={1.5} />
-            </ILinkButton>
+      {providerCredentials.length === 0 && (
+        <>
+          <div className="p-4">
+            <h2 className="text-xl font-semibold text-foreground mb-1">
+              Get Started
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Complete these steps to set up your workspace
+            </p>
           </div>
-        )}
-      </div>
+          <div className="border-y p-3">
+            <div className="flex justify-between border bg-light-background dark:bg-gray-950 items-center">
+              <div className="p-4">
+                <h1 className="text-base font-semibold">
+                  Connect your ai providers
+                </h1>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Set up the language model, speech-to-text, and text-to-speech
+                  services you want to use.
+                </p>
+              </div>
+              <ILinkButton
+                href="/integration/models"
+                className="p-0 px-2 pl-4 mr-4"
+              >
+                Connect
+                <ExternalLink className="w-4 h-4 ml-2" strokeWidth={1.5} />
+              </ILinkButton>
+            </div>
+          </div>
+        </>
+      )}
 
       <div className="border-b bg-white dark:bg-gray-900 p-4">
         <h1 className="text-xl font-semibold">
