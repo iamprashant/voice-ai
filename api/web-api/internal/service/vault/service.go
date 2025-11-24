@@ -76,9 +76,11 @@ func (vS *vaultService) GetAllOrganizationCredential(ctx context.Context, auth t
 	var vaults []*internal_entity.Vault
 	var cnt int64
 
-	qry := db.Debug().Model(internal_entity.Vault{})
+	qry := db.Model(internal_entity.Vault{})
 	qry.
-		Where("organization_id = ? AND project_id = ? AND status = ?", *auth.GetCurrentOrganizationId(), *auth.GetCurrentProjectId(), type_enums.RECORD_ACTIVE)
+		Where("organization_id = ? AND project_id = ? AND status = ?",
+			*auth.GetCurrentOrganizationId(),
+			*auth.GetCurrentProjectId(), type_enums.RECORD_ACTIVE)
 	for _, ct := range criterias {
 		switch ct.GetLogic() {
 		case "or":

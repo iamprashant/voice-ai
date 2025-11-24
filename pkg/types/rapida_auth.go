@@ -73,7 +73,6 @@ type Principle interface {
 	GetProjectRoles() []*ProjectRole
 	GetCurrentProjectRole() *ProjectRole
 
-	//
 	PlainAuthPrinciple() PlainAuthPrinciple
 	SwitchProject(projectId uint64) error
 	GetFeaturePermission() []*FeaturePermission

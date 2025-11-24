@@ -12,7 +12,7 @@ type authPrinciple struct {
 	user               *internal_entity.UserAuth
 	userAuthToken      *internal_entity.UserAuthToken
 	userOrgRole        *internal_entity.UserOrganizationRole
-	userProjectRoles   *[]internal_entity.UserProjectRole
+	userProjectRoles   []*internal_entity.UserProjectRole
 	currentProjectRole *types.ProjectRole
 	featurePermissions []*internal_entity.UserFeaturePermission
 }
@@ -45,12 +45,12 @@ func (aP *authPrinciple) GetProjectRoles() []*types.ProjectRole {
 		return nil
 	}
 
-	if aP.userProjectRoles != nil && len(*aP.userProjectRoles) == 0 {
+	if aP.userProjectRoles != nil && len(aP.userProjectRoles) == 0 {
 		return nil
 	}
 
-	prs := make([]*types.ProjectRole, len(*aP.userProjectRoles))
-	for idx, pr := range *aP.userProjectRoles {
+	prs := make([]*types.ProjectRole, len(aP.userProjectRoles))
+	for idx, pr := range aP.userProjectRoles {
 		prs[idx] = &types.ProjectRole{
 			Id:          pr.Id,
 			ProjectId:   pr.ProjectId,
@@ -122,7 +122,6 @@ func (aP *authPrinciple) GetCurrentOrganizationId() *uint64 {
 	if aP.GetOrganizationRole() != nil {
 		return &aP.GetOrganizationRole().OrganizationId
 	}
-
 	return nil
 }
 
@@ -134,7 +133,10 @@ func (aP *authPrinciple) GetCurrentProjectId() *uint64 {
 }
 
 func (aP *authPrinciple) GetCurrentProjectRole() *types.ProjectRole {
-	panic("illegal of calling current project role when not selected")
+	if aP.currentProjectRole == nil {
+		return nil
+	}
+	return aP.currentProjectRole
 }
 
 // has an user

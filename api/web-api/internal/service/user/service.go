@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	internal_entity "github.com/rapidaai/api/web-api/internal/entity"
@@ -50,77 +49,64 @@ func (aS *userService) Authenticate(ctx context.Context, email string, password 
 		return nil, tx.Error
 	}
 
-	var wg sync.WaitGroup
-	var aToken *internal_entity.UserAuthToken
+	var aToken internal_entity.UserAuthToken
 	var rt internal_entity.UserOrganizationRole
-	var prjs *[]internal_entity.UserProjectRole
+	var prjs []*internal_entity.UserProjectRole
 	var permissions []*internal_entity.UserFeaturePermission
 
-	var errChan = make(chan error, 3)
-
-	// all is done in goroutine
-	wg.Add(4)
-
-	go func() {
-		defer wg.Done()
-		var err error
-		aToken, err = aS.GetAuthToken(ctx, aUser.Id)
-		if err != nil {
-			errChan <- fmt.Errorf("exception in DB transaction: %v", err)
+	g, ctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		tx := db.First(&aToken, "user_auth_id = ?", aUser.Id)
+		if tx.Error != nil {
+			aS.logger.Errorf("exception in DB transaction %v", tx.Error)
+			return tx.Error
 		}
-	}()
+		return nil
+	})
 
-	go func() {
-		defer wg.Done()
+	g.Go(func() error {
 		tx := db.Preload("Organization").First(&rt, "user_auth_id = ? AND status = ?", aUser.Id, type_enums.RECORD_ACTIVE.String())
 		if tx.Error != nil {
 			aS.logger.Debugf("organization not found for the user: %v", tx.Error)
 			// Uncomment the following line if you want to treat this as an error
 			// errChan <- fmt.Errorf("exception in DB transaction: %v", tx.Error)
 		}
-	}()
+		return nil
+	})
 
-	go func() {
-		defer wg.Done()
-		prjs = aS.getUserProjectRoles(ctx, aUser.Id, rt.OrganizationId)
-	}()
+	g.Go(func() error {
+		prjs = aS.getUserProjectRoles(ctx, aUser.Id)
+		return nil
+	})
 
-	go func() {
-		defer wg.Done()
+	g.Go(func() error {
 		permissions, _ = aS.GetAllUserFeaturePermission(ctx, aUser.Id)
-	}()
+		return nil
+	})
 
-	wg.Wait()
-	close(errChan)
-
-	for err := range errChan {
-		if err != nil {
-			aS.logger.Errorf("error on one of the routine of authentication %v", err)
-			return nil, err
-		}
+	if err := g.Wait(); err != nil {
+		return nil, err
 	}
-	return &authPrinciple{user: &aUser, userAuthToken: aToken, userOrgRole: &rt, userProjectRoles: prjs, featurePermissions: permissions}, nil
+	return &authPrinciple{user: &aUser, userAuthToken: &aToken, userOrgRole: &rt, userProjectRoles: prjs, featurePermissions: permissions}, nil
 }
 
-func (aS *userService) getUserProjectRoles(ctx context.Context, userId uint64, organizationId uint64) *[]internal_entity.UserProjectRole {
+func (aS *userService) getUserProjectRoles(ctx context.Context, userId uint64) []*internal_entity.UserProjectRole {
 	db := aS.postgres.DB(ctx)
-	var prjs []internal_entity.UserProjectRole
+	var prjs []*internal_entity.UserProjectRole
 	tx := db.Where(&internal_entity.UserProjectRole{
 		UserAuthId: userId,
 		Mutable: gorm_models.Mutable{
 			Status: type_enums.RECORD_ACTIVE,
 		},
 	}).InnerJoins("Project", db.Where(&internal_entity.Project{
-		OrganizationId: organizationId,
 		Mutable: gorm_models.Mutable{
 			Status: type_enums.RECORD_ACTIVE,
 		}})).Find(&prjs)
 	if tx.Error != nil {
 		aS.logger.Errorf("exception in DB transaction %v", tx.Error)
 		aS.logger.Debugf("user project not found not found for the user %v", tx.Error)
-		// return nil, tx.Error
 	}
-	return &prjs
+	return prjs
 }
 
 func (aS *userService) Create(ctx context.Context, name string, email string, password string, status type_enums.RecordState, source *string) (types.Principle, error) {
@@ -195,7 +181,7 @@ func (aS *userService) Activate(ctx context.Context, userId uint64, name string,
 		// return nil, tx.Error
 	}
 
-	prjs := aS.getUserProjectRoles(ctx, userId, rt.OrganizationId)
+	prjs := aS.getUserProjectRoles(ctx, userId)
 	return &authPrinciple{user: &ct, userAuthToken: aTh, userOrgRole: &rt, userProjectRoles: prjs}, nil
 
 }
@@ -338,7 +324,7 @@ func (aS *userService) AuthPrinciple(ctx context.Context, userId uint64) (types.
 	var authToken internal_entity.UserAuthToken
 	var userAuth internal_entity.UserAuth
 	var orgRole internal_entity.UserOrganizationRole
-	var prjs *[]internal_entity.UserProjectRole
+	var prjs []*internal_entity.UserProjectRole
 
 	g, ctx := errgroup.WithContext(ctx)
 	g.Go(func() error {
@@ -370,7 +356,7 @@ func (aS *userService) AuthPrinciple(ctx context.Context, userId uint64) (types.
 	})
 
 	g.Go(func() error {
-		prjs = aS.getUserProjectRoles(ctx, userId, orgRole.OrganizationId)
+		prjs = aS.getUserProjectRoles(ctx, userId)
 		return nil
 	})
 
@@ -390,30 +376,52 @@ func (aS *userService) Authorize(ctx context.Context, token string, userId uint6
 
 	db := aS.postgres.DB(ctx)
 	var ct internal_entity.UserAuthToken
-	tx := db.First(&ct, "user_auth_id = ? AND token = ? AND token_type = ? ", userId, token, "auth-token")
-	if tx.Error != nil {
-		aS.logger.Errorf("exception in DB transaction %v", tx.Error)
-		return nil, tx.Error
-	}
+
+	g, ctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		tx := db.First(&ct, "user_auth_id = ? AND token = ? AND token_type = ? ", userId, token, "auth-token")
+		if tx.Error != nil {
+			aS.logger.Errorf("exception in DB transaction %v", tx.Error)
+			return tx.Error
+		}
+		return nil
+	})
 
 	var aUser internal_entity.UserAuth
-	tx = db.First(&aUser, "id = ? AND status = ? ", userId, type_enums.RECORD_ACTIVE.String())
-	if tx.Error != nil {
-		aS.logger.Errorf("exception in DB transaction %v", tx.Error)
-		return nil, tx.Error
-	}
+	g.Go(func() error {
+		tx := db.First(&aUser, "id = ? AND status = ? ", userId, type_enums.RECORD_ACTIVE.String())
+		if tx.Error != nil {
+			aS.logger.Errorf("exception in DB transaction %v", tx.Error)
+			return tx.Error
+		}
+		return nil
+	})
 
 	var rt internal_entity.UserOrganizationRole
-	tx = db.Preload("Organization").First(&rt, "user_auth_id = ? AND status = ?", userId, type_enums.RECORD_ACTIVE.String())
-	//This fails first request to create org
-	if tx.Error != nil {
-		aS.logger.Debugf("organization not found for the user %v", tx.Error)
-		// return nil, tx.Error
+	g.Go(func() error {
+		tx := db.Preload("Organization").First(&rt, "user_auth_id = ? AND status = ?", userId, type_enums.RECORD_ACTIVE.String())
+		if tx.Error != nil {
+			aS.logger.Debugf("organization not found for the user %v", tx.Error)
+		}
+		return nil
+	})
+
+	var prjs []*internal_entity.UserProjectRole
+	g.Go(func() error {
+		prjs = aS.getUserProjectRoles(ctx, userId)
+		return nil
+	})
+
+	var permissions []*internal_entity.UserFeaturePermission
+	g.Go(func() error {
+		permissions, _ = aS.GetAllUserFeaturePermission(ctx, userId)
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return nil, err
 	}
-
-	prjs := aS.getUserProjectRoles(ctx, userId, rt.OrganizationId)
-
-	return &authPrinciple{user: &aUser, userAuthToken: &ct, userOrgRole: &rt, userProjectRoles: prjs}, nil
+	return &authPrinciple{user: &aUser, userAuthToken: &ct, userOrgRole: &rt, userProjectRoles: prjs, featurePermissions: permissions}, nil
 }
 
 func (aS *userService) GetUser(ctx context.Context, userId uint64) (*internal_entity.UserAuth, error) {
