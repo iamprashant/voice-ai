@@ -4,15 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/rapidaai/api/assistant-api/config"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 	"github.com/twilio/twilio-go"
 	openapi "github.com/twilio/twilio-go/rest/api/v2010"
 )
 
 type twilioTelephony struct {
+	appCfg     *config.AssistantConfig
 	logger     commons.Logger
 	accountSid string
 	authToken  string
@@ -20,8 +22,9 @@ type twilioTelephony struct {
 }
 
 func NewTwilioTelephony(
+	config *config.AssistantConfig,
 	logger commons.Logger,
-	vaultCredential *lexatic_backend.VaultCredential,
+	vaultCredential *protos.VaultCredential,
 	cfg utils.Option) (Telephony, error) {
 	accountSid, ok := vaultCredential.GetValue().AsMap()["account_sid"]
 	if !ok {
@@ -32,6 +35,7 @@ func NewTwilioTelephony(
 		return nil, fmt.Errorf("illegal vault config account_token not found")
 	}
 	return &twilioTelephony{
+		appCfg:     config,
 		cfg:        cfg,
 		logger:     logger,
 		accountSid: accountSid.(string),
@@ -65,6 +69,7 @@ func (tpc *twilioTelephony) CreateCall(
 	case "project":
 		callParams.SetTwiml(
 			CreateTwinML(
+				tpc.appCfg.MediaHost,
 				GetAnswerPath("twilio", auth, assistantId,
 					sessionId,
 					toPhone,
@@ -76,6 +81,7 @@ func (tpc *twilioTelephony) CreateCall(
 	case "user":
 		callParams.SetTwiml(
 			CreateTwinML(
+				tpc.appCfg.MediaHost,
 				GetAnswerPath("twilio", auth, assistantId,
 					sessionId,
 					toPhone,
@@ -104,9 +110,7 @@ func (tpc *twilioTelephony) CreateCall(
 	return responseMap, nil
 }
 
-func CreateTwinML(path string, assistantId uint64, clientNumber string) string {
-	redirectUrl := "assistant-01.rapida.ai"
-	// redirectUrl = "integral-presently-cub.ngrok-free.app"
+func CreateTwinML(mediaServer string, path string, assistantId uint64, clientNumber string) string {
 
 	return fmt.Sprintf(`
 	    <Response>
@@ -118,7 +122,7 @@ func CreateTwinML(path string, assistantId uint64, clientNumber string) string {
 			</Connect>
 	    </Response>
 	`,
-		redirectUrl,
+		mediaServer,
 		path,
 		assistantId,
 		clientNumber,
@@ -133,7 +137,6 @@ func GetAnswerPath(provider string, auth types.SimplePrinciple, assistantId uint
 			assistantId,
 			toPhone,
 			assistantConversationId,
-			// authentication
 			auth.GetCurrentToken())
 	default:
 		return fmt.Sprintf("v1/talk/%s/usr/%d/%s/%d/%s/%d/%d",
@@ -141,7 +144,6 @@ func GetAnswerPath(provider string, auth types.SimplePrinciple, assistantId uint
 			assistantId,
 			toPhone,
 			assistantConversationId,
-			// authentication
 			auth.GetCurrentToken(),
 			*auth.GetUserId(),
 			*auth.GetCurrentProjectId())

@@ -36,6 +36,7 @@ export interface WorkspaceConfig {
 
 export interface RapidaConfig {
   connection: {
+    media: string;
     assistant: string;
     web: string;
     endpoint: string;

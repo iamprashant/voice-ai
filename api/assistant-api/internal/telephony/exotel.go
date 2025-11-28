@@ -8,22 +8,23 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rapidaai/api/assistant-api/config"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
 type exotelTelephony struct {
-	logger commons.Logger
-	cfg    utils.Option
-
+	logger       commons.Logger
+	appCfg       *config.AssistantConfig
+	cfg          utils.Option
 	AccountSid   string
 	ClientID     string
 	ClientSecret string
 }
 
-func NewExotelTelephony(logger commons.Logger, vaultCredential *lexatic_backend.VaultCredential, cfg utils.Option) (Telephony, error) {
+func NewExotelTelephony(config *config.AssistantConfig, logger commons.Logger, vaultCredential *protos.VaultCredential, cfg utils.Option) (Telephony, error) {
 	accountSid, ok := vaultCredential.GetValue().AsMap()["account_sid"]
 	if !ok {
 		return nil, fmt.Errorf("illegal vault config accountSid is not found")
@@ -55,13 +56,12 @@ func (tpc *exotelTelephony) CreateCall(
 	toPhone string,
 	fromPhone string,
 	assistantId, sessionId uint64) (map[string]interface{}, error) {
-	redirectUrl := "assistant-01.rapida.ai"
-	// redirectUrl = "integral-presently-cub.ngrok-free.app"
+
 	formData := url.Values{}
 	formData.Set("From", toPhone)
 	formData.Set("CallerId", fromPhone)
 	formData.Set("Url", fmt.Sprintf("wss://%s/v1/talk/exotel/stream/%d/%s/%d/%s",
-		redirectUrl,
+		tpc.appCfg.MediaHost,
 		assistantId,
 		toPhone,
 		sessionId,

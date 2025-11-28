@@ -15,7 +15,7 @@ import (
 	"github.com/rapidaai/pkg/storages"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
-	protos "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

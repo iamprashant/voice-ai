@@ -2,25 +2,47 @@ package internal_adapter_request_streamers
 
 import (
 	"context"
+	"fmt"
 
-	internal_voices "github.com/rapidaai/api/assistant-api/internal/voices"
+	internal_audio "github.com/rapidaai/api/assistant-api/internal/audio"
 	lexatic_backend "github.com/rapidaai/protos"
 )
 
 type StreamConfig struct {
-	Audio *internal_voices.AudioConfig `json:"audio,omitempty"`
-	Text  *struct {
+	audio *internal_audio.AudioConfig `json:"audio,omitempty"`
+	text  *struct {
 		Charset string `json:"charset"` // Character set (e.g., UTF-8)
 	} `json:"text,omitempty"`
+}
+
+func (sa *StreamConfig) GetAudioConfig() (*internal_audio.AudioConfig, error) {
+	if sa.audio != nil {
+		return sa.audio, nil
+	}
+	return nil, fmt.Errorf("input audio config is not defined in stream config")
 }
 
 // StreamAttribute represents the configuration with appropriate JSON tags.
 type StreamAttribute struct {
 	// Input audio configuration
-	InputConfig *StreamConfig `json:"input_config,omitempty"`
+	inputConfig *StreamConfig `json:"input_config,omitempty"`
 
 	// Output audio configuration
-	OutputConfig *StreamConfig `json:"output_config,omitempty"`
+	outputConfig *StreamConfig `json:"output_config,omitempty"`
+}
+
+func (sa *StreamAttribute) GetInputConfig() (*StreamConfig, error) {
+	if sa.inputConfig != nil {
+		return sa.inputConfig, nil
+	}
+	return nil, fmt.Errorf("input config is not defined in stream config")
+}
+
+func (sa *StreamAttribute) GetOutputConfig() (*StreamConfig, error) {
+	if sa.outputConfig != nil {
+		return sa.outputConfig, nil
+	}
+	return nil, fmt.Errorf("output config is not defined in stream config")
 }
 
 type Streamer interface {

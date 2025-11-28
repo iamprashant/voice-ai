@@ -9,7 +9,8 @@ import (
 	internal_adapter_request_streamers "github.com/rapidaai/api/assistant-api/internal/adapters/requests/streamers"
 	internal_agent_embeddings "github.com/rapidaai/api/assistant-api/internal/agents/embeddings"
 	internal_agent_rerankers "github.com/rapidaai/api/assistant-api/internal/agents/rerankers"
-	internal_analyzers "github.com/rapidaai/api/assistant-api/internal/analyzers"
+	internal_denoiser "github.com/rapidaai/api/assistant-api/internal/denoiser"
+	internal_end_of_speech "github.com/rapidaai/api/assistant-api/internal/end_of_speech"
 	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
 	internal_conversation_gorm "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
 	internal_knowledge_gorm "github.com/rapidaai/api/assistant-api/internal/entity/knowledges"
@@ -22,8 +23,9 @@ import (
 	internal_telemetry "github.com/rapidaai/api/assistant-api/internal/telemetry"
 	internal_assistant_telemetry "github.com/rapidaai/api/assistant-api/internal/telemetry/assistant"
 	internal_assistant_telemetry_exporters "github.com/rapidaai/api/assistant-api/internal/telemetry/assistant/exporters"
-	internal_transcribes "github.com/rapidaai/api/assistant-api/internal/transcribers"
-	internal_transformers "github.com/rapidaai/api/assistant-api/internal/transformers"
+	internal_tokenizer "github.com/rapidaai/api/assistant-api/internal/tokenizer"
+	internal_transformer "github.com/rapidaai/api/assistant-api/internal/transformer"
+	internal_vad "github.com/rapidaai/api/assistant-api/internal/vad"
 	endpoint_client "github.com/rapidaai/pkg/clients/endpoint"
 	integration_client "github.com/rapidaai/pkg/clients/integration"
 	web_client "github.com/rapidaai/pkg/clients/web"
@@ -71,14 +73,17 @@ type GenericRequestor struct {
 	messaging internal_adapter_request_customizers.Messaging
 
 	// listening
-	speechToTextTransformer internal_transformers.SpeechToTextTransformer
-	audioAnalyzers          []internal_analyzers.AudioAnalyzer
-	textAnalyzers           []internal_analyzers.TextAnalyzer
+	speechToTextTransformer internal_transformer.SpeechToTextTransformer
+	endOfSpeech             internal_end_of_speech.EndOfSpeech
+	vad                     internal_vad.Vad
+	denoiser                internal_denoiser.Denoiser
+
+	//
 
 	// speak
-	outputAudioTransformer internal_transformers.TextToSpeechTransformer
+	textToSpeechTransformer internal_transformer.TextToSpeechTransformer
 	//
-	transcriber  internal_transcribes.Transcriber
+	tokenizer    internal_tokenizer.Tokenizer
 	synthesizers []internal_synthesizers.SentenceSynthesizer
 
 	recorder       internal_adapter_request_customizers.Recorder
@@ -136,10 +141,10 @@ func NewGenericRequestor(
 		//
 		tracer: internal_assistant_telemetry.NewInMemoryTracer(logger,
 			internal_assistant_telemetry_exporters.NewLoggingAssistantTraceExporter(logger),
-			internal_assistant_telemetry_exporters.NewOpensearchAssistantTraceExporter(
-				logger,
-				&config.AppConfig, opensearch,
-			),
+			// internal_assistant_telemetry_exporters.NewOpensearchAssistantTraceExporter(
+			// 	logger,
+			// 	&config.AppConfig, opensearch,
+			// ),
 		),
 
 		recorder:          internal_adapter_request_customizers.NewRecorder(logger),

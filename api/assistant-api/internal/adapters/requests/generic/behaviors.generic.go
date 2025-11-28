@@ -44,9 +44,11 @@ func (gr *GenericRequestor) GetBehavior() (*internal_assistant_entity.AssistantD
 func (io *GenericRequestor) Greeting(ctx context.Context) error {
 	behavior, err := io.GetBehavior()
 	if err != nil {
+		io.logger.Warnf("no behavior is setuped for assistant.")
 		return nil
 	}
 	if behavior.Greeting == nil {
+		io.logger.Infof("greeting is not set for assistant.")
 		return nil
 	}
 	greetingCnt := io.templateParser.Parse(*behavior.Greeting, io.GetArgs())
@@ -79,11 +81,10 @@ func (io *GenericRequestor) Greeting(ctx context.Context) error {
 		Notify(
 			ctx,
 			&lexatic_backend.AssistantConversationMessage{
-				MessageId:               inGreet.GetId(),
-				AssistantId:             io.assistant.Id,
-				AssistantConversationId: io.assistantConversation.Id,
-				Request:                 inGreet.ToProto(),
-				Response:                greet.ToProto(),
+				MessageId:   inGreet.GetId(),
+				AssistantId: io.assistant.Id,
+				Request:     inGreet.ToProto(),
+				Response:    greet.ToProto(),
 			},
 		)
 	return nil

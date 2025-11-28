@@ -932,3 +932,11 @@ ALTER TABLE assistant_debugger_deployments
 ALTER COLUMN greeting DROP NOT NULL;
 
 
+ALTER TABLE assistant_web_plugin_deployments
+ALTER COLUMN mistake DROP NOT NULL;
+
+ALTER TABLE assistant_phone_deployments
+ALTER COLUMN greeting DROP NOT NULL;
+
+ALTER TABLE assistant_phone_deployments
+ALTER COLUMN mistake DROP NOT NULL;

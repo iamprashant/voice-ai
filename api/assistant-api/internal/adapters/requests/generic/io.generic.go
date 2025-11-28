@@ -6,12 +6,12 @@ import (
 	"time"
 
 	internal_adapter_request_customizers "github.com/rapidaai/api/assistant-api/internal/adapters/requests/customizers"
-	internal_analyzers "github.com/rapidaai/api/assistant-api/internal/analyzers"
+	internal_end_of_speech "github.com/rapidaai/api/assistant-api/internal/end_of_speech"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -29,10 +29,10 @@ func (lio *GenericRequestor) OnRecieveTranscript(ctx context.Context,
 			type_enums.UserActor,
 			transcript)
 		lio.Notify(ctx,
-			&lexatic_backend.AssistantConversationUserMessage{
+			&protos.AssistantConversationUserMessage{
 				Id: msgi.GetId(),
-				Message: &lexatic_backend.AssistantConversationUserMessage_Text{
-					Text: &lexatic_backend.AssistantConversationMessageTextContent{
+				Message: &protos.AssistantConversationUserMessage_Text{
+					Text: &protos.AssistantConversationMessageTextContent{
 						Content: msgi.String(),
 					},
 				},
@@ -50,7 +50,7 @@ func (lio *GenericRequestor) OnRecieveTranscript(ctx context.Context,
 
 func (io *GenericRequestor) OnSilenceBreak(
 	ctx context.Context,
-	act internal_analyzers.SpeechEndActivity) error {
+) error {
 	start := time.Now()
 	defer io.logger.Benchmark("io.OnSilenceBreakActivity", time.Since(start))
 
@@ -61,10 +61,10 @@ func (io *GenericRequestor) OnSilenceBreak(
 	}
 	io.messaging.Transition(internal_adapter_request_customizers.UserCompleted)
 	if err := io.Notify(ctx,
-		&lexatic_backend.AssistantConversationUserMessage{
+		&protos.AssistantConversationUserMessage{
 			Id: msg.GetId(),
-			Message: &lexatic_backend.AssistantConversationUserMessage_Text{
-				Text: &lexatic_backend.AssistantConversationMessageTextContent{
+			Message: &protos.AssistantConversationUserMessage_Text{
+				Text: &protos.AssistantConversationMessageTextContent{
 					Content: msg.String(),
 				},
 			},
@@ -92,8 +92,8 @@ func (io *GenericRequestor) OnInterrupt(ctx context.Context, source string) erro
 			io.recorder.Interrupt()
 		}
 		io.Notify(ctx,
-			&lexatic_backend.AssistantConversationInterruption{
-				Type: lexatic_backend.AssistantConversationInterruption_INTERRUPTION_TYPE_WORD,
+			&protos.AssistantConversationInterruption{
+				Type: protos.AssistantConversationInterruption_INTERRUPTION_TYPE_WORD,
 				Time: timestamppb.Now(),
 			})
 	default:
@@ -103,8 +103,8 @@ func (io *GenericRequestor) OnInterrupt(ctx context.Context, source string) erro
 		if io.messaging.GetMode().Audio() {
 			io.recorder.Interrupt()
 		}
-		io.Notify(ctx, &lexatic_backend.AssistantConversationInterruption{
-			Type: lexatic_backend.AssistantConversationInterruption_INTERRUPTION_TYPE_VAD,
+		io.Notify(ctx, &protos.AssistantConversationInterruption{
+			Type: protos.AssistantConversationInterruption_INTERRUPTION_TYPE_VAD,
 			Time: timestamppb.Now(),
 		})
 	}
@@ -114,11 +114,11 @@ func (io *GenericRequestor) OnInterrupt(ctx context.Context, source string) erro
 
 // Start Input
 // =====================================
-func (io *GenericRequestor) Input(message *lexatic_backend.AssistantConversationUserMessage) error {
+func (io *GenericRequestor) Input(message *protos.AssistantConversationUserMessage) error {
 	switch msg := message.GetMessage().(type) {
-	case *lexatic_backend.AssistantConversationUserMessage_Audio:
+	case *protos.AssistantConversationUserMessage_Audio:
 		return io.InputAudio(io.Context(), msg.Audio.GetContent())
-	case *lexatic_backend.AssistantConversationUserMessage_Text:
+	case *protos.AssistantConversationUserMessage_Text:
 		return io.InputText(io.Context(), msg.Text.GetContent())
 	default:
 		return fmt.Errorf("illegal input from the user %+v", msg)
@@ -127,17 +127,15 @@ func (io *GenericRequestor) Input(message *lexatic_backend.AssistantConversation
 }
 
 func (io *GenericRequestor) InputAudio(ctx context.Context, in []byte) error {
-
-	// record the user input
-	utils.Go(context.Background(), func() {
-		io.recorder.User(in)
-	})
-
-	// switch mode
 	io.messaging.SwitchMode(type_enums.AudioMode)
 
 	// listen to audio as this input audio
-	io.ListenAudio(ctx, in)
+	v, _ := io.ListenAudio(ctx, in)
+
+	// record the user input
+	utils.Go(context.Background(), func() {
+		io.recorder.User(v)
+	})
 	return nil
 }
 
@@ -156,12 +154,12 @@ func (io *GenericRequestor) InputText(ctx context.Context, msg string) error {
 	io.
 		Notify(
 			ctx,
-			&lexatic_backend.AssistantConversationUserMessage{
+			&protos.AssistantConversationUserMessage{
 				Time:      timestamppb.Now(),
 				Id:        interim.GetId(),
 				Completed: false,
-				Message: &lexatic_backend.AssistantConversationUserMessage_Text{
-					Text: &lexatic_backend.AssistantConversationMessageTextContent{
+				Message: &protos.AssistantConversationUserMessage_Text{
+					Text: &protos.AssistantConversationMessageTextContent{
 						Content: interim.String(),
 					},
 				},
@@ -171,7 +169,7 @@ func (io *GenericRequestor) InputText(ctx context.Context, msg string) error {
 	return io.
 		ListenText(
 			ctx,
-			&internal_analyzers.UserTextAnalyzerInput{
+			&internal_end_of_speech.UserEndOfSpeechInput{
 				Message: interim.String(),
 				Time:    time.Now(),
 			},
@@ -202,12 +200,12 @@ func (io *GenericRequestor) OutputAudio(
 	if err := io.
 		Notify(
 			io.Context(),
-			&lexatic_backend.AssistantConversationAssistantMessage{
+			&protos.AssistantConversationAssistantMessage{
 				Time:      timestamppb.Now(),
 				Id:        contextId,
 				Completed: completed,
-				Message: &lexatic_backend.AssistantConversationAssistantMessage_Audio{
-					Audio: &lexatic_backend.AssistantConversationMessageAudioContent{
+				Message: &protos.AssistantConversationAssistantMessage_Audio{
+					Audio: &protos.AssistantConversationMessageAudioContent{
 						Content: v,
 					},
 				},
@@ -251,12 +249,12 @@ func (io *GenericRequestor) Output(
 	io.
 		Notify(
 			ctx,
-			&lexatic_backend.AssistantConversationAssistantMessage{
+			&protos.AssistantConversationAssistantMessage{
 				Time:      timestamppb.Now(),
 				Id:        contextId,
 				Completed: completed,
-				Message: &lexatic_backend.AssistantConversationAssistantMessage_Text{
-					Text: &lexatic_backend.AssistantConversationMessageTextContent{
+				Message: &protos.AssistantConversationAssistantMessage_Text{
+					Text: &protos.AssistantConversationMessageTextContent{
 						Content: msg.String(),
 					},
 				},
@@ -269,7 +267,7 @@ func (io *GenericRequestor) Output(
 		io.
 			Notify(
 				ctx,
-				&lexatic_backend.AssistantConversationMessage{
+				&protos.AssistantConversationMessage{
 					MessageId:               contextId,
 					AssistantId:             io.assistant.Id,
 					AssistantConversationId: io.assistantConversation.Id,

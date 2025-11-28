@@ -3,22 +3,24 @@ package internal_telephony
 import (
 	"fmt"
 
+	"github.com/rapidaai/api/assistant-api/config"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 	"github.com/vonage/vonage-go-sdk"
 	"github.com/vonage/vonage-go-sdk/ncco"
 )
 
 type vonageTelephony struct {
+	appCfg        *config.AssistantConfig
 	cfg           utils.Option
 	logger        commons.Logger
 	privateKey    string
 	applicationId string
 }
 
-func NewVonageTelephony(logger commons.Logger, vaultCredential *lexatic_backend.VaultCredential, cfg utils.Option) (Telephony, error) {
+func NewVonageTelephony(config *config.AssistantConfig, logger commons.Logger, vaultCredential *protos.VaultCredential, cfg utils.Option) (Telephony, error) {
 	privateKey, ok := vaultCredential.GetValue().AsMap()["private_key"]
 	if !ok {
 		return nil, fmt.Errorf("illegal vault config privateKey is not found")
@@ -30,6 +32,7 @@ func NewVonageTelephony(logger commons.Logger, vaultCredential *lexatic_backend.
 	return &vonageTelephony{
 		cfg:           cfg,
 		logger:        logger,
+		appCfg:        config,
 		privateKey:    privateKey.(string),
 		applicationId: applicationId.(string),
 	}, nil
@@ -41,9 +44,7 @@ func (vt *vonageTelephony) CreateCall(
 	fromPhone string,
 	assistantId, assistantConversationId uint64) (map[string]interface{}, error) {
 
-	redirectUrl := "assistant-01.rapida.ai"
-	// redirectUrl = "integral-presently-cub.ngrok-free.app"
-
+	vt.logger.Debugf("Calling with credentials %+v", vt)
 	clientAuth, _ := vonage.CreateAuthFromAppPrivateKey(vt.applicationId, []byte(vt.privateKey))
 	client := vonage.NewVoiceClient(clientAuth)
 
@@ -52,7 +53,7 @@ func (vt *vonageTelephony) CreateCall(
 		EventType: "synchronous",
 		Endpoint: []ncco.Endpoint{ncco.WebSocketEndpoint{
 			Uri: fmt.Sprintf("wss://%s/%s",
-				redirectUrl,
+				vt.appCfg.MediaHost,
 				GetAnswerPath("vonage", auth, assistantId, assistantConversationId, toPhone)),
 			ContentType: "audio/l16;rate=16000",
 		}},

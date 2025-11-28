@@ -37,7 +37,7 @@ import {
   GetAssistantRequest,
 } from '@rapidaai/react';
 import toast from 'react-hot-toast/headless';
-import { connectionConfig } from '@/configs';
+import { CONFIG, connectionConfig } from '@/configs';
 import { ProviderPill } from '@/app/components/pill/provider-model-pill';
 import { AnimatePresence, motion } from 'framer-motion';
 import { PlusIcon } from '@/app/components/Icon/plus';
@@ -255,7 +255,7 @@ export const ConfigureAssistantDeploymentPage = () => {
               <FieldSet className="col-span-2">
                 <FormLabel>Public Url</FormLabel>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 dark:bg-gray-900 bg-gray-100 px-3 py-2 font-mono text-xs min-w-0 overflow-hidden">
+                  <code className="flex-1 dark:bg-gray-950 bg-gray-100 px-3 py-2 font-mono text-xs min-w-0 overflow-hidden">
                     {`https://www.rapida.ai/public/assistant/${assistantId}?token={{PROJECT_CRDENTIAL_KEY}}`}
                   </code>
                   <div className="flex shrink-0 border divide-x">
@@ -331,7 +331,7 @@ export const ConfigureAssistantDeploymentPage = () => {
         )}
         {/* phone */}
         {assistant?.hasApideployment() && (
-          <div className="bg-white dark:bg-gray-950 border">
+          <div className="bg-white dark:bg-gray-900 border">
             <div className="flex items-center justify-between border-b">
               <div className="flex items-center gap-2 justify-between px-4">
                 <h3 className="font-semibold truncate">API</h3>
@@ -438,7 +438,7 @@ export const ConfigureAssistantDeploymentPage = () => {
           </div>
         )}
         {assistant?.hasPhonedeployment() && (
-          <div className="bg-white dark:bg-gray-950 border">
+          <div className="bg-white dark:bg-gray-900 border">
             <div className="flex items-center justify-between border-b">
               <div className="flex items-center gap-2 justify-between px-4">
                 <h3 className="font-semibold truncate">Phone Call</h3>
@@ -554,12 +554,12 @@ export const ConfigureAssistantDeploymentPage = () => {
                 <FieldSet className="col-span-2">
                   <FormLabel>Inbound webhook url</FormLabel>
                   <div className="flex items-center gap-2">
-                    <code className="flex-1 dark:bg-gray-900 bg-gray-100 px-3 py-2 font-mono text-xs min-w-0 overflow-hidden">
-                      {`https://assistant-01.rapida.ai/v1/talk/twilio/call/${assistantId}?x-api-key={{PROJECT_CRDENTIAL_KEY}}`}
+                    <code className="flex-1 dark:bg-gray-950 bg-gray-100 px-3 py-2 font-mono text-xs min-w-0 overflow-hidden">
+                      {`${CONFIG.connection.media}/v1/talk/${assistant.getPhonedeployment()?.getPhoneprovidername().toLowerCase()}/call/${assistantId}?x-api-key={{PROJECT_CRDENTIAL_KEY}}`}
                     </code>
                     <div className="flex shrink-0 border divide-x">
                       <CopyButton className="h-7 w-7">
-                        {`https://assistant-01.rapida.ai/v1/talk/twilio/call/${assistantId}?x-api-key={{PROJECT_CRDENTIAL_KEY}}`}
+                        {`${CONFIG.connection.media}/v1/talk/${assistant.getPhonedeployment()?.getPhoneprovidername().toLowerCase()}/call/${assistantId}?x-api-key={{PROJECT_CRDENTIAL_KEY}}`}
                       </CopyButton>
                     </div>
                   </div>
@@ -592,7 +592,7 @@ export const ConfigureAssistantDeploymentPage = () => {
         )}
         {/* web widget */}
         {assistant?.hasWebplugindeployment() && (
-          <div className="bg-white dark:bg-gray-950 border">
+          <div className="bg-white dark:bg-gray-900 border">
             <div className="flex items-center justify-between border-b">
               <div className="flex items-center gap-2 justify-between px-4">
                 <h3 className="font-semibold truncate">Web widget</h3>

@@ -5,7 +5,7 @@ import (
 
 	"github.com/rapidaai/api/assistant-api/config"
 	internal_adapter_request_streamers "github.com/rapidaai/api/assistant-api/internal/adapters/requests/streamers"
-	internal_factories "github.com/rapidaai/api/assistant-api/internal/factories"
+	internal_factory "github.com/rapidaai/api/assistant-api/internal/factory"
 	internal_services "github.com/rapidaai/api/assistant-api/internal/services"
 	internal_assistant_service "github.com/rapidaai/api/assistant-api/internal/services/assistant"
 	web_client "github.com/rapidaai/pkg/clients/web"
@@ -94,7 +94,7 @@ func (cApi *ConversationGrpcApi) AssistantTalk(stream assistant_api.TalkService_
 	if !ok {
 		return errors.New("illegal source")
 	}
-	talker, err := internal_factories.GetTalker(
+	talker, err := internal_factory.GetTalker(
 		source,
 		stream.Context(),
 		cApi.cfg,
@@ -113,6 +113,6 @@ func (cApi *ConversationGrpcApi) AssistantTalk(stream assistant_api.TalkService_
 		Talk(
 			stream.Context(),
 			auth,
-			internal_factories.Identifier(source, stream.Context(), auth, ""),
+			internal_factory.Identifier(source, stream.Context(), auth, ""),
 		)
 }

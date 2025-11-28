@@ -8,7 +8,7 @@ import (
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
 	assistant_api "github.com/rapidaai/protos"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 /*
@@ -16,13 +16,13 @@ GetAllAssistantConversation retrieves all assistant conversations based on the p
 
 Parameters:
 - ctx: A context.Context object that carries deadlines, cancellation signals, and other request-scoped values across API boundaries.
-- cer: A pointer to lexatic_backend.GetAllAssistantConversationRequest, containing the necessary parameters for retrieving conversations.
+- cer: A pointer to protos.GetAllAssistantConversationRequest, containing the necessary parameters for retrieving conversations.
 
 Returns:
-- A pointer to lexatic_backend.GetAllAssistantConversationResponse, containing the retrieved conversations and any error that occurred during the process.
+- A pointer to protos.GetAllAssistantConversationResponse, containing the retrieved conversations and any error that occurred during the process.
 - An error object, which will be nil if no error occurred.
 */
-func (cApi *ConversationGrpcApi) GetAllAssistantConversation(ctx context.Context, cer *lexatic_backend.GetAllAssistantConversationRequest) (*lexatic_backend.GetAllAssistantConversationResponse, error) {
+func (cApi *ConversationGrpcApi) GetAllAssistantConversation(ctx context.Context, cer *protos.GetAllAssistantConversationRequest) (*protos.GetAllAssistantConversationResponse, error) {
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(ctx)
 	if !isAuthenticated {
 		return utils.Error[assistant_api.GetAllAssistantConversationResponse](
@@ -38,23 +38,23 @@ func (cApi *ConversationGrpcApi) GetAllAssistantConversation(ctx context.Context
 			NewDefaultGetConversationOption())
 
 	if err != nil {
-		return utils.Error[lexatic_backend.GetAllAssistantConversationResponse](
+		return utils.Error[protos.GetAllAssistantConversationResponse](
 			err,
 			"Unable to get all the assistant for the conversaction.",
 		)
 	}
-	out := []*lexatic_backend.AssistantConversation{}
+	out := []*protos.AssistantConversation{}
 	err = utils.Cast(acs, &out)
 	if err != nil {
 		cApi.logger.Errorf("unable to cast assistant provider model %v", err)
 	}
-	return utils.PaginatedSuccess[lexatic_backend.GetAllAssistantConversationResponse, []*lexatic_backend.AssistantConversation](
+	return utils.PaginatedSuccess[protos.GetAllAssistantConversationResponse, []*protos.AssistantConversation](
 		uint32(cnt),
 		cer.GetPaginate().GetPage(),
 		out)
 }
 
-func (cApi *ConversationGrpcApi) GetAllConversationMessage(ctx context.Context, cer *lexatic_backend.GetAllConversationMessageRequest) (*lexatic_backend.GetAllConversationMessageResponse, error) {
+func (cApi *ConversationGrpcApi) GetAllConversationMessage(ctx context.Context, cer *protos.GetAllConversationMessageRequest) (*protos.GetAllConversationMessageResponse, error) {
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(ctx)
 	if !isAuthenticated {
 		return utils.Error[assistant_api.GetAllConversationMessageResponse](
@@ -70,18 +70,18 @@ func (cApi *ConversationGrpcApi) GetAllConversationMessage(ctx context.Context, 
 		cer.GetPaginate(),
 		cer.GetOrder(), internal_services.NewDefaultGetMessageOption())
 	if err != nil {
-		return utils.Error[lexatic_backend.GetAllConversationMessageResponse](
+		return utils.Error[protos.GetAllConversationMessageResponse](
 			err,
 			"Unable to get all the assistant.",
 		)
 	}
-	out := []*lexatic_backend.AssistantConversationMessage{}
+	out := []*protos.AssistantConversationMessage{}
 	err = utils.Cast(acs, &out)
 	if err != nil {
 		cApi.logger.Errorf("unable to cast assistant provider model %v", err)
 	}
 
-	return utils.PaginatedSuccess[lexatic_backend.GetAllConversationMessageResponse, []*lexatic_backend.AssistantConversationMessage](
+	return utils.PaginatedSuccess[protos.GetAllConversationMessageResponse, []*protos.AssistantConversationMessage](
 		uint32(cnt),
 		cer.GetPaginate().GetPage(),
 		out)

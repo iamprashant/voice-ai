@@ -191,7 +191,7 @@ const ConfigureAssistantDebuggerDeployment: FC<{ assistantId: string }> = ({
     event.preventDefault();
     showLoader('block');
     setErrorMessage('');
-    if (audioInputConfig != null) {
+    if (voiceInputEnable) {
       if (!audioInputConfig.provider) {
         hideLoader();
         setErrorMessage(
@@ -212,7 +212,7 @@ const ConfigureAssistantDebuggerDeployment: FC<{ assistantId: string }> = ({
       }
     }
 
-    if (audioOutputConfig != null) {
+    if (voiceOutputEnable) {
       if (!audioOutputConfig.provider) {
         hideLoader();
         setErrorMessage(
@@ -249,14 +249,14 @@ const ConfigureAssistantDebuggerDeployment: FC<{ assistantId: string }> = ({
     if (experienceConfig?.maxCallDuration)
       deployment.setMaxsessionduration(experienceConfig?.maxCallDuration);
 
-    if (audioInputConfig) {
+    if (voiceInputEnable) {
       const inputAudioProvider = new DeploymentAudioProvider();
       inputAudioProvider.setAudioprovider(audioInputConfig.provider);
       inputAudioProvider.setAudiooptionsList(audioInputConfig.parameters);
       deployment.setInputaudio(inputAudioProvider);
     }
 
-    if (audioOutputConfig) {
+    if (voiceOutputEnable) {
       const outputAudioProvider = new DeploymentAudioProvider();
       outputAudioProvider.setAudioprovider(audioOutputConfig.provider);
       outputAudioProvider.setAudiooptionsList(audioOutputConfig.parameters);

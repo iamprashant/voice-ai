@@ -8,12 +8,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	internal_adapter_request_streamers "github.com/rapidaai/api/assistant-api/internal/adapters/requests/streamers"
-	internal_factories "github.com/rapidaai/api/assistant-api/internal/factories"
+	internal_factory "github.com/rapidaai/api/assistant-api/internal/factory"
 	internal_services "github.com/rapidaai/api/assistant-api/internal/services"
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 // CallReciever handles incoming calls for the given assistant.
@@ -67,7 +67,7 @@ func (cApi *ConversationApi) ExotelCallReciever(c *gin.Context) {
 	conversation, err := cApi.assistantConversationService.CreateConversation(
 		c,
 		iAuth,
-		internal_factories.Identifier(utils.PhoneCall, c, iAuth, toNumber),
+		internal_factory.Identifier(utils.PhoneCall, c, iAuth, toNumber),
 		assistant.Id,
 		assistant.AssistantProviderId,
 		type_enums.DIRECTION_INBOUND,
@@ -84,12 +84,9 @@ func (cApi *ConversationApi) ExotelCallReciever(c *gin.Context) {
 			c, iAuth, conversation.Id, []*types.Metric{types.NewStatusMetric(type_enums.RECORD_CONNECTED)},
 		)
 
-	// this is temp
-	redirectUrl := "assistant-01.rapida.ai"
-	// redirectUrl = "integral-presently-cub.ngrok-free.app"
 	response := map[string]string{
 		"url": fmt.Sprintf("wss://%s/v1/talk/prj/stream/%s/%s/%d/%s",
-			redirectUrl, assistantIdStr, toNumber, conversation.Id, iAuth.GetCurrentToken()),
+			cApi.cfg.MediaHost, assistantIdStr, toNumber, conversation.Id, iAuth.GetCurrentToken()),
 	}
 
 	c.JSON(http.StatusOK, response)
@@ -133,7 +130,7 @@ func (cApi *ConversationApi) ExotelCallTalker(c *gin.Context) {
 	}
 
 	cApi.logger.Debugf("starting a call talker for twillio with %s and params %+v", identifier, c.Params)
-	talker, err := internal_factories.GetTalker(
+	talker, err := internal_factory.GetTalker(
 		utils.PhoneCall,
 		c,
 		cApi.cfg,
@@ -154,11 +151,11 @@ func (cApi *ConversationApi) ExotelCallTalker(c *gin.Context) {
 		cApi.logger.Errorf("illegal to get talker %v", err)
 		return
 	}
-	cIdentifier := internal_factories.Identifier(utils.PhoneCall, c, auth, identifier)
+	cIdentifier := internal_factory.Identifier(utils.PhoneCall, c, auth, identifier)
 	err = talker.Connect(
-		c, auth, cIdentifier, &lexatic_backend.AssistantConversationConfiguration{
+		c, auth, cIdentifier, &protos.AssistantConversationConfiguration{
 			AssistantConversationId: conversationId,
-			Assistant: &lexatic_backend.AssistantDefinition{
+			Assistant: &protos.AssistantDefinition{
 				AssistantId: assistantId,
 				Version:     "latest",
 			},

@@ -3,7 +3,7 @@ package internal_adapter_request_streamers
 import (
 	"context"
 
-	internal_voices "github.com/rapidaai/api/assistant-api/internal/voices"
+	internal_audio "github.com/rapidaai/api/assistant-api/internal/audio"
 	lexatic_backend "github.com/rapidaai/protos"
 	"google.golang.org/grpc"
 )
@@ -35,17 +35,17 @@ func (uds *unidirectionalStreamer) Send(out *lexatic_backend.AssistantMessagingR
 
 func (uds *unidirectionalStreamer) Config() *StreamAttribute {
 	return &StreamAttribute{
-		InputConfig: &StreamConfig{
-			Audio: internal_voices.NewLinear24khzMonoAudioConfig(),
-			Text: &struct {
+		inputConfig: &StreamConfig{
+			audio: internal_audio.NewLinear16khzMonoAudioConfig(),
+			text: &struct {
 				Charset string `json:"charset"`
 			}{
 				Charset: "UTF-8",
 			},
 		},
-		OutputConfig: &StreamConfig{
-			Audio: internal_voices.NewLinear24khzMonoAudioConfig(),
-			Text: &struct {
+		outputConfig: &StreamConfig{
+			audio: internal_audio.NewLinear16khzMonoAudioConfig(),
+			text: &struct {
 				Charset string `json:"charset"`
 			}{
 				Charset: "UTF-8",

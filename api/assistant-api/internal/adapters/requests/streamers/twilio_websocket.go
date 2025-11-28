@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	"github.com/gorilla/websocket"
-	internal_voices "github.com/rapidaai/api/assistant-api/internal/voices"
+	internal_audio "github.com/rapidaai/api/assistant-api/internal/audio"
 	"github.com/rapidaai/pkg/commons"
 	lexatic_backend "github.com/rapidaai/protos"
 )
@@ -254,17 +254,17 @@ func (tws *twilioWebsocketStreamer) captureStreamSid(streamSid string) {
 
 func (uds *twilioWebsocketStreamer) Config() *StreamAttribute {
 	return &StreamAttribute{
-		InputConfig: &StreamConfig{
-			Audio: internal_voices.NewMulaw8khzMonoAudioConfig(),
-			Text: &struct {
+		inputConfig: &StreamConfig{
+			audio: internal_audio.NewMulaw8khzMonoAudioConfig(),
+			text: &struct {
 				Charset string `json:"charset"`
 			}{
 				Charset: "UTF-8",
 			},
 		},
-		OutputConfig: &StreamConfig{
-			Audio: internal_voices.NewMulaw8khzMonoAudioConfig(),
-			Text: &struct {
+		outputConfig: &StreamConfig{
+			audio: internal_audio.NewMulaw8khzMonoAudioConfig(),
+			text: &struct {
 				Charset string `json:"charset"`
 			}{
 				Charset: "UTF-8",

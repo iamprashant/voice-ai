@@ -9,7 +9,7 @@ import (
 	"sync"
 
 	"github.com/gorilla/websocket"
-	internal_voices "github.com/rapidaai/api/assistant-api/internal/voices"
+	internal_audio "github.com/rapidaai/api/assistant-api/internal/audio"
 	"github.com/rapidaai/pkg/commons"
 	lexatic_backend "github.com/rapidaai/protos"
 )
@@ -215,17 +215,17 @@ func (vng *vonageWebsocketStreamer) handleWebSocketError(err error) error {
 
 func (uds *vonageWebsocketStreamer) Config() *StreamAttribute {
 	return &StreamAttribute{
-		InputConfig: &StreamConfig{
-			Audio: internal_voices.NewLinear16khzMonoAudioConfig(),
-			Text: &struct {
+		inputConfig: &StreamConfig{
+			audio: internal_audio.NewLinear16khzMonoAudioConfig(),
+			text: &struct {
 				Charset string `json:"charset"`
 			}{
 				Charset: "UTF-8",
 			},
 		},
-		OutputConfig: &StreamConfig{
-			Audio: internal_voices.NewLinear16khzMonoAudioConfig(),
-			Text: &struct {
+		outputConfig: &StreamConfig{
+			audio: internal_audio.NewLinear16khzMonoAudioConfig(),
+			text: &struct {
 				Charset string `json:"charset"`
 			}{
 				Charset: "UTF-8",

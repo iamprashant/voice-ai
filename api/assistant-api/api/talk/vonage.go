@@ -8,11 +8,23 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	internal_adapter_request_streamers "github.com/rapidaai/api/assistant-api/internal/adapters/requests/streamers"
-	internal_factories "github.com/rapidaai/api/assistant-api/internal/factories"
+	internal_factory "github.com/rapidaai/api/assistant-api/internal/factory"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
+
+func (cApi *ConversationApi) VonageEventReceiver(c *gin.Context) {
+	cApi.logger.Debugf("event from vonage %+v", c)
+	requestBody, err := c.GetRawData() // Extract raw request body
+	if err != nil {
+		cApi.logger.Errorf("failed to read request body: %v", err)
+		return
+	}
+
+	// Log request body and query parameters
+	cApi.logger.Debugf("event from vonage | body: %s | query params: %+v", string(requestBody), c.Request.URL.Query())
+}
 
 func (cApi *ConversationApi) VonageCallTalker(c *gin.Context) {
 	start := time.Now()
@@ -55,6 +67,8 @@ func (cApi *ConversationApi) VonageCallTalker(c *gin.Context) {
 
 	identifier := c.Param("identifier")
 	cApi.logger.Debugf("starting a call talker for vonage with %s and params %+v", identifier, c.Params)
+
+	// this is more of provider implimentation
 	vonageStreamer := internal_adapter_request_streamers.
 		NewVonageWebsocketStreamer(
 			cApi.logger,
@@ -62,7 +76,7 @@ func (cApi *ConversationApi) VonageCallTalker(c *gin.Context) {
 			assistantId, "latest", conversationId,
 		)
 
-	talker, err := internal_factories.GetTalker(
+	talker, err := internal_factory.GetTalker(
 		utils.PhoneCall,
 		c,
 		cApi.cfg,
@@ -78,13 +92,13 @@ func (cApi *ConversationApi) VonageCallTalker(c *gin.Context) {
 		return
 	}
 	cApi.logger.Benchmark("conversationapi.VonageCallTalker.GetTalker", time.Since(start))
-	cidentifier := internal_factories.
+	cidentifier := internal_factory.
 		Identifier(utils.PhoneCall, c, auth, identifier)
 
 	err = talker.Connect(
-		c, auth, cidentifier, &lexatic_backend.AssistantConversationConfiguration{
+		c, auth, cidentifier, &protos.AssistantConversationConfiguration{
 			AssistantConversationId: conversationId,
-			Assistant: &lexatic_backend.AssistantDefinition{
+			Assistant: &protos.AssistantDefinition{
 				AssistantId: assistantId,
 				Version:     "latest",
 			},

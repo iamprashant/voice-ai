@@ -9,13 +9,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	internal_adapter_request_streamers "github.com/rapidaai/api/assistant-api/internal/adapters/requests/streamers"
-	internal_factories "github.com/rapidaai/api/assistant-api/internal/factories"
+	internal_factory "github.com/rapidaai/api/assistant-api/internal/factory"
 	internal_services "github.com/rapidaai/api/assistant-api/internal/services"
 	internal_telephony "github.com/rapidaai/api/assistant-api/internal/telephony"
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 // CallReciever handles incoming calls for the given assistant.
@@ -76,7 +76,7 @@ func (cApi *ConversationApi) PhoneCallReciever(c *gin.Context) {
 		CreateConversation(
 			c,
 			iAuth,
-			internal_factories.Identifier(utils.PhoneCall, c, iAuth, clientNumber),
+			internal_factory.Identifier(utils.PhoneCall, c, iAuth, clientNumber),
 			assistant.Id,
 			assistant.AssistantProviderId,
 			type_enums.DIRECTION_INBOUND,
@@ -95,6 +95,7 @@ func (cApi *ConversationApi) PhoneCallReciever(c *gin.Context) {
 
 	c.Data(http.StatusOK, "text/xml", []byte(
 		internal_telephony.CreateTwinML(
+			cApi.cfg.MediaHost,
 			fmt.Sprintf("v1/talk/twilio/prj/%d/%s/%d/%s",
 				assistantId,
 				clientNumber, conversation.Id, iAuth.GetCurrentToken()), assistantId, clientNumber),
@@ -149,7 +150,7 @@ func (cApi *ConversationApi) TwilioCallTalker(c *gin.Context) {
 		assistantId, "latest", conversationId,
 	)
 
-	talker, err := internal_factories.GetTalker(
+	talker, err := internal_factory.GetTalker(
 		utils.PhoneCall,
 		c,
 		cApi.cfg,
@@ -165,11 +166,11 @@ func (cApi *ConversationApi) TwilioCallTalker(c *gin.Context) {
 		return
 	}
 	cApi.logger.Benchmark("conversationapi.TwilioCallTalker.GetTalker", time.Since(start))
-	cidentifier := internal_factories.Identifier(utils.PhoneCall, c, auth, identifier)
+	cidentifier := internal_factory.Identifier(utils.PhoneCall, c, auth, identifier)
 	err = talker.Connect(
-		c, auth, cidentifier, &lexatic_backend.AssistantConversationConfiguration{
+		c, auth, cidentifier, &protos.AssistantConversationConfiguration{
 			AssistantConversationId: conversationId,
-			Assistant: &lexatic_backend.AssistantDefinition{
+			Assistant: &protos.AssistantDefinition{
 				AssistantId: assistantId,
 				Version:     "latest",
 			},

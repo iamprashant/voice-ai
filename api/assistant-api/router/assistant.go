@@ -88,6 +88,7 @@ func TalkCallbackApiRoute(
 
 		// vonage call
 		apiv1.GET("/vonage/call/:assistantId", talkRpcApi.PhoneCallReciever)
+		apiv1.GET("/vonage/event/:assistantId", talkRpcApi.VonageEventReceiver)
 		apiv1.GET("/vonage/usr/:assistantId/:identifier/:conversationId/:authorization/:x-auth-id/:x-project-id", talkRpcApi.VonageCallTalker)
 		apiv1.GET("/vonage/prj/:assistantId/:identifier/:conversationId/:x-api-key", talkRpcApi.VonageCallTalker)
 
