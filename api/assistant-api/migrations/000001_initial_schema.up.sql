@@ -57,10 +57,19 @@ CREATE TABLE public.assistant_conversations (
     updated_by bigint,
     created_date timestamp without time zone DEFAULT now() NOT NULL,
     updated_date timestamp without time zone,
-    status character varying(50) DEFAULT 'active'::character varying,
+    status character varying(50) DEFAULT 'ACTIVE'::character varying,
     direction character varying(20) DEFAULT 'inbound'::character varying NOT NULL
 );
 
+CREATE TABLE public.assistant_conversation_telephony_events (
+    id bigint NOT NULL,
+    assistant_conversation_id bigint NOT NULL,
+    event_type character varying(200) NOT NULL,
+    provider character varying(200) NOT NULL,
+    payload text NOT NULL,
+    created_date timestamp without time zone DEFAULT now() NOT NULL,
+    updated_date timestamp without time zone
+);
 CREATE TABLE public.assistant_conversation_action_metrics (
     id bigint NOT NULL,
     assistant_conversation_id bigint NOT NULL,
@@ -137,23 +146,6 @@ CREATE TABLE public.assistant_conversation_message_metrics (
     updated_date timestamp without time zone
 );
 
-CREATE TABLE public.assistant_conversation_message_stages (
-    id bigint NOT NULL,
-    assistant_conversation_id bigint NOT NULL,
-    assistant_conversation_message_id character varying(50) NOT NULL,
-    stage character varying(255) NOT NULL,
-    stage_name character varying(255) NOT NULL,
-    lifecycle_id character varying(255) NOT NULL,
-    start_timestamp timestamp without time zone,
-    end_timestamp timestamp without time zone,
-    time_taken bigint,
-    additional_data text,
-    status character varying(50) DEFAULT 'ACTIVE'::character varying NOT NULL,
-    created_by bigint NOT NULL,
-    updated_by bigint,
-    created_date timestamp without time zone DEFAULT now() NOT NULL,
-    updated_date timestamp without time zone
-);
 CREATE TABLE public.assistant_conversation_metadata (
     id bigint NOT NULL,
     assistant_conversation_id bigint NOT NULL,
@@ -304,7 +296,7 @@ CREATE TABLE public.assistant_knowledges (
     score_threshold double precision,
     created_by bigint NOT NULL,
     updated_by bigint,
-    status character varying(50) DEFAULT 'active'::character varying NOT NULL,
+    status character varying(50) DEFAULT 'ACTIVE'::character varying NOT NULL,
     created_date timestamp without time zone DEFAULT now() NOT NULL,
     updated_date timestamp without time zone,
     retrieval_method character varying(50),
@@ -354,7 +346,7 @@ CREATE TABLE public.assistant_provider_models (
     id bigint NOT NULL,
     created_date timestamp without time zone DEFAULT now() NOT NULL,
     updated_date timestamp without time zone,
-    status character varying(50) DEFAULT 'active'::character varying NOT NULL,
+    status character varying(50) DEFAULT 'ACTIVE'::character varying NOT NULL,
     assistant_id bigint,
     created_by bigint NOT NULL,
     description text,
@@ -511,7 +503,7 @@ CREATE TABLE public.assistants (
     description character varying(2000),
     created_date timestamp without time zone DEFAULT now() NOT NULL,
     updated_date timestamp without time zone,
-    status character varying(50) DEFAULT 'active'::character varying NOT NULL,
+    status character varying(50) DEFAULT 'ACTIVE'::character varying NOT NULL,
     visibility character varying(50) DEFAULT 'private'::character varying NOT NULL,
     project_id bigint NOT NULL,
     organization_id bigint NOT NULL,
@@ -531,7 +523,7 @@ CREATE TABLE public.knowledge_collections (
     created_date timestamp without time zone NOT NULL,
     updated_date timestamp without time zone,
     name character varying(250) NOT NULL,
-    status character varying(50) DEFAULT 'active'::character varying NOT NULL,
+    status character varying(50) DEFAULT 'ACTIVE'::character varying NOT NULL,
     router_provider_id bigint NOT NULL,
     router_provider_model_id bigint NOT NULL
 );
@@ -607,7 +599,7 @@ CREATE TABLE public.knowledge_documents (
     document_source text NOT NULL,
     document_path character varying(500),
     index_status character varying(50) DEFAULT 'pending'::character varying NOT NULL,
-    status character varying(50) DEFAULT 'active'::character varying NOT NULL,
+    status character varying(50) DEFAULT 'ACTIVE'::character varying NOT NULL,
     retrieval_count bigint DEFAULT 0,
     token_count bigint DEFAULT 0,
     word_count bigint DEFAULT 0,
@@ -679,7 +671,7 @@ CREATE TABLE public.knowledges (
     name character varying NOT NULL,
     description text,
     visibility character varying DEFAULT 'private'::character varying NOT NULL,
-    status character varying(50) DEFAULT 'active'::character varying NOT NULL,
+    status character varying(50) DEFAULT 'ACTIVE'::character varying NOT NULL,
     project_id bigint NOT NULL,
     organization_id bigint NOT NULL,
     created_by bigint NOT NULL,
@@ -728,8 +720,6 @@ ALTER TABLE ONLY public.assistant_conversation_message_metadata
     ADD CONSTRAINT assistant_conversation_message_metadata_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.assistant_conversation_message_metrics
     ADD CONSTRAINT assistant_conversation_message_metrics_pkey PRIMARY KEY (id);
-ALTER TABLE ONLY public.assistant_conversation_message_stages
-    ADD CONSTRAINT assistant_conversation_message_stages_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.assistant_conversation_metadata
     ADD CONSTRAINT assistant_conversation_metadata_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.assistant_conversation_metrics
@@ -806,8 +796,6 @@ ALTER TABLE ONLY public.assistant_conversation_message_metadata
     ADD CONSTRAINT uk_assistant_conversation_message_metadata UNIQUE (assistant_conversation_message_id, key);
 ALTER TABLE ONLY public.assistant_conversation_message_metrics
     ADD CONSTRAINT uk_assistant_conversation_message_metrics UNIQUE (assistant_conversation_message_id, name);
-ALTER TABLE ONLY public.assistant_conversation_message_stages
-    ADD CONSTRAINT uk_assistant_conversation_message_stages UNIQUE (assistant_conversation_message_id, stage);
 ALTER TABLE ONLY public.assistant_conversation_metrics
     ADD CONSTRAINT uk_assistant_conversation_name UNIQUE (assistant_conversation_id, name);
 ALTER TABLE ONLY public.assistant_deployment_audio_options
@@ -837,7 +825,6 @@ CREATE INDEX idx_assistant_conversactions_identifier_assistant_org_proj ON publi
 CREATE INDEX idx_assistant_conversation_action_metrics ON public.assistant_conversation_action_metrics USING btree (assistant_conversation_action_id);
 CREATE INDEX idx_assistant_conversation_message_id ON public.assistant_conversation_message_metrics USING btree (assistant_conversation_message_id);
 CREATE INDEX idx_assistant_conversation_message_metadata ON public.assistant_conversation_message_metadata USING btree (assistant_conversation_message_id);
-CREATE INDEX idx_assistant_conversation_message_stages ON public.assistant_conversation_message_stages USING btree (assistant_conversation_message_id);
 CREATE INDEX idx_assistant_debugger_deployments_on_assistant_id ON public.assistant_debugger_deployments USING btree (assistant_id);
 CREATE INDEX idx_assistant_deployment_audios_on_deployment_id_and_audio_type ON public.assistant_deployment_audios USING btree (assistant_deployment_id, audio_type);
 CREATE INDEX idx_assistant_knowledge_configurations_assistant_id ON public.assistant_knowledges USING btree (assistant_id);
@@ -940,3 +927,65 @@ ALTER COLUMN greeting DROP NOT NULL;
 
 ALTER TABLE assistant_phone_deployments
 ALTER COLUMN mistake DROP NOT NULL;
+
+
+
+-- only for migration do not commit it
+ALTER TABLE assistant_conversation_actions add column assistant_id bigint;
+UPDATE public.assistant_conversation_actions
+SET assistant_id = ac.assistant_id
+FROM public.assistant_conversations ac
+WHERE public.assistant_conversation_actions.assistant_conversation_id = ac.id;
+ALTER TABLE assistant_conversation_actions ALTER COLUMN assistant_id SET NOT NULL;
+
+
+
+ALTER TABLE assistant_conversation_arguments add column assistant_id bigint;
+UPDATE public.assistant_conversation_arguments
+SET assistant_id = ac.assistant_id
+FROM public.assistant_conversations ac
+WHERE public.assistant_conversation_arguments.assistant_conversation_id = ac.id;
+ALTER TABLE assistant_conversation_arguments ALTER COLUMN assistant_id SET NOT NULL;
+
+
+
+ALTER TABLE assistant_conversation_recordings add column assistant_id bigint;
+UPDATE public.assistant_conversation_recordings
+SET assistant_id = ac.assistant_id
+FROM public.assistant_conversations ac
+WHERE public.assistant_conversation_recordings.assistant_conversation_id = ac.id;
+ALTER TABLE assistant_conversation_recordings ALTER COLUMN assistant_id SET NOT NULL;
+
+
+
+ALTER TABLE assistant_conversation_telephony_events add column assistant_id bigint;
+UPDATE public.assistant_conversation_telephony_events
+SET assistant_id = ac.assistant_id
+FROM public.assistant_conversations ac
+WHERE public.assistant_conversation_telephony_events.assistant_conversation_id = ac.id;
+ALTER TABLE assistant_conversation_telephony_events ALTER COLUMN assistant_id SET NOT NULL;
+
+
+
+ALTER TABLE assistant_conversation_metadata add column assistant_id bigint;
+UPDATE public.assistant_conversation_metadata
+SET assistant_id = ac.assistant_id
+FROM public.assistant_conversations ac
+WHERE public.assistant_conversation_metadata.assistant_conversation_id = ac.id;
+ALTER TABLE assistant_conversation_metadata ALTER COLUMN assistant_id SET NOT NULL;
+
+
+
+ALTER TABLE assistant_conversation_metrics add column assistant_id bigint;
+UPDATE public.assistant_conversation_metrics
+SET assistant_id = ac.assistant_id
+FROM public.assistant_conversations ac
+WHERE public.assistant_conversation_metrics.assistant_conversation_id = ac.id;
+ALTER TABLE assistant_conversation_metrics ALTER COLUMN assistant_id SET NOT NULL;
+
+ALTER TABLE assistant_conversation_options add column assistant_id bigint;
+UPDATE public.assistant_conversation_options
+SET assistant_id = ac.assistant_id
+FROM public.assistant_conversations ac
+WHERE public.assistant_conversation_options.assistant_conversation_id = ac.id;
+ALTER TABLE assistant_conversation_options ALTER COLUMN assistant_id SET NOT NULL;

@@ -40,9 +40,8 @@ func (tc *GenericRequestor) AddMetadata(
 		tc.conversationService.
 			ApplyConversationMetadata(
 				context.Background(),
-				auth, tc.assistantConversation.Id, map[string]interface{}{
-					k: v,
-				})
+				auth, tc.assistant.Id, tc.assistantConversation.Id,
+				[]*types.Metadata{types.NewMetadata(k, v)})
 		tc.logger.Benchmark("GenericRequestor.AddMetadata", time.Since(start))
 	})
 }
@@ -65,7 +64,7 @@ func (tc *GenericRequestor) SetMetadata(
 		tc.conversationService.
 			ApplyConversationMetadata(
 				context.Background(),
-				auth, tc.assistantConversation.Id, modified)
+				auth, tc.assistant.Id, tc.assistantConversation.Id, types.NewMetadataList(modified))
 		tc.logger.Benchmark("GenericRequestor.SetMetadata", time.Since(start))
 	})
 

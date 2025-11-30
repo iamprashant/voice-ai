@@ -12,9 +12,9 @@ import (
 func NewAuthenticationMiddleware(resolver types.Authenticator, logger commons.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get the token from the request header
-		authToken := c.GetHeader(types.AUTHORIZATION_KEY)
+		authToken := c.Param(types.AUTHORIZATION_KEY)
 		if authToken == "" {
-			authToken = c.Param(types.AUTHORIZATION_KEY)
+			authToken = c.GetHeader(types.AUTHORIZATION_KEY)
 		}
 		authId := c.GetHeader(types.AUTH_KEY)
 		if authId == "" {

@@ -152,7 +152,7 @@ export const ConversationMessages: FC<{
       {conversations.map((x, idx) => {
         return (
           <div
-            className="flex flex-col w-full  bg-white dark:bg-gray-900 relative "
+            className="flex flex-col w-full  bg-white dark:bg-gray-900 relative border-b-[0.5px] dark:border-gray-800"
             key={idx}
           >
             {x.getRequest() && (

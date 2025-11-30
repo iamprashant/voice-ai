@@ -1,9 +1,9 @@
 package internal_twilio_telephony
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -32,14 +32,38 @@ func NewTwilioTelephony(
 	}, nil
 }
 
-func (tpc *twilioTelephony) Callback(c *gin.Context, auth types.SimplePrinciple, assistantId uint64, assistantConversationId uint64) (string, map[string]interface{}, error) {
+func (tpc *twilioTelephony) CatchAllCallback(ctx *gin.Context) (*string, []*types.Metric, []*types.Event, error) {
+	return nil, nil, nil, nil
+}
+func (tpc *twilioTelephony) Callback(c *gin.Context, auth types.SimplePrinciple, assistantId uint64, assistantConversationId uint64) ([]*types.Metric, []*types.Event, error) {
 	body, err := c.GetRawData() // Extract raw request body
 	if err != nil {
 		tpc.logger.Errorf("failed to read event body with error %+v", err)
-		return "unknown", nil, fmt.Errorf("not implimented")
+		return nil, nil, fmt.Errorf("not implimented")
 	}
-	tpc.logger.Debugf("event from twilio | body: %s", string(body))
-	return "unknown", nil, fmt.Errorf("not implimented")
+
+	values, err := url.ParseQuery(string(body))
+	if err != nil {
+		tpc.logger.Errorf("failed to parse body with error %+v", err)
+		return nil, nil, fmt.Errorf("failed to parse request body")
+	}
+
+	eventDetails := make(map[string]interface{})
+	for key, value := range values {
+		if len(value) > 0 {
+			eventDetails[key] = value[0]
+		} else {
+			eventDetails[key] = nil
+		}
+	}
+
+	callStatusOrStreamEvent := eventDetails["CallStatus"]
+	if streamEvent, ok := eventDetails["StreamEvent"]; ok {
+		callStatusOrStreamEvent = streamEvent
+	}
+
+	tpc.logger.Infof("parsed twilio event details: %+v", eventDetails)
+	return []*types.Metric{types.NewMetric("STATUS", fmt.Sprintf("%v", callStatusOrStreamEvent), utils.Ptr("Status of conversation"))}, []*types.Event{types.NewEvent(fmt.Sprintf("%v", callStatusOrStreamEvent), eventDetails)}, nil
 
 }
 func (tpc *twilioTelephony) TwilioClientParam(vaultCredential *protos.VaultCredential,
@@ -71,54 +95,63 @@ func (tpc *twilioTelephony) MakeCall(
 	auth types.SimplePrinciple,
 	toPhone string,
 	fromPhone string,
-	assistantId, sessionId uint64,
+	assistantId, assistantConversationId uint64,
 	vaultCredential *protos.VaultCredential,
 	opts utils.Option,
-) (map[string]interface{}, error) {
+) ([]*types.Metadata, []*types.Metric, []*types.Event, error) {
+	mtds := []*types.Metadata{
+		types.NewMetadata("telephony.toPhone", toPhone),
+		types.NewMetadata("telephony.fromPhone", toPhone),
+		types.NewMetadata("telephony.provider", "twilio"),
+	}
+	event := []*types.Event{
+		types.NewEvent("api-call", map[string]interface{}{}),
+	}
+
 	client, err := tpc.TwilioClient(vaultCredential, opts)
 	if err != nil {
-		return nil, err
+		mtds = append(mtds, types.NewMetadata("telephony.error", fmt.Sprintf("authentication error: %s", err.Error())))
+		return mtds, []*types.Metric{types.NewMetric("STATUS", "FAILED", utils.Ptr("Status of telephony api"))}, event, err
 	}
 	callParams := &openapi.CreateCallParams{}
 	callParams.SetTo(toPhone)
 	callParams.SetFrom(fromPhone)
+	callParams.SetStatusCallback(
+		fmt.Sprintf("https://%s/%s", tpc.appCfg.MediaHost, internal_telephony.GetEventPath("twilio", auth, assistantId, assistantConversationId)),
+	)
 	callParams.SetStatusCallbackEvent([]string{
-		fmt.Sprintf("https://%s/%s", tpc.appCfg.MediaHost, internal_telephony.GetEventPath("twilio", auth, assistantId, sessionId)),
+		"initiated", "ringing", "answered", "completed",
 	})
+	callParams.SetStatusCallbackMethod("POST")
 	callParams.SetTwiml(
 		tpc.CreateTwinML(
 			tpc.appCfg.MediaHost,
+			fmt.Sprintf("%d__%d", assistantId, assistantConversationId),
 			internal_telephony.GetAnswerPath("twilio", auth, assistantId,
-				sessionId,
+				assistantConversationId,
 				toPhone,
 			),
+			fmt.Sprintf("https://%s/%s", tpc.appCfg.MediaHost, internal_telephony.GetEventPath("twilio", auth, assistantId, assistantConversationId)),
 			assistantId,
 			toPhone),
 	)
 	resp, err := client.Api.CreateCall(callParams)
-	if err != nil {
-		return nil, err
-	}
-	// Convert entire response to JSON, then to map
-	jsonData, err := json.Marshal(resp)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling response to JSON: %v", err)
+	if err != nil || resp.Status == nil || resp.Sid == nil {
+		mtds = append(mtds, types.NewMetadata("telephony.error", fmt.Sprintf("API error: %s", err.Error())))
+		return mtds, []*types.Metric{types.NewMetric("STATUS", "FAILED", utils.Ptr("Status of telephony api"))}, event, err
 	}
 
-	var responseMap map[string]interface{}
-	err = json.Unmarshal(jsonData, &responseMap)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshaling JSON to map: %v", err)
-	}
-	return responseMap, nil
+	event = append(event, types.NewEvent(*resp.Status, resp))
+	mtds = append(mtds, types.NewMetadata("telephony.status", *resp.Status))
+	mtds = append(mtds, types.NewMetadata("telephony.conversation_reference", *resp.Sid))
+	return mtds, []*types.Metric{types.NewMetric("STATUS", "SUCCESS", utils.Ptr("Status of telephony api"))}, event, nil
 }
 
-func (tpc *twilioTelephony) CreateTwinML(mediaServer string, path string, assistantId uint64, clientNumber string) string {
-
+func (tpc *twilioTelephony) CreateTwinML(mediaServer string, name, path string, callback string, assistantId uint64, clientNumber string) string {
 	return fmt.Sprintf(`
 	    <Response>
 		 	<Connect>
-	        	<Stream url="wss://%s/%s">
+	        	<Stream url="wss://%s/%s" name="%s" statusCallback="%s" statusCallbackEvent="initiated ringing answered completed">
 					<Parameter name="assistant_id" value="%d"/>
 					<Parameter name="client_number" value="%s"/>
 				</Stream>
@@ -127,6 +160,8 @@ func (tpc *twilioTelephony) CreateTwinML(mediaServer string, path string, assist
 	`,
 		mediaServer,
 		path,
+		name,
+		callback,
 		assistantId,
 		clientNumber,
 	)
@@ -136,9 +171,12 @@ func (tpc *twilioTelephony) ReceiveCall(c *gin.Context, auth types.SimplePrincip
 	c.Data(http.StatusOK, "text/xml", []byte(
 		tpc.CreateTwinML(
 			tpc.appCfg.MediaHost,
+			fmt.Sprintf("%d__%d", assistantId, assistantConversationId),
 			fmt.Sprintf("v1/talk/twilio/prj/%d/%s/%d/%s",
 				assistantId,
-				clientNumber, assistantConversationId, auth.GetCurrentToken()), assistantId, clientNumber),
+				clientNumber, assistantConversationId, auth.GetCurrentToken()),
+			fmt.Sprintf("https://%s/%s", tpc.appCfg.MediaHost, internal_telephony.GetEventPath("twilio", auth, assistantId, assistantConversationId)),
+			assistantId, clientNumber),
 	))
 	return nil
 }
@@ -147,4 +185,17 @@ func (tpc *twilioTelephony) Streamer(c *gin.Context, connection *websocket.Conn,
 	return NewTwilioWebsocketStreamer(tpc.logger, connection, assistantID,
 		assistantVersion,
 		assistantConversationID)
+}
+
+func (tpc *twilioTelephony) GetCaller(c *gin.Context) (string, bool) {
+	queryParams := make(map[string]string)
+	for key, values := range c.Request.URL.Query() {
+		if len(values) > 0 {
+			queryParams[key] = values[0]
+		}
+	}
+
+	clientNumber, ok := queryParams["from"]
+	return clientNumber, ok
+
 }

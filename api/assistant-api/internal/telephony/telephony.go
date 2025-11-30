@@ -24,13 +24,19 @@ type Telephony interface {
 		assistantId, assistantConversationId uint64,
 		vaultCredential *protos.VaultCredential,
 		opts utils.Option,
-	) (map[string]interface{}, error)
+	) ([]*types.Metadata, []*types.Metric, []*types.Event, error)
 
-	// for handling event callback
-	Callback(ctx *gin.Context, auth types.SimplePrinciple, assistantId, assistantConversationId uint64) (string, map[string]interface{}, error)
+	//  callback for a conversation
+	Callback(ctx *gin.Context, auth types.SimplePrinciple, assistantId, assistantConversationId uint64) ([]*types.Metric, []*types.Event, error)
+
+	// conversation reference, metrics, events
+	CatchAllCallback(ctx *gin.Context) (*string, []*types.Metric, []*types.Event, error)
 
 	//
 	ReceiveCall(c *gin.Context, auth types.SimplePrinciple, assistantId uint64, clientNumber string, assistantConversationId uint64) error
+
+	//
+	GetCaller(c *gin.Context) (string, bool)
 }
 
 func GetAnswerPath(provider string, auth types.SimplePrinciple, assistantId uint64, assistantConversationId uint64, toPhone string) string {

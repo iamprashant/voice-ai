@@ -24,16 +24,19 @@ type exotelTelephony struct {
 	appCfg *config.AssistantConfig
 }
 
+func (tpc *exotelTelephony) CatchAllCallback(ctx *gin.Context) (*string, []*types.Metric, []*types.Event, error) {
+	return nil, nil, nil, nil
+}
+
 // EventCallback implements [Telephony].
-func (tpc *exotelTelephony) Callback(c *gin.Context, auth types.SimplePrinciple, assistantId uint64, assistantConversationId uint64) (string, map[string]interface{}, error) {
+func (tpc *exotelTelephony) Callback(c *gin.Context, auth types.SimplePrinciple, assistantId uint64, assistantConversationId uint64) ([]*types.Metric, []*types.Event, error) {
 	body, err := c.GetRawData() // Extract raw request body
 	if err != nil {
 		tpc.logger.Errorf("failed to read event body with error %+v", err)
-		return "unknown", nil, fmt.Errorf("not implimented")
+		return nil, nil, fmt.Errorf("not implimented")
 	}
 	tpc.logger.Debugf("event from exotel | body: %s", string(body))
-	return "unknown", nil, fmt.Errorf("not implimented")
-
+	return nil, nil, fmt.Errorf("not implimented")
 }
 
 func NewExotelTelephony(config *config.AssistantConfig, logger commons.Logger) (internal_telephony.Telephony, error) {
@@ -68,10 +71,18 @@ func (tpc *exotelTelephony) MakeCall(
 	fromPhone string,
 	assistantId, sessionId uint64,
 	vaultCredential *protos.VaultCredential,
-	opts utils.Option) (map[string]interface{}, error) {
+	opts utils.Option) ([]*types.Metadata, []*types.Metric, []*types.Event, error) {
+	mtds := []*types.Metadata{
+		types.NewMetadata("telephony.toPhone", toPhone),
+		types.NewMetadata("telephony.fromPhone", toPhone),
+		types.NewMetadata("telephony.provider", "exotel"),
+	}
+	event := []*types.Event{
+		types.NewEvent("api-call", map[string]interface{}{}),
+	}
 	clientUrl, err := tpc.ClientUrl(vaultCredential, opts)
 	if err != nil {
-		return nil, err
+		return mtds, []*types.Metric{types.NewMetric("STATUS", "FAILED", utils.Ptr("Status of telephony api"))}, event, err
 	}
 	formData := url.Values{}
 	formData.Set("From", toPhone)
@@ -83,20 +94,29 @@ func (tpc *exotelTelephony) MakeCall(
 	client := &http.Client{Timeout: 60 * time.Second}
 	req, err := http.NewRequest("POST", *clientUrl, strings.NewReader(formData.Encode()))
 	if err != nil {
-		return nil, err
+		return mtds, []*types.Metric{types.NewMetric("STATUS", "FAILED", utils.Ptr("Status of telephony api"))}, event, err
 	}
-
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return mtds, []*types.Metric{types.NewMetric("STATUS", "FAILED", utils.Ptr("Status of telephony api"))}, event, err
 	}
 	defer resp.Body.Close()
-	var jsonResponse map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&jsonResponse); err != nil {
-		return nil, err
+	var jsonResponse struct {
+		Call struct {
+			Sid              string `json:"Sid"`
+			Status           string `json:"Status"`
+			RecordingUrl     string `json:"RecordingUrl"`
+			ConversationUuid string `json:"ParentCallSid"` // Assuming ParentCallSid represents conversation reference
+		} `json:"Call"`
 	}
-	return jsonResponse, nil
+	if err := json.NewDecoder(resp.Body).Decode(&jsonResponse); err != nil {
+		return mtds, []*types.Metric{types.NewMetric("STATUS", "FAILED", utils.Ptr("Status of telephony api"))}, event, err
+	}
+
+	mtds = append(mtds, types.NewMetadata("telephony.status", jsonResponse.Call.Status))
+	mtds = append(mtds, types.NewMetadata("telephony.conversation_reference", jsonResponse.Call.Sid))
+	return mtds, []*types.Metric{types.NewMetric("STATUS", "SUCCESS", utils.Ptr("Status of telephony api"))}, event, nil
 }
 
 func (tpc *exotelTelephony) ReceiveCall(c *gin.Context, auth types.SimplePrinciple, assistantId uint64, clientNumber string, assistantConversationId uint64) error {
@@ -107,4 +127,17 @@ func (tpc *exotelTelephony) Streamer(c *gin.Context, connection *websocket.Conn,
 	return NewExotelWebsocketStreamer(tpc.logger, connection, assistantID,
 		assistantVersion,
 		assistantConversationID)
+}
+
+func (tpc *exotelTelephony) GetCaller(c *gin.Context) (string, bool) {
+	queryParams := make(map[string]string)
+	for key, values := range c.Request.URL.Query() {
+		if len(values) > 0 {
+			queryParams[key] = values[0]
+		}
+	}
+
+	clientNumber, ok := queryParams["from"]
+	return clientNumber, ok
+
 }

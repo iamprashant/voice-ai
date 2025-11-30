@@ -16,6 +16,14 @@ import (
 	"github.com/rapidaai/protos"
 )
 
+func (cApi *ConversationApi) UnviersalCallback(c *gin.Context) {
+	body, err := c.GetRawData() // Extract raw request body
+	if err != nil {
+		cApi.logger.Errorf("failed to read event body with error %+v", err)
+	}
+	cApi.logger.Debugf("event from exotel | body: %s", string(body))
+}
+
 func (cApi *ConversationApi) Callback(c *gin.Context) {
 	iAuth, isAuthenticated := types.GetAuthPrinciple(c)
 	if !isAuthenticated {
@@ -48,18 +56,29 @@ func (cApi *ConversationApi) Callback(c *gin.Context) {
 		return
 	}
 
-	eventType, payload, err := _telephony.Callback(c, iAuth, assistantId, conversationId)
+	mtr, evts, err := _telephony.Callback(c, iAuth, assistantId, conversationId)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid event to process"})
 		return
 	}
 
-	_, err = cApi.assistantConversationService.
-		CreateConversationTelephonyEvent(c, iAuth, tlp, conversationId, eventType, payload)
+	_, err = cApi.
+		assistantConversationService.
+		ApplyConversationTelephonyEvent(c, iAuth, tlp, assistantId, conversationId, evts)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "unable to process telephony event callback."})
+		c.Status(http.StatusOK)
 		return
 	}
+
+	_, err = cApi.
+		assistantConversationService.
+		ApplyConversationMetrics(c, iAuth, assistantId, conversationId, mtr)
+	if err != nil {
+		c.Status(http.StatusOK)
+		return
+	}
+	c.Status(http.StatusCreated)
+	return
 }
 
 // CallReciever handles incoming calls for the given assistant.
@@ -83,26 +102,24 @@ func (cApi *ConversationApi) CallReciever(c *gin.Context) {
 		return
 	}
 
-	queryParams := make(map[string]string)
-	for key, values := range c.Request.URL.Query() {
-		if len(values) > 0 {
-			queryParams[key] = values[0]
-		}
-	}
-
-	clientNumber, ok := queryParams["Caller"]
-	if !ok {
-		cApi.logger.Debugf("Missing 'Caller' number in Twilio request")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing 'Caller' number"})
-		return
-	}
-
 	tlp := c.Param("telephony")
 	_telephony, err := telephony.GetTelephony(
 		telephony.Telephony(tlp),
 		cApi.cfg,
 		cApi.logger,
 	)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Telephony is not connected"})
+		return
+	}
+
+	clientNumber, ok := _telephony.GetCaller(c)
+	if !ok {
+		cApi.logger.Debugf("Missing 'Caller' OR 'from' number in Twilio request")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing 'Caller' number"})
+		return
+	}
 
 	assistant, err := cApi.
 		assistantService.
@@ -140,13 +157,16 @@ func (cApi *ConversationApi) CallReciever(c *gin.Context) {
 	cApi.
 		assistantConversationService.
 		ApplyConversationMetrics(
-			c, iAuth, conversation.Id, []*types.Metric{types.NewStatusMetric(type_enums.RECORD_CONNECTED)},
+			c, iAuth,
+			assistantId,
+			conversation.Id, []*types.Metric{types.NewStatusMetric(type_enums.RECORD_CONNECTED)},
 		)
 	err = _telephony.ReceiveCall(c, iAuth, assistant.Id, clientNumber, conversation.Id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "unable to initiate talker"})
 		return
 	}
+	return
 
 }
 
@@ -190,8 +210,6 @@ func (cApi *ConversationApi) CallTalker(c *gin.Context) {
 	}
 
 	identifier := c.Param("identifier")
-	cApi.logger.Debugf("starting a call talker for with %s and params %+v", identifier, c.Params)
-
 	tlp := c.Param("telephony")
 	_telephony, err := telephony.GetTelephony(
 		telephony.Telephony(tlp),

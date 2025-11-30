@@ -99,6 +99,7 @@ func (cr *GenericRequestor) CreateConversationMessageLog(
 	cr.conversationService.CreateLLMAction(
 		cr.Context(),
 		cr.Auth(),
+		cr.assistant.Id,
 		cr.assistantConversation.Id,
 		messageid,
 		in, out, metrics)
@@ -110,6 +111,7 @@ func (cr *GenericRequestor) CreateConversationToolLog(
 	cr.conversationService.CreateToolAction(
 		cr.Context(),
 		cr.Auth(),
+		cr.assistant.Id,
 		cr.assistantConversation.Id,
 		messageid,
 		in, out, metrics)

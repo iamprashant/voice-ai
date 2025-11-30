@@ -25,12 +25,12 @@ const SingleAssistant: FC<{ assistant: Assistant }> = ({ assistant }) => {
               }}
               className={cn(
                 'w-full max-w-full break-words',
-                'text-base leading-tight capitalize hover:text-blue-600 hover:cursor-pointer',
+                'text-base/6 font-medium leading-tight hover:text-blue-600 hover:cursor-pointer',
               )}
             >
               {assistant.getName()}
             </div>
-            <div className="text-sm flex items-centerdark:text-gray-500 space-x-2">
+            <div className="text-sm/6 flex items-center text-muted space-x-2">
               <span>
                 Sessions : {assistant.getAssistantconversationsList().length}
               </span>

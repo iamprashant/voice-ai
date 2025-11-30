@@ -67,6 +67,11 @@ func (conversationService *assistantConversationService) GetAll(ctx context.Cont
 			Preload("Arguments")
 	}
 
+	if opts != nil && opts.InjectTelephonyEvent {
+		qry = qry.
+			Preload("TelephonyEvents")
+	}
+
 	for _, ct := range criterias {
 		qry.Where(fmt.Sprintf("%s %s ?", ct.GetKey(), ct.GetLogic()), ct.GetValue())
 	}
@@ -253,8 +258,9 @@ func (conversationService *assistantConversationService) CreateConversation(
 func (conversationService *assistantConversationService) ApplyConversationMetadata(
 	ctx context.Context,
 	auth types.SimplePrinciple,
+	assistantId,
 	assistantConversationId uint64,
-	metadata map[string]interface{},
+	metadata []*types.Metadata,
 ) ([]*internal_conversation_gorm.AssistantConversationMetadata, error) {
 	start := time.Now()
 	//
@@ -266,14 +272,15 @@ func (conversationService *assistantConversationService) ApplyConversationMetada
 	db := conversationService.postgres.DB(ctx)
 	_metadatas := make([]*internal_conversation_gorm.AssistantConversationMetadata, 0)
 	//
-	for k, mt := range metadata {
+	for _, mt := range metadata {
 		_meta := &internal_conversation_gorm.AssistantConversationMetadata{
 			AssistantConversationId: assistantConversationId,
 			Metadata: gorm_models.Metadata{
-				Key: k,
+				Key: mt.Key,
 			},
+			AssistantId: assistantId,
 		}
-		_meta.SetValue(mt)
+		_meta.SetValue(mt.Value)
 		if auth.GetUserId() != nil {
 			_meta.UpdatedBy = *auth.GetUserId()
 			_meta.CreatedBy = *auth.GetUserId()
@@ -298,6 +305,7 @@ func (conversationService *assistantConversationService) ApplyConversationMetada
 
 func (conversationService *assistantConversationService) ApplyConversationOption(ctx context.Context,
 	auth types.SimplePrinciple,
+	assistantId,
 	assistantConversationId uint64,
 	opts map[string]interface{}) ([]*internal_conversation_gorm.AssistantConversationOption, error) {
 	start := time.Now()
@@ -314,6 +322,7 @@ func (conversationService *assistantConversationService) ApplyConversationOption
 			Metadata: gorm_models.Metadata{
 				Key: k,
 			},
+			AssistantId: assistantId,
 		}
 		option.SetValue(o)
 		if auth.GetUserId() != nil {
@@ -341,6 +350,7 @@ func (conversationService *assistantConversationService) ApplyConversationOption
 
 func (conversationService *assistantConversationService) ApplyConversationArgument(ctx context.Context,
 	auth types.SimplePrinciple,
+	assistantId,
 	assistantConversationId uint64,
 	arguments map[string]interface{},
 ) ([]*internal_conversation_gorm.AssistantConversationArgument, error) {
@@ -392,6 +402,7 @@ func (conversationService *assistantConversationService) ApplyConversationArgume
 func (conversationService *assistantConversationService) ApplyConversationMetrics(
 	ctx context.Context,
 	auth types.SimplePrinciple,
+	assistantId,
 	assistantConversationId uint64,
 	metrics []*types.Metric,
 ) ([]*internal_conversation_gorm.AssistantConversationMetric, error) {
@@ -446,6 +457,7 @@ func (conversationService *assistantConversationService) CreateConversationMetri
 			Description: description,
 			Value:       value,
 		},
+		AssistantId:             assistantId,
 		AssistantConversationId: assistantConversationId,
 	}
 
@@ -485,6 +497,7 @@ func (conversationService *assistantConversationService) CreateCustomConversatio
 				Description: v.GetDescription(),
 				Value:       v.GetValue(),
 			},
+			AssistantId:             assistantId,
 			AssistantConversationId: assistantConversationId,
 		}
 
@@ -513,6 +526,7 @@ func (conversationService *assistantConversationService) CreateCustomConversatio
 func (conversationService *assistantConversationService) CreateConversationRecording(
 	ctx context.Context,
 	auth types.SimplePrinciple,
+	assistantId,
 	assistantConversationId uint64,
 	body []byte,
 ) (*internal_conversation_gorm.AssistantConversationRecording, error) {
@@ -533,6 +547,7 @@ func (conversationService *assistantConversationService) CreateConversationRecor
 			ProjectId:      *auth.GetCurrentProjectId(),
 			OrganizationId: *auth.GetCurrentOrganizationId(),
 		},
+		AssistantId:             assistantId,
 		AssistantConversationId: assistantConversationId,
 		RecordingUrl:            key,
 	}
@@ -565,20 +580,30 @@ func (eService *assistantConversationService) GetRecordingPublicUrl(ctx context.
 	return utils.Ptr(output.CompletePath), nil
 }
 
-func (eService *assistantConversationService) CreateConversationTelephonyEvent(
+func (eService *assistantConversationService) ApplyConversationTelephonyEvent(
 	ctx context.Context,
 	auth types.SimplePrinciple,
 	telephony string,
+	assistantId,
 	assistantConversationId uint64,
-	eventType string,
-	payload map[string]interface{},
-) (*internal_conversation_gorm.AssistantConverstaionTelephonyEvent, error) {
+	events []*types.Event,
+) ([]*internal_conversation_gorm.AssistantConversationTelephonyEvent, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
-	telephonyEvent := &internal_conversation_gorm.AssistantConverstaionTelephonyEvent{
-		AssistantConversationId: assistantConversationId,
-		EventType:               eventType,
-		Payload:                 payload,
+
+	telephonyEvent := make([]*internal_conversation_gorm.AssistantConversationTelephonyEvent, 0)
+	for _, v := range events {
+		tE := &internal_conversation_gorm.AssistantConversationTelephonyEvent{
+			AssistantConversationId: assistantConversationId,
+			Event: *gorm_models.NewEvent(
+				v.EventType,
+				v.Payload,
+			),
+			Provider:    telephony,
+			AssistantId: assistantId,
+		}
+
+		telephonyEvent = append(telephonyEvent, tE)
 	}
 
 	tx := db.Create(&telephonyEvent)

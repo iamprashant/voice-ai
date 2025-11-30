@@ -35,7 +35,7 @@ export const VoiceAgent: FC<{
   }, [connectConfig, agentConfig, agentCallback]);
 
   return (
-    <div className="h-dvh flex p-8">
+    <div className="h-dvh flex p-8 text-sm/6">
       <div className="relative overflow-hidden h-full max-w-7xl mx-auto  dark:bg-gray-950/50 border rounded-[2px]">
         <div className="h-full flex flex-row flex-nowrap items-stretch">
           <div className="flex flex-col grow min-w-0 flex-1">

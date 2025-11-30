@@ -48,6 +48,7 @@ import { InputHelper } from '@/app/components/input-helper';
 import { CodeHighlighting } from '@/app/components/code-highlighting';
 import { useRapidaStore } from '@/hooks';
 import { cn } from '@/utils';
+import { AssistantPhoneCallDeploymentDialog } from '@/app/components/base/modal/assistant-phone-call-deployment-modal';
 
 export const ConfigureAssistantDeploymentPage = () => {
   /**
@@ -121,8 +122,7 @@ export const ConfigureAssistantDeploymentPage = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isApiExpanded, setIsApiExpanded] = useState(false);
   const [isPhoneExpanded, setIsPhoneExpanded] = useState(false);
-  const [isPhoneInboundCodeExpanded, setIsPhoneInboundCodeExpanded] =
-    useState(false);
+
   const [isWidgetExpanded, setIsWidgetExpanded] = useState(false);
   const [isWidgetCodeExpanded, setIsWidgetCodeExpanded] = useState(false);
   const [createDeploymentPopover, setCreateDeploymentPopover] = useState(false);
@@ -133,6 +133,13 @@ export const ConfigureAssistantDeploymentPage = () => {
    */
   return (
     <div className="flex flex-col w-full flex-1 overflow-auto">
+      {assistant?.getPhonedeployment() && (
+        <AssistantPhoneCallDeploymentDialog
+          modalOpen={isPhoneExpanded}
+          setModalOpen={setIsPhoneExpanded}
+          deployment={assistant?.getPhonedeployment()!}
+        />
+      )}
       <Helmet title="Assistant deployment" />
       <PageHeaderBlock>
         <div className="flex items-center gap-3">
@@ -464,20 +471,9 @@ export const ConfigureAssistantDeploymentPage = () => {
                   <span className="mr-2">Preview</span>
                   <ExternalLink className="w-4 h-4 " />
                 </IButton>
-                <IButton
-                  onClick={() => {
-                    setIsPhoneInboundCodeExpanded(!isPhoneInboundCodeExpanded);
-                  }}
-                >
+                <IButton onClick={() => setIsPhoneExpanded(!isPhoneExpanded)}>
                   <span className="mr-2">Inbound Instruction</span>
                   <Code className="w-4 h-4 " />
-                </IButton>
-                <IButton onClick={() => setIsPhoneExpanded(!isPhoneExpanded)}>
-                  {isPhoneExpanded ? (
-                    <ChevronUp className="w-4 h-4" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4" />
-                  )}
                 </IButton>
               </div>
             </div>
@@ -538,56 +534,6 @@ export const ConfigureAssistantDeploymentPage = () => {
               </div>
             </div>
             {/*  */}
-            <AnimatePresence>
-              <motion.div
-                initial={{ height: 0, opacity: 0, zIndex: -1 }}
-                animate={{
-                  height: isPhoneInboundCodeExpanded ? 'auto' : 0,
-                  opacity: isPhoneInboundCodeExpanded ? 1 : 0,
-                }}
-                transition={{ duration: 0.3 }}
-                className={cn(
-                  'overflow-hidden text-muted',
-                  isPhoneInboundCodeExpanded && 'space-y-6 p-4 border-t',
-                )}
-              >
-                <FieldSet className="col-span-2">
-                  <FormLabel>Inbound webhook url</FormLabel>
-                  <div className="flex items-center gap-2">
-                    <code className="flex-1 dark:bg-gray-950 bg-gray-100 px-3 py-2 font-mono text-xs min-w-0 overflow-hidden">
-                      {`${CONFIG.connection.media}/v1/talk/${assistant.getPhonedeployment()?.getPhoneprovidername().toLowerCase()}/call/${assistantId}?x-api-key={{PROJECT_CRDENTIAL_KEY}}`}
-                    </code>
-                    <div className="flex shrink-0 border divide-x">
-                      <CopyButton className="h-7 w-7">
-                        {`${CONFIG.connection.media}/v1/talk/${assistant.getPhonedeployment()?.getPhoneprovidername().toLowerCase()}/call/${assistantId}?x-api-key={{PROJECT_CRDENTIAL_KEY}}`}
-                      </CopyButton>
-                    </div>
-                  </div>
-                  <InputHelper>
-                    You can add all the additional agent arguments in query
-                    parameters for example if you are expecting argument
-                    <code className="text-red-600">`name`</code>
-                    add <code className="text-red-600">`?name=your-name`</code>
-                  </InputHelper>
-                </FieldSet>
-              </motion.div>
-            </AnimatePresence>
-            <AnimatePresence>
-              <motion.div
-                initial={{ height: 0 }} // h-10 is 40px in most Tailwind configurations
-                animate={{ height: isPhoneExpanded ? 'auto' : 0 }}
-                transition={{ duration: 0.3 }}
-                className="grid grid-cols-2 divide-x border-t overflow-hidden"
-              >
-                <VoiceInput
-                  deployment={assistant.getPhonedeployment()?.getInputaudio()}
-                />
-
-                <VoiceOutput
-                  deployment={assistant.getPhonedeployment()?.getOutputaudio()}
-                />
-              </motion.div>
-            </AnimatePresence>
           </div>
         )}
         {/* web widget */}

@@ -66,8 +66,8 @@ export const ScrollableResizableTable: FC<ScrollableResizableTableProps> = ({
         ref={tableRef}
         style={{ width: `${tableWidth}px`, minWidth: '100%' }}
       >
-        <table className="w-full border-collapse bg-white dark:bg-gray-900">
-          <thead className="">
+        <table className="w-full border-collapse bg-white dark:bg-gray-900 border-y">
+          <thead className="uppercase">
             <TableRow className="bg-gray-100 dark:bg-gray-950">
               {isActionable && (
                 <TableCell className="w-8 h-8 ">
@@ -89,13 +89,13 @@ export const ScrollableResizableTable: FC<ScrollableResizableTableProps> = ({
               {columns.map((column, index) => (
                 <TableCell
                   key={column.key}
-                  className="px-2 py-2 text-left text-sm font-medium tracking-wider relative"
+                  className="px-2 py-2 text-left uppercase text-xs/6 font-medium tracking-wider relative text-muted"
                   style={{ width: column.width }}
                 >
                   {column.name}
                   {index !== columns.length - 1 && (
                     <div
-                      className="absolute top-1 right-0 bottom-1 w-[1.5px] cursor-col-resize bg-gray-300 dark:bg-slate-800 hover:bg-blue-500"
+                      className="absolute top-1 -right-[2px] bottom-1 w-[2px] cursor-col-resize hover:bg-blue-500"
                       onMouseDown={e => {
                         e.preventDefault();
                         const startX = e.pageX;
@@ -117,7 +117,7 @@ export const ScrollableResizableTable: FC<ScrollableResizableTableProps> = ({
                         document.addEventListener('mousemove', onMouseMove);
                         document.addEventListener('mouseup', onMouseUp);
                       }}
-                    />
+                    ></div>
                   )}
                 </TableCell>
               ))}

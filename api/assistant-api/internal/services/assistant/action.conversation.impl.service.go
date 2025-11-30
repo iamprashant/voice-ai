@@ -70,14 +70,16 @@ func (conversationService *assistantConversationService) GetAllMessageActions(
 func (conversationService *assistantConversationService) CreateLLMAction(
 	ctx context.Context,
 	auth types.SimplePrinciple,
-	conversationId uint64,
+	assistantId,
+	assistantConversationId uint64,
 	messageId string,
 	in, out *types.Message, metrics []*types.Metric) (*internal_conversation_gorm.AssistantConversationAction, error) {
 	start := time.Now()
 	db := conversationService.postgres.DB(ctx)
 	aca := &internal_conversation_gorm.AssistantConversationAction{
 		AssistantConversationMessageId: messageId,
-		AssistantConversationId:        conversationId,
+		AssistantConversationId:        assistantConversationId,
+		AssistantId:                    assistantId,
 	}
 	aca.SetLLMCall(in, out)
 	tx := db.Create(aca)
@@ -86,7 +88,7 @@ func (conversationService *assistantConversationService) CreateLLMAction(
 		conversationService.logger.Errorf("error while creating message action %v", tx.Error)
 		return nil, tx.Error
 	}
-	_, err := conversationService.ApplyToolMetrics(ctx, auth, conversationId, aca.Id, messageId, metrics)
+	_, err := conversationService.ApplyToolMetrics(ctx, auth, assistantConversationId, aca.Id, messageId, metrics)
 	if err != nil {
 		conversationService.logger.Errorf("error while creating message action metrics %v", tx.Error)
 	}
@@ -97,14 +99,16 @@ func (conversationService *assistantConversationService) CreateLLMAction(
 func (conversationService *assistantConversationService) CreateToolAction(
 	ctx context.Context,
 	auth types.SimplePrinciple,
-	conversationId uint64,
+	assistantId uint64,
+	assistantConversationId uint64,
 	messageId string,
 	in, out map[string]interface{}, metrics []*types.Metric) (*internal_conversation_gorm.AssistantConversationAction, error) {
 	start := time.Now()
 	db := conversationService.postgres.DB(ctx)
 	aca := &internal_conversation_gorm.AssistantConversationAction{
 		AssistantConversationMessageId: messageId,
-		AssistantConversationId:        conversationId,
+		AssistantConversationId:        assistantConversationId,
+		AssistantId:                    assistantId,
 	}
 	aca.SetToolCall(in, out)
 	tx := db.Create(aca)
@@ -113,7 +117,7 @@ func (conversationService *assistantConversationService) CreateToolAction(
 		conversationService.logger.Errorf("error while creating message action %v", tx.Error)
 		return nil, tx.Error
 	}
-	_, err := conversationService.ApplyToolMetrics(ctx, auth, conversationId, aca.Id, messageId, metrics)
+	_, err := conversationService.ApplyToolMetrics(ctx, auth, assistantConversationId, aca.Id, messageId, metrics)
 	if err != nil {
 		conversationService.logger.Errorf("error while creating message action metrics %v", tx.Error)
 	}

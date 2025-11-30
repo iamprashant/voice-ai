@@ -43,7 +43,7 @@ export const SingleTrace: React.FC<SingleTraceProps> = ({
                 event.stopPropagation();
                 setInfo(!info);
               }}
-              className="h-6 w-6 flex items-center justify-center rounded-[2px] hover:bg-gray-300 dark:hover:bg-gray-800 cursor-pointer"
+              className="size-10 flex items-center justify-center rounded-[2px] hover:bg-gray-300 dark:hover:bg-gray-800 cursor-pointer"
             >
               <ChevronRight
                 strokeWidth={1.5}
@@ -53,7 +53,7 @@ export const SingleTrace: React.FC<SingleTraceProps> = ({
                 )}
               />
             </span>
-            <span className="h-6 w-6 flex items-center justify-center rounded-[2px] hover:bg-gray-300 dark:hover:bg-gray-800 cursor-pointer">
+            <span className="size-10 flex items-center justify-center rounded-[2px] hover:bg-gray-300 dark:hover:bg-gray-800 cursor-pointer">
               <Telescope
                 strokeWidth={1.5}
                 className={cn('w-5 h-5 transition-all duration-200')}

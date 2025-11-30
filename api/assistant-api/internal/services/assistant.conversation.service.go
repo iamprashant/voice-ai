@@ -12,23 +12,25 @@ import (
 )
 
 type GetConversationOption struct {
-	InjectContext   bool
-	InjectArgument  bool
-	InjectMetadata  bool
-	InjectMetric    bool
-	InjectOption    bool
-	InjectMessage   bool
-	InjectRecording bool
+	InjectContext        bool
+	InjectArgument       bool
+	InjectMetadata       bool
+	InjectMetric         bool
+	InjectOption         bool
+	InjectMessage        bool
+	InjectRecording      bool
+	InjectTelephonyEvent bool
 }
 
 func NewDefaultGetConversationOption() *GetConversationOption {
 	return &GetConversationOption{
-		InjectContext:   true,
-		InjectArgument:  true,
-		InjectMetadata:  true,
-		InjectMetric:    true,
-		InjectOption:    true,
-		InjectRecording: false,
+		InjectContext:        true,
+		InjectArgument:       true,
+		InjectMetadata:       true,
+		InjectMetric:         true,
+		InjectOption:         true,
+		InjectRecording:      false,
+		InjectTelephonyEvent: true,
 	}
 }
 
@@ -49,6 +51,8 @@ func (gco *GetConversationOption) WithFieldSelector(selectors []*workflow_api.Fi
 			gco.InjectMessage = true
 		case "recording":
 			gco.InjectRecording = true
+		case "telephonyEvent":
+			gco.InjectTelephonyEvent = true
 		}
 	}
 	return gco
@@ -85,7 +89,6 @@ func (o *GetConversationOption) WithInjectRecording(inject bool) *GetConversatio
 type GetMessageOption struct {
 	InjectMetadata bool
 	InjectMetric   bool
-	InjectStage    bool
 	InjectRequest  bool
 	InjectResponse bool
 }
@@ -98,7 +101,6 @@ func NewDefaultGetMessageOption() *GetMessageOption {
 	return &GetMessageOption{
 		InjectMetadata: true,
 		InjectMetric:   true,
-		InjectStage:    true,
 		InjectRequest:  true,
 		InjectResponse: true,
 	}
@@ -111,8 +113,6 @@ func (gco *GetMessageOption) WithFieldSelector(selectors []*workflow_api.FieldSe
 			gco.InjectMetadata = true
 		case "metric":
 			gco.InjectMetric = true
-		case "stage":
-			gco.InjectStage = true
 		case "request":
 			gco.InjectRequest = true
 		case "response":
@@ -125,11 +125,6 @@ func (gco *GetMessageOption) WithFieldSelector(selectors []*workflow_api.FieldSe
 
 func (opt *GetMessageOption) WithInjectMetric(ij bool) *GetMessageOption {
 	opt.InjectMetric = ij
-	return opt
-}
-
-func (opt *GetMessageOption) WithInjectStage(ij bool) *GetMessageOption {
-	opt.InjectStage = ij
 	return opt
 }
 
@@ -256,12 +251,14 @@ type AssistantConversationService interface {
 
 	CreateLLMAction(ctx context.Context,
 		auth types.SimplePrinciple,
+		assistantId uint64,
 		conversationId uint64,
 		assistantConversationMessageId string,
 		in, out *types.Message, metrics []*types.Metric) (*internal_conversation_gorm.AssistantConversationAction, error)
 
 	CreateToolAction(ctx context.Context,
 		auth types.SimplePrinciple,
+		assistantId uint64,
 		conversationId uint64,
 		assistantConversationMessageId string,
 		in, out map[string]interface{},
@@ -272,25 +269,29 @@ type AssistantConversationService interface {
 	ApplyConversationMetadata(
 		ctx context.Context,
 		auth types.SimplePrinciple,
+		assistantId uint64,
 		assistantConversationId uint64,
-		metadata map[string]interface{},
+		metadata []*types.Metadata,
 	) ([]*internal_conversation_gorm.AssistantConversationMetadata, error)
 
 	ApplyConversationArgument(
 		ctx context.Context,
 		auth types.SimplePrinciple,
+		assistantId uint64,
 		assistantConversationId uint64,
 		arguments map[string]interface{},
 	) ([]*internal_conversation_gorm.AssistantConversationArgument, error)
 
 	ApplyConversationOption(ctx context.Context,
 		auth types.SimplePrinciple,
+		assistantId uint64,
 		assistantConversationId uint64,
 		opts map[string]interface{}) ([]*internal_conversation_gorm.AssistantConversationOption, error)
 
 	ApplyConversationMetrics(
 		ctx context.Context,
 		auth types.SimplePrinciple,
+		assistantId uint64,
 		assistantConversationId uint64,
 		metrics []*types.Metric,
 	) ([]*internal_conversation_gorm.AssistantConversationMetric, error)
@@ -298,16 +299,17 @@ type AssistantConversationService interface {
 	CreateConversationRecording(
 		ctx context.Context,
 		auth types.SimplePrinciple,
+		assistantId uint64,
 		assistantConversationId uint64,
 		body []byte,
 	) (*internal_conversation_gorm.AssistantConversationRecording, error)
 
-	CreateConversationTelephonyEvent(
+	ApplyConversationTelephonyEvent(
 		ctx context.Context,
 		auth types.SimplePrinciple,
 		telephony string,
+		assistantId uint64,
 		assistantConversationId uint64,
-		eventType string,
-		payload map[string]interface{},
-	) (*internal_conversation_gorm.AssistantConverstaionTelephonyEvent, error)
+		events []*types.Event,
+	) ([]*internal_conversation_gorm.AssistantConversationTelephonyEvent, error)
 }

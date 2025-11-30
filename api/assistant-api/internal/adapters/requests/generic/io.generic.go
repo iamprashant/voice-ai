@@ -242,7 +242,7 @@ func (io *GenericRequestor) Output(
 	}
 
 	if err := io.messaging.Transition(internal_adapter_request_customizers.AgentSpeaking); err != nil {
-		io.logger.Warnf("Can't notify the assistant think as user is speaking")
+		// io.logger.Warnf("Can't notify the assistant think as user is speaking")
 		return nil
 	}
 

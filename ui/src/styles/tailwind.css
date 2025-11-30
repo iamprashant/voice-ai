@@ -111,6 +111,7 @@
 
 @theme {
     --font-sans: "IBM Plex Sans", sans-serif;
+    --font-mono: "IBM Plex Mono", monospace;
     --font-weight-medium: 450;
     --font-weight-semibold: 500;
     --font-weight-bold: 700;

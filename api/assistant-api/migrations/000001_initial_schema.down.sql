@@ -46,3 +46,4 @@ DROP TABLE IF EXISTS knowledge_model_options CASCADE;
 DROP TABLE IF EXISTS knowledge_tags CASCADE;
 DROP TABLE IF EXISTS knowledges CASCADE;
 DROP TABLE IF EXISTS tools CASCADE;
+DROP TABLE IF EXISTS assistant_converstaion_telephony_events CASCADE;

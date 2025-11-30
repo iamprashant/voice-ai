@@ -144,9 +144,6 @@ func (conversationService *assistantConversationService) GetAllAssistantMessage(
 	if opts != nil && opts.InjectMetric {
 		qry = qry.Preload("Metrics")
 	}
-	if opts != nil && opts.InjectStage {
-		qry = qry.Preload("Stages")
-	}
 	for _, ct := range criterias {
 		qry = qry.Where(fmt.Sprintf("%s %s ?", ct.GetKey(), ct.GetLogic()), ct.GetValue())
 	}

@@ -13,6 +13,14 @@ import {
 
 export const StatusIndicator = ({ state, size = 'medium' }) => {
   // Status configurations with SVG icons and appropriate colors
+  const complete = {
+    bgColor: 'bg-purple-100 dark:bg-purple-900/30',
+    textColor: 'text-purple-700 dark:text-purple-500',
+    iconColor: 'text-purple-500 dark:text-purple-400',
+    ringColor: 'ring-purple-200 dark:ring-purple-700',
+    Icon: CircleCheck,
+    display: 'Complete',
+  };
   const statusConfig = {
     INVITED: {
       bgColor: 'bg-yellow-100 dark:bg-yellow-900/30',
@@ -55,14 +63,9 @@ export const StatusIndicator = ({ state, size = 'medium' }) => {
       Icon: CircleCheck,
       display: 'Success',
     },
-    COMPLETE: {
-      bgColor: 'bg-purple-100 dark:bg-purple-900/30',
-      textColor: 'text-purple-700 dark:text-purple-500',
-      iconColor: 'text-purple-500 dark:text-purple-400',
-      ringColor: 'ring-purple-200 dark:ring-purple-700',
-      Icon: CircleCheck,
-      display: 'Complete',
-    },
+    COMPLETE: complete,
+    COMPLETED: complete,
+    'STREAM-STOPPED': complete,
     INACTIVE: {
       bgColor: 'bg-gray-100 dark:bg-gray-800/50',
       textColor: 'text-gray-700 dark:text-gray-500',

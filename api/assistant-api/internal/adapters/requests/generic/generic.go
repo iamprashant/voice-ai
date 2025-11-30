@@ -7,6 +7,7 @@ import (
 	"github.com/rapidaai/api/assistant-api/config"
 	internal_adapter_request_customizers "github.com/rapidaai/api/assistant-api/internal/adapters/requests/customizers"
 	internal_streamers "github.com/rapidaai/api/assistant-api/internal/streamers"
+	internal_assistant_telemetry "github.com/rapidaai/api/assistant-api/internal/telemetry/assistant"
 
 	internal_agent_embeddings "github.com/rapidaai/api/assistant-api/internal/agents/embeddings"
 	internal_agent_rerankers "github.com/rapidaai/api/assistant-api/internal/agents/rerankers"
@@ -22,8 +23,6 @@ import (
 	internal_knowledge_service "github.com/rapidaai/api/assistant-api/internal/services/knowledge"
 	internal_synthesizers "github.com/rapidaai/api/assistant-api/internal/synthesizes"
 	internal_telemetry "github.com/rapidaai/api/assistant-api/internal/telemetry"
-	internal_assistant_telemetry "github.com/rapidaai/api/assistant-api/internal/telemetry/assistant"
-	internal_assistant_telemetry_exporters "github.com/rapidaai/api/assistant-api/internal/telemetry/assistant/exporters"
 	internal_tokenizer "github.com/rapidaai/api/assistant-api/internal/tokenizer"
 	internal_transformer "github.com/rapidaai/api/assistant-api/internal/transformer"
 	internal_vad "github.com/rapidaai/api/assistant-api/internal/vad"
@@ -140,13 +139,11 @@ func NewGenericRequestor(
 		integrationClient: integration_client.NewIntegrationServiceClientGRPC(&config.AppConfig, logger, redis),
 
 		//
-		tracer: internal_assistant_telemetry.NewInMemoryTracer(logger,
-			internal_assistant_telemetry_exporters.NewLoggingAssistantTraceExporter(logger),
-			// internal_assistant_telemetry_exporters.NewOpensearchAssistantTraceExporter(
-			// 	logger,
-			// 	&config.AppConfig, opensearch,
-			// ),
-		),
+		tracer: internal_assistant_telemetry.NewInMemoryTracer(logger), // internal_assistant_telemetry_exporters.NewLoggingAssistantTraceExporter(logger),
+		// internal_assistant_telemetry_exporters.NewOpensearchAssistantTraceExporter(
+		// 	logger,
+		// 	&config.AppConfig, opensearch,
+		// ),
 
 		recorder:          internal_adapter_request_customizers.NewRecorder(logger),
 		messaging:         internal_adapter_request_customizers.NewMessaging(logger),
@@ -352,38 +349,42 @@ func (gr *GenericRequestor) CreateAssistantConversation(
 		return conversation, err
 	}
 	utils.Go(gr.Context(), func() {
-		gr.CreateConversationArgument(auth, conversation.Id, arguments)
+		gr.CreateConversationArgument(auth, assistantId, conversation.Id, arguments)
 	})
 
 	utils.Go(gr.Context(), func() {
-		gr.CreateConversationOption(auth, conversation.Id, options)
+		gr.CreateConversationOption(auth, assistantId, conversation.Id, options)
 	})
 
 	utils.Go(gr.Context(), func() {
-		gr.CreateConversationMetadata(auth, conversation.Id, metadata)
+		gr.CreateConversationMetadata(auth, assistantId, conversation.Id, metadata)
 	})
 
 	return conversation, err
 
 }
 
-func (gr *GenericRequestor) CreateConversationArgument(auth types.SimplePrinciple, assistantConversationId uint64, args map[string]interface{}) ([]*internal_conversation_gorm.AssistantConversationArgument, error) {
+func (gr *GenericRequestor) CreateConversationArgument(auth types.SimplePrinciple,
+	assistantId,
+	assistantConversationId uint64, args map[string]interface{}) ([]*internal_conversation_gorm.AssistantConversationArgument, error) {
 	return gr.conversationService.ApplyConversationArgument(gr.Context(),
 		auth,
+		assistantId,
 		assistantConversationId,
 		args)
 }
 
-func (gr *GenericRequestor) CreateConversationMetadata(auth types.SimplePrinciple, assistantConversationId uint64, metadata map[string]interface{}) ([]*internal_conversation_gorm.AssistantConversationMetadata, error) {
+func (gr *GenericRequestor) CreateConversationMetadata(auth types.SimplePrinciple, assistantId, assistantConversationId uint64, metadata map[string]interface{}) ([]*internal_conversation_gorm.AssistantConversationMetadata, error) {
 	return gr.conversationService.ApplyConversationMetadata(gr.Context(),
 		auth,
+		assistantId,
 		assistantConversationId,
-		metadata)
+		types.NewMetadataList(metadata))
 }
 
-func (gr *GenericRequestor) CreateConversationOption(auth types.SimplePrinciple, assistantConversationId uint64, opts map[string]interface{}) ([]*internal_conversation_gorm.AssistantConversationOption, error) {
+func (gr *GenericRequestor) CreateConversationOption(auth types.SimplePrinciple, assistantId, assistantConversationId uint64, opts map[string]interface{}) ([]*internal_conversation_gorm.AssistantConversationOption, error) {
 	return gr.conversationService.ApplyConversationOption(gr.Context(),
-		auth,
+		auth, assistantId,
 		assistantConversationId,
 		opts)
 }
@@ -487,6 +488,7 @@ func (gr *GenericRequestor) CreateConversationRecording(
 	_, err := gr.conversationService.CreateConversationRecording(
 		gr.ctx,
 		gr.auth,
+		gr.assistant.Id,
 		gr.assistantConversation.Id,
 		body)
 	if err != nil {

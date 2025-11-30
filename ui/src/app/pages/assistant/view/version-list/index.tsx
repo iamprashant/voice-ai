@@ -96,7 +96,7 @@ export function Version(props: VersionProps) {
             case GetAllAssistantProviderResponse.AssistantProvider
               .AssistantproviderCase.ASSISTANTPROVIDERMODEL:
               return (
-                <TableRow key={idx} className="cursor-pointer" data-id={idx}>
+                <TableRow key={idx} data-id={idx}>
                   <CopyCell>
                     {`vrsn_${apm.getAssistantprovidermodel()?.getId()}`}
                   </CopyCell>
@@ -108,16 +108,6 @@ export function Version(props: VersionProps) {
                       ? apm.getAssistantprovidermodel()?.getDescription()
                       : 'Initial assistant version'}
                   </TableCell>
-                  <NameCell data-id={apm.getAssistantprovidermodel()?.getId()}>
-                    {apm.getAssistantprovidermodel()?.getCreateduser() &&
-                      apm
-                        .getAssistantprovidermodel()
-                        ?.getCreateduser()
-                        ?.getName()!}
-                  </NameCell>
-                  <DateCell
-                    date={apm.getAssistantprovidermodel()?.getCreateddate()}
-                  />
                   <TableCell>
                     {assistantProviderAction.assistant?.getAssistantproviderid() !==
                     apm.getAssistantprovidermodel()?.getId() ? (
@@ -153,6 +143,16 @@ export function Version(props: VersionProps) {
                       />
                     )}
                   </TableCell>
+                  <NameCell data-id={apm.getAssistantprovidermodel()?.getId()}>
+                    {apm.getAssistantprovidermodel()?.getCreateduser() &&
+                      apm
+                        .getAssistantprovidermodel()
+                        ?.getCreateduser()
+                        ?.getName()!}
+                  </NameCell>
+                  <DateCell
+                    date={apm.getAssistantprovidermodel()?.getCreateddate()}
+                  />
                 </TableRow>
               );
             case GetAllAssistantProviderResponse.AssistantProvider
@@ -170,18 +170,6 @@ export function Version(props: VersionProps) {
                       ? apm.getAssistantprovideragentkit()?.getDescription()
                       : 'Initial assistant version'}
                   </TableCell>
-
-                  <NameCell>
-                    {
-                      apm
-                        .getAssistantprovideragentkit()
-                        ?.getCreateduser()
-                        ?.getName()!
-                    }
-                  </NameCell>
-                  <DateCell
-                    date={apm.getAssistantprovideragentkit()?.getCreateddate()}
-                  ></DateCell>
                   <TableCell>
                     {assistantProviderAction.assistant?.getAssistantproviderid() !==
                     apm.getAssistantprovideragentkit()?.getId() ? (
@@ -217,6 +205,18 @@ export function Version(props: VersionProps) {
                       />
                     )}
                   </TableCell>
+
+                  <NameCell>
+                    {
+                      apm
+                        .getAssistantprovideragentkit()
+                        ?.getCreateduser()
+                        ?.getName()!
+                    }
+                  </NameCell>
+                  <DateCell
+                    date={apm.getAssistantprovideragentkit()?.getCreateddate()}
+                  ></DateCell>
                 </TableRow>
               );
             case GetAllAssistantProviderResponse.AssistantProvider
@@ -234,16 +234,6 @@ export function Version(props: VersionProps) {
                       ? apm.getAssistantproviderwebsocket()?.getDescription()
                       : 'Initial assistant version'}
                   </TableCell>
-                  <NameCell>
-                    {apm.getAssistantproviderwebsocket()?.getCreateduser() &&
-                      apm
-                        .getAssistantproviderwebsocket()
-                        ?.getCreateduser()
-                        ?.getName()!}
-                  </NameCell>
-                  <DateCell
-                    date={apm.getAssistantproviderwebsocket()?.getCreateddate()}
-                  ></DateCell>
                   <TableCell>
                     {assistantProviderAction.assistant?.getAssistantproviderid() !==
                     apm.getAssistantproviderwebsocket()?.getId() ? (
@@ -279,6 +269,16 @@ export function Version(props: VersionProps) {
                       />
                     )}
                   </TableCell>
+                  <NameCell>
+                    {apm.getAssistantproviderwebsocket()?.getCreateduser() &&
+                      apm
+                        .getAssistantproviderwebsocket()
+                        ?.getCreateduser()
+                        ?.getName()!}
+                  </NameCell>
+                  <DateCell
+                    date={apm.getAssistantproviderwebsocket()?.getCreateddate()}
+                  ></DateCell>
                 </TableRow>
               );
           }
