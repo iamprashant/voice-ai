@@ -43,7 +43,7 @@ export const ConversationMessages: FC<{ vag: VoiceAgent }> = ({ vag }) => {
   }, [JSON.stringify(messages)]);
 
   return (
-    <div className="parent group [&_.feedback-btn]:hidden [&_.message-cntnt:last-of-type_.feedback-btn]:flex">
+    <div className="parent group [&_.feedback-btn]:hidden [&_.message-cntnt:last-of-type_.feedback-btn]:flex  !font-mono ">
       {messages.messages.map((msg, idx) => {
         return msg.role === MessageRole.User ? (
           <div
@@ -196,7 +196,7 @@ export const ConversationMessages: FC<{ vag: VoiceAgent }> = ({ vag }) => {
                   >
                     <MarkdownPreview
                       source={x}
-                      className="text-gray-700! dark:text-gray-400! prose prose-base break-words max-w-none! prose-img:rounded-xl prose-headings:underline prose-a:text-blue-600 prose-strong:font-bold prose-headings:font-bold dark:prose-strong:text-white dark:prose-headings:text-white"
+                      className="text-gray-700! dark:text-gray-400! prose !prose-sm break-words max-w-none! prose-img:rounded-xl prose-headings:underline prose-a:text-blue-600 prose-strong:font-bold prose-headings:font-bold dark:prose-strong:text-white dark:prose-headings:text-white !font-mono"
                       style={{ background: 'transparent' }}
                     />
 

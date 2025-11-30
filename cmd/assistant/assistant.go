@@ -288,7 +288,6 @@ func (g *AppRunner) AllRouters() {
 
 	// rpc call handle by gin handler
 	router.TalkCallbackApiRoute(g.Cfg, g.E, g.Logger, g.Postgres, g.Redis, g.Opensearch)
-	router.ConversationApiRoute(g.Cfg, g.E, g.Logger, g.Postgres, g.Redis, g.Opensearch)
 
 }
 

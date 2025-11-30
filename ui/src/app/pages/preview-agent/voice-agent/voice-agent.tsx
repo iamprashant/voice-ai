@@ -35,7 +35,7 @@ export const VoiceAgent: FC<{
   }, [connectConfig, agentConfig, agentCallback]);
 
   return (
-    <div className="h-dvh flex p-8">
+    <div className="h-dvh flex p-8 text-sm/6">
       <div className="relative overflow-hidden h-full max-w-7xl mx-auto  dark:bg-gray-950/50 border rounded-[2px]">
         <div className="h-full flex flex-row flex-nowrap items-stretch">
           <div className="flex flex-col grow min-w-0 flex-1">
@@ -82,7 +82,7 @@ export const VoiceAgent: FC<{
           </div>
         </div>
       </div>
-      <div className="w-1/4 shrink-0 flex flex-col overflow-auto border">
+      <div className="w-[500px] shrink-0 flex flex-col overflow-auto border border-l-0">
         <VoiceAgentDebugger voiceAgent={voiceAgentContextValue} />
       </div>
     </div>
@@ -216,7 +216,7 @@ export const VoiceAgentDebugger: FC<{ voiceAgent: VI }> = memo(
                       </div>
                       {assistant.getDescription() && (
                         <>
-                          <div className="flex mt-4 flex-row  justify-between items-center text-sm uppercase tracking-wider">
+                          <div className="flex mt-4 flex-row justify-between items-center text-sm uppercase tracking-wider">
                             <h3>Description</h3>
                           </div>
                           <div className="py-2 text-sm leading-normal">
@@ -323,7 +323,7 @@ export const VoiceAgentDebugger: FC<{ voiceAgent: VI }> = memo(
                     <InputGroup title="Deployment" childClass="p-3 text-muted">
                       <div className="space-y-4">
                         <div className="flex justify-between">
-                          <div className="text-muted-foreground">
+                          <div className="text-sm uppercase tracking-wider">
                             Input Mode
                           </div>
                           <div className="font-medium">
@@ -334,7 +334,7 @@ export const VoiceAgentDebugger: FC<{ voiceAgent: VI }> = memo(
                           </div>
                         </div>
                         <div className="flex justify-between">
-                          <div className="text-muted-foreground">
+                          <div className="text-sm uppercase tracking-wider">
                             Output Mode
                           </div>
                           <div className="font-medium">
@@ -355,7 +355,7 @@ export const VoiceAgentDebugger: FC<{ voiceAgent: VI }> = memo(
                             ?.getAudiooptionsList().length! > 0 && (
                             <div className="space-y-4">
                               <div className="flex justify-between">
-                                <div className="text-muted-foreground">
+                                <div className="text-muted uppercase">
                                   Listen.Provider
                                 </div>
                                 <div className="font-medium mt-1 underline underline-offset-4">
@@ -376,7 +376,7 @@ export const VoiceAgentDebugger: FC<{ voiceAgent: VI }> = memo(
                                     className="flex justify-between"
                                     key={index}
                                   >
-                                    <div className="text-muted-foreground capitalize">
+                                    <div className="text-sm uppercase tracking-wider">
                                       {detail.getKey()}
                                     </div>
                                     <div className="font-medium">
@@ -396,7 +396,7 @@ export const VoiceAgentDebugger: FC<{ voiceAgent: VI }> = memo(
                             ?.getAudiooptionsList().length! > 0 && (
                             <div className="space-y-4">
                               <div className="flex justify-between">
-                                <div className="text-muted-foreground">
+                                <div className="text-sm uppercase tracking-wider">
                                   Listen.Provider
                                 </div>
                                 <div className="font-medium mt-1 underline underline-offset-4">
@@ -417,7 +417,7 @@ export const VoiceAgentDebugger: FC<{ voiceAgent: VI }> = memo(
                                     key={index}
                                     className="flex justify-between"
                                   >
-                                    <div className="text-muted-foreground capitalize">
+                                    <div className="text-sm uppercase tracking-wider">
                                       {detail.getKey()}
                                     </div>
                                     <div className="font-medium">

@@ -8,5 +8,6 @@ type AssistantConversationArgument struct {
 	gorm_model.Audited
 	gorm_model.Mutable
 	gorm_model.Argument
+	AssistantId             uint64 `json:"assistantId" gorm:"type:bigint;not null"`
 	AssistantConversationId uint64 `json:"assistantConversationId" gorm:"type:bigint;not null"`
 }

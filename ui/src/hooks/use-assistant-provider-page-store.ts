@@ -154,11 +154,11 @@ export const useAssistantProviderPageStore = create<AssistantProviderType>(
         get().pageSize,
         get().criteria,
         afterGetAllAssistantProviderModel,
-        {
+        ConnectionConfig.WithDebugger({
           authorization: token,
-          'x-auth-id': userId,
-          'x-project-id': projectId,
-        },
+          userId: userId,
+          projectId: projectId,
+        }),
       );
     },
 
@@ -269,9 +269,9 @@ export const useAssistantProviderPageStore = create<AssistantProviderType>(
       { name: 'Version', key: 'version', visible: true },
       { name: 'Provider', key: 'provider', visible: true },
       { name: 'Change description', key: 'change_description', visible: true },
+      { name: 'Action', key: 'action', visible: true },
       { name: 'Created by', key: 'created_by', visible: true },
       { name: 'Created on', key: 'created_on', visible: true },
-      { name: 'Action', key: 'action', visible: true },
     ],
 
     /**

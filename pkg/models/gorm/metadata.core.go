@@ -35,3 +35,11 @@ func (d *Metadata) SetValue(src interface{}) error {
 	}
 	return nil
 }
+
+func NewMetadata(k string, v interface{}) *Metadata {
+	md := &Metadata{
+		Key: k,
+	}
+	md.SetValue(v)
+	return md
+}

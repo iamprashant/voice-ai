@@ -277,14 +277,14 @@ const ConfigureAssistantWebDeployment: FC<{ assistantId: string }> = ({
     webDeployment.setArticlecatalogenabled(featureConfig.blogPost);
     webDeployment.setUploadfileenabled(false); // Not provided in the input, set to false by default
 
-    if (voiceInputEnable && audioInputConfig) {
+    if (voiceInputEnable) {
       const inputAudioProvider = new DeploymentAudioProvider();
       inputAudioProvider.setAudioprovider(audioInputConfig.provider);
       inputAudioProvider.setAudiooptionsList(audioInputConfig.parameters);
       webDeployment.setInputaudio(inputAudioProvider);
     }
 
-    if (voiceOutputEnable && audioOutputConfig) {
+    if (voiceOutputEnable) {
       const outputAudioProvider = new DeploymentAudioProvider();
       outputAudioProvider.setAudioprovider(audioOutputConfig.provider);
       outputAudioProvider.setAudiooptionsList(audioOutputConfig.parameters);
@@ -313,19 +313,18 @@ const ConfigureAssistantWebDeployment: FC<{ assistantId: string }> = ({
           }
           setShowInstruction(true);
         } else {
-          let err =
+          setErrorMessage(
             response?.getError()?.getHumanmessage() ||
-            'Unable to create deployment, please try again';
-          toast.error(err);
+              'Error while deploying assistant as web plugin, please check and try again.',
+          );
         }
       })
       .catch(err => {
         hideLoader();
         if (err) {
-          setErrorMessage(err.message || 'Failed to deploy api');
-          toast.error(
+          setErrorMessage(
             err.message ||
-              'Error while deploying assistant as phone call, please check and try again.',
+              'Error while deploying assistant as web plugin, please check and try again.',
           );
           return;
         }

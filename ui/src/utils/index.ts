@@ -157,3 +157,20 @@ export const randomMeaningfullName = (prefix?: string): string => {
   const name = generate({ exactly: 3, join: '-' });
   return prefix ? `${prefix}-${name}` : name;
 };
+
+/**
+ *
+ */
+export function ConversationIdentifier(input: string): string | null {
+  if (!input) return null;
+  const parts = input.split('-');
+  const idRegex = /^\+?\d+$/;
+
+  for (const part of parts) {
+    if (idRegex.test(part)) {
+      return part;
+    }
+  }
+
+  return null;
+}

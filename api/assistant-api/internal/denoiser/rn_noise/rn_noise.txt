@@ -1,0 +1,142 @@
+package internal_denoiser_rnnoise
+
+import (
+	"context"
+	"fmt"
+	"math"
+	"sync"
+	"unsafe"
+
+	"github.com/rapidaai/pkg/commons"
+)
+
+/*
+#cgo CFLAGS: -I.
+#cgo LDFLAGS: -L./models -lrnnoise
+#include <rnnoise.h>
+#include <stdlib.h>
+*/
+import "C"
+
+type RNNoise struct {
+	logger        commons.Logger
+	Locker        sync.Mutex
+	DenoiseStates []*C.DenoiseState
+	// Buffer        []byte
+}
+
+var frameSize int
+
+func init() {
+	frameSize = int(C.rnnoise_get_frame_size())
+}
+
+func New(
+	logger commons.Logger,
+) (*RNNoise, error) {
+	var denoiseState []*C.DenoiseState
+	for ch := 0; ch < int(1); ch++ {
+		denoiseState = append(denoiseState, C.rnnoise_create(nil))
+	}
+	return &RNNoise{
+		logger:        logger,
+		DenoiseStates: denoiseState,
+	}, nil
+}
+
+func (s *RNNoise) Close() error {
+	if s.DenoiseStates == nil {
+		return fmt.Errorf("double-free attempt")
+	}
+	for _, denoiseState := range s.DenoiseStates {
+		C.rnnoise_destroy(denoiseState)
+	}
+	s.DenoiseStates = nil
+	return nil
+}
+
+var floatSize = unsafe.Sizeof(float32(0))
+
+func chunkSize() uint {
+	return uint(1) * uint(frameSize) * uint(floatSize)
+}
+
+func (s *RNNoise) ChunkSize() uint {
+	return chunkSize()
+}
+
+func (s *RNNoise) SuppressNoise(ctx context.Context, input []byte, outputVoice []byte) (_ret float64, _err error) {
+	if len(input)%int(floatSize) != 0 {
+		return 0, fmt.Errorf("the size of the input is not a multiple of size float32: %d %% %d != 0", len(input), floatSize)
+	}
+	if len(input) != len(outputVoice) {
+		return 0, fmt.Errorf("lengths of input and output slices are not equal: %d != %d", len(input), len(outputVoice))
+	}
+	if len(input) < int(s.ChunkSize()) {
+		return 0, fmt.Errorf("the size of the input is too small: %d < %d", len(input), s.ChunkSize())
+	}
+	if len(input)%int(s.ChunkSize()) != 0 {
+		return 0, fmt.Errorf("the size of the input is not a multiple of ChunkSize: %d %% %d != 0", len(input), int(s.ChunkSize()))
+	}
+
+	s.Locker.Lock()
+	defer s.Locker.Unlock()
+
+	gain(input, input) // Apply gain directly to input
+	v := noiseSuppressOneChannel(ctx, s.DenoiseStates[0], input, outputVoice)
+
+	ungain(outputVoice) // Adjust output after denoising
+	return v, nil
+	// s.Locker.Lock()
+	// defer s.Locker.Unlock()
+
+	// // Ensure buffer is initialized once and reused
+	// if cap(s.Buffer) < len(input) {
+	// 	s.Buffer = make([]byte, len(input))
+	// } else {
+	// 	s.Buffer = s.Buffer[:len(input)]
+	// }
+
+	// gain(s.Buffer, input)
+	// v := noiseSuppressOneChannel(ctx, s.DenoiseStates[0], s.Buffer, outputVoice)
+
+	// ungain(outputVoice)
+	// return v, nil
+
+}
+
+func noiseSuppressOneChannel(ctx context.Context, denoiseState *C.DenoiseState, input []byte, outputVoice []byte) float64 {
+	var maxVADProb float64
+	chunkSize := chunkSize()
+	for len(input) > 0 {
+		in := unsafe.Slice((*C.float)(unsafe.Pointer(&input[0])), int(chunkSize/uint(floatSize)))
+		out := unsafe.Slice((*C.float)(unsafe.Pointer(&outputVoice[0])), int(chunkSize/uint(floatSize)))
+
+		vadProb := C.rnnoise_process_frame(
+			denoiseState,
+			(*C.float)(unsafe.Pointer(&out[0])),
+			(*C.float)(unsafe.Pointer(&in[0])),
+		)
+		if float64(vadProb) > maxVADProb {
+			maxVADProb = float64(vadProb)
+		}
+		input = input[int(chunkSize):]
+		outputVoice = outputVoice[int(chunkSize):]
+	}
+	return maxVADProb
+}
+
+func gain(dstBytes, srcBytes []byte) {
+	src := unsafe.Slice((*float32)(unsafe.Pointer(&srcBytes[0])), len(srcBytes)/4)
+	dst := unsafe.Slice((*float32)(unsafe.Pointer(&dstBytes[0])), len(dstBytes)/4)
+	for idx := range src {
+		dst[idx] = src[idx] * math.MaxInt16
+	}
+}
+
+func ungain(buf []byte) {
+	s := unsafe.Slice((*float32)(unsafe.Pointer(&buf[0])), len(buf)/4)
+	for idx := range s {
+		s[idx] /= math.MaxInt16
+	}
+}

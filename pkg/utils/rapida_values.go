@@ -52,6 +52,7 @@ func AnyMapToInterfaceMap(anyMap map[string]*anypb.Any) (map[string]interface{},
 	}
 	return interfaceMap, nil
 }
+
 func AnyToBool(anyValue *anypb.Any) (bool, error) {
 	if anyValue.TypeUrl == "type.googleapis.com/google.protobuf.Value" {
 		value := &structpb.Value{}

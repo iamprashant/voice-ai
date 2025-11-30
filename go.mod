@@ -38,6 +38,7 @@ require (
 	github.com/sendgrid/sendgrid-go v3.16.1+incompatible
 	github.com/soheilhy/cmux v0.1.5
 	github.com/spf13/viper v1.13.0
+	github.com/streamer45/silero-vad-go v0.2.1
 	github.com/stretchr/testify v1.10.0
 	github.com/twilio/twilio-go v1.28.5
 	github.com/vonage/vonage-go-sdk v0.14.0

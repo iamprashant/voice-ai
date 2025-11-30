@@ -2394,10 +2394,10 @@
     uuid "^10.0.0"
     zustand "^4.5.5"
 
-"@rapidaai/react@1.1.44":
-  version "1.1.44"
-  resolved "https://registry.yarnpkg.com/@rapidaai/react/-/react-1.1.44.tgz#c467801161b8754d7768637273ceacc1d7e2322f"
-  integrity sha512-BO2Ybo2JCDUQf9jNMMdThymbKsdqZEkQBdb7y5gKLMjdzg8Bf7OZVN2tAchY+vCcYKsBfPLgkyIh0D0xZLANZg==
+"@rapidaai/react@1.1.45":
+  version "1.1.45"
+  resolved "https://registry.yarnpkg.com/@rapidaai/react/-/react-1.1.45.tgz#97162ea5c45f4d22d1b64d76783d0c90d013b5bd"
+  integrity sha512-gYKpDNUK3D2FnpJzzgenjsqd9Z4G2dJNis39s1ZusjVIin0REpDW6AoeP81jUL999CPFdVsKuBMnsGBSHFZXVw==
   dependencies:
     "@emotion/is-prop-valid" "^1.3.1"
     "@grpc/grpc-js" "^1.13.4"

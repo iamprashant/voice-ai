@@ -44,6 +44,7 @@ func (tc *GenericRequestor) AddMetrics(
 		_, err := tc.conversationService.ApplyConversationMetrics(
 			tc.ctx,
 			auth,
+			tc.assistant.Id,
 			tc.assistantConversation.Id,
 			metrics,
 		)
@@ -63,6 +64,7 @@ func (tc *GenericRequestor) AddMetric(
 		_, err := tc.conversationService.ApplyConversationMetrics(
 			tc.ctx,
 			auth,
+			tc.assistant.Id,
 			tc.assistantConversation.Id,
 			[]*types.Metric{metric},
 		)

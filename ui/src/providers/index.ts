@@ -3,6 +3,7 @@ import developmentProvider from './provider.development.json';
 
 export interface IntegrationProvider extends RapidaProvider {}
 interface EndOfSpeechProvider extends RapidaProvider {}
+interface VADProvider extends RapidaProvider {}
 interface NoiseCancellationProvider extends RapidaProvider {}
 export interface RapidaProvider {
   code: string;
@@ -25,6 +26,10 @@ export const allProvider = (): RapidaProvider[] => {
 
 export const EndOfSpeech = (): EndOfSpeechProvider[] => {
   return allProvider().filter(x => x.featureList.includes('end_of_speech'));
+};
+
+export const VAD = (): VADProvider[] => {
+  return allProvider().filter(x => x.featureList.includes('vad'));
 };
 
 export const NoiseCancellation = (): NoiseCancellationProvider[] => {

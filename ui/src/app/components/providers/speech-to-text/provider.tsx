@@ -88,11 +88,12 @@ export const GetDefaultMicrophoneConfig = (
   existing: Metadata[] = [],
 ): Metadata[] => {
   const defaultConfig = [
-    { key: 'microphone.eos.enable', value: 'true' },
-    { key: 'microphone.eos.timeout', value: '1500' },
-    { key: 'microphone.denoising', value: 'true' },
-    { key: 'microphone.silence.timeout', value: '5000' },
-    { key: 'microphone.idle.message', value: 'Are you still there?' },
+    // end of speech
+    { key: 'microphone.eos.timeout', value: '1000' },
+    { key: 'microphone.eos.provider', value: 'silence_based_eos' },
+    { key: 'microphone.denoising.provider', value: 'rn_noise' },
+    { key: 'microphone.vad.provider', value: 'silero_vad' },
+    { key: 'microphone.vad.threshold', value: '0.5' },
   ];
 
   const existingKeys = new Set(existing.map(m => m.getKey()));

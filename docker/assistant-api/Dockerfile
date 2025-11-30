@@ -22,14 +22,6 @@ RUN mkdir -p /tmp/build && cd /tmp/build && \
     rm onnxruntime-linux-x64-1.16.0.tgz
 
 # ---- Build RNNoise ----
-# RUN cd /tmp/build && \
-#     git clone https://github.com/rapidaai/rnnoise.git && \
-#     cd rnnoise && \
-#     ./autogen.sh && \
-#     ./configure --prefix=/usr/local && \
-#     make -j$(nproc) && \
-#     make install && \
-#     cd .. && rm -rf rnnoise
 
 RUN cd /tmp/build && \
     curl -fsSL https://github.com/rapidaai/rnnoise/archive/refs/heads/main.tar.gz -o rnnoise.tar.gz && \

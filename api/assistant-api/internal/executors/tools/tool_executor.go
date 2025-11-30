@@ -12,7 +12,7 @@ import (
 	internal_executors "github.com/rapidaai/api/assistant-api/internal/executors"
 	internal_adapter_telemetry "github.com/rapidaai/api/assistant-api/internal/telemetry"
 
-	internal_tool_factories "github.com/rapidaai/api/assistant-api/internal/factories/tools"
+	internal_tool_factory "github.com/rapidaai/api/assistant-api/internal/factory/tool"
 	lexatic_backend "github.com/rapidaai/protos"
 
 	"github.com/rapidaai/pkg/commons"
@@ -46,7 +46,7 @@ func (executor *toolExecutor) Init(
 
 	start := time.Now()
 	for _, tool := range communication.Assistant().AssistantTools {
-		caller, err := internal_tool_factories.GetToolAction(
+		caller, err := internal_tool_factory.GetToolAction(
 			executor.logger,
 			tool, communication)
 		if err != nil {

@@ -8,6 +8,7 @@ import {
   GetDefaultMicrophoneConfig,
   GetDefaultSpeechToTextIfInvalid,
 } from '@/app/components/providers/speech-to-text/provider';
+import { VADProvider } from '@/app/components/providers/vad';
 
 /**
  *
@@ -97,21 +98,32 @@ export const ConfigureAudioInputProvider: React.FC<
       />
       {audioInputConfig.provider && (
         <>
+          <VADProvider
+            className="m-0 mt-6"
+            vadProvider={getParamValue('microphone.vad.provider', 'silero_vad')}
+            onChangeVADProvider={v => {
+              updateParameter('microphone.vad.provider', v);
+            }}
+            vadThreshold={getParamValue('microphone.vad.threshold', '0,5')}
+            onChangeVadThreshold={(timeout: string) => {
+              updateParameter('microphone.vad.threshold', timeout);
+            }}
+          />
           <NoiseCancellationProvider
             className="m-0 mt-6"
             noiseCancellationProvider={getParamValue(
-              'microphone.noise_removal.provider',
+              'microphone.denoising.provider',
               'rn_noise',
             )}
             onChangeNoiseCancellationProvider={v => {
-              updateParameter('microphone.noise_removal.provider', v);
+              updateParameter('microphone.denoising.provider', v);
             }}
           />
           <EndOfSpeechProvider
             className="m-0 mt-6"
             endOfSpeechProvider={getParamValue(
               'microphone.eos.provider',
-              'silero_vad',
+              'silence_based_eos',
             )}
             onChangeEndOfSpeechProvider={provider => {
               updateParameter('microphone.eos.provider', provider);

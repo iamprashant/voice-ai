@@ -111,6 +111,7 @@
 
 @theme {
     --font-sans: "IBM Plex Sans", sans-serif;
+    --font-mono: "IBM Plex Mono", monospace;
     --font-weight-medium: 450;
     --font-weight-semibold: 500;
     --font-weight-bold: 700;
@@ -518,7 +519,7 @@
     }
 
     .text-muted {
-        @apply text-gray-500 dark:text-gray-600;
+        @apply text-gray-500 dark:text-gray-500;
     }
 
     .form-label {

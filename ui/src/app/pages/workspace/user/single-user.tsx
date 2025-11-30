@@ -6,6 +6,7 @@ import { StatusIndicator } from '@/app/components/indicators/status';
 import { RoleIndicator } from '@/app/components/indicators/role';
 import { toHumanReadableDate } from '@/utils/date';
 import { TableRow } from '@/app/components/base/tables/table-row';
+import { TableCell } from '@/app/components/base/tables/table-cell';
 
 /**
  * all the user row
@@ -15,46 +16,34 @@ import { TableRow } from '@/app/components/base/tables/table-row';
 export function SingleUser(props: { user: User }) {
   return (
     <TableRow>
-      <td>
-        <div className="underline underline-offset-2 hover:text-blue-600 text-blue-500 text-[15px]  px-2 md:px-5 py-3">
-          {props.user.getId()}
-        </div>
-      </td>
-      <td>
-        <div className="whitespace-no-wrap px-2 md:px-5 py-3">
-          <div className="flex items-center">
-            <div className="shrink-0 mr-3">
-              <TextImage size={7} name={props.user.getName()}></TextImage>
-            </div>
-            <div className="">{props.user.getName()}</div>
+      <TableCell>{props.user.getId()}</TableCell>
+      <TableCell>
+        <div className="flex items-center">
+          <div className="shrink-0 mr-3">
+            <TextImage size={7} name={props.user.getName()}></TextImage>
           </div>
+          <div className="">{props.user.getName()}</div>
         </div>
-      </td>
-      <td>
+      </TableCell>
+      <TableCell>
         <div className="font-normal text-left max-w-[20rem] truncate">
           {props.user.getEmail()}
         </div>
-      </td>
-      <td>
-        <div className="whitespace-no-wrap px-2 md:px-5 py-3">
-          <RoleIndicator role={'SUPER_ADMIN'} />
-        </div>
-      </td>
-      <td>
+      </TableCell>
+      <TableCell>
+        <RoleIndicator role={'SUPER_ADMIN'} />
+      </TableCell>
+      <TableCell>
         <div className="font-normal text-left underline decoration-dotted">
           {toHumanReadableDate(props.user.getCreateddate()!)}
         </div>
-      </td>
-      <td>
-        <div className="whitespace-no-wrap px-2 md:px-5 py-3">
-          <StatusIndicator state={props.user.getStatus()} />
-        </div>
-      </td>
-      <td>
-        <div className="whitespace-no-wrap px-2 md:px-5 py-3">
-          <UserOption id={props.user.getId()}></UserOption>
-        </div>
-      </td>
+      </TableCell>
+      <TableCell>
+        <StatusIndicator state={props.user.getStatus()} />
+      </TableCell>
+      <TableCell>
+        <UserOption id={props.user.getId()}></UserOption>
+      </TableCell>
     </TableRow>
   );
 }

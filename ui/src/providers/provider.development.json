@@ -3,14 +3,28 @@
         "name": "Silero Vad",
         "code": "silero_vad",
         "featureList": [
+            "vad"
+        ]
+    },
+    {
+        "name": "Ten Vad",
+        "code": "ten_vad",
+        "featureList": [
+            "wip_vad"
+        ]
+    },
+    {
+        "name": "Silence based",
+        "code": "silence_based_eos",
+        "featureList": [
             "end_of_speech"
         ]
     },
     {
         "name": "Livekit EOU",
-        "code": "livekit_eou",
+        "code": "livekit_eos",
         "featureList": [
-            "end_of_speech"
+            "wip_end_of_speech"
         ]
     },
     {
@@ -24,7 +38,7 @@
         "name": "Krsip",
         "code": "krsip",
         "featureList": [
-            "noise_cancellation"
+            "wip_noise_cancellation"
         ]
     },
     {

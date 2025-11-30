@@ -28,7 +28,7 @@ export const Tab: FC<TabProps> = ({ isActive, children, ...props }) => {
   );
 };
 
-export const TabLink: FC<LinkTabProps> = ({ to, children }) => {
+export const TabLink: FC<LinkTabProps> = ({ to, children, className }) => {
   return (
     <NavLink
       to={to}
@@ -38,6 +38,7 @@ export const TabLink: FC<LinkTabProps> = ({ to, children }) => {
           isActive
             ? 'text-blue-500 bg-blue-500/10'
             : 'hover:bg-blue-500/5 hover:text-blue-500',
+          className,
         );
       }}
     >

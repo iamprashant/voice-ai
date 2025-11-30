@@ -13,7 +13,7 @@ import (
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -98,7 +98,7 @@ func (talking *GenericRequestor) Connect(
 	ctx context.Context,
 	iAuth types.SimplePrinciple,
 	identifier string,
-	req *lexatic_backend.AssistantConversationConfiguration) error {
+	req *protos.AssistantConversationConfiguration) error {
 	ctx, span, err := talking.
 		Tracer().StartSpan(
 		ctx,
@@ -156,29 +156,47 @@ func (talking *GenericRequestor) OnCreateSession(
 	)
 	defer span.EndSpan(ctx, utils.AssistantCreateConversationStage)
 
-	start := time.Now()
-	defer talking.logger.Benchmark("io.speak.Init", time.Since(start))
-	var wg sync.WaitGroup
+	streamInConfg, err := talking.streamer.Config().GetInputConfig()
+	if err != nil {
+		talking.logger.Errorf("streamConfg is not set, please check the configuration")
+		return err
+	}
 
+	audioInConfig, err := streamInConfg.GetAudioConfig()
+	if err != nil {
+		talking.logger.Errorf("streamConfg is not set, please check the configuration")
+		return err
+	}
+
+	streamOtConfg, err := talking.streamer.Config().GetOutputConfig()
+	if err != nil {
+		talking.logger.Errorf("streamConfg is not set, please check the configuration")
+		return err
+	}
+
+	audioOutConfig, err := streamOtConfg.GetAudioConfig()
+	if err != nil {
+		talking.logger.Errorf("streamConfg is not set, please check the configuration")
+		return err
+	}
+
+	var wg sync.WaitGroup
 	wg.Add(1)
 	// establish listener
 	utils.Go(ctx, func() {
 		defer wg.Done()
-		err := talking.ConnectListener(ctx)
+		err := talking.ConnectListener(ctx, audioInConfig, audioOutConfig)
 		if err != nil {
 			talking.logger.Tracef(ctx, "unable to init analyzer %+v", err)
 		}
-		talking.logger.Benchmark("io.listen.Init", time.Since(start))
 	})
-	// establish speaker
 
 	wg.Add(1)
 	utils.Go(ctx, func() {
 		defer wg.Done()
-		err := talking.ConnectSpeaker(ctx)
+		err := talking.ConnectSpeaker(ctx, audioInConfig, audioOutConfig)
 		if err != nil {
 			talking.logger.Tracef(ctx, "unable to connect speaker %+v", err)
-			return
 		}
 		err = talking.Greeting(ctx)
 		if err != nil {
@@ -191,7 +209,7 @@ func (talking *GenericRequestor) OnCreateSession(
 	utils.Go(ctx, func() {
 		defer wg.Done()
 		err := talking.recorder.
-			Init(talking.streamer.Config().InputConfig.Audio, talking.streamer.Config().OutputConfig.Audio)
+			Init(audioInConfig, audioOutConfig)
 		if err != nil {
 			talking.logger.Tracef(ctx, "unable to init recorder %+v", err)
 		}
@@ -214,9 +232,9 @@ func (talking *GenericRequestor) OnCreateSession(
 	err = talking.
 		Notify(
 			ctx,
-			&lexatic_backend.AssistantConversationConfiguration{
+			&protos.AssistantConversationConfiguration{
 				AssistantConversationId: conversation.Id,
-				Assistant: &lexatic_backend.AssistantDefinition{
+				Assistant: &protos.AssistantDefinition{
 					AssistantId: assistant.Id,
 					Version:     fmt.Sprintf("vrsn_%d", assistant.AssistantProviderId),
 				},
@@ -289,13 +307,36 @@ func (talking *GenericRequestor) OnResumeSession(
 	)
 	defer span.EndSpan(ctx, utils.AssistantResumeConverstaionStage)
 
-	var wg sync.WaitGroup
+	streamInConfg, err := talking.streamer.Config().GetInputConfig()
+	if err != nil {
+		talking.logger.Errorf("streamConfg is not set, please check the configuration")
+		return err
+	}
 
+	audioInConfig, err := streamInConfg.GetAudioConfig()
+	if err != nil {
+		talking.logger.Errorf("streamConfg is not set, please check the configuration")
+		return err
+	}
+
+	streamOtConfg, err := talking.streamer.Config().GetOutputConfig()
+	if err != nil {
+		talking.logger.Errorf("streamConfg is not set, please check the configuration")
+		return err
+	}
+
+	audioOutConfig, err := streamOtConfg.GetAudioConfig()
+	if err != nil {
+		talking.logger.Errorf("streamConfg is not set, please check the configuration")
+		return err
+	}
+
+	var wg sync.WaitGroup
 	wg.Add(1)
 	// establish listener
 	utils.Go(talking.Context(), func() {
 		defer wg.Done()
-		err := talking.ConnectListener(ctx)
+		err := talking.ConnectListener(ctx, audioInConfig, audioOutConfig)
 		if err != nil {
 			talking.logger.Tracef(talking.Context(), "unable to init analyzer %+v", err)
 		}
@@ -305,10 +346,9 @@ func (talking *GenericRequestor) OnResumeSession(
 	wg.Add(1)
 	utils.Go(talking.Context(), func() {
 		defer wg.Done()
-		err := talking.ConnectSpeaker(ctx)
+		err := talking.ConnectSpeaker(ctx, audioInConfig, audioOutConfig)
 		if err != nil {
 			talking.logger.Tracef(talking.Context(), "unable to init analyzer %+v", err)
-			return
 		}
 		err = talking.Greeting(ctx)
 		if err != nil {
@@ -320,8 +360,8 @@ func (talking *GenericRequestor) OnResumeSession(
 	utils.Go(talking.Context(), func() {
 		defer wg.Done()
 		err := talking.recorder.Init(
-			talking.streamer.Config().InputConfig.Audio,
-			talking.streamer.Config().OutputConfig.Audio,
+			audioInConfig,
+			audioOutConfig,
 		)
 		if err != nil {
 			talking.logger.Tracef(talking.Context(), "unable to init recorder %+v", err)
@@ -353,9 +393,9 @@ func (talking *GenericRequestor) OnResumeSession(
 	err = talking.
 		Notify(
 			ctx,
-			&lexatic_backend.AssistantConversationConfiguration{
+			&protos.AssistantConversationConfiguration{
 				AssistantConversationId: conversation.Id,
-				Assistant: &lexatic_backend.AssistantDefinition{
+				Assistant: &protos.AssistantDefinition{
 					AssistantId: assistant.Id,
 					Version:     fmt.Sprintf("vrsn_%d", assistant.AssistantProviderId),
 				},

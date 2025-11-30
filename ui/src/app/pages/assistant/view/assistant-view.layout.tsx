@@ -15,7 +15,12 @@ import {
 import { useAssistantPageStore } from '@/hooks/use-assistant-page-store';
 import { TabLink } from '@/app/components/tab-link';
 import { IBlueButton, IButton } from '@/app/components/form/button';
-import { Bolt, ExternalLink, GitPullRequestCreate } from 'lucide-react';
+import {
+  Bolt,
+  ChevronDown,
+  ExternalLink,
+  GitPullRequestCreate,
+} from 'lucide-react';
 import { useGlobalNavigation } from '@/hooks/use-global-navigator';
 import { PageHeaderBlock } from '@/app/components/blocks/page-header-block';
 import { PageTitleBlock } from '@/app/components/blocks/page-title-block';
@@ -50,11 +55,15 @@ export const AssistantViewLayout: FC<HTMLAttributes<HTMLDivElement>> = () => {
   //
   const [createVersionPopover, setCreateVersionPopover] = useState(false);
 
+  //
+  const [previewPopover, setPreviewPopover] = useState(false);
+
   /**
    * navigation
    */
   const {
     goToAssistantPreview,
+    goToAssistantPreviewCall,
     goToCreateAssistantVersion,
     goToCreateAssistantWebsocketVersion,
     goToCreateAssistantAgentKitVersion,
@@ -195,10 +204,46 @@ export const AssistantViewLayout: FC<HTMLAttributes<HTMLDivElement>> = () => {
               <Bolt className="w-4 h-4 ml-1.5" strokeWidth={1.5} />
             </IButton>
 
-            <IButton onClick={() => goToAssistantPreview(assistantId!)}>
-              Preview
-              <ExternalLink className="w-4 h-4 ml-1.5" strokeWidth={1.5} />
-            </IButton>
+            <div className="flex">
+              <IButton onClick={() => setPreviewPopover(!previewPopover)}>
+                Preview
+                <ChevronDown
+                  className={cn(
+                    'w-4 h-4 ml-1.5 transition-all delay-200',
+                    previewPopover && 'rotate-180',
+                  )}
+                  strokeWidth={1.5}
+                />
+              </IButton>
+              <Popover
+                align={'bottom-end'}
+                className="w-60 pb-2"
+                open={previewPopover}
+                setOpen={setPreviewPopover}
+              >
+                <div className="space-y-0.5 text-sm/6">
+                  <p className="px-2 py-1 text-xs/5 text-muted uppercase">
+                    Agent Preview
+                  </p>
+                  <hr className="w-full h-[1px] bg-gray-800" />
+
+                  {assistantAction.currentAssistant.getPhonedeployment() && (
+                    <IButton
+                      className="w-full justify-start"
+                      onClick={() => goToAssistantPreviewCall(assistantId!)}
+                    >
+                      Preview phone call
+                    </IButton>
+                  )}
+                  <IButton
+                    className="w-full justify-start"
+                    onClick={() => goToAssistantPreview(assistantId!)}
+                  >
+                    Debugging
+                  </IButton>
+                </div>
+              </Popover>
+            </div>
           </div>
         )}
       </PageHeaderBlock>
@@ -209,13 +254,22 @@ export const AssistantViewLayout: FC<HTMLAttributes<HTMLDivElement>> = () => {
         )}
       >
         <div className="flex items-center divide-x border-r w-fit">
-          <TabLink to={`/deployment/assistant/${assistantId}/overview`}>
+          <TabLink
+            to={`/deployment/assistant/${assistantId}/overview`}
+            className="text-sm/6 uppercase font-medium"
+          >
             Overview
           </TabLink>
-          <TabLink to={`/deployment/assistant/${assistantId}/sessions`}>
+          <TabLink
+            to={`/deployment/assistant/${assistantId}/sessions`}
+            className="text-sm/6 uppercase font-medium"
+          >
             Sessions
           </TabLink>
-          <TabLink to={`/deployment/assistant/${assistantId}/version-history`}>
+          <TabLink
+            to={`/deployment/assistant/${assistantId}/version-history`}
+            className="text-sm/6 uppercase font-medium"
+          >
             Versions
           </TabLink>
         </div>

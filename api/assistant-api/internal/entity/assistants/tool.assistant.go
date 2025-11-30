@@ -17,22 +17,6 @@ type AssistantTool struct {
 	ExecutionOptions []*AssistantToolOption  `json:"executionOptions" gorm:"foreignKey:AssistantToolId"`
 }
 
-// CREATE TABLE assistant_tools (
-//     id bigint NOT NULL,
-//     created_date timestamp without time zone NOT NULL DEFAULT now(),
-//     updated_date timestamp without time zone,
-//     status character varying(50) NOT NULL DEFAULT 'ACTIVE'::character varying,
-//     created_by bigint NOT NULL,
-//     updated_by bigint,
-//     assistant_id bigint NOT NULL,
-//     name character varying(50) NOT NULL,
-// 	description character varying(400) NOT NULL,
-// 	fields TEXT NOT NULL,
-// 	execution_method character varying(200) NOT NULL,
-//     CONSTRAINT assistant_tools_pkey PRIMARY KEY (id),
-//     CONSTRAINT assistant_tools_assistant_id_name_key UNIQUE (assistant_id, name)
-// );
-
 type AssistantToolOption struct {
 	gorm_model.Audited
 	gorm_model.Mutable
@@ -48,19 +32,6 @@ func (a *AssistantTool) GetOptions() utils.Option {
 	return opts
 }
 
-// CREATE TABLE assistant_tool_options (
-//     id BIGINT PRIMARY KEY NOT NULL,
-//     status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
-//     created_by BIGINT NOT NULL,
-//     updated_by BIGINT,
-//     created_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-//     updated_date TIMESTAMP DEFAULT NULL,
-//     key VARCHAR(200) NOT NULL,
-//     value TEXT NOT NULL,
-//     assistant_tool_id BIGINT NOT NULL,
-//     CONSTRAINT uk_assistant_tool_id UNIQUE (key, assistant_tool_id)
-// );
-
 type AssistantToolLog struct {
 	gorm_model.Audited
 	gorm_model.Mutable
@@ -75,22 +46,3 @@ type AssistantToolLog struct {
 	TimeTaken                      int64          `json:"timeTaken" gorm:"type:bigint;size:20"`
 	AssistantTool                  *AssistantTool `json:"assistantTool" gorm:"foreignKey:AssistantToolId"`
 }
-
-//  CREATE TABLE assistant_tool_logs (
-//     id BIGINT PRIMARY KEY,
-//     created_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-//     updated_date TIMESTAMP WITH TIME ZONE,
-//     status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
-//     created_by BIGINT,
-//     updated_by BIGINT,
-//     project_id BIGINT NOT NULL,
-//     organization_id BIGINT NOT NULL,
-// 		assistant_tool_id BIGINT NOT NULL,
-// 		assistant_tool_name VARCHAR(255) NOT NULL,
-//     assistant_id BIGINT,
-//     assistant_conversation_id BIGINT,
-//     assistant_conversation_message_id VARCHAR(255) NOT NULL,
-//     execution_method VARCHAR(20),
-//     asset_prefix VARCHAR(200) NOT NULL,
-//     time_taken BIGINT
-// );

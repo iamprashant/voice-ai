@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import { ScrollableResizableTable } from '@/app/components/data-table';
-import { Assistant } from '@rapidaai/react';
+import {
+  Assistant,
+  AssistantConversationTelephonyEvent,
+  Criteria,
+} from '@rapidaai/react';
 import { useCredential, useRapidaStore } from '@/hooks';
 import toast from 'react-hot-toast/headless';
 import { BluredWrapper } from '@/app/components/wrapper/blured-wrapper';
@@ -20,7 +24,15 @@ import { TableRow } from '@/app/components/base/tables/table-row';
 import { AssistantConversationFilterDialog } from '@/app/components/base/modal/assistant-conversation-filter-modal';
 import { IButton } from '@/app/components/form/button';
 import TooltipPlus from '@/app/components/base/tooltip-plus';
-import { Download, ExternalLink, ListFilterPlus, RotateCw } from 'lucide-react';
+import {
+  Download,
+  ExternalLink,
+  Eye,
+  ListFilterPlus,
+  PhoneCall,
+  RotateCw,
+  Telescope,
+} from 'lucide-react';
 import { Spinner } from '@/app/components/loader/spinner';
 import { useGlobalNavigation } from '@/hooks/use-global-navigator';
 import { TableCell } from '@/app/components/base/tables/table-cell';
@@ -31,6 +43,9 @@ import { ConversationDirectionIndicator } from '@/app/components/indicators/conv
 import { CopyCell } from '@/app/components/base/tables/copy-cell';
 import { LabelCell } from '@/app/components/base/tables/label-cell';
 import { DateCell } from '@/app/components/base/tables/date-cell';
+import { ConversationIdentifier } from '@/utils';
+import { ConversationTelemetryDialog } from '@/app/components/base/modal/conversation-telemetry-modal';
+import { AssistantConversationTelephonyEventDialog } from '@/app/components/base/modal/assistant-conversation-telephony-event-modal';
 
 interface ConversationProps {
   currentAssistant: Assistant;
@@ -38,6 +53,12 @@ interface ConversationProps {
 
 export function Conversations({ currentAssistant }: ConversationProps) {
   const [userId, token, projectId] = useCredential();
+  const [criterias, setCriterias] = useState<Criteria[]>([]);
+  const [isTelemetryDialogOpen, setTelemetryDialogOpen] = useState(false);
+  const [isTelephonyStatusOpen, setTelephonyStatusOpen] = useState(false);
+  const [telephonyEvents, setTelephonyEvents] = useState<
+    AssistantConversationTelephonyEvent[]
+  >([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const rapidaContext = useRapidaStore();
   const navigation = useGlobalNavigation();
@@ -149,6 +170,21 @@ export function Conversations({ currentAssistant }: ConversationProps) {
     });
   };
 
+  const handleTraceClick = (assistnatId: string, conversationID: string) => {
+    const ctr = new Criteria();
+    ctr.setKey('assistantId');
+    ctr.setLogic('match');
+    ctr.setValue(assistnatId);
+
+    const ctr2 = new Criteria();
+    ctr2.setKey('assistantConversationId');
+    ctr2.setLogic('match');
+    ctr2.setValue(conversationID);
+
+    setCriterias([ctr, ctr2]);
+    setTelemetryDialogOpen(true);
+  };
+
   const csvEscape = (str: string): string => {
     return `"${str.replace(/"/g, '""')}"`;
   };
@@ -213,13 +249,27 @@ export function Conversations({ currentAssistant }: ConversationProps) {
       </div>
     );
   }
+
   return (
     <div className="h-full flex flex-col flex-1">
+      {isTelemetryDialogOpen && (
+        <ConversationTelemetryDialog
+          modalOpen={isTelemetryDialogOpen}
+          setModalOpen={setTelemetryDialogOpen}
+          criterias={criterias}
+        />
+      )}
       <AssistantConversationFilterDialog
         modalOpen={isFilterOpen}
         setModalOpen={setFilterClose}
         filters={filters}
         onFiltersChange={applyFilter}
+      />
+
+      <AssistantConversationTelephonyEventDialog
+        modalOpen={isTelephonyStatusOpen}
+        setModalOpen={setTelephonyStatusOpen}
+        events={telephonyEvents}
       />
 
       <BluredWrapper className="border-none p-0">
@@ -237,6 +287,7 @@ export function Conversations({ currentAssistant }: ConversationProps) {
 
           <IButton
             type="button"
+            className="rounded-none"
             onClick={() => {
               setFilterOpen();
             }}
@@ -253,6 +304,7 @@ export function Conversations({ currentAssistant }: ConversationProps) {
             </TooltipPlus>
           </IButton>
           <IButton
+            className="rounded-none"
             type="button"
             disabled={downloading}
             onClick={() => {
@@ -275,6 +327,7 @@ export function Conversations({ currentAssistant }: ConversationProps) {
             </TooltipPlus>
           </IButton>
           <IButton
+            className="rounded-none"
             onClick={() => {
               get();
             }}
@@ -289,41 +342,11 @@ export function Conversations({ currentAssistant }: ConversationProps) {
             clms={assistantConversationListAction.columns.filter(
               x => x.visible,
             )}
+            isActionable={false}
           >
             {assistantConversationListAction.assistantConversations.map(
               (row, idx) => (
-                <TableRow
-                  key={idx}
-                  className="cursor-pointer"
-                  data-id={row.getId()}
-                  onClick={event => {
-                    event.stopPropagation();
-                    navigation.goToAssistantSession(
-                      row.getAssistantid(),
-                      row.getId(),
-                    );
-                    // assistantConversationListAction.showDialog(row);
-                  }}
-                >
-                  <TableCell>
-                    {selectedIds.indexOf(row.getId()) > 0 && (
-                      <div className="absolute top-0 bottom-0 left-0 bg-blue-500 w-[2px]"></div>
-                    )}
-                    <div className="w-8 h-8 flex justify-center items-center">
-                      <input
-                        type="checkbox"
-                        name={`checkbox-${row.getId()}--name`}
-                        id={`checkbox-${row.getId()}--name`}
-                        checked={selectedIds.includes(row.getId())}
-                        onClick={event => {
-                          event.stopPropagation(); // Prevent <tr> onClick from firing
-                        }}
-                        onChange={() => {
-                          onToggleSelect(row.getId());
-                        }}
-                      />
-                    </div>
-                  </TableCell>
+                <TableRow key={idx} data-id={row.getId()}>
                   {assistantConversationListAction.visibleColumn('id') && (
                     <TableCell>
                       <CustomLink
@@ -361,7 +384,7 @@ export function Conversations({ currentAssistant }: ConversationProps) {
                     'identifier',
                   ) && (
                     <TableCell className="truncate max-w-20">
-                      {row.getIdentifier()}
+                      {ConversationIdentifier(row.getIdentifier())}
                     </TableCell>
                   )}
                   {assistantConversationListAction.visibleColumn('source') && (
@@ -379,6 +402,69 @@ export function Conversations({ currentAssistant }: ConversationProps) {
                       )}
                     </LabelCell>
                   )}
+                  <TableCell>
+                    <div className="divide-x dark:divide-gray-800 flex border w-fit">
+                      {row.getTelephonyeventsList().length > 0 && (
+                        <IButton
+                          className="rounded-none"
+                          onClick={() => {
+                            setTelephonyEvents(row.getTelephonyeventsList());
+                            setTelephonyStatusOpen(true);
+                            //
+                          }}
+                        >
+                          <TooltipPlus
+                            className="bg-white dark:bg-gray-950 border-[0.5px] rounded-[2px] px-0 py-0"
+                            popupContent={
+                              <div className="px-3 py-2 text-sm text-gray-600 dark:text-gray-500">
+                                View status
+                              </div>
+                            }
+                          >
+                            <PhoneCall strokeWidth={1.5} className="h-4 w-4" />
+                          </TooltipPlus>
+                        </IButton>
+                      )}
+                      <IButton
+                        className="rounded-none"
+                        onClick={() => {
+                          handleTraceClick(row.getAssistantid(), row.getId());
+                        }}
+                      >
+                        <TooltipPlus
+                          className="bg-white dark:bg-gray-950 border-[0.5px] rounded-[2px] px-0 py-0"
+                          popupContent={
+                            <div className="px-3 py-2 text-sm text-gray-600 dark:text-gray-500">
+                              View telemetry
+                            </div>
+                          }
+                        >
+                          <Telescope strokeWidth={1.5} className="h-4 w-4" />
+                        </TooltipPlus>
+                      </IButton>
+                      <IButton
+                        className="rounded-none"
+                        onClick={event => {
+                          event.stopPropagation();
+                          navigation.goToAssistantSession(
+                            row.getAssistantid(),
+                            row.getId(),
+                          );
+                        }}
+                      >
+                        <TooltipPlus
+                          className="bg-white dark:bg-gray-950 border-[0.5px] rounded-[2px] px-0 py-0"
+                          popupContent={
+                            <div className="px-3 py-2 text-sm text-gray-600 dark:text-gray-500">
+                              View conversation
+                            </div>
+                          }
+                        >
+                          <ExternalLink strokeWidth={1.5} className="h-4 w-4" />
+                        </TooltipPlus>
+                      </IButton>
+                    </div>
+                  </TableCell>
                   {assistantConversationListAction.visibleColumn('status') && (
                     <TableCell>
                       <StatusIndicator

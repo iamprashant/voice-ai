@@ -5,17 +5,25 @@ import (
 	"sync"
 	"time"
 
-	internal_adapter_transformer_factories "github.com/rapidaai/api/assistant-api/internal/factories/transformers"
+	internal_audio "github.com/rapidaai/api/assistant-api/internal/audio"
+	internal_adapter_transformer_factory "github.com/rapidaai/api/assistant-api/internal/factory/transformer"
 	internal_synthesizers "github.com/rapidaai/api/assistant-api/internal/synthesizes"
 	internal_adapter_telemetry "github.com/rapidaai/api/assistant-api/internal/telemetry"
-	internal_transcribes "github.com/rapidaai/api/assistant-api/internal/transcribers"
-	internal_transformers "github.com/rapidaai/api/assistant-api/internal/transformers"
+	internal_tokenizer "github.com/rapidaai/api/assistant-api/internal/tokenizer"
+	internal_transformer "github.com/rapidaai/api/assistant-api/internal/transformer"
 	"github.com/rapidaai/pkg/utils"
 )
 
 func (spk *GenericRequestor) FinishSpeaking(
 	contextId string,
 ) error {
+	_, err := spk.
+		GetTextToSpeechTransformer()
+	if err != nil {
+		spk.logger.Warnf("no output transformer, skipping finish speak.")
+		return err
+	}
+
 	ctx, span, _ := spk.Tracer().StartSpan(spk.Context(), utils.AssistantSpeakingStage)
 	defer span.EndSpan(ctx, utils.AssistantSpeakingStage)
 
@@ -28,19 +36,19 @@ func (spk *GenericRequestor) FinishSpeaking(
 		},
 	)
 	spk.
-		transcriber.
-		Transcribe(
+		tokenizer.
+		Tokenize(
 			ctx,
 			contextId,
 			"",
 			true,
 		)
 	// keep it sync or blocking
-	if spk.outputAudioTransformer != nil {
-		spk.outputAudioTransformer.Transform(
+	if spk.textToSpeechTransformer != nil {
+		spk.textToSpeechTransformer.Transform(
 			ctx,
 			"",
-			&internal_transformers.TextToSpeechOption{
+			&internal_transformer.TextToSpeechOption{
 				ContextId:  contextId,
 				IsComplete: true,
 			})
@@ -53,6 +61,13 @@ func (spk *GenericRequestor) Speak(
 	contextId string,
 	msg string,
 ) error {
+	_, err := spk.
+		GetTextToSpeechTransformer()
+	if err != nil {
+		spk.logger.Warnf("no output transformer, skipping speak")
+		return err
+	}
+
 	ctx, span, _ := spk.Tracer().StartSpan(spk.Context(), utils.AssistantTranscribeStage)
 	defer span.EndSpan(ctx, utils.AssistantTranscribeStage)
 	span.AddAttributes(ctx,
@@ -64,17 +79,16 @@ func (spk *GenericRequestor) Speak(
 		},
 	)
 	return spk.
-		transcriber.
-		Transcribe(
-			ctx,
-			contextId, msg, false)
+		tokenizer.Tokenize(
+		ctx,
+		contextId, msg, false)
 
 }
 
 // Init initializes the audio talking system for a given assistant persona.
-// It sets up both audio input and output transformers.
+// It sets up both audio input and output transformer.
 // This function is typically called at the beginning of a communication session.
-func (spk *GenericRequestor) ConnectSpeaker(ctx context.Context) error {
+func (spk *GenericRequestor) ConnectSpeaker(ctx context.Context, audioInConfig, audioOutConfig *internal_audio.AudioConfig) error {
 	context, span, _ := spk.Tracer().StartSpan(ctx, utils.AssistantSpeakConnectStage)
 	defer span.EndSpan(context, utils.AssistantSpeakConnectStage)
 
@@ -102,13 +116,12 @@ func (spk *GenericRequestor) ConnectSpeaker(ctx context.Context) error {
 	wg.Add(1)
 	utils.Go(context, func() {
 		defer wg.Done()
-		if transcriber, err := internal_transcribes.NewSentenceTranscriber(
+		if tokenizer, err := internal_tokenizer.NewSentenceTokenizer(
 			spk.logger,
-			internal_transcribes.TranscriberOptions{
-				OnCompleteSentence: spk.OnCompleteSentence,
-				Opts:               speakerOpts,
-			}); err == nil {
-			spk.transcriber = transcriber
+			spk.OnCompleteSentence,
+			speakerOpts,
+		); err == nil {
+			spk.tokenizer = tokenizer
 		}
 
 		if normalizer, err := internal_synthesizers.NewSentenceNormalizeSynthesizer(
@@ -133,8 +146,8 @@ func (spk *GenericRequestor) ConnectSpeaker(ctx context.Context) error {
 	wg.Add(1)
 	utils.Go(context, func() {
 		defer wg.Done()
-		opts := &internal_transformers.TextToSpeechInitializeOptions{
-			AudioConfig: spk.streamer.Config().OutputConfig.Audio,
+		opts := &internal_transformer.TextToSpeechInitializeOptions{
+			AudioConfig: audioOutConfig,
 			OnSpeech: func(contextId string, v []byte) error {
 				return spk.OutputAudio(contextId, v, false)
 			},
@@ -157,9 +170,9 @@ func (spk *GenericRequestor) ConnectSpeaker(ctx context.Context) error {
 			return
 		}
 
-		atransformer, err := internal_adapter_transformer_factories.
+		atransformer, err := internal_adapter_transformer_factory.
 			GetTextToSpeechTransformer(
-				internal_adapter_transformer_factories.AudioTransformer(outputTransformer.GetName()),
+				internal_adapter_transformer_factory.AudioTransformer(outputTransformer.GetName()),
 				context,
 				spk.logger,
 				credential,
@@ -175,7 +188,7 @@ func (spk *GenericRequestor) ConnectSpeaker(ctx context.Context) error {
 			spk.logger.Errorf("unable to initilize transformer %v", err)
 			return
 		}
-		spk.outputAudioTransformer = atransformer
+		spk.textToSpeechTransformer = atransformer
 		spk.logger.Benchmark("speak.transformer.Initialize", time.Since(start))
 	})
 
@@ -210,13 +223,13 @@ func (spk *GenericRequestor) OnCompleteSentence(
 			K: "synthesize_script", V: internal_adapter_telemetry.StringValue(output),
 		},
 	)
-	if spk.outputAudioTransformer != nil {
+	if spk.textToSpeechTransformer != nil {
 		spk.
-			outputAudioTransformer.
+			textToSpeechTransformer.
 			Transform(
 				spk.Context(),
 				output,
-				&internal_transformers.TextToSpeechOption{
+				&internal_transformer.TextToSpeechOption{
 					ContextId:  contextId,
 					IsComplete: false,
 				})
@@ -226,9 +239,9 @@ func (spk *GenericRequestor) OnCompleteSentence(
 }
 
 func (spk *GenericRequestor) CloseSpeaker() error {
-	if spk.outputAudioTransformer != nil {
+	if spk.textToSpeechTransformer != nil {
 		if err := spk.
-			outputAudioTransformer.
+			textToSpeechTransformer.
 			Close(spk.Context()); err != nil {
 			spk.logger.Errorf("cancel all output transformer with error %v", err)
 		}

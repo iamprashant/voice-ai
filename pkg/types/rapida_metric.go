@@ -30,7 +30,7 @@ import (
 
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
 type Metric struct {
@@ -60,21 +60,21 @@ func (x *Metric) GetDescription() string {
 	return ""
 }
 
-func (x *Metric) ToProto() *lexatic_backend.Metric {
-	out := &lexatic_backend.Metric{}
+func (x *Metric) ToProto() *protos.Metric {
+	out := &protos.Metric{}
 	_ = utils.Cast(x, out)
 	return out
 }
 
 type Metrics []*Metric
 
-func (m Metrics) ToProto() []*lexatic_backend.Metric {
-	out := make([]*lexatic_backend.Metric, len(m))
+func (m Metrics) ToProto() []*protos.Metric {
+	out := make([]*protos.Metric, len(m))
 	_ = utils.Cast(m, &out)
 	return out
 }
 
-func ToMetric(mtr *lexatic_backend.Metric) *Metric {
+func ToMetric(mtr *protos.Metric) *Metric {
 	out := &Metric{}
 	err := utils.Cast(mtr, out)
 	if err != nil {
@@ -83,7 +83,7 @@ func ToMetric(mtr *lexatic_backend.Metric) *Metric {
 	return out
 }
 
-func ToMetrics(mtr []*lexatic_backend.Metric) []*Metric {
+func ToMetrics(mtr []*protos.Metric) []*Metric {
 	out := make([]*Metric, len(mtr))
 	for idx, k := range mtr {
 		out[idx] = ToMetric(k)

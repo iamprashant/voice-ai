@@ -18,6 +18,9 @@ type AssistantConfig struct {
 	OpenSearchConfig configs.OpenSearchConfig `mapstructure:"opensearch" validate:"required"`
 	WeaviateConfig   configs.WeaviateConfig   `mapstructure:"weaviate" validate:"required"`
 	AssetStoreConfig configs.AssetStoreConfig `mapstructure:"asset_store" validate:"required"`
+
+	// telephony host
+	MediaHost string `mapstructure:"media_host" validate:"required"`
 }
 
 // reading config and intializing configs for application

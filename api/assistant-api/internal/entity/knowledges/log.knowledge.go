@@ -18,22 +18,3 @@ type KnowledgeLog struct {
 	TimeTaken       int64                `json:"timeTaken" gorm:"type:bigint;size:20"`
 	AdditionalData  gorm_types.StringMap `json:"additionalData" gorm:"type:string"`
 }
-
-//  CREATE TABLE knowledge_logs (
-//     id BIGINT PRIMARY KEY,
-//     created_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-//     updated_date TIMESTAMP WITH TIME ZONE,
-//     status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
-//     created_by BIGINT,
-//     updated_by BIGINT,
-//     project_id BIGINT NOT NULL,
-//     organization_id BIGINT NOT NULL,
-//     knowledge_id BIGINT NOT NULL,
-//     retrieval_method VARCHAR(50),
-//     top_k INTEGER,
-//     score_threshold REAL,
-//     document_count INTEGER,
-//     asset_prefix VARCHAR(200) NOT NULL,
-//     time_taken BIGINT,
-//     additional_data TEXT
-// );

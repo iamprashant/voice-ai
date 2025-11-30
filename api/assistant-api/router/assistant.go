@@ -73,41 +73,22 @@ func TalkCallbackApiRoute(
 		opensearch,
 	)
 	{
-		// exotel call
-		apiv1.GET("/exotel/call/:assistantId", talkRpcApi.ExotelCallReciever)
-		apiv1.GET("/exotel/usr/:assistantId/:identifier/:conversationId/:authorization/:x-auth-id/:x-project-id", talkRpcApi.ExotelCallTalker)
-		apiv1.GET("/exotel/prj/:assistantId/:identifier/:conversationId/:x-api-key", talkRpcApi.ExotelCallTalker)
+		// global
+		apiv1.GET("/:telephony/event/:assistantId", talkRpcApi.UnviersalCallback)
+		apiv1.POST("/:telephony/event/:assistantId", talkRpcApi.UnviersalCallback)
 
-		// twillio call
-		apiv1.GET("/twilio/call/:assistantId", talkRpcApi.PhoneCallReciever)
-		apiv1.GET("/twilio/usr/:assistantId/:identifier/:conversationId/:authorization/:x-auth-id/:x-project-id", talkRpcApi.TwilioCallTalker)
-		apiv1.GET("/twilio/prj/:assistantId/:identifier/:conversationId/:x-api-key", talkRpcApi.TwilioCallTalker)
+		apiv1.GET("/:telephony/usr/event/:assistantId/:conversationId/:authorization/:x-auth-id/:x-project-id", talkRpcApi.Callback)
+		apiv1.POST("/:telephony/usr/event/:assistantId/:conversationId/:authorization/:x-auth-id/:x-project-id", talkRpcApi.Callback)
+		apiv1.GET("/:telephony/prj/event/:assistantId/:conversationId/:x-api-key", talkRpcApi.Callback)
+		apiv1.POST("/:telephony/prj/event/:assistantId/:conversationId/:x-api-key", talkRpcApi.Callback)
 
 		// twilio whatsapp
 		apiv1.POST("/twilio/whatsapp/:assistantToken", talkRpcApi.WhatsappReciever)
 
 		// vonage call
-		apiv1.GET("/vonage/call/:assistantId", talkRpcApi.PhoneCallReciever)
-		apiv1.GET("/vonage/usr/:assistantId/:identifier/:conversationId/:authorization/:x-auth-id/:x-project-id", talkRpcApi.VonageCallTalker)
-		apiv1.GET("/vonage/prj/:assistantId/:identifier/:conversationId/:x-api-key", talkRpcApi.VonageCallTalker)
+		apiv1.GET("/:telephony/call/:assistantId", talkRpcApi.CallReciever)
+		apiv1.GET("/:telephony/usr/:assistantId/:identifier/:conversationId/:authorization/:x-auth-id/:x-project-id", talkRpcApi.CallTalker)
+		apiv1.GET("/:telephony/prj/:assistantId/:identifier/:conversationId/:x-api-key", talkRpcApi.CallTalker)
 
 	}
-}
-
-func ConversationApiRoute(
-	cfg *config.AssistantConfig, engine *gin.Engine, logger commons.Logger,
-	postgres connectors.PostgresConnector,
-	redis connectors.RedisConnector,
-	opensearch connectors.OpenSearchConnector) {
-	apiv1 := engine.Group("v1/conversation")
-	talkRpcApi := assistantTalkApi.NewConversationApi(cfg,
-		logger,
-		postgres,
-		redis,
-		opensearch,
-		opensearch,
-	)
-	apiv1.POST("/create-phone-call", talkRpcApi.ExotelCallReciever)
-	apiv1.POST("/create-bulk-phone-call", talkRpcApi.ExotelCallReciever)
-
 }

@@ -2,7 +2,8 @@
     "connection": {
         "assistant": "http://assistant.rapida.local",
         "web": "http://dev.rapida.local",
-        "endpoint": "http://dev.rapida.local"
+        "endpoint": "http://dev.rapida.local",
+        "media": "https://integral-presently-cub.ngrok-free.app"
     },
     "workspace": {
         "domain": "rapida.ai",

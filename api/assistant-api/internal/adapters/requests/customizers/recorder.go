@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	internal_voices "github.com/rapidaai/api/assistant-api/internal/voices"
+	internal_audio "github.com/rapidaai/api/assistant-api/internal/audio"
 	"github.com/rapidaai/pkg/commons"
 )
 
@@ -17,12 +17,12 @@ type AudioChunk struct {
 	Data      []byte
 	Timestamp time.Time
 	IsSystem  bool // true for system audio, false for user audio
-	Config    *internal_voices.AudioConfig
+	Config    *internal_audio.AudioConfig
 	ID        int64 // Add unique identifier for each chunk
 }
 
 type Recorder interface {
-	Init(userAudioConfig, systemAudioConfig *internal_voices.AudioConfig) error
+	Init(userAudioConfig, systemAudioConfig *internal_audio.AudioConfig) error
 	User(in []byte) error
 	Interrupt() error
 	System(out []byte) error
@@ -34,8 +34,8 @@ type recorder struct {
 	mu               sync.Mutex   // Ensure thread-safe access
 	audioChunks      []AudioChunk // All audio chunks with timestamps
 	interruptionTime *time.Time   // When interruption occurred (nil if no interruption)
-	userConfig       *internal_voices.AudioConfig
-	systemConfig     *internal_voices.AudioConfig
+	userConfig       *internal_audio.AudioConfig
+	systemConfig     *internal_audio.AudioConfig
 	chunkIDCounter   int64 // Counter for unique chunk IDs
 }
 
@@ -47,7 +47,7 @@ func NewRecorder(logger commons.Logger) Recorder {
 	}
 }
 
-func (r *recorder) Init(userConfig, systemConfig *internal_voices.AudioConfig) error {
+func (r *recorder) Init(userConfig, systemConfig *internal_audio.AudioConfig) error {
 	r.userConfig = userConfig
 	r.systemConfig = systemConfig
 	return nil
@@ -180,7 +180,7 @@ func (r *recorder) createSilentAudioData(byteLength int) []byte {
 	return make([]byte, byteLength)
 }
 
-func (r *recorder) trimAudioChunkData(data []byte, keepDuration time.Duration, config *internal_voices.AudioConfig) []byte {
+func (r *recorder) trimAudioChunkData(data []byte, keepDuration time.Duration, config *internal_audio.AudioConfig) []byte {
 	if config == nil || keepDuration <= 0 {
 		return []byte{}
 	}
@@ -188,9 +188,9 @@ func (r *recorder) trimAudioChunkData(data []byte, keepDuration time.Duration, c
 	// Calculate bytes per sample based on audio format
 	var bytesPerSample int
 	switch config.Format {
-	case internal_voices.Linear16:
+	case internal_audio.Linear16:
 		bytesPerSample = 2
-	case internal_voices.MuLaw8:
+	case internal_audio.MuLaw8:
 		bytesPerSample = 1
 	default:
 		bytesPerSample = 2 // Default to 16-bit PCM
@@ -286,7 +286,7 @@ func (r *recorder) Persist() ([]byte, error) {
 	return wavData, nil
 }
 
-func (r *recorder) getTargetAudioConfig() *internal_voices.AudioConfig {
+func (r *recorder) getTargetAudioConfig() *internal_audio.AudioConfig {
 	if r.userConfig != nil {
 		return r.userConfig
 	}
@@ -299,7 +299,7 @@ func (r *recorder) getTargetAudioConfig() *internal_voices.AudioConfig {
 	return nil
 }
 
-func (r *recorder) mergeAudioChunks(targetConfig *internal_voices.AudioConfig) ([]byte, error) {
+func (r *recorder) mergeAudioChunks(targetConfig *internal_audio.AudioConfig) ([]byte, error) {
 	if len(r.audioChunks) == 0 {
 		return nil, fmt.Errorf("no audio chunks to merge")
 	}
@@ -350,9 +350,9 @@ func (r *recorder) calculateChunkDuration(chunk AudioChunk) time.Duration {
 	}
 	var bytesPerSample int
 	switch chunk.Config.Format {
-	case internal_voices.Linear16:
+	case internal_audio.Linear16:
 		bytesPerSample = 2
-	case internal_voices.MuLaw8:
+	case internal_audio.MuLaw8:
 		bytesPerSample = 1
 	default:
 		bytesPerSample = 2 // default to 16-bit
@@ -363,7 +363,7 @@ func (r *recorder) calculateChunkDuration(chunk AudioChunk) time.Duration {
 	return time.Duration(duration * float64(time.Second))
 }
 
-func (r *recorder) addChunkToOutput(chunk AudioChunk, output []int32, startTime time.Time, targetConfig *internal_voices.AudioConfig) error {
+func (r *recorder) addChunkToOutput(chunk AudioChunk, output []int32, startTime time.Time, targetConfig *internal_audio.AudioConfig) error {
 	if chunk.Config == nil {
 		return fmt.Errorf("chunk has no audio configuration")
 	}
@@ -408,17 +408,17 @@ func (r *recorder) addChunkToOutput(chunk AudioChunk, output []int32, startTime 
 	return nil
 }
 
-func (r *recorder) convertToSamples(data []byte, config *internal_voices.AudioConfig) ([]int32, error) {
+func (r *recorder) convertToSamples(data []byte, config *internal_audio.AudioConfig) ([]int32, error) {
 	var samples []int32
 
 	switch config.Format {
-	case internal_voices.Linear16:
+	case internal_audio.Linear16:
 		samples = make([]int32, len(data)/2)
 		for i := 0; i < len(samples); i++ {
 			sample := int16(binary.LittleEndian.Uint16(data[i*2:]))
 			samples[i] = int32(sample)
 		}
-	case internal_voices.MuLaw8:
+	case internal_audio.MuLaw8:
 		samples = make([]int32, len(data))
 		for i, b := range data {
 			samples[i] = r.muLawToLinear(b)
@@ -448,7 +448,7 @@ func (r *recorder) muLawToLinear(muLawByte byte) int32 {
 	return sample << 2 // Scale to 16-bit range
 }
 
-func (r *recorder) createWAVFile(pcmData []byte, config *internal_voices.AudioConfig) ([]byte, error) {
+func (r *recorder) createWAVFile(pcmData []byte, config *internal_audio.AudioConfig) ([]byte, error) {
 	var buf bytes.Buffer
 
 	// WAV header

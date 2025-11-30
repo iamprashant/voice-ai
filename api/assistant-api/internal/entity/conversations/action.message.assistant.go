@@ -6,7 +6,7 @@ import (
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 //
@@ -15,6 +15,7 @@ import (
 // "assistant_conversation_message_id" of relation "assistant_conversation_actions" does
 type AssistantConversationAction struct {
 	gorm_model.Audited
+	AssistantId                    uint64 `json:"assistantId" gorm:"type:bigint;not null"`
 	AssistantConversationId        uint64 `json:"assistantConversationId" gorm:"type:bigint;not null"`
 	AssistantConversationMessageId string `json:"assistantConversationMessageId" gorm:"type:string;not null"`
 
@@ -39,14 +40,14 @@ type AssistantConversationActionMetric struct {
 	AssistantConversationMessageId string `json:"assistantConversationMessageId" gorm:"type:string;not null"`
 }
 
-func (acm *AssistantConversationAction) RequestMessage() *lexatic_backend.Message {
-	out := &lexatic_backend.Message{}
+func (acm *AssistantConversationAction) RequestMessage() *protos.Message {
+	out := &protos.Message{}
 	_ = utils.Cast(acm.Request, &out)
 	return out
 }
 
-func (acm *AssistantConversationAction) ResponseMessage() *lexatic_backend.Message {
-	out := &lexatic_backend.Message{}
+func (acm *AssistantConversationAction) ResponseMessage() *protos.Message {
+	out := &protos.Message{}
 	_ = utils.Cast(acm.Response, &out)
 	return out
 }

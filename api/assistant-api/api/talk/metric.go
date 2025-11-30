@@ -9,7 +9,7 @@ import (
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
 	assistant_api "github.com/rapidaai/protos"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 func (cApi *ConversationApi) CreateMessageMetric(ctx context.Context, cer *assistant_api.CreateMessageMetricRequest) (*assistant_api.CreateMessageMetricResponse, error) {
@@ -36,15 +36,15 @@ func (cApi *ConversationApi) CreateMessageMetric(ctx context.Context, cer *assis
 		mtr,
 	)
 	if err != nil {
-		return exceptions.InternalServerError[lexatic_backend.CreateMessageMetricResponse](
+		return exceptions.InternalServerError[protos.CreateMessageMetricResponse](
 			err,
 			"Unable to get all the assistant for the conversaction.",
 		)
 	}
-	return utils.Success[lexatic_backend.CreateMessageMetricResponse](val)
+	return utils.Success[protos.CreateMessageMetricResponse](val)
 }
 
-// ConversationFeedback implements lexatic_backend.TalkServiceServer.
+// ConversationFeedback implements protos.TalkServiceServer.
 func (cApi *ConversationGrpcApi) CreateConversationMetric(ctx context.Context, cfr *assistant_api.CreateConversationMetricRequest) (*assistant_api.CreateConversationMetricResponse, error) {
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(ctx)
 	if !isAuthenticated {
@@ -61,15 +61,15 @@ func (cApi *ConversationGrpcApi) CreateConversationMetric(ctx context.Context, c
 		cfr.GetMetrics(),
 	)
 	if err != nil {
-		return exceptions.InternalServerError[lexatic_backend.CreateConversationMetricResponse](
+		return exceptions.InternalServerError[protos.CreateConversationMetricResponse](
 			err,
 			"Unable to get all the assistant for the conversaction.",
 		)
 	}
-	out := &lexatic_backend.AssistantConversation{}
+	out := &protos.AssistantConversation{}
 	err = utils.Cast(val, out)
 	if err != nil {
 		cApi.logger.Errorf("unable to cast assistant provider model %v", err)
 	}
-	return utils.Success[lexatic_backend.CreateConversationMetricResponse](out)
+	return utils.Success[protos.CreateConversationMetricResponse](out)
 }

@@ -72,25 +72,3 @@ type AssistantWebhookLog struct {
 	TimeTaken               int64  `json:"timeTaken" gorm:"type:bigint;size:20"`
 	RetryCount              uint32 `json:"retryCount" gorm:"type:bigint;size:20"`
 }
-
-// ALTER TABLE assistant_webhook_logs rename column assistantConversationId to assistant_conversation_id;
-// CREATE TABLE assistant_webhook_logs (
-//     id BIGINT PRIMARY KEY,
-//     created_date TIMESTAMP NOT NULL DEFAULT NOW(),
-//     updated_date TIMESTAMP,
-//     status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
-//     created_by BIGINT NOT NULL,
-//     updated_by BIGINT,
-//     webhook_id BIGINT NOT NULL,
-//     project_id BIGINT NOT NULL,
-//     organization_id BIGINT NOT NULL,
-//     assistant_id BIGINT,
-//     conversation_id BIGINT,
-//     http_method VARCHAR(200) NOT NULL,
-//     http_url VARCHAR(400) NOT NULL,
-//     asset_prefix VARCHAR(200) NOT NULL,
-//     event VARCHAR(200) NOT NULL,
-//     response_status BIGINT,
-//     time_taken BIGINT,
-//     retry_count BIGINT
-// );
