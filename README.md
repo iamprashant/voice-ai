@@ -1,11 +1,8 @@
-
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="/.github/banner-01.png">
-  <source media="(prefers-color-scheme: light)" srcset="/.github/banner-01.png">
-   <img style="width:100%;" src="https://raw.githubusercontent.com/rapidaai/voice-ai/blob/main/.github/banner-01.png">
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/rapidaai/voice-ai/blob/87ff2937e086162acb5f5fad8c01e3f1f582b87b/.github/banner-01.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/rapidaai/voice-ai/blob/87ff2937e086162acb5f5fad8c01e3f1f582b87b/.github/banner-01.png">
+  <img style="width:100%;" src="https://github.com/rapidaai/voice-ai/blob/87ff2937e086162acb5f5fad8c01e3f1f582b87b/.github/banner-01.png" alt="Banner">
 </picture>
-
-
 # Rapida: End-to-End Voice Orchestration Platform
 
 [Rapida](https://rapida.ai) is an open-source platform for designing, building, and deploying voice agents at scale.  
