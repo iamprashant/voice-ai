@@ -1,45 +1,40 @@
+# Rapida License
+
 Rapida is licensed under a modified version of the GNU General Public License v2.0 (GPL-2.0), with the following additional conditions:
 
+---
 
---------------------------------------------------------------------
-RAPIDA ADDITIONAL TERMS
---------------------------------------------------------------------
+## RAPIDA ADDITIONAL TERMS
 
 These additional terms apply to all use of Rapida under the GPL-2.0 license.
 
-1. Branding Requirement
-   If you are using Rapida under this open-source GPL license, you
-   must keep the Rapida name and logo visible in all UI components
-   provided by the software. You may not remove, obscure, or modify
-   Rapida branding in these components.
+### 1. Branding Requirement
+If you are using Rapida under this open-source GPL license, you must keep the Rapida name and logo visible in all UI components provided by the software. You may not remove, obscure, or modify Rapida branding in these components.
 
-   Frontend Definition: The "frontend" includes all components located
-   in the `web/` directory when running Rapida from source, or the
-   "web" image/container when running Rapida with Docker.
+**Frontend Definition:** The "frontend" includes all components located in the `ui/` directory when running Rapida from source, or the "ui" image/container when running Rapida with Docker.
 
-2. Commercial License Exception
-   A separate commercial license is available that removes the
-   branding requirement and allows the use of Rapida in closed-source
-   or proprietary products without GPL obligations.
+### 2. Commercial License Exception
+A separate commercial license is available that removes the branding requirement and allows the use of Rapida in closed-source or proprietary products without GPL obligations.
 
-   To obtain a commercial license, contact:
-   enterprise@rapida.ai
+To obtain a commercial license, contact:  
+**Email:** sales@rapida.ai  
+**Website:** [https://rapida.ai](https://rapida.ai)
 
-3. Contributors
-   By contributing to Rapida, you agree that:
-   a. RapidaAI may adjust the open-source licensing terms in future
-      versions, either to relax or tighten restrictions.
-   b. Your contributed code may be used for commercial purposes,
-      including cloud or enterprise offerings.
+### 3. SaaS-Only Features
+Certain features of Rapida are provided exclusively as part of Rapida’s SaaS offering. These features are **not included in the open-source version** and cannot be replicated, sold, or offered as a service without a commercial agreement with RapidaAI.
 
-4. License Change Notice
-   RapidaAI reserves the right to change or update licensing terms
-   for future releases. This does not affect versions already
-   released under the GPL-2.0 license.
+### 4. Contributors
+By contributing to Rapida, you agree that:
 
---------------------------------------------------------------------
-COMMERCIAL LICENSE OPTION (Summary)
---------------------------------------------------------------------
+- RapidaAI may adjust the open-source licensing terms in future versions, either to relax or tighten restrictions.
+- Your contributed code may be used for commercial purposes, including cloud or enterprise offerings.
+
+### 5. License Change Notice
+RapidaAI reserves the right to change or update licensing terms for future releases. This does not affect versions already released under the GPL-2.0 license.
+
+---
+
+## COMMERCIAL LICENSE OPTION (Summary)
 
 RapidaAI provides an optional commercial license that grants:
 
@@ -47,21 +42,17 @@ RapidaAI provides an optional commercial license that grants:
 - Right to use Rapida in closed-source or proprietary software  
 - Right to keep modifications private (no copyleft obligation)  
 - Access to enterprise-only modules, connectors, and enhancements  
+- Access to SaaS-only features (for commercial offerings)  
 - Priority bug fixes, patches, and SLAs  
 - Commercial support and onboarding assistance  
 
-This summary does not replace the full commercial agreement, which
-must be signed separately with RapidaAI.
+This summary does not replace the full commercial agreement, which must be signed separately with RapidaAI.
 
-To inquire about commercial licensing:
-Email: sales@rapida.ai
-Website: https://rapida.ai
+To inquire about commercial licensing:  
+**Email:** sales@rapida.ai  
+**Website:** [https://rapida.ai](https://rapida.ai)
 
-
---------------------------------------------------------------------
-
---------------------------------------------------------------------
-
+---
                     GNU GENERAL PUBLIC LICENSE
                        Version 2, June 1991
 
@@ -402,4 +393,5 @@ library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.
 
 
+---
 © 2025 Rapida Pte. Ltd.
