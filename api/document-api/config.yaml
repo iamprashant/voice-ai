@@ -4,10 +4,8 @@ port: 9010
 
 authentication_config:
   strict: false
-  # type: "token"
   type: "jwt"
   config:
-    # auth_host: "localhost:9001"
     secret_key: "rpd_pks"
 
 elastic_search:
