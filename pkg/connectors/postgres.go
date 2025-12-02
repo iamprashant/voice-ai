@@ -42,8 +42,6 @@ func (psql *postgresConnector) connectionString() string {
 }
 
 func (psql *postgresConnector) Connect(ctx context.Context) error {
-	psql.logger.Debugf("Creating postgres client for postgres  %s", psql.connectionString())
-	// lgr := logger.Default
 	db, err := gorm.Open(postgres.Open(psql.connectionString()), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})

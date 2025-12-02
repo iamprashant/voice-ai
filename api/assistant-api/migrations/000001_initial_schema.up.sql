@@ -1,4 +1,4 @@
-CREATE TABLE public.assistant_analyses_01 (
+CREATE TABLE public.assistant_analyses (
     id bigint PRIMARY KEY,
     status character varying(50) DEFAULT 'ACTIVE'::character varying NOT NULL,
     assistant_id bigint NOT NULL,
@@ -53,10 +53,10 @@ CREATE TABLE public.assistant_conversation_messages (
 );
 ALTER TABLE ONLY public.assistant_conversation_messages
     ADD CONSTRAINT unique_message_id_assistant_conversation_id UNIQUE (message_id, assistant_conversation_id);
-CREATE INDEX idx_assistant_conversation_id ON public.assistant_conversation_messages (assistant_conversation_id);
-CREATE INDEX idx_status ON public.assistant_conversation_messages (status);
-CREATE INDEX idx_created_date ON public.assistant_conversation_messages (created_date);
-CREATE INDEX idx_assistant_provider_model_id ON public.assistant_conversation_messages (assistant_provider_model_id);
+CREATE INDEX idx_assistant_conversation_messages_assistant_conversation_id ON public.assistant_conversation_messages (assistant_conversation_id);
+CREATE INDEX idx_assistant_conversation_messages_status ON public.assistant_conversation_messages (status);
+CREATE INDEX idx_assistant_conversation_messages_created_date ON public.assistant_conversation_messages (created_date);
+CREATE INDEX idx_assistant_conversation_messages_assistant_provider_model_id ON public.assistant_conversation_messages (assistant_provider_model_id);
 
 CREATE TABLE public.assistant_conversations (
     id bigint PRIMARY KEY,
@@ -94,8 +94,6 @@ CREATE TABLE public.assistant_conversation_telephony_events (
 );
 
 CREATE INDEX idx_assistant_conversation_telephony_events_assistant_id ON public.assistant_conversation_telephony_events USING btree (assistant_id);
-CREATE INDEX idx_assistant_conversation_telephony_events_project_id ON public.assistant_conversation_telephony_events USING btree (project_id);
-CREATE INDEX idx_assistant_conversation_telephony_events_organization_id ON public.assistant_conversation_telephony_events USING btree (organization_id);
 
 
 
@@ -132,9 +130,9 @@ CREATE TABLE public.assistant_conversation_actions (
     created_date timestamp without time zone DEFAULT now() NOT NULL,
     updated_date timestamp without time zone
 );
-CREATE INDEX idx_assistant_conversation_id ON public.assistant_conversation_actions(assistant_conversation_id);
-CREATE INDEX idx_assistant_conversation_message_id ON public.assistant_conversation_actions(assistant_conversation_message_id);
-CREATE INDEX idx_assistant_id ON public.assistant_conversation_actions(assistant_id);
+CREATE INDEX idx_assistant_conversation_actions_assistant_conversation_id ON public.assistant_conversation_actions(assistant_conversation_id);
+CREATE INDEX idx_assistant_conversation_actions_assistant_conversation_message_id ON public.assistant_conversation_actions(assistant_conversation_message_id);
+CREATE INDEX idx_assistant_conversation_actions_assistant_id ON public.assistant_conversation_actions(assistant_id);
 
 
 
@@ -203,8 +201,8 @@ CREATE TABLE public.assistant_conversation_message_metrics (
     updated_date timestamp without time zone
 );
 ALTER TABLE ONLY public.assistant_conversation_message_metrics
-    ADD CONSTRAINT uk_assistant_conversation_message_metrics UNIQUE (assistant_conversation_message_id, name);
-CREATE INDEX idx_assistant_conversation_message_id ON public.assistant_conversation_message_metrics USING btree (assistant_conversation_message_id);
+    ADD CONSTRAINT uk_assistant_conversation_message_metrics_message_id_name UNIQUE (assistant_conversation_message_id, name);
+CREATE INDEX idx_assistant_conversation_message_metrics_conversation_message_id ON public.assistant_conversation_message_metrics USING btree (assistant_conversation_message_id);
 
 
 
@@ -222,8 +220,8 @@ CREATE TABLE public.assistant_conversation_metadata (
 );
 ALTER TABLE ONLY public.assistant_conversation_metadata
     ADD CONSTRAINT uk_an_metadata UNIQUE (assistant_conversation_id, key);
-CREATE INDEX idx_assistant_conversation_metadata_assistant_id ON public.assistant_conversation_metadata_assistant_id USING btree (assistant_id);
-CREATE INDEX idx_assistant_conversation_metadata_assistant_assistant_conversation_id ON public.assistant_conversation_metadata_assistant_conversation_id USING btree (assistant_conversation_id);
+CREATE INDEX idx_assistant_conversation_metadata_assistant_id ON public.assistant_conversation_metadata USING btree (assistant_id);
+CREATE INDEX idx_assistant_conversation_metadata_assistant_assistant_conversation_id ON public.assistant_conversation_metadata USING btree (assistant_conversation_id);
 
 
 CREATE TABLE public.assistant_conversation_metrics (
@@ -241,8 +239,8 @@ CREATE TABLE public.assistant_conversation_metrics (
 );
 ALTER TABLE ONLY public.assistant_conversation_metrics
     ADD CONSTRAINT uk_assistant_conversation_name UNIQUE (assistant_conversation_id, name);
-CREATE INDEX idx_assistant_conversation_metrics_assistant_id ON public.assistant_conversation_metrics_assistant_id USING btree (assistant_id);
-CREATE INDEX idx_assistant_conversation_metrics_assistant_assistant_conversation_id ON public.assistant_conversation_metrics_assistant_conversation_id USING btree (assistant_conversation_id);
+CREATE INDEX idx_assistant_conversation_metrics_assistant_id ON public.assistant_conversation_metrics USING btree (assistant_id);
+CREATE INDEX idx_assistant_conversation_metrics_assistant_assistant_conversation_id ON public.assistant_conversation_metrics USING btree (assistant_conversation_id);
 
 
 CREATE TABLE public.assistant_conversation_options (
@@ -259,8 +257,8 @@ CREATE TABLE public.assistant_conversation_options (
 );
 ALTER TABLE ONLY public.assistant_conversation_options
     ADD CONSTRAINT uk_an_options UNIQUE (assistant_conversation_id, key);
-CREATE INDEX idx_assistant_conversation_options_assistant_id ON public.assistant_conversation_options_assistant_id USING btree (assistant_id);
-CREATE INDEX idx_assistant_conversation_options_assistant_assistant_conversation_id ON public.assistant_conversation_options_assistant_conversation_id USING btree (assistant_conversation_id);
+CREATE INDEX idx_assistant_conversation_options_assistant_id ON public.assistant_conversation_options USING btree (assistant_id);
+CREATE INDEX idx_assistant_conversation_options_assistant_assistant_conversation_id ON public.assistant_conversation_options USING btree (assistant_conversation_id);
 
 
 CREATE TABLE public.assistant_conversation_recordings (
@@ -276,8 +274,8 @@ CREATE TABLE public.assistant_conversation_recordings (
     assistant_conversation_id bigint NOT NULL,
     recording_url character varying(200) NOT NULL
 );
-CREATE INDEX idx_assistant_conversation_recordings_assistant_id ON public.assistant_conversation_recordings_assistant_id USING btree (assistant_id);
-CREATE INDEX idx_assistant_conversation_recordings_assistant_assistant_conversation_id ON public.assistant_conversation_recordings_assistant_conversation_id USING btree (assistant_conversation_id);
+CREATE INDEX idx_assistant_conversation_recordings_assistant_id ON public.assistant_conversation_recordings USING btree (assistant_id);
+CREATE INDEX idx_assistant_conversation_recordings_assistant_assistant_conversation_id ON public.assistant_conversation_recordings USING btree (assistant_conversation_id);
 
 
 CREATE TABLE public.assistant_debugger_deployments (
@@ -440,7 +438,7 @@ CREATE TABLE public.assistant_phone_deployments (
     mistake character varying(250),
     ideal_timeout BIGINT, 
     ideal_timeout_message CHARACTER VARYING(200), 
-    max_session_duration BIGINT;
+    max_session_duration BIGINT,
     telephony_provider character varying(50) NOT NULL
 );
 CREATE INDEX idx_assistant_phone_deployments_on_assistant_id ON public.assistant_phone_deployments USING btree (assistant_id);
@@ -602,7 +600,7 @@ CREATE TABLE public.assistant_web_plugin_deployments (
     suggestions text,
     ideal_timeout BIGINT, 
     ideal_timeout_message CHARACTER VARYING(200), 
-    max_session_duration BIGINT;
+    max_session_duration BIGINT,
     help_center_enabled boolean DEFAULT false NOT NULL,
     product_catalog_enabled boolean DEFAULT false NOT NULL,
     article_catalog_enabled boolean DEFAULT false NOT NULL
@@ -699,10 +697,9 @@ CREATE TABLE public.assistants (
     assistant_provider character varying(50) DEFAULT 'PROVIDER_MODEL'::character varying NOT NULL
 );
 
-CREATE INDEX idx_assistant_whatsapp_deployments_on_organization_id ON public.assistant_whatsapp_deployments USING btree (organization_id);
-CREATE INDEX idx_assistant_whatsapp_deployments_on_project_id ON public.assistant_whatsapp_deployments USING btree (project_id);
-CREATE INDEX idx_assistant_whatsapp_deployments_on_organization_id ON public.assistant_whatsapp_deployments USING btree (organization_id);
-CREATE INDEX idx_assistant_whatsapp_deployments_on_assistant_provider_id ON public.assistant_whatsapp_deployments USING btree (assistant_provider_id);
+CREATE INDEX idx_assistants_on_organization_id ON public.assistants USING btree (organization_id);
+CREATE INDEX idx_assistants_on_project_id ON public.assistants USING btree (project_id);
+CREATE INDEX idx_assistants_on_assistant_provider_id ON public.assistants USING btree (assistant_provider_id);
 
 
 CREATE SEQUENCE public.knowledge_document_embeddings_id_seq

@@ -295,13 +295,12 @@ func (g *AppRunner) RequestLoggerMiddleware() {
 }
 
 func (app *AppRunner) Migrate() error {
-	withMigration := flag.Bool("skip-migration", false, "Run migration when provided, eg: -skip-migration")
+	skipMigration := flag.Bool("skip-migration", false, "Skip migration when provided, eg: -skip-migration")
 	flag.Parse()
-	if withMigration != nil {
-		app.Logger.Infof("Skipping the migration, if not you need to check the argument -skip-migration")
+	if *skipMigration {
+		app.Logger.Infof("Skipping migration due to -skip-migration flag")
 		return nil
 	}
-
 	dsn := fmt.Sprintf(
 		"postgres://%s:%s@%s:%d/%s?sslmode=%s",
 		app.Cfg.PostgresConfig.Auth.User,

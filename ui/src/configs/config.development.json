@@ -1,8 +1,8 @@
 {
     "connection": {
-        "assistant": "http://assistant.rapida.local",
-        "web": "http://dev.rapida.local",
-        "endpoint": "http://dev.rapida.local",
+        "assistant": "http://localhost:8080",
+        "web": "http://localhost:8080",
+        "endpoint": "http://localhost:8080",
         "media": "https://integral-presently-cub.ngrok-free.app"
     },
     "workspace": {

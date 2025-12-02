@@ -2076,10 +2076,6 @@
   .aspect-\[1\] {
     aspect-ratio: 1;
   }
-  .size-10 {
-    width: calc(var(--spacing) * 10);
-    height: calc(var(--spacing) * 10);
-  }
   .size-21 {
     width: calc(var(--spacing) * 21);
     height: calc(var(--spacing) * 21);
@@ -3125,9 +3121,6 @@
   }
   .overflow-y-scroll {
     overflow-y: scroll;
-  }
-  .rounded {
-    border-radius: 0.25rem;
   }
   .rounded-2xl {
     border-radius: var(--radius-2xl);
@@ -4423,10 +4416,6 @@
   .text-sm\! {
     font-size: var(--text-sm) !important;
     line-height: var(--tw-leading, var(--text-sm--line-height)) !important;
-  }
-  .text-sm\/5 {
-    font-size: var(--text-sm);
-    line-height: calc(var(--spacing) * 5);
   }
   .text-sm\/6 {
     font-size: var(--text-sm);
@@ -6989,11 +6978,6 @@
   .md\:grid-cols-4 {
     @media (width >= 48rem) {
       grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-  }
-  .md\:grid-cols-5 {
-    @media (width >= 48rem) {
-      grid-template-columns: repeat(5, minmax(0, 1fr));
     }
   }
   .md\:grid-cols-9 {

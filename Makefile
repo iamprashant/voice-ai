@@ -111,7 +111,7 @@ up-endpoint:
 up-assistant:
 	@echo "Starting assistant-api..."
 	$(COMPOSE) up -d assistant-api
-	@echo "✓ assistant-api started on port 9005"
+	@echo "✓ assistant-api started on port 9007"
 
 up-db:
 	@echo "Starting PostgreSQL..."
@@ -247,6 +247,11 @@ rebuild-web:
 	$(COMPOSE) build --no-cache web-api
 	@echo "✓ web-api rebuilt"
 
+rebuild-nginx:
+	@echo "Rebuilding nginx (no cache)..."
+	$(COMPOSE) build --no-cache nginx
+	@echo "✓ nginx rebuilt"
+	
 rebuild-document:
 	@echo "Rebuilding document-api (no cache)..."
 	$(COMPOSE) build --no-cache document-api
@@ -324,6 +329,11 @@ restart-all:
 	@echo "Restarting all services..."
 	$(COMPOSE) restart
 	@echo "✓ All services restarted"
+
+restart-nginx:
+	@echo "Restarting nginx..."
+	$(COMPOSE) restart nginx
+	@echo "✓ nginx restarted"
 
 restart-ui:
 	@echo "Restarting ui..."
