@@ -11,7 +11,7 @@ import (
 
 	internal_transformer "github.com/rapidaai/api/assistant-api/internal/transformer"
 	"github.com/rapidaai/pkg/commons"
-	protos "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
 func NewRevaiTextToSpeech(

@@ -33,34 +33,22 @@ type Word struct {
 	Confidence  float64 `json:"confidence"`
 	WordIsFinal bool    `json:"word_is_final"`
 }
-type Encoding string
 
-const (
-	PCM_S16LE Encoding = "pcm_s16le"
-	PCM_MULAW Encoding = "pcm_mulaw"
-)
-
-func EncodingFromString(encoding string) string {
-	switch Encoding(encoding) {
-	case "Linear16", PCM_S16LE:
-		return string(PCM_S16LE)
-	case "MuLaw8", PCM_MULAW:
-		return string(PCM_MULAW)
+func (opts *assemblyaiOption) GetEncoding() string {
+	switch opts.audioConfig.Format {
+	case internal_audio.Linear16:
+		return "pcm_s16le"
+	case internal_audio.MuLaw8:
+		return "pcm_mulaw"
 	default:
-		fmt.Printf("Warning: Invalid encoding option '%s'. Using default (linear16).", encoding)
-		return string(PCM_S16LE)
+		return "pcm_s16le"
 	}
-}
-
-type AssemblyaiOption interface {
-	GetSpeechToTextConnectionString() string
-	GetKey() string
 }
 
 type assemblyaiOption struct {
 	logger      commons.Logger
 	key         string
-	options     utils.Option
+	mdlOpts     utils.Option
 	audioConfig *internal_audio.AudioConfig
 }
 
@@ -68,14 +56,14 @@ func NewAssemblyaiOption(
 	logger commons.Logger,
 	vaultCredential *protos.VaultCredential,
 	audioConfig *internal_audio.AudioConfig,
-	options utils.Option) (AssemblyaiOption, error) {
+	mdlOpts utils.Option) (*assemblyaiOption, error) {
 	cx, ok := vaultCredential.GetValue().AsMap()["key"]
 	if !ok {
 		return nil, fmt.Errorf("illegal vault config")
 	}
 	return &assemblyaiOption{
 		logger:      logger,
-		options:     options,
+		mdlOpts:     mdlOpts,
 		audioConfig: audioConfig,
 		key:         cx.(string),
 	}, nil
@@ -89,32 +77,19 @@ func (co *assemblyaiOption) GetSpeechToTextConnectionString() string {
 	baseURL := "wss://streaming.assemblyai.com/v3/ws"
 	params := url.Values{}
 	params.Add("sample_rate", fmt.Sprintf("%d", co.audioConfig.SampleRate))
-	params.Add("encoding", EncodingFromString(co.audioConfig.GetFormat()))
+	params.Add("encoding", co.GetEncoding())
 
 	// Check and add language
-	if language, err := co.options.
+	if language, err := co.mdlOpts.
 		GetString("listen.language"); err == nil {
 		params.Add("language", language)
 	}
 
 	// Check and add model
-	if model, err := co.options.
+	if model, err := co.mdlOpts.
 		GetString("listen.model"); err == nil {
 		params.Add("model", model)
 	}
 
-	// Check and add encoding
-	if encoding, err := co.options.
-		GetString("listen.output_format.encoding"); err == nil {
-		params.Add("encoding", EncodingFromString(encoding))
-	}
-
-	// Check and add sample rate
-	if sampleRate, err := co.options.
-		GetString("listen.output_format.sample_rate"); err == nil {
-		params.Add("sample_rate", sampleRate)
-	}
-
-	// Construct the final URL
 	return fmt.Sprintf("%s?%s", baseURL, params.Encode())
 }

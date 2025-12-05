@@ -12,7 +12,7 @@ import (
 	internal_audio "github.com/rapidaai/api/assistant-api/internal/audio"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/utils"
-	protos "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 	"google.golang.org/api/option"
 )
 
@@ -25,10 +25,10 @@ const (
 
 // googleOption is the primary configuration structure for Google services
 type googleOption struct {
-	logger            commons.Logger
-	clientOptons      []option.ClientOption
-	audioConfig       *internal_audio.AudioConfig
-	initializeOptions utils.Option
+	logger       commons.Logger
+	clientOptons []option.ClientOption
+	audioConfig  *internal_audio.AudioConfig
+	mdlOpts      utils.Option
 }
 
 // NewGoogleOption initializes googleOption with provided credentials, audio configurations, and options.
@@ -54,10 +54,10 @@ func NewGoogleOption(logger commons.Logger,
 	}
 
 	return &googleOption{
-		logger:            logger,
-		initializeOptions: opts,
-		clientOptons:      co,
-		audioConfig:       audioConfig,
+		logger:       logger,
+		mdlOpts:      opts,
+		clientOptons: co,
+		audioConfig:  audioConfig,
 	}, nil
 }
 
@@ -67,7 +67,7 @@ func (gO *googleOption) GetClientOptions() []option.ClientOption {
 }
 
 // SpeechToTextOptions generates a configuration for Google Speech-to-Text streaming recognition.
-// Default language and model are used unless overridden via initializeOptions.
+// Default language and model are used unless overridden via mdlOpts.
 func (gog *googleOption) SpeechToTextOptions() *speechpb.StreamingRecognitionConfig {
 	audioEncoding, _ := gog.GetAudioEncoding(gog.audioConfig.Format)
 
@@ -85,14 +85,14 @@ func (gog *googleOption) SpeechToTextOptions() *speechpb.StreamingRecognitionCon
 	}
 
 	// Override language code if specified in options
-	if language, err := gog.initializeOptions.GetString("listen.language"); err == nil {
+	if language, err := gog.mdlOpts.GetString("listen.language"); err == nil {
 		opts.Config.LanguageCode = language
 	} else {
 		gog.logger.Warn("Language not specified, defaulting to " + DefaultLanguageCode)
 	}
 
 	// Override model if specified in options
-	if model, err := gog.initializeOptions.GetString("listen.model"); err == nil {
+	if model, err := gog.mdlOpts.GetString("listen.model"); err == nil {
 		opts.Config.Model = model
 	} else {
 		gog.logger.Warn("Model not specified, defaulting to " + DefaultModel)
@@ -116,7 +116,7 @@ func (goog *googleOption) TextToSpeechOptions() *texttospeechpb.StreamingSynthes
 	}
 
 	// Override voice configuration if specified in options
-	if voice, err := goog.initializeOptions.GetString("speak.voice.id"); err == nil {
+	if voice, err := goog.mdlOpts.GetString("speak.voice.id"); err == nil {
 		options.Voice.Name = voice
 	} else {
 		goog.logger.Warn("Voice not specified, defaulting to " + DefaultVoice)

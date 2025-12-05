@@ -11,22 +11,22 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
 	internal_transformer "github.com/rapidaai/api/assistant-api/internal/transformer"
 	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/utils"
 	"github.com/rapidaai/protos"
 )
 
 type assemblyaiSTT struct {
-	ctx                context.Context
-	cancel             context.CancelFunc
-	logger             commons.Logger
-	connection         *websocket.Conn
-	transformerOptions *internal_transformer.SpeechToTextInitializeOptions
-	providerOptions    AssemblyaiOption
+	*assemblyaiOption
+	ctx        context.Context
+	mu         sync.Mutex
+	logger     commons.Logger
+	connection *websocket.Conn
+	options    *internal_transformer.SpeechToTextInitializeOptions
 }
 
 func NewAssemblyaiSpeechToText(
@@ -42,16 +42,14 @@ func NewAssemblyaiSpeechToText(
 		iOption.ModelOptions,
 	)
 	if err != nil {
-		logger.Errorf("Key from credential failed %+v", err)
+		logger.Errorf("assembly-ai-stt: key from credential failed %v", err)
 		return nil, err
 	}
-	gctx, cancel := context.WithCancel(ctx)
 	return &assemblyaiSTT{
-		logger:             logger,
-		providerOptions:    ayOptions,
-		transformerOptions: iOption,
-		ctx:                gctx,
-		cancel:             cancel,
+		ctx:              ctx,
+		logger:           logger,
+		options:          iOption,
+		assemblyaiOption: ayOptions,
 	}, nil
 }
 
@@ -60,38 +58,32 @@ func (aai *assemblyaiSTT) Name() string {
 }
 
 func (aai *assemblyaiSTT) Initialize() error {
-	start := time.Now()
-
-	utils.Go(aai.ctx, func() {
-		headers := http.Header{}
-		headers.Set("Authorization", aai.providerOptions.GetKey())
-		dialer := websocket.Dialer{
-			Proxy:            nil,              // Skip proxy for direct connection
-			HandshakeTimeout: 10 * time.Second, // Reduced handshake timeout for quick failover
-		}
-		conenction, _, err := dialer.Dial(aai.providerOptions.GetSpeechToTextConnectionString(), headers)
-		if err != nil {
-			// return fmt.Errorf("failed to connect to AssemblyAI WebSocket: %w", err)
-		}
-		aai.connection = conenction
-		aai.speech()
-	})
-	aai.logger.Benchmark("AssemblyaiSTT.Initialize", time.Since(start))
+	headers := http.Header{}
+	headers.Set("Authorization", aai.GetKey())
+	dialer := websocket.Dialer{
+		Proxy:            nil,              // Skip proxy for direct connection
+		HandshakeTimeout: 10 * time.Second, // Reduced handshake timeout for quick failover
+	}
+	conenction, _, err := dialer.Dial(aai.GetSpeechToTextConnectionString(), headers)
+	if err != nil {
+		aai.logger.Errorf("assembly-ai-stt: key from credential failed %v", err)
+		return fmt.Errorf("failed to connect to assemblyai websocket: %w", err)
+	}
+	aai.connection = conenction
+	go aai.speechToTextCallback()
 	return nil
 }
 
-func (aai *assemblyaiSTT) speech() {
+func (aai *assemblyaiSTT) speechToTextCallback() {
 	for {
 		select {
 		case <-aai.ctx.Done():
-			aai.logger.Info("Cartesia STT read goroutine exiting due to context cancellation")
+			aai.logger.Info("assembly-ai-stt: read goroutine exiting due to context cancellation")
 			return
 		default:
 			_, msg, err := aai.connection.ReadMessage()
-
-			aai.logger.Debug("Other message: ", string(msg))
 			if err != nil {
-				aai.logger.Error("read error: ", err)
+				aai.logger.Error("assembly-ai-stt: read error: ", err)
 				return
 			}
 			var transcript TranscriptMessage
@@ -106,14 +98,14 @@ func (aai *assemblyaiSTT) speech() {
 				}
 				averageConfidence := confidence / float64(len(transcript.Words))
 				if transcript.EndOfTurn {
-					aai.transformerOptions.OnTranscript(
+					aai.options.OnTranscript(
 						transcript.Transcript,
 						averageConfidence,
 						"en",
 						true,
 					)
 				} else {
-					aai.transformerOptions.OnTranscript(
+					aai.options.OnTranscript(
 						transcript.Transcript,
 						averageConfidence,
 						"en",
@@ -121,16 +113,14 @@ func (aai *assemblyaiSTT) speech() {
 					)
 				}
 			case "Begin":
-				aai.logger.Debug("Session began: ", string(msg))
 			default:
-				aai.logger.Debug("Other message: ", string(msg))
 			}
 		}
 	}
 }
 func (aai *assemblyaiSTT) Transform(ctx context.Context, in []byte, opts *internal_transformer.SpeechToTextOption) error {
 	if aai.connection == nil {
-		return fmt.Errorf("WebSocket connection is not initialized")
+		return fmt.Errorf("assembly-ai-stt: websocket connection is not initialized")
 	}
 	if err := aai.connection.WriteMessage(websocket.BinaryMessage, in); err != nil {
 		return fmt.Errorf("error sending audio: %w", err)
@@ -139,9 +129,6 @@ func (aai *assemblyaiSTT) Transform(ctx context.Context, in []byte, opts *intern
 }
 
 func (aai *assemblyaiSTT) Close(ctx context.Context) error {
-	if aai.cancel != nil {
-		aai.cancel()
-	}
 	if aai.connection != nil {
 		return aai.connection.Close()
 	}

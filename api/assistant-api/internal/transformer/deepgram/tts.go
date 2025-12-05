@@ -8,12 +8,13 @@ package internal_transformer_deepgram
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/deepgram/deepgram-go-sdk/v3/pkg/client/interfaces"
 	client "github.com/deepgram/deepgram-go-sdk/v3/pkg/client/speak"
 	internal_transformer "github.com/rapidaai/api/assistant-api/internal/transformer"
+	internal_transformer_deepgram_internal "github.com/rapidaai/api/assistant-api/internal/transformer/deepgram/internal"
 	"github.com/rapidaai/pkg/commons"
 	protos "github.com/rapidaai/protos"
 )
@@ -26,13 +27,13 @@ type DeepgramSpeaking interface {
 }
 
 type deepgramTTS struct {
+	*deepgramOption
+	ctx       context.Context
+	mu        sync.Mutex
+	contextId string
 	logger    commons.Logger
 	client    DeepgramSpeaking
-	contextId string
-	mu        sync.Mutex
-
-	providerOption    DeepgramOption
-	transformerOption *internal_transformer.TextToSpeechInitializeOptions
+	options   *internal_transformer.TextToSpeechInitializeOptions
 }
 
 func NewDeepgramTextToSpeech(
@@ -49,57 +50,68 @@ func NewDeepgramTextToSpeech(
 		opts.ModelOptions,
 	)
 	if err != nil {
-		logger.Errorf("error while intializing deepgram text to speech")
+		logger.Errorf("deepgram-tts: error while intializing deepgram text to speech")
 		return nil, err
 	}
+	return &deepgramTTS{
+		ctx:            ctx,
+		logger:         logger,
+		options:        opts,
+		deepgramOption: dGoptions,
+	}, nil
+}
 
-	dg := &deepgramTTS{
-		logger:            logger,
-		providerOption:    dGoptions,
-		transformerOption: opts,
-	}
-	dg.client, err = client.NewWSUsingCallback(ctx,
-		dGoptions.GetKey(),
-		&interfaces.ClientOptions{
-			APIKey:          dGoptions.GetKey(),
-			EnableKeepAlive: true,
-		},
-		dGoptions.TextToSpeechOptions(),
-		NewDeepgramSpeakCallback(logger, dg.onspeech, dg.oncomplete),
-	)
-	if err != nil {
-		logger.Errorf("unable create dg client with error %+v", err.Error())
-		return nil, err
-	}
-	return dg, nil
+func (dg *deepgramTTS) Name() string {
+	return "deepgram-text-to-speech"
 }
 
 // Deepgram service using the WebSocket client `dg.client`.
 func (dg *deepgramTTS) Initialize() error {
-	if !dg.client.Connect() {
-		return errors.New("unable to connect")
+	dg.mu.Lock()
+	defer dg.mu.Unlock()
+
+	client, err := client.NewWSUsingCallback(dg.ctx,
+		dg.GetKey(),
+		&interfaces.ClientOptions{
+			APIKey:          dg.GetKey(),
+			EnableKeepAlive: true,
+		},
+		dg.TextToSpeechOptions(),
+		internal_transformer_deepgram_internal.NewDeepgramSpeakCallback(dg.logger, dg.onspeech, dg.oncomplete),
+	)
+	dg.client = client
+	if err != nil {
+		dg.logger.Errorf("deepgram-tts: unable create dg client with error %+v", err.Error())
+		return err
 	}
 	return nil
 }
 
 func (dg *deepgramTTS) onspeech(b []byte) error {
-	return dg.transformerOption.OnSpeech(dg.contextId, b)
+	return dg.options.OnSpeech(dg.contextId, b)
 }
 
 func (dg *deepgramTTS) oncomplete() error {
-	return dg.transformerOption.OnComplete(dg.contextId)
+	return dg.options.OnComplete(dg.contextId)
 }
 
 func (dg *deepgramTTS) Transform(
 	ctx context.Context,
 	sentence string,
 	opts *internal_transformer.TextToSpeechOption) error {
-	dg.logger.Infof("deepgram-tts: speak %s with context id = %s and completed = %t", sentence, opts.ContextId, opts.IsComplete)
 	dg.mu.Lock()
-	dg.contextId = opts.ContextId
-	dg.mu.Unlock()
+	defer dg.mu.Unlock()
 
-	dg.client.Speak(sentence)
+	if dg.client == nil {
+		return fmt.Errorf("deepgram-tts: connection is not initialized")
+	}
+
+	dg.contextId = opts.ContextId
+	err := dg.client.Speak(sentence)
+	if err != nil {
+		dg.logger.Errorf("deepgram-tts: unable to speak with error: %v", err)
+		return nil
+	}
 	if opts.IsComplete {
 		dg.client.Flush()
 	}
@@ -108,6 +120,8 @@ func (dg *deepgramTTS) Transform(
 }
 
 func (dg *deepgramTTS) Close(ctx context.Context) error {
-	dg.client.Reset()
+	if dg.client != nil {
+		dg.client.Reset()
+	}
 	return nil
 }

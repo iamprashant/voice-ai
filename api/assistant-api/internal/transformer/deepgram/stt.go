@@ -10,25 +10,26 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
-	"time"
+	"sync"
 
 	interfaces "github.com/deepgram/deepgram-go-sdk/v3/pkg/client/interfaces"
 	client "github.com/deepgram/deepgram-go-sdk/v3/pkg/client/listen"
 	internal_transformer "github.com/rapidaai/api/assistant-api/internal/transformer"
+	internal_transformer_deepgram_internal "github.com/rapidaai/api/assistant-api/internal/transformer/deepgram/internal"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/protos"
 )
 
 type deepgramSTT struct {
-	logger            commons.Logger
-	client            *client.WSCallback
-	providerOption    DeepgramOption
-	transformerOption *internal_transformer.SpeechToTextInitializeOptions
+	*deepgramOption
+	mu      sync.Mutex
+	ctx     context.Context
+	logger  commons.Logger
+	client  *client.WSCallback
+	options *internal_transformer.SpeechToTextInitializeOptions
 }
 
-// Name implements internal_transformer.SpeechToTextTransformer.
 func (*deepgramSTT) Name() string {
 	return "deepgram-speech-to-text"
 }
@@ -38,54 +39,49 @@ func NewDeepgramSpeechToText(ctx context.Context,
 	vaultCredential *protos.VaultCredential,
 	opts *internal_transformer.SpeechToTextInitializeOptions,
 ) (internal_transformer.SpeechToTextTransformer, error) {
-	start := time.Now()
-	//create deepgram option
-	dGoptions, err := NewDeepgramOption(
+	deepgramOpts, err := NewDeepgramOption(
 		logger,
 		vaultCredential,
 		opts.AudioConfig,
 		opts.ModelOptions,
 	)
 	if err != nil {
-		logger.Errorf("Key from credential failed %+v", err)
-		return nil, err
-	}
-
-	dgClient, err := client.NewWSUsingCallback(
-		context.Background(),
-		dGoptions.GetKey(),
-		&interfaces.ClientOptions{
-			APIKey:          dGoptions.GetKey(),
-			EnableKeepAlive: true,
-		},
-		dGoptions.SpeechToTextOptions(),
-		NewDeepgramSttCallback(logger, opts.OnTranscript))
-
-	//
-	if err != nil {
-		logger.Benchmark("deepgram.NewDeepgramSpeechToText", time.Since(start))
-		logger.Errorf("unable create dg client with error %+v", err.Error())
+		logger.Errorf("deepgram-stt: Key from credential failed %+v", err)
 		return nil, err
 	}
 
 	//
-	logger.Benchmark("deepgram.NewDeepgramSpeechToText", time.Since(start))
 	return &deepgramSTT{
-		client:            dgClient,
-		logger:            logger,
-		providerOption:    dGoptions,
-		transformerOption: opts,
+		ctx:            ctx,
+		options:        opts,
+		logger:         logger,
+		deepgramOption: deepgramOpts,
 	}, nil
 }
 
 // The `Initialize` method in the `deepgram` struct is responsible for establishing a connection to the
 // Deepgram service using the WebSocket client `dg.client`.
 func (dg *deepgramSTT) Initialize() error {
-	start := time.Now()
-	if !dg.client.Connect() {
-		return errors.New("unable to connect with deepgram")
+	dg.mu.Lock()
+	defer dg.mu.Unlock()
+
+	dgClient, err := client.NewWSUsingCallback(
+		dg.ctx,
+		dg.GetKey(),
+		&interfaces.ClientOptions{
+			APIKey:          dg.GetKey(),
+			EnableKeepAlive: true,
+		},
+		dg.SpeechToTextOptions(),
+		internal_transformer_deepgram_internal.
+			NewDeepgramSttCallback(dg.logger, dg.options.OnTranscript))
+
+	//
+	dg.client = dgClient
+	if err != nil {
+		dg.logger.Errorf("deepgram-stt: unable create dg client with error %+v", err.Error())
+		return err
 	}
-	dg.logger.Benchmark("deepgram.Initialize", time.Since(start))
 	return nil
 }
 
@@ -96,18 +92,26 @@ func (dg *deepgramSTT) Initialize() error {
 // for transcription. If there are any errors during the streaming process, they will be returned by
 // the method.
 func (dg *deepgramSTT) Transform(ctx context.Context, in []byte, opts *internal_transformer.SpeechToTextOption) error {
+	dg.mu.Lock()
+	defer dg.mu.Unlock()
+
+	if dg.client == nil {
+		return fmt.Errorf("deepgram-stt: connection is not initialized")
+	}
 	err := dg.client.Stream(bufio.NewReader(bytes.NewReader(in)))
 	if err != nil {
 		if err.Error() == "EOF" {
 			return nil
 		}
-		dg.logger.Errorf("error while calling deepgram: %v", err)
+		dg.logger.Errorf("deepgram-stt: error while calling deepgram: %v", err)
 		return fmt.Errorf("deepgram stream error: %w", err)
 	}
 	return err
 }
 
 func (dg *deepgramSTT) Close(ctx context.Context) error {
-	dg.client.Stop()
+	if dg.client != nil {
+		dg.client.Stop()
+	}
 	return nil
 }

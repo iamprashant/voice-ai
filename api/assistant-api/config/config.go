@@ -12,15 +12,13 @@ import (
 
 // Application config structure
 type AssistantConfig struct {
-	config.AppConfig `mapstructure:",squash"`
-	PostgresConfig   configs.PostgresConfig   `mapstructure:"postgres" validate:"required"`
-	RedisConfig      configs.RedisConfig      `mapstructure:"redis" validate:"required"`
-	OpenSearchConfig configs.OpenSearchConfig `mapstructure:"opensearch" validate:"required"`
-	WeaviateConfig   configs.WeaviateConfig   `mapstructure:"weaviate" validate:"required"`
-	AssetStoreConfig configs.AssetStoreConfig `mapstructure:"asset_store" validate:"required"`
-
-	// telephony host
-	PublicAssistantHost string `mapstructure:"public_assistant_host" validate:"required"`
+	config.AppConfig    `mapstructure:",squash"`
+	PostgresConfig      configs.PostgresConfig   `mapstructure:"postgres" validate:"required"`
+	RedisConfig         configs.RedisConfig      `mapstructure:"redis" validate:"required"`
+	OpenSearchConfig    configs.OpenSearchConfig `mapstructure:"opensearch" validate:"required"`
+	WeaviateConfig      configs.WeaviateConfig   `mapstructure:"weaviate"`
+	AssetStoreConfig    configs.AssetStoreConfig `mapstructure:"asset_store" validate:"required"`
+	PublicAssistantHost string                   `mapstructure:"public_assistant_host" validate:"required"`
 }
 
 // reading config and intializing configs for application

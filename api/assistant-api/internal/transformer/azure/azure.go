@@ -20,7 +20,7 @@ import (
 
 type azureOption struct {
 	logger          commons.Logger
-	options         utils.Option
+	mdlOpts         utils.Option
 	audioConfig     *internal_audio.AudioConfig
 	endpoint        string
 	subscriptionKey string
@@ -42,7 +42,7 @@ func NewAzureOption(
 	}
 	return &azureOption{
 		logger:          logger,
-		options:         options,
+		mdlOpts:         options,
 		audioConfig:     audioConfig,
 		endpoint:        endpoint.(string),
 		subscriptionKey: subscriptionKey.(string),
@@ -51,7 +51,7 @@ func NewAzureOption(
 
 func (az *azureOption) SpeechToTextOption() (*speech.SpeechConfig, error) {
 	cfg, err := speech.NewSpeechConfigFromEndpointWithSubscription(az.endpoint, az.subscriptionKey)
-	if language, ok := az.options.GetString("listen.language"); ok == nil {
+	if language, ok := az.mdlOpts.GetString("listen.language"); ok == nil {
 		cfg.SetSpeechRecognitionLanguage(language)
 	}
 	return cfg, err
@@ -70,11 +70,11 @@ func (az *azureOption) TextToSpeechOption() (*speech.SpeechConfig, error) {
 	cfg.SetSpeechSynthesisOutputFormat(
 		az.GetSpeechSynthesisOutputFormat(),
 	)
-	if voiceIDValue, ok := az.options.GetString("speak.voice.id"); ok == nil {
+	if voiceIDValue, ok := az.mdlOpts.GetString("speak.voice.id"); ok == nil {
 		az.logger.Debugf("azure options %v", voiceIDValue)
 		cfg.SetSpeechSynthesisVoiceName(voiceIDValue)
 	}
-	if language, ok := az.options.GetString("speak.language"); ok == nil {
+	if language, ok := az.mdlOpts.GetString("speak.language"); ok == nil {
 		cfg.SetSpeechSynthesisLanguage(language)
 		az.logger.Debugf("azure options %v", language)
 	}

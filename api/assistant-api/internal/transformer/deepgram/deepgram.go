@@ -18,46 +18,22 @@ import (
 	protos "github.com/rapidaai/protos"
 )
 
-type Encoding string
-
-const (
-	//
-	EncodingLinear16 Encoding = "linear16"
-	EncodingMulaw    Encoding = "mulaw"
-	EncodingAlaw     Encoding = "alaw"
-)
-
-// Name implements internal_transformer.SpeechToTextTransformer.
-func (*deepgramTTS) Name() string {
-	return "deepgram-speech-to-text"
-}
-
-func (d Encoding) String() string {
-	return string(d)
-}
-
-func EncodingFromString(encoding string) string {
-	switch Encoding(encoding) {
-	case EncodingLinear16, "Linear16":
-		return EncodingLinear16.String()
-	case EncodingMulaw, "MuLaw8":
-		return EncodingMulaw.String()
+func (dg *deepgramOption) GetEncoding() string {
+	switch dg.audioConfig.Format {
+	case internal_audio.Linear16:
+		return "linear16"
+	case internal_audio.MuLaw8:
+		return "mulaw"
 	default:
-		fmt.Printf("Warning: Invalid encoding option '%s'. Using default (linear16).", encoding)
-		return string(EncodingLinear16)
+		return "linear16"
 	}
-}
 
-type DeepgramOption interface {
-	SpeechToTextOptions() *interfaces.LiveTranscriptionOptions
-	TextToSpeechOptions() *interfaces.WSSpeakOptions
-	GetKey() string
 }
 
 type deepgramOption struct {
 	key         string
 	logger      commons.Logger
-	options     utils.Option
+	mdlOpts     utils.Option
 	audioConfig *internal_audio.AudioConfig
 }
 
@@ -65,7 +41,7 @@ func NewDeepgramOption(
 	logger commons.Logger,
 	vaultCredential *protos.VaultCredential,
 	audioConfig *internal_audio.AudioConfig,
-	opts utils.Option) (DeepgramOption, error) {
+	opts utils.Option) (*deepgramOption, error) {
 	cx, ok := vaultCredential.GetValue().AsMap()["key"]
 	if !ok {
 		return nil, fmt.Errorf("illegal vault config")
@@ -73,7 +49,7 @@ func NewDeepgramOption(
 	return &deepgramOption{
 		key:         cx.(string),
 		logger:      logger,
-		options:     opts,
+		mdlOpts:     opts,
 		audioConfig: audioConfig,
 	}, nil
 }
@@ -94,50 +70,40 @@ func (dgOpt *deepgramOption) SpeechToTextOptions() *interfaces.LiveTranscription
 		Endpointing:    "5",
 		Punctuate:      true,
 		NoDelay:        true,
-		Encoding:       EncodingFromString(dgOpt.audioConfig.GetFormat()),
+		Encoding:       dgOpt.GetEncoding(),
 		SampleRate:     dgOpt.audioConfig.SampleRate,
 		Diarize:        false,
 		Multichannel:   false,
 	}
 
-	if sampleRate, err := dgOpt.options.GetUint32("listen.output_format.sample_rate"); err == nil {
-		opts.SampleRate = int(sampleRate)
-	}
-
-	if encoding, err := dgOpt.options.GetString("listen.output_format.encoding"); err == nil {
-		opts.Encoding = EncodingFromString(encoding)
-	}
-
-	if language, err := dgOpt.options.GetString("listen.language"); err == nil {
+	if language, err := dgOpt.mdlOpts.GetString("listen.language"); err == nil {
 		opts.Language = language
 	}
-	if channels, err := dgOpt.options.GetUint32("listen.channel"); err == nil {
-		opts.Channels = int(channels)
-	}
-	if smartFormat, err := dgOpt.options.GetBool("listen.smart_format"); err == nil {
+
+	if smartFormat, err := dgOpt.mdlOpts.GetBool("listen.smart_format"); err == nil {
 		opts.SmartFormat = smartFormat
 	}
 
-	if fillerWords, err := dgOpt.options.GetBool("listen.filler_words"); err == nil {
+	if fillerWords, err := dgOpt.mdlOpts.GetBool("listen.filler_words"); err == nil {
 		opts.FillerWords = fillerWords
 	}
-	if vadEvents, err := dgOpt.options.GetBool("listen.vad_events"); err == nil {
+	if vadEvents, err := dgOpt.mdlOpts.GetBool("listen.vad_events"); err == nil {
 		opts.VadEvents = vadEvents
 	}
-	if endpointing, err := dgOpt.options.GetString("listen.endpointing"); err == nil {
+	if endpointing, err := dgOpt.mdlOpts.GetString("listen.endpointing"); err == nil {
 		opts.Endpointing = endpointing
 	}
-	if multichannel, err := dgOpt.options.GetBool("listen.multichannel"); err == nil {
+	if multichannel, err := dgOpt.mdlOpts.GetBool("listen.multichannel"); err == nil {
 		opts.Multichannel = multichannel
 	}
-	if model, err := dgOpt.options.GetString("listen.model"); err == nil {
+	if model, err := dgOpt.mdlOpts.GetString("listen.model"); err == nil {
 		opts.Model = model
 	}
-	if utteranceEndMs, err := dgOpt.options.GetString("listen.utterance_end"); err == nil {
+	if utteranceEndMs, err := dgOpt.mdlOpts.GetString("listen.utterance_end"); err == nil {
 		opts.UtteranceEndMs = utteranceEndMs
 	}
 
-	if keywordsRaw, exists := dgOpt.options["listen.keyword"]; exists {
+	if keywordsRaw, exists := dgOpt.mdlOpts["listen.keyword"]; exists {
 		var keywords []string
 		switch v := keywordsRaw.(type) {
 		case string:
@@ -170,28 +136,20 @@ func (dgOpt *deepgramOption) SpeechToTextOptions() *interfaces.LiveTranscription
 func (dgOpt *deepgramOption) TextToSpeechOptions() *interfaces.WSSpeakOptions {
 	opts := &interfaces.WSSpeakOptions{
 		Model:      "aura-asteria-en",
-		Encoding:   EncodingFromString(dgOpt.audioConfig.GetFormat()),
+		Encoding:   dgOpt.GetEncoding(),
 		SampleRate: dgOpt.audioConfig.SampleRate,
 	}
 
-	if sampleRate, err := dgOpt.options.GetUint32("speak.output_format.sample_rate"); err == nil {
-		opts.SampleRate = int(sampleRate)
-	}
-
-	if encoding, err := dgOpt.options.GetString("speak.output_format.encoding"); err == nil {
-		opts.Encoding = EncodingFromString(encoding)
-	}
-
 	var model, voiceID, language string
-	if modelValue, err := dgOpt.options.GetString("speak.model"); err == nil {
+	if modelValue, err := dgOpt.mdlOpts.GetString("speak.model"); err == nil {
 		model = modelValue
 	}
 
-	if voiceIDValue, err := dgOpt.options.GetString("speak.voice.id"); err == nil {
+	if voiceIDValue, err := dgOpt.mdlOpts.GetString("speak.voice.id"); err == nil {
 		voiceID = voiceIDValue
 	}
 
-	if languageValue, err := dgOpt.options.GetString("speak.language"); err == nil {
+	if languageValue, err := dgOpt.mdlOpts.GetString("speak.language"); err == nil {
 		language = languageValue
 	}
 

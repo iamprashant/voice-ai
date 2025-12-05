@@ -16,19 +16,18 @@ import (
 	"github.com/gorilla/websocket"
 	internal_transformer "github.com/rapidaai/api/assistant-api/internal/transformer"
 	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/utils"
 	protos "github.com/rapidaai/protos"
 )
 
 type resembleTTS struct {
+	*resembleOption
 	ctx       context.Context
-	contextId string
 	mu        sync.Mutex
+	contextId string
 
-	logger            commons.Logger
-	connection        *websocket.Conn
-	providerOption    ResembleOption
-	transformerOption *internal_transformer.TextToSpeechInitializeOptions
+	logger     commons.Logger
+	connection *websocket.Conn
+	options    *internal_transformer.TextToSpeechInitializeOptions
 }
 
 func NewResembleTextToSpeech(
@@ -37,38 +36,38 @@ func NewResembleTextToSpeech(
 	credential *protos.VaultCredential,
 	options *internal_transformer.TextToSpeechInitializeOptions,
 ) (internal_transformer.TextToSpeechTransformer, error) {
-	wsURL := "wss://websocket.cluster.resemble.ai/stream"
-	headers := map[string][]string{
-		"Authorization": {"Bearer " + RESEMBLE_API_KEY},
-	}
-	cOptions, err := NewResembleOption(
+	rsmblOpts, err := NewResembleOption(
 		logger,
 		credential,
 		options.AudioConfig,
 		options.ModelOptions)
 	if err != nil {
-		logger.Errorf("intializing resembleai failed %+v", err)
-		return nil, err
-	}
-	//
-	conn, _, err := websocket.DefaultDialer.Dial(wsURL, headers)
-	if err != nil {
+		logger.Errorf("resemble-tts: intializing resembleai failed %+v", err)
 		return nil, err
 	}
 	return &resembleTTS{
-		ctx:               ctx,
-		logger:            logger,
-		connection:        conn,
-		transformerOption: options,
-		providerOption:    cOptions,
+		resembleOption: rsmblOpts,
+		ctx:            ctx,
+		logger:         logger,
+		options:        options,
 	}, nil
 }
 
 // Initialize implements internal_transformer.OutputAudioTransformer.
 func (rt *resembleTTS) Initialize() error {
-	utils.Go(context.Background(), func() {
-		rt.processAudio()
-	})
+	rt.mu.Lock()
+	defer rt.mu.Unlock()
+
+	headers := map[string][]string{
+		"Authorization": {"Bearer " + rt.GetKey()},
+	}
+	conn, _, err := websocket.DefaultDialer.Dial("wss://websocket.cluster.resemble.ai/stream", headers)
+	if err != nil {
+		rt.logger.Errorf("resemble-tts: unable to connect to websocket err: %v", err)
+		return err
+	}
+	rt.connection = conn
+	go rt.textToSpeechCallback(rt.ctx)
 	return nil
 }
 
@@ -77,48 +76,51 @@ func (*resembleTTS) Name() string {
 	return "resemble-text-to-speech"
 }
 
-func (rt *resembleTTS) Cleanup(ctx context.Context, opts *internal_transformer.TextToSpeechOption) error {
-	return nil
-}
+func (rt *resembleTTS) textToSpeechCallback(ctx context.Context) {
 
-func (rt *resembleTTS) processAudio() {
 	for {
-		_, audioChunk, err := rt.connection.ReadMessage()
-		if err != nil {
-			rt.logger.Errorf("Error reading from Resemble WebSocket: %v", err)
-			continue
-		}
-
-		var audioData map[string]interface{}
-		if err := json.Unmarshal(audioChunk, &audioData); err != nil {
-			rt.logger.Errorf("Error parsing audio chunk: %v", err)
-			continue
-		}
-		if audioData["type"] == "audio_end" {
-			break
-		}
-		if audioData["type"] == "audio" {
-			payload, ok := audioData["audio_content"].(string)
-			if !ok {
+		select {
+		case <-ctx.Done():
+			rt.logger.Infof("sarvam-tts: context cancelled, stopping response listener")
+			return
+		default:
+			_, audioChunk, err := rt.connection.ReadMessage()
+			if err != nil {
+				rt.logger.Errorf("resemble-tts: error reading from Resemble WebSocket: %v", err)
 				continue
 			}
-			rawAudioData, err := base64.StdEncoding.DecodeString(payload)
-			if err != nil {
-				log.Fatalf("Error decoding base64 string: %v", err)
+
+			var audioData map[string]interface{}
+			if err := json.Unmarshal(audioChunk, &audioData); err != nil {
+				rt.logger.Errorf("resemble-tts: error parsing audio chunk: %v", err)
+				continue
 			}
-			rt.transformerOption.OnSpeech(rt.contextId, rawAudioData)
+			if audioData["type"] == "audio_end" {
+				break
+			}
+			if audioData["type"] == "audio" {
+				payload, ok := audioData["audio_content"].(string)
+				if !ok {
+					continue
+				}
+				rawAudioData, err := base64.StdEncoding.DecodeString(payload)
+				if err != nil {
+					log.Fatalf("Error decoding base64 string: %v", err)
+				}
+				rt.options.OnSpeech(rt.contextId, rawAudioData)
+			}
 		}
 	}
+
 }
 
 func (rt *resembleTTS) Transform(ctx context.Context, in string, opts *internal_transformer.TextToSpeechOption) error {
-	rt.logger.Infof("resemble-tts: speak %s with context id = %s and completed = %t", in, opts.ContextId, opts.IsComplete)
 	rt.mu.Lock()
-	rt.contextId = opts.ContextId
-	rt.mu.Unlock()
+	defer rt.mu.Unlock()
 
-	if err := rt.connection.WriteJSON(rt.providerOption.GetTextToSpeechRequest(opts.ContextId, in)); err != nil {
-		rt.logger.Debugf("error while writing request to websocket %v", err)
+	rt.contextId = opts.ContextId
+	if err := rt.connection.WriteJSON(rt.GetTextToSpeechRequest(opts.ContextId, in)); err != nil {
+		rt.logger.Errorf("resemble-tts: error while writing request to websocket %v", err)
 		return err
 	}
 	return nil

@@ -15,7 +15,7 @@ import (
 	internal_audio "github.com/rapidaai/api/assistant-api/internal/audio"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/utils"
-	protos "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
 type TextToSpeechVoice struct {
@@ -70,51 +70,28 @@ type SpeechToTextOutput struct {
 	Words     []TranscriptWord `json:"words"`
 }
 
-type Encoding string
-
 const (
+	URL                  = "wss://api.cartesia.ai/stt/websocket"
 	CARTESIA_API_VERSION = "2024-06-10"
-
-	RECONNECT_DELAY = 5 * time.Second
-	WRITE_TIME_OUT  = 10 * time.Second
-	// PCM_F32LE represents 32-bit floating-point PCM encoding
-	PCM_F32LE Encoding = "pcm_f32le"
-	// PCM_S16LE represents 16-bit signed integer PCM encoding
-	PCM_S16LE Encoding = "pcm_s16le"
-	// PCM_MULAW represents mu-law PCM encoding
-	PCM_MULAW Encoding = "pcm_mulaw"
-	//
-	PCM_ALAW Encoding = "pcm_alaw"
+	RECONNECT_DELAY      = 5 * time.Second
+	WRITE_TIME_OUT       = 10 * time.Second
 )
 
-func (m Encoding) String() string {
-	return string(m)
-}
-
-func EncodingFromString(encoding string) string {
-	switch Encoding(encoding) {
-	case PCM_S16LE, "Linear16":
-		return PCM_S16LE.String()
-	case PCM_MULAW, "MuLaw8":
-		return PCM_MULAW.String()
+func (co *cartesiaOption) GetEncoding() string {
+	switch co.audioConfig.Format {
+	case internal_audio.Linear16:
+		return "pcm_s16le"
+	case internal_audio.MuLaw8:
+		return "pcm_mulaw"
 	default:
-		fmt.Printf("Warning: Invalid encoding option '%s'. Using default (linear16).", encoding)
-		return string(PCM_S16LE)
+		fmt.Printf("Warning: Invalid encoding option '%s'. Using default (linear16).", co.audioConfig.Format)
+		return "pcm_s16le"
 	}
-}
-
-type CartesiaOption interface {
-	GetTextToSpeechInput(
-		transcript string,
-		oOpts map[string]interface{},
-	) TextToSpeechInput
-	GetSpeechToTextConnectionString() string
-	GetTextToSpeechConnectionString() string
 }
 
 type cartesiaOption struct {
 	key         string
-	options     utils.Option
+	mdlOpts     utils.Option
 	logger      commons.Logger
 	audioConfig *internal_audio.AudioConfig
 }
@@ -122,14 +99,14 @@ type cartesiaOption struct {
 func NewCartesiaOption(logger commons.Logger,
 	vltC *protos.VaultCredential,
 	audioConfig *internal_audio.AudioConfig,
-	opts utils.Option) (CartesiaOption, error) {
+	opts utils.Option) (*cartesiaOption, error) {
 	cx, ok := vltC.GetValue().AsMap()["key"]
 	if !ok {
-		return nil, fmt.Errorf("illegal vault config")
+		return nil, fmt.Errorf("unable to get config parameters from vaults")
 	}
 	return &cartesiaOption{
 		logger:      logger,
-		options:     opts,
+		mdlOpts:     opts,
 		audioConfig: audioConfig,
 		key:         cx.(string),
 	}, nil
@@ -147,37 +124,29 @@ func (co *cartesiaOption) GetTextToSpeechInput(
 		},
 		OutputFormat: TextToSpeechOutputFormat{
 			Container:  "raw",
-			Encoding:   EncodingFromString(co.audioConfig.GetFormat()),
+			Encoding:   co.GetEncoding(),
 			SampleRate: co.audioConfig.SampleRate,
 		},
 		Transcript:    transcript,
 		AddTimestamps: false,
 	}
 
-	if encoding, err := co.options.GetString("speak.output_format.encoding"); err == nil {
-		opts.OutputFormat.Encoding = EncodingFromString(encoding)
-	}
-
-	if sampleRate, err := co.options.GetUint32("speak.output_format.sample_rate"); err == nil {
-		opts.OutputFormat.SampleRate = int(sampleRate)
-	}
-
-	if speed, err := co.options.GetString("speak.__experimental_controls.speed"); err == nil {
+	if speed, err := co.mdlOpts.GetString("speak.__experimental_controls.speed"); err == nil {
 		opts.ExperimentalControls.Speed = speed
 	}
 
-	if emotion, err := co.options.GetString("speak.__experimental_controls.emotion"); err == nil {
+	if emotion, err := co.mdlOpts.GetString("speak.__experimental_controls.emotion"); err == nil {
 		opts.ExperimentalControls.Emotion = strings.Split(emotion, commons.SEPARATOR)
 	}
 
-	if language, err := co.options.GetString("speak.language"); err == nil {
+	if language, err := co.mdlOpts.GetString("speak.language"); err == nil {
 		opts.Language = language
 	}
 
-	if model, err := co.options.GetString("speak.model"); err == nil {
+	if model, err := co.mdlOpts.GetString("speak.model"); err == nil {
 		opts.ModelID = model
 	}
-	if voice, err := co.options.GetString("speak.voice.id"); err == nil {
+	if voice, err := co.mdlOpts.GetString("speak.voice.id"); err == nil {
 		opts.Voice = TextToSpeechVoice{
 			Mode: "id",
 			ID:   voice,
@@ -198,35 +167,22 @@ func (co *cartesiaOption) GetTextToSpeechInput(
 }
 
 func (co *cartesiaOption) GetSpeechToTextConnectionString() string {
-	baseURL := "wss://api.cartesia.ai/stt/websocket"
 	params := url.Values{}
 	params.Add("api_key", co.key)
 	params.Add("cartesia_version", CARTESIA_API_VERSION)
-	params.Add("encoding", EncodingFromString(co.audioConfig.GetFormat()))
+	params.Add("encoding", co.GetEncoding())
 	params.Add("sample_rate", fmt.Sprintf("%d", co.audioConfig.GetSampleRate()))
-
 	// Check and add language
-	if language, err := co.options.GetString("listen.language"); err == nil {
+	if language, err := co.mdlOpts.GetString("listen.language"); err == nil {
 		params.Add("language", language)
 	}
 
 	// Check and add model
-	if model, err := co.options.GetString("listen.model"); err == nil {
+	if model, err := co.mdlOpts.GetString("listen.model"); err == nil {
 		params.Add("model", model)
 	}
-
-	// Check and add encoding
-	if encoding, err := co.options.GetString("listen.output_format.encoding"); err == nil {
-		params.Add("encoding", EncodingFromString(encoding))
-	}
-
-	// Check and add sample rate
-	if sampleRate, err := co.options.GetString("listen.output_format.sample_rate"); err == nil {
-		params.Add("sample_rate", sampleRate)
-	}
-
 	// Construct the final URL
-	return fmt.Sprintf("%s?%s", baseURL, params.Encode())
+	return fmt.Sprintf("%s?%s", URL, params.Encode())
 }
 
 func (co *cartesiaOption) GetTextToSpeechConnectionString() string {

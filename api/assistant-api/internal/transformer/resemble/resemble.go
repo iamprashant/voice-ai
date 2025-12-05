@@ -7,57 +7,77 @@
 package internal_transformer_resemble
 
 import (
+	"fmt"
+
 	internal_audio "github.com/rapidaai/api/assistant-api/internal/audio"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/utils"
-	protos "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
 const (
-	RESEMBLE_URL     = "f.cluster.resemble.ai/stream"
-	RESEMBLE_API_KEY = "MeSE5fr4a1yMblzzLYWMzgtt"
-	PROJECT_ID       = "665d946d"
-	VOICE_ID         = "1dcf0222"
+	RESEMBLE_URL = "f.cluster.resemble.ai/stream"
+	VOICE_ID     = "1dcf0222"
 )
-
-type ResembleOption interface {
-	GetTextToSpeechRequest(contextId, text string) map[string]interface{}
-}
 
 type resembleOption struct {
 	logger      commons.Logger
 	audioConfig *internal_audio.AudioConfig
-	option      utils.Option
+	modelOpts   utils.Option
+	key         string
+	projectId   string
 }
 
 func NewResembleOption(logger commons.Logger,
 	vaultCredential *protos.VaultCredential,
-	audioConfig *internal_audio.AudioConfig, option utils.Option) (ResembleOption, error) {
+	audioConfig *internal_audio.AudioConfig, option utils.Option) (*resembleOption, error) {
+
+	credentialsMap := vaultCredential.GetValue().AsMap()
+	cx, ok := credentialsMap["key"]
+	if !ok {
+		return nil, fmt.Errorf("resemble: illegal vault config")
+	}
+
+	prj, ok := credentialsMap["project_id"]
+	if !ok {
+		return nil, fmt.Errorf("resemble: illegal vault config")
+	}
 	return &resembleOption{
 		logger:      logger,
 		audioConfig: audioConfig,
-		option:      option,
+		modelOpts:   option,
+		key:         cx.(string),
+		projectId:   prj.(string),
 	}, nil
 }
 
-func (ro *resembleOption) GetTextToSpeechFormat(format string) string {
-	switch format {
-	case "PCM_16", "Linear16":
+func (ro *resembleOption) GetKey() string {
+	return ro.key
+}
+
+func (ro *resembleOption) GetProject() string {
+	return ro.projectId
+}
+
+func (ro *resembleOption) GetEncoding() string {
+	switch ro.audioConfig.Format {
+	case internal_audio.Linear16:
 		return "PCM_16"
-	case "MuLaw8", "MULAW":
+	case internal_audio.MuLaw8:
 		return "MULAW"
+	default:
+		return "PCM_16"
 	}
-	return "PCM_16"
 }
 
 func (ro *resembleOption) GetTextToSpeechRequest(contextId, text string) map[string]interface{} {
 	return map[string]interface{}{
 		"voice_uuid":      VOICE_ID,
 		"request_id":      contextId,
-		"project_uuid":    PROJECT_ID,
+		"project_uuid":    ro.GetProject(),
 		"data":            text,
 		"binary_response": true,
-		"precision":       ro.GetTextToSpeechFormat(ro.audioConfig.GetFormat()),
+		"precision":       ro.GetEncoding(),
 		"sample_rate":     ro.audioConfig.GetSampleRate(),
 	}
 
