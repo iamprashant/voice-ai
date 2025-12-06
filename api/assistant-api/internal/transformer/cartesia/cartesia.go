@@ -162,7 +162,6 @@ func (co *cartesiaOption) GetTextToSpeechInput(
 		opts.ContextID = ctxId.(string)
 	}
 
-	co.logger.Debugf("cartesia options %+v", opts)
 	return opts
 }
 

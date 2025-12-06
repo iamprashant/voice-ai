@@ -10,6 +10,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"log"
 	"sync"
 
@@ -118,6 +119,10 @@ func (rt *resembleTTS) Transform(ctx context.Context, in string, opts *internal_
 	rt.mu.Lock()
 	defer rt.mu.Unlock()
 
+	if rt.connection == nil {
+		return fmt.Errorf("resemble-tts: connection is not initialized")
+	}
+
 	rt.contextId = opts.ContextId
 	if err := rt.connection.WriteJSON(rt.GetTextToSpeechRequest(opts.ContextId, in)); err != nil {
 		rt.logger.Errorf("resemble-tts: error while writing request to websocket %v", err)
@@ -127,6 +132,8 @@ func (rt *resembleTTS) Transform(ctx context.Context, in string, opts *internal_
 }
 
 func (rt *resembleTTS) Close(ctx context.Context) error {
-	rt.connection.Close()
+	if rt.connection != nil {
+		rt.connection.Close()
+	}
 	return nil
 }

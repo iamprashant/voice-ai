@@ -11,20 +11,20 @@ import (
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 type largeLanguageCaller struct {
 	Anthropic
 }
 
-func NewLargeLanguageCaller(logger commons.Logger, credential *lexatic_backend.Credential) internal_callers.LargeLanguageCaller {
+func NewLargeLanguageCaller(logger commons.Logger, credential *protos.Credential) internal_callers.LargeLanguageCaller {
 	return &largeLanguageCaller{
 		Anthropic: anthropicAI(logger, credential),
 	}
 }
 
-func (llc *largeLanguageCaller) BuildHistory(allMessages []*lexatic_backend.Message) ([]anthropic.TextBlockParam, []anthropic.MessageParam) {
+func (llc *largeLanguageCaller) BuildHistory(allMessages []*protos.Message) ([]anthropic.TextBlockParam, []anthropic.MessageParam) {
 	messages := make([]anthropic.MessageParam, 0)
 	systemPrompt := make([]anthropic.TextBlockParam, 0)
 	for _, msg := range allMessages {
@@ -118,7 +118,7 @@ func (llc *largeLanguageCaller) BuildHistory(allMessages []*lexatic_backend.Mess
 }
 func (llc *largeLanguageCaller) StreamChatCompletion(
 	ctx context.Context,
-	allMessages []*lexatic_backend.Message,
+	allMessages []*protos.Message,
 	options *internal_callers.ChatCompletionOptions,
 	onStream func(types.Message) error,
 	onMetrics func(*types.Message, types.Metrics) error,
@@ -316,7 +316,7 @@ func (llc *largeLanguageCaller) GetMessageNewParams(opts *internal_callers.ChatC
 
 func (llc *largeLanguageCaller) GetChatCompletion(
 	ctx context.Context,
-	allMessages []*lexatic_backend.Message,
+	allMessages []*protos.Message,
 	options *internal_callers.ChatCompletionOptions,
 ) (*types.Message, types.Metrics, error) {
 	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)

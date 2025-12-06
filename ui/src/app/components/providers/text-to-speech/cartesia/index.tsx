@@ -5,7 +5,7 @@ import { FieldSet } from '@/app/components/form/fieldset';
 import {
   CARTESIA_EMOTION_LEVEL_COMBINATION,
   CARTESIA_LANGUAGE,
-  CARTESIA_MODEL,
+  CARTESIA_TEXT_TO_SPEECH_MODEL,
   CARTESIA_SPEED_OPTION,
   CARTESIA_VOICE,
 } from '@/providers';
@@ -61,13 +61,13 @@ export const ConfigureCartesiaTextToSpeech: React.FC<{
         <FormLabel>Model</FormLabel>
         <Dropdown
           className="bg-light-background max-w-full dark:bg-gray-950"
-          currentValue={CARTESIA_MODEL().find(
+          currentValue={CARTESIA_TEXT_TO_SPEECH_MODEL().find(
             x => x.id === getParamValue('speak.model'),
           )}
           setValue={v => {
             updateParameter('speak.model', v.id);
           }}
-          allValue={CARTESIA_MODEL()}
+          allValue={CARTESIA_TEXT_TO_SPEECH_MODEL()}
           placeholder={`Select model`}
           option={renderOption}
           label={renderOption}

@@ -27,7 +27,7 @@ type webAssistantDeploymentGRPCApi struct {
 	webAssistantDeploymentApi
 }
 
-// GetAssistantApiDeployment implements lexatic_backend.AssistantDeploymentServiceServer.
+// GetAssistantApiDeployment implements protos.AssistantDeploymentServiceServer.
 func (w *webAssistantDeploymentGRPCApi) GetAssistantApiDeployment(c context.Context, iRequest *protos.GetAssistantDeploymentRequest) (*protos.GetAssistantApiDeploymentResponse, error) {
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(c)
 	if !isAuthenticated {
@@ -36,7 +36,7 @@ func (w *webAssistantDeploymentGRPCApi) GetAssistantApiDeployment(c context.Cont
 	return w.assistantClient.GetAssistantApiDeployment(c, iAuth, iRequest)
 }
 
-// GetAssistantDebuggerDeployment implements lexatic_backend.AssistantDeploymentServiceServer.
+// GetAssistantDebuggerDeployment implements protos.AssistantDeploymentServiceServer.
 func (w *webAssistantDeploymentGRPCApi) GetAssistantDebuggerDeployment(c context.Context, iRequest *protos.GetAssistantDeploymentRequest) (*protos.GetAssistantDebuggerDeploymentResponse, error) {
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(c)
 	if !isAuthenticated {
@@ -45,7 +45,7 @@ func (w *webAssistantDeploymentGRPCApi) GetAssistantDebuggerDeployment(c context
 	return w.assistantClient.GetAssistantDebuggerDeployment(c, iAuth, iRequest)
 }
 
-// GetAssistantPhoneDeployment implements lexatic_backend.AssistantDeploymentServiceServer.
+// GetAssistantPhoneDeployment implements protos.AssistantDeploymentServiceServer.
 func (w *webAssistantDeploymentGRPCApi) GetAssistantPhoneDeployment(c context.Context, iRequest *protos.GetAssistantDeploymentRequest) (*protos.GetAssistantPhoneDeploymentResponse, error) {
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(c)
 	if !isAuthenticated {
@@ -54,7 +54,7 @@ func (w *webAssistantDeploymentGRPCApi) GetAssistantPhoneDeployment(c context.Co
 	return w.assistantClient.GetAssistantPhoneDeployment(c, iAuth, iRequest)
 }
 
-// GetAssistantWebpluginDeployment implements lexatic_backend.AssistantDeploymentServiceServer.
+// GetAssistantWebpluginDeployment implements protos.AssistantDeploymentServiceServer.
 func (w *webAssistantDeploymentGRPCApi) GetAssistantWebpluginDeployment(c context.Context, iRequest *protos.GetAssistantDeploymentRequest) (*protos.GetAssistantWebpluginDeploymentResponse, error) {
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(c)
 	if !isAuthenticated {
@@ -63,7 +63,7 @@ func (w *webAssistantDeploymentGRPCApi) GetAssistantWebpluginDeployment(c contex
 	return w.assistantClient.GetAssistantWebpluginDeployment(c, iAuth, iRequest)
 }
 
-// GetAssistantWhatsappDeployment implements lexatic_backend.AssistantDeploymentServiceServer.
+// GetAssistantWhatsappDeployment implements protos.AssistantDeploymentServiceServer.
 func (w *webAssistantDeploymentGRPCApi) GetAssistantWhatsappDeployment(c context.Context, iRequest *protos.GetAssistantDeploymentRequest) (*protos.GetAssistantWhatsappDeploymentResponse, error) {
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(c)
 	if !isAuthenticated {
@@ -80,7 +80,7 @@ func (w *webAssistantDeploymentGRPCApi) CreateAssistantApiDeployment(c context.C
 	return w.assistantClient.CreateAssistantApiDeployment(c, iAuth, iRequest)
 }
 
-// CreateAssistantDebuggerDeployment implements lexatic_backend.AssistantDeploymentServiceServer.
+// CreateAssistantDebuggerDeployment implements protos.AssistantDeploymentServiceServer.
 func (w *webAssistantDeploymentGRPCApi) CreateAssistantDebuggerDeployment(c context.Context, iRequest *protos.CreateAssistantDeploymentRequest) (*protos.GetAssistantDebuggerDeploymentResponse, error) {
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(c)
 	if !isAuthenticated {
@@ -89,7 +89,7 @@ func (w *webAssistantDeploymentGRPCApi) CreateAssistantDebuggerDeployment(c cont
 	return w.assistantClient.CreateAssistantDebuggerDeployment(c, iAuth, iRequest)
 }
 
-// CreateAssistantPhoneDeployment implements lexatic_backend.AssistantDeploymentServiceServer.
+// CreateAssistantPhoneDeployment implements protos.AssistantDeploymentServiceServer.
 func (w *webAssistantDeploymentGRPCApi) CreateAssistantPhoneDeployment(c context.Context, iRequest *protos.CreateAssistantDeploymentRequest) (*protos.GetAssistantPhoneDeploymentResponse, error) {
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(c)
 	if !isAuthenticated {
@@ -98,7 +98,7 @@ func (w *webAssistantDeploymentGRPCApi) CreateAssistantPhoneDeployment(c context
 	return w.assistantClient.CreateAssistantPhoneDeployment(c, iAuth, iRequest)
 }
 
-// CreateAssistantWebpluginDeployment implements lexatic_backend.AssistantDeploymentServiceServer.
+// CreateAssistantWebpluginDeployment implements protos.AssistantDeploymentServiceServer.
 func (w *webAssistantDeploymentGRPCApi) CreateAssistantWebpluginDeployment(c context.Context, iRequest *protos.CreateAssistantDeploymentRequest) (*protos.GetAssistantWebpluginDeploymentResponse, error) {
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(c)
 	if !isAuthenticated {
@@ -107,7 +107,7 @@ func (w *webAssistantDeploymentGRPCApi) CreateAssistantWebpluginDeployment(c con
 	return w.assistantClient.CreateAssistantWebpluginDeployment(c, iAuth, iRequest)
 }
 
-// CreateAssistantWhatsappDeployment implements lexatic_backend.AssistantDeploymentServiceServer.
+// CreateAssistantWhatsappDeployment implements protos.AssistantDeploymentServiceServer.
 func (w *webAssistantDeploymentGRPCApi) CreateAssistantWhatsappDeployment(c context.Context, iRequest *protos.CreateAssistantDeploymentRequest) (*protos.GetAssistantWhatsappDeploymentResponse, error) {
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(c)
 	if !isAuthenticated {

@@ -3,7 +3,7 @@ package internal_adapter_request_generic
 import (
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 const CONVERSACTION_PAGE_HISTORY uint32 = 50
@@ -56,26 +56,26 @@ func (cr *GenericRequestor) CreateWebhookLog(
 	return err
 }
 
-func (cr *GenericRequestor) GetConversationLogs() []*lexatic_backend.Message {
-	messages := make([]*lexatic_backend.Message, 0)
+func (cr *GenericRequestor) GetConversationLogs() []*protos.Message {
+	messages := make([]*protos.Message, 0)
 	cnt, conversactions, err := cr.
 		conversationService.
 		GetAllMessageActions(
 			cr.ctx,
 			cr.auth,
 			cr.assistantConversation.Id,
-			[]*lexatic_backend.Criteria{
+			[]*protos.Criteria{
 				{
 					Key:   "action_type",
 					Value: "llm-call",
 					Logic: "=",
 				},
 			},
-			&lexatic_backend.Paginate{
+			&protos.Paginate{
 				Page:     1,
 				PageSize: CONVERSACTION_PAGE_HISTORY,
 			},
-			&lexatic_backend.Ordering{
+			&protos.Ordering{
 				Column: "created_date",
 				Order:  "asc",
 			},

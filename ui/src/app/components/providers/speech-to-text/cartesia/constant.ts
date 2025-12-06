@@ -1,29 +1,6 @@
+import { CARTESIA_LANGUAGE, CARTESIA_SPEECH_TO_TEXT_MODEL } from '@/providers';
 import { SetMetadata } from '@/utils/metadata';
 import { Metadata } from '@rapidaai/react';
-
-export const CARTESIA_MODELS = [
-  {
-    name: 'ink-whisper',
-    id: 'ink-whisper',
-  },
-];
-export const CARTESIA_LANGUAGE = [
-  { code: 'en', name: 'English' },
-  { code: 'fr', name: 'French' },
-  { code: 'de', name: 'German' },
-  { code: 'es', name: 'Spanish' },
-  { code: 'pt', name: 'Portuguese' },
-  { code: 'zh', name: 'Chinese' },
-  { code: 'ja', name: 'Japanese' },
-  { code: 'hi', name: 'Hindi' },
-  { code: 'it', name: 'Italian' },
-  { code: 'ko', name: 'Korean' },
-  { code: 'nl', name: 'Dutch' },
-  { code: 'pl', name: 'Polish' },
-  { code: 'ru', name: 'Russian' },
-  { code: 'sv', name: 'Swedish' },
-  { code: 'tr', name: 'Turkish' },
-];
 
 export const GetCartesiaDefaultOptions = (current: Metadata[]): Metadata[] => {
   const mtds: Metadata[] = [];
@@ -48,12 +25,12 @@ export const GetCartesiaDefaultOptions = (current: Metadata[]): Metadata[] => {
   addMetadata('rapida.credential_id');
   // Set language
   addMetadata('listen.language', 'en', value =>
-    CARTESIA_LANGUAGE.some(l => l.code === value),
+    CARTESIA_LANGUAGE().some(l => l.code === value),
   );
 
   // Set model
   addMetadata('listen.model', 'ink-whisper', value =>
-    CARTESIA_MODELS.some(m => m.id === value),
+    CARTESIA_SPEECH_TO_TEXT_MODEL().some(m => m.id === value),
   );
 
   // Only return metadata for the keys we want to keep
@@ -80,7 +57,7 @@ export const ValidateCartesiaOptions = (options: Metadata[]): boolean => {
   );
   if (
     !languageOption ||
-    !CARTESIA_LANGUAGE.some(lang => lang.code === languageOption.getValue())
+    !CARTESIA_LANGUAGE().some(lang => lang.code === languageOption.getValue())
   ) {
     return false;
   }
@@ -89,7 +66,9 @@ export const ValidateCartesiaOptions = (options: Metadata[]): boolean => {
   const modelOption = options.find(opt => opt.getKey() === 'listen.model');
   if (
     !modelOption ||
-    !CARTESIA_MODELS.some(model => model.id === modelOption.getValue())
+    !CARTESIA_SPEECH_TO_TEXT_MODEL().some(
+      model => model.id === modelOption.getValue(),
+    )
   ) {
     return false;
   }

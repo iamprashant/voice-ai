@@ -13,7 +13,7 @@ import (
 	internal_streamers "github.com/rapidaai/api/assistant-api/internal/streamers"
 	internal_text "github.com/rapidaai/api/assistant-api/internal/text"
 	"github.com/rapidaai/pkg/commons"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 type vonageWebsocketStreamer struct {
@@ -22,7 +22,7 @@ type vonageWebsocketStreamer struct {
 	ctx        context.Context
 	cancelFunc context.CancelFunc
 
-	assistant               *lexatic_backend.AssistantDefinition
+	assistant               *protos.AssistantDefinition
 	version                 string
 	assistantConversationId uint64
 
@@ -60,7 +60,7 @@ func NewVonageWebsocketStreamer(
 		conn:       connection,
 		ctx:        ctx,
 		cancelFunc: cancel,
-		assistant: &lexatic_backend.AssistantDefinition{
+		assistant: &protos.AssistantDefinition{
 			AssistantId: assistantId,
 			Version:     version,
 		},
@@ -76,7 +76,7 @@ func (vng *vonageWebsocketStreamer) Context() context.Context {
 	return vng.ctx
 }
 
-func (vng *vonageWebsocketStreamer) Recv() (*lexatic_backend.AssistantMessagingRequest, error) {
+func (vng *vonageWebsocketStreamer) Recv() (*protos.AssistantMessagingRequest, error) {
 	if vng.conn == nil {
 		return nil, vng.handleError("WebSocket connection is nil", io.EOF)
 	}
@@ -125,12 +125,12 @@ func (vng *vonageWebsocketStreamer) Recv() (*lexatic_backend.AssistantMessagingR
 	return nil, nil
 }
 
-func (vng *vonageWebsocketStreamer) BuildVoiceRequest(audioData []byte) *lexatic_backend.AssistantMessagingRequest {
-	return &lexatic_backend.AssistantMessagingRequest{
-		Request: &lexatic_backend.AssistantMessagingRequest_Message{
-			Message: &lexatic_backend.AssistantConversationUserMessage{
-				Message: &lexatic_backend.AssistantConversationUserMessage_Audio{
-					Audio: &lexatic_backend.AssistantConversationMessageAudioContent{
+func (vng *vonageWebsocketStreamer) BuildVoiceRequest(audioData []byte) *protos.AssistantMessagingRequest {
+	return &protos.AssistantMessagingRequest{
+		Request: &protos.AssistantMessagingRequest_Message{
+			Message: &protos.AssistantConversationUserMessage{
+				Message: &protos.AssistantConversationUserMessage_Audio{
+					Audio: &protos.AssistantConversationMessageAudioContent{
 						Content: audioData,
 					},
 				},
@@ -139,14 +139,14 @@ func (vng *vonageWebsocketStreamer) BuildVoiceRequest(audioData []byte) *lexatic
 	}
 }
 
-func (vng *vonageWebsocketStreamer) Send(response *lexatic_backend.AssistantMessagingResponse) error {
+func (vng *vonageWebsocketStreamer) Send(response *protos.AssistantMessagingResponse) error {
 	if vng.conn == nil {
 		return nil
 	}
 	switch data := response.GetData().(type) {
-	case *lexatic_backend.AssistantMessagingResponse_Assistant:
+	case *protos.AssistantMessagingResponse_Assistant:
 		switch content := data.Assistant.Message.(type) {
-		case *lexatic_backend.AssistantConversationAssistantMessage_Audio:
+		case *protos.AssistantConversationAssistantMessage_Audio:
 			//	1ms 32  10ms 320byte @ 16000Hz, 16-bit mono PCM = 640 bytes
 			// Each message needs to be a 20ms sample of audio.
 			// At 8kHz the message should be 320 bytes.
@@ -179,7 +179,7 @@ func (vng *vonageWebsocketStreamer) Send(response *lexatic_backend.AssistantMess
 				vng.outputAudioBuffer.Reset() // Clear the buffer after flushing
 			}
 		}
-	case *lexatic_backend.AssistantMessagingResponse_Interruption:
+	case *protos.AssistantMessagingResponse_Interruption:
 		vng.logger.Debugf("clearing action")
 		vng.audioBufferLock.Lock()
 		defer vng.audioBufferLock.Unlock()
@@ -190,7 +190,7 @@ func (vng *vonageWebsocketStreamer) Send(response *lexatic_backend.AssistantMess
 		if err != nil {
 			vng.logger.Errorf("Error sending clear command:", err)
 		}
-	case *lexatic_backend.AssistantMessagingResponse_DisconnectAction:
+	case *protos.AssistantMessagingResponse_DisconnectAction:
 		vng.logger.Debugf("ending call action")
 		err := vng.conn.Close()
 		if err != nil {

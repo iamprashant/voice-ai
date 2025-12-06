@@ -4,11 +4,11 @@ import (
 	"context"
 
 	"github.com/rapidaai/pkg/types"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 type TextEmbeddingOption struct {
-	ProviderCredential *lexatic_backend.VaultCredential
+	ProviderCredential *protos.VaultCredential
 	ModelProviderName  string
 	Options            map[string]interface{}
 	AdditionalData     map[string]string
@@ -19,5 +19,5 @@ type QueryEmbedding interface {
 		ctx context.Context,
 		auth types.SimplePrinciple,
 		query string,
-		opts *TextEmbeddingOption) (*lexatic_backend.EmbeddingResponse, error)
+		opts *TextEmbeddingOption) (*protos.EmbeddingResponse, error)
 }

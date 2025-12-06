@@ -23,7 +23,7 @@ type cohereIntegrationGRPCApi struct {
 	cohereIntegrationApi
 }
 
-// StreamChat implements lexatic_backend.CohereServiceServer.
+// StreamChat implements protos.CohereServiceServer.
 func (cohere *cohereIntegrationGRPCApi) StreamChat(irRequest *integration_api.ChatRequest, stream integration_api.CohereService_StreamChatServer) error {
 	cohere.logger.Debugf("request for streaming chat cohere with request %+v", irRequest)
 	return cohere.integrationApi.StreamChat(
@@ -52,7 +52,7 @@ func NewCohereGRPC(config *config.IntegrationConfig, logger commons.Logger, post
 	}
 }
 
-// Embedding implements lexatic_backend.CohereServiceServer.
+// Embedding implements protos.CohereServiceServer.
 func (cohere *cohereIntegrationGRPCApi) Embedding(c context.Context, irRequest *integration_api.EmbeddingRequest) (*integration_api.EmbeddingResponse, error) {
 	return cohere.integrationApi.Embedding(
 		c, irRequest,
@@ -93,7 +93,7 @@ func (cohereGRPC *cohereIntegrationGRPCApi) VerifyCredential(c context.Context, 
 	}, nil
 }
 
-// Reranking implements lexatic_backend.CohereServiceServer.
+// Reranking implements protos.CohereServiceServer.
 func (cohere *cohereIntegrationGRPCApi) Reranking(c context.Context, irRequest *integration_api.RerankingRequest) (*integration_api.RerankingResponse, error) {
 	return cohere.integrationApi.Reranking(
 		c,

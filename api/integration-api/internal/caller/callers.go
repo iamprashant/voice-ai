@@ -10,7 +10,7 @@ import (
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
 	integration_api "github.com/rapidaai/protos"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
@@ -62,13 +62,13 @@ type Verifier interface {
 type LargeLanguageCaller interface {
 	GetChatCompletion(
 		ctx context.Context,
-		allMessages []*lexatic_backend.Message,
+		allMessages []*protos.Message,
 		options *ChatCompletionOptions,
 	) (*types.Message, types.Metrics, error)
 
 	StreamChatCompletion(
 		ctx context.Context,
-		allMessages []*lexatic_backend.Message,
+		allMessages []*protos.Message,
 		options *ChatCompletionOptions,
 		onStream func(types.Message) error,
 		onMetrics func(*types.Message, types.Metrics) error,
@@ -89,7 +89,7 @@ type ModerationsCaller interface {
 type RerankingCaller interface {
 	GetReranking(ctx context.Context,
 		query string,
-		content map[int32]*lexatic_backend.Content,
+		content map[int32]*protos.Content,
 		options *RerankerOptions,
 	) ([]*integration_api.Reranking, types.Metrics, error)
 }

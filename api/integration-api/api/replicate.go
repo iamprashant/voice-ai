@@ -24,7 +24,7 @@ type replicateIntegrationGRPCApi struct {
 	replicateIntegrationApi
 }
 
-// StreamChat implements lexatic_backend.ReplicateServiceServer.
+// StreamChat implements protos.ReplicateServiceServer.
 func (*replicateIntegrationGRPCApi) StreamChat(*integration_api.ChatRequest, integration_api.ReplicateService_StreamChatServer) error {
 	panic("unimplemented")
 }

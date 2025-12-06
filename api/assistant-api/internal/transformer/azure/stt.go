@@ -9,6 +9,7 @@ package internal_transformer_azure
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/Microsoft/cognitive-services-speech-sdk-go/audio"
 	"github.com/Microsoft/cognitive-services-speech-sdk-go/speech"
@@ -19,6 +20,7 @@ import (
 
 type azureSpeechToText struct {
 	*azureOption
+	mu                sync.Mutex
 	logger            commons.Logger
 	client            *speech.SpeechRecognizer
 	azureAudioConfig  *audio.AudioConfig
@@ -27,6 +29,9 @@ type azureSpeechToText struct {
 }
 
 func (azure *azureSpeechToText) Initialize() (err error) {
+	azure.mu.Lock()
+	defer azure.mu.Unlock()
+
 	azure.inputstream, err = audio.CreatePushAudioInputStreamFromFormat(azure.GetAudioStreamFormat())
 	if err != nil {
 		azure.logger.Errorf("azure-stt: failed to create push audio input stream: %v", err)
@@ -67,6 +72,9 @@ func (a *azureSpeechToText) Name() string {
 
 // Transform implements internal_transformer.SpeechToTextTransformer.
 func (azure *azureSpeechToText) Transform(ctx context.Context, ad []byte, opts *internal_transformer.SpeechToTextOption) (err error) {
+	azure.mu.Lock()
+	defer azure.mu.Unlock()
+
 	if azure.inputstream == nil {
 		return fmt.Errorf("azure-stt: you are calling transform without initilize")
 	}

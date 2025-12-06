@@ -6,7 +6,7 @@ import (
 	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 type AssistantWebhookService interface {
@@ -41,8 +41,8 @@ type AssistantWebhookService interface {
 	GetAll(ctx context.Context,
 		auth types.SimplePrinciple,
 		assistantId uint64,
-		criterias []*lexatic_backend.Criteria,
-		paginate *lexatic_backend.Paginate) (int64, []*internal_assistant_entity.AssistantWebhook, error)
+		criterias []*protos.Criteria,
+		paginate *protos.Paginate) (int64, []*internal_assistant_entity.AssistantWebhook, error)
 
 	CreateLog(
 		ctx context.Context,
@@ -61,9 +61,9 @@ type AssistantWebhookService interface {
 	GetAllLog(ctx context.Context,
 		auth types.SimplePrinciple,
 		projectId uint64,
-		criterias []*lexatic_backend.Criteria,
-		paginate *lexatic_backend.Paginate,
-		order *lexatic_backend.Ordering,
+		criterias []*protos.Criteria,
+		paginate *protos.Paginate,
+		order *protos.Ordering,
 	) (int64, []*internal_assistant_entity.AssistantWebhookLog, error)
 
 	GetLog(ctx context.Context,

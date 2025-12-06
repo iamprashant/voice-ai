@@ -14,7 +14,7 @@ import (
 	internal_streamers "github.com/rapidaai/api/assistant-api/internal/streamers"
 	internal_text "github.com/rapidaai/api/assistant-api/internal/text"
 	"github.com/rapidaai/pkg/commons"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 type twilioWebsocketStreamer struct {
@@ -23,7 +23,7 @@ type twilioWebsocketStreamer struct {
 	ctx        context.Context
 	cancelFunc context.CancelFunc
 
-	assistant               *lexatic_backend.AssistantDefinition
+	assistant               *protos.AssistantDefinition
 	version                 string
 	assistantConversationId uint64
 	streamSid               string
@@ -62,7 +62,7 @@ func NewTwilioWebsocketStreamer(
 		conn:       connection,
 		ctx:        ctx,
 		cancelFunc: cancel,
-		assistant: &lexatic_backend.AssistantDefinition{
+		assistant: &protos.AssistantDefinition{
 			AssistantId: assistantId,
 			Version:     version,
 		},
@@ -80,7 +80,7 @@ func (tws *twilioWebsocketStreamer) Context() context.Context {
 	return tws.ctx
 }
 
-func (tws *twilioWebsocketStreamer) Recv() (*lexatic_backend.AssistantMessagingRequest, error) {
+func (tws *twilioWebsocketStreamer) Recv() (*protos.AssistantMessagingRequest, error) {
 	if tws.conn == nil {
 		return nil, tws.handleError("WebSocket connection is nil", io.EOF)
 	}
@@ -108,7 +108,7 @@ func (tws *twilioWebsocketStreamer) Recv() (*lexatic_backend.AssistantMessagingR
 	}
 }
 
-func (tws *twilioWebsocketStreamer) handleMediaEvent(mediaEvent TwilioMediaEvent) (*lexatic_backend.AssistantMessagingRequest, error) {
+func (tws *twilioWebsocketStreamer) handleMediaEvent(mediaEvent TwilioMediaEvent) (*protos.AssistantMessagingRequest, error) {
 	payloadBytes, err := tws.encoder.DecodeString(mediaEvent.Media.Payload)
 	if err != nil {
 		tws.logger.Warn("Failed to decode media payload", "error", err.Error())
@@ -131,12 +131,12 @@ func (tws *twilioWebsocketStreamer) handleMediaEvent(mediaEvent TwilioMediaEvent
 	return nil, nil
 }
 
-func (tws *twilioWebsocketStreamer) BuildVoiceRequest(audioData []byte) *lexatic_backend.AssistantMessagingRequest {
-	return &lexatic_backend.AssistantMessagingRequest{
-		Request: &lexatic_backend.AssistantMessagingRequest_Message{
-			Message: &lexatic_backend.AssistantConversationUserMessage{
-				Message: &lexatic_backend.AssistantConversationUserMessage_Audio{
-					Audio: &lexatic_backend.AssistantConversationMessageAudioContent{
+func (tws *twilioWebsocketStreamer) BuildVoiceRequest(audioData []byte) *protos.AssistantMessagingRequest {
+	return &protos.AssistantMessagingRequest{
+		Request: &protos.AssistantMessagingRequest_Message{
+			Message: &protos.AssistantConversationUserMessage{
+				Message: &protos.AssistantConversationUserMessage_Audio{
+					Audio: &protos.AssistantConversationMessageAudioContent{
 						Content: audioData,
 					},
 				},
@@ -145,12 +145,12 @@ func (tws *twilioWebsocketStreamer) BuildVoiceRequest(audioData []byte) *lexatic
 	}
 }
 
-func (tws *twilioWebsocketStreamer) Send(response *lexatic_backend.AssistantMessagingResponse) error {
+func (tws *twilioWebsocketStreamer) Send(response *protos.AssistantMessagingResponse) error {
 
 	switch data := response.GetData().(type) {
-	case *lexatic_backend.AssistantMessagingResponse_Assistant:
+	case *protos.AssistantMessagingResponse_Assistant:
 		switch content := data.Assistant.Message.(type) {
-		case *lexatic_backend.AssistantConversationAssistantMessage_Audio:
+		case *protos.AssistantConversationAssistantMessage_Audio:
 			//1ms 32  10ms 320byte @ 16000Hz, 16-bit mono PCM = 640 bytes
 			// Each message needs to be a 20ms sample of audio.
 			// At 8kHz the message should be 320 bytes.
@@ -187,7 +187,7 @@ func (tws *twilioWebsocketStreamer) Send(response *lexatic_backend.AssistantMess
 				tws.outputAudioBuffer.Reset() // Clear the buffer after flushing
 			}
 		}
-	case *lexatic_backend.AssistantMessagingResponse_Interruption:
+	case *protos.AssistantMessagingResponse_Interruption:
 		tws.logger.Debugf("clearing action")
 		tws.audioBufferLock.Lock()
 		defer tws.audioBufferLock.Unlock()
@@ -196,7 +196,7 @@ func (tws *twilioWebsocketStreamer) Send(response *lexatic_backend.AssistantMess
 		if err != nil {
 			tws.logger.Errorf("Error sending clear command:", err)
 		}
-	case *lexatic_backend.AssistantMessagingResponse_DisconnectAction:
+	case *protos.AssistantMessagingResponse_DisconnectAction:
 		tws.logger.Debugf("ending call action")
 		err := tws.conn.Close()
 		if err != nil {

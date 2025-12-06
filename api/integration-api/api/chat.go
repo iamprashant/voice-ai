@@ -7,7 +7,7 @@ import (
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -35,11 +35,11 @@ import (
 // Returns an error if authentication fails or if there's an issue sending responses.
 
 func (iApi *integrationApi) StreamChat(
-	irRequest *lexatic_backend.ChatRequest,
+	irRequest *protos.ChatRequest,
 	context context.Context,
 	providerName string,
 	llmCaller internal_callers.LargeLanguageCaller,
-	send func(*lexatic_backend.ChatResponse) error) error {
+	send func(*protos.ChatResponse) error) error {
 
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(context)
 	if !isAuthenticated || !iAuth.HasProject() {
@@ -93,14 +93,14 @@ func (iApi *integrationApi) StreamChat(
 			iApi.PostHook(context, iAuth, irRequest, requestId, providerName),
 		),
 		func(content types.Message) error {
-			return send(&lexatic_backend.ChatResponse{
+			return send(&protos.ChatResponse{
 				Success:   true,
 				RequestId: requestId,
 				Data:      content.ToProto(),
 			})
 		},
 		func(content *types.Message, mtx types.Metrics) error {
-			return send(&lexatic_backend.ChatResponse{
+			return send(&protos.ChatResponse{
 				Success:   true,
 				RequestId: requestId,
 				Metrics:   mtx.ToProto(),
@@ -108,11 +108,11 @@ func (iApi *integrationApi) StreamChat(
 			})
 		},
 		func(err error) {
-			send(&lexatic_backend.ChatResponse{
+			send(&protos.ChatResponse{
 				Success:   false,
 				Code:      400,
 				RequestId: requestId,
-				Error: &lexatic_backend.Error{
+				Error: &protos.Error{
 					ErrorCode:    uint64(400),
 					ErrorMessage: err.Error(),
 					HumanMessage: err.Error(),
@@ -125,15 +125,15 @@ func (iApi *integrationApi) StreamChat(
 
 func (iApi *integrationApi) Chat(
 	c context.Context,
-	irRequest *lexatic_backend.ChatRequest,
+	irRequest *protos.ChatRequest,
 	tag string,
 	caller internal_callers.LargeLanguageCaller,
-) (*lexatic_backend.ChatResponse, error) {
+) (*protos.ChatResponse, error) {
 	iApi.logger.Infof("Chat from grpc with provider %s", tag)
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(c)
 	if !isAuthenticated || !iAuth.HasProject() {
 		iApi.logger.Errorf("unauthenticated request for invoke")
-		return utils.Error[lexatic_backend.ChatResponse](
+		return utils.Error[protos.ChatResponse](
 			errors.New("unauthenticated request for chat"),
 			"Please provider valid service credentials to perfom invoke, read docs @ docs.rapida.ai",
 		)
@@ -185,9 +185,9 @@ func (iApi *integrationApi) Chat(
 		),
 	)
 	if err != nil {
-		return utils.Error[lexatic_backend.ChatResponse](err, err.Error())
+		return utils.Error[protos.ChatResponse](err, err.Error())
 	}
-	return &lexatic_backend.ChatResponse{
+	return &protos.ChatResponse{
 		Code:    200,
 		Success: true,
 		Data:    completions.ToProto(),

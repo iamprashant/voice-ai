@@ -113,7 +113,7 @@ func (als *auditLoggingGRPCApi) GetAllAuditLog(c context.Context, ir *integratio
 
 }
 
-// CreateMetadata implements lexatic_backend.AuditLoggingServiceServer.
+// CreateMetadata implements protos.AuditLoggingServiceServer.
 func (als *auditLoggingGRPCApi) CreateMetadata(c context.Context, cmr *integration_api.CreateMetadataRequest) (*integration_api.CreateMetadataResponse, error) {
 
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(c)

@@ -2,10 +2,7 @@ import { Metadata } from '@rapidaai/react';
 import { Dropdown } from '@/app/components/dropdown';
 import { FormLabel } from '@/app/components/form-label';
 import { FieldSet } from '@/app/components/form/fieldset';
-import {
-  CARTESIA_LANGUAGE,
-  CARTESIA_MODELS,
-} from '@/app/components/providers/speech-to-text/cartesia/constant';
+import { CARTESIA_LANGUAGE, CARTESIA_SPEECH_TO_TEXT_MODEL } from '@/providers';
 
 export {
   GetCartesiaDefaultOptions,
@@ -46,8 +43,8 @@ export const ConfigureCartesiaSpeechToText: React.FC<{
     {
       label: 'Language',
       key: 'listen.language',
-      options: CARTESIA_LANGUAGE,
-      findMatch: (val: string) => CARTESIA_LANGUAGE.find(x => x.code === val),
+      options: CARTESIA_LANGUAGE(),
+      findMatch: (val: string) => CARTESIA_LANGUAGE().find(x => x.code === val),
       onChange: v => {
         updateParameter('listen.language', v.code);
       },
@@ -55,8 +52,9 @@ export const ConfigureCartesiaSpeechToText: React.FC<{
     {
       label: 'Models',
       key: 'listen.model',
-      options: CARTESIA_MODELS,
-      findMatch: (val: string) => CARTESIA_MODELS.find(x => x.id === val),
+      options: CARTESIA_SPEECH_TO_TEXT_MODEL(),
+      findMatch: (val: string) =>
+        CARTESIA_SPEECH_TO_TEXT_MODEL().find(x => x.id === val),
       onChange: v => {
         updateParameter('listen.model', v.id);
       },

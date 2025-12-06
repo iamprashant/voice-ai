@@ -100,6 +100,14 @@ export const DEEPGRAM_VOICE = () => {
   return require('./deepgram/voices.json');
 };
 
+export const DEEPGRAM_SPEECH_TO_TEXT_MODEL = () => {
+  return require('./deepgram/speech-to-text-models.json');
+};
+
+export const DEEPGRAM_SPEECH_TO_TEXT_LANGUAGE = () => {
+  return require('./deepgram/speech-to-text-languages.json');
+};
+
 /**
  * ElevEnlabs constants
  * @returns
@@ -126,8 +134,12 @@ export const CARTESIA_VOICE = () => {
   return require('./cartesia/voices.json');
 };
 
-export const CARTESIA_MODEL = () => {
-  return require('./cartesia/models.json');
+export const CARTESIA_TEXT_TO_SPEECH_MODEL = () => {
+  return require('./cartesia/text-to-speech-models.json');
+};
+
+export const CARTESIA_SPEECH_TO_TEXT_MODEL = () => {
+  return require('./cartesia/speech-to-text-models.json');
 };
 
 export const CARTESIA_LANGUAGE = () => {
@@ -175,4 +187,24 @@ export const CARTESIA_EMOTION_LEVEL_COMBINATION = [
 
 export const GEMINI_MODEL = () => {
   return require('./gemini/models.json');
+};
+
+/**
+ * sarvam
+ */
+
+export const SARVAM_LANGUAGE = () => {
+  return require('./sarvam/languages.json');
+};
+
+export const SARVAM_TEXT_TO_SPEECH_MODEL = () => {
+  return require('./sarvam/text-to-speech-models.json');
+};
+
+export const SARVAM_SPEECH_TO_TEXT_MODEL = () => {
+  return require('./sarvam/speech-to-text-models.json');
+};
+
+export const SARVAM_VOICE = () => {
+  return require('./sarvam/voices.json');
 };

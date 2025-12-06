@@ -9,7 +9,7 @@ import (
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
 	integration_api "github.com/rapidaai/protos"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 type rerankingCaller struct {
@@ -24,7 +24,7 @@ func NewRerankingCaller(logger commons.Logger, credential *integration_api.Crede
 
 func (rr *rerankingCaller) GetReranking(ctx context.Context,
 	query string,
-	content map[int32]*lexatic_backend.Content,
+	content map[int32]*protos.Content,
 	options *internal_callers.RerankerOptions,
 ) ([]*integration_api.Reranking, types.Metrics, error) {
 	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)

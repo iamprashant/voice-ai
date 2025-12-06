@@ -6,7 +6,7 @@ import (
 	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 	workflow_api "github.com/rapidaai/protos"
 )
 
@@ -29,7 +29,7 @@ type AssistantToolService interface {
 		description string,
 		fields map[string]interface{},
 		executionMethod string,
-		executionOptions []*lexatic_backend.Metadata,
+		executionOptions []*protos.Metadata,
 	) (*internal_assistant_entity.AssistantTool, error)
 
 	Update(ctx context.Context,
@@ -40,7 +40,7 @@ type AssistantToolService interface {
 		description string,
 		fields map[string]interface{},
 		executionMethod string,
-		executionOptions []*lexatic_backend.Metadata,
+		executionOptions []*protos.Metadata,
 	) (*internal_assistant_entity.AssistantTool, error)
 
 	Delete(ctx context.Context,
@@ -71,9 +71,9 @@ type AssistantToolService interface {
 		ctx context.Context,
 		auth types.SimplePrinciple,
 		projectId uint64,
-		criterias []*lexatic_backend.Criteria,
-		paginate *lexatic_backend.Paginate,
-		order *lexatic_backend.Ordering) (int64, []*internal_assistant_entity.AssistantToolLog, error)
+		criterias []*protos.Criteria,
+		paginate *protos.Paginate,
+		order *protos.Ordering) (int64, []*internal_assistant_entity.AssistantToolLog, error)
 
 	GetLogObject(
 		ctx context.Context,

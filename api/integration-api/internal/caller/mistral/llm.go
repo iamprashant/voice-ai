@@ -10,7 +10,7 @@ import (
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
 	integration_api "github.com/rapidaai/protos"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 type largeLanguageCaller struct {
@@ -27,7 +27,7 @@ func NewLargeLanguageCaller(logger commons.Logger, credential *integration_api.C
 func (*largeLanguageCaller) StreamChatCompletion(
 	ctx context.Context,
 	// providerModel string,
-	allMessages []*lexatic_backend.Message,
+	allMessages []*protos.Message,
 	options *internal_callers.ChatCompletionOptions,
 	onStream func(types.Message) error,
 	onMetrics func(*types.Message, types.Metrics) error,
@@ -39,7 +39,7 @@ func (*largeLanguageCaller) StreamChatCompletion(
 func (llc *largeLanguageCaller) GetChatCompletion(
 	ctx context.Context,
 	// providerModel string,
-	allMessages []*lexatic_backend.Message,
+	allMessages []*protos.Message,
 	options *internal_callers.ChatCompletionOptions,
 ) (*types.Message, types.Metrics, error) {
 	llc.logger.Debugf("getting chat completion from google llc")

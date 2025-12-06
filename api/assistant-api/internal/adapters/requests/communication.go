@@ -13,7 +13,7 @@ import (
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 type InternalCaller interface {
@@ -37,7 +37,7 @@ type Notifier interface {
 }
 
 type Logger interface {
-	GetConversationLogs() []*lexatic_backend.Message
+	GetConversationLogs() []*protos.Message
 	CreateConversationMessageLog(messageid string, in, out *types.Message, metrics []*types.Metric) error
 	CreateConversationToolLog(messageid string, in, out map[string]interface{}, metrics []*types.Metric) error
 	CreateWebhookLog(

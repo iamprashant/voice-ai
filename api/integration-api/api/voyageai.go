@@ -44,7 +44,7 @@ func NewVoyageAiGRPC(config *config.IntegrationConfig, logger commons.Logger, po
 	}
 }
 
-// Embedding implements lexatic_backend.VoyageAiServiceServer.
+// Embedding implements protos.VoyageAiServiceServer.
 func (oiGRPC *voyageaiIntegrationGRPCApi) Embedding(c context.Context, irRequest *integration_api.EmbeddingRequest) (*integration_api.EmbeddingResponse, error) {
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(c)
 	if !isAuthenticated || !iAuth.HasProject() {
@@ -61,7 +61,7 @@ func (oiGRPC *voyageaiIntegrationGRPCApi) Embedding(c context.Context, irRequest
 	)
 }
 
-// Reranking implements lexatic_backend.VoyageAiServiceServer.
+// Reranking implements protos.VoyageAiServiceServer.
 func (oiGRPC *voyageaiIntegrationGRPCApi) Reranking(c context.Context, irRequest *integration_api.RerankingRequest) (*integration_api.RerankingResponse, error) {
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(c)
 	if !isAuthenticated || !iAuth.HasProject() {

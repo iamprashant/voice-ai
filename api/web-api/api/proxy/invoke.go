@@ -35,12 +35,12 @@ func NewInvokeGRPC(config *config.WebAppConfig, logger commons.Logger, postgres 
 
 }
 
-// Probe implements lexatic_backend.DeploymentServer.
+// Probe implements protos.DeploymentServer.
 func (*webInvokeGRPCApi) Probe(context.Context, *protos.ProbeRequest) (*protos.ProbeResponse, error) {
 	panic("unimplemented")
 }
 
-// Update implements lexatic_backend.DeploymentServer.
+// Update implements protos.DeploymentServer.
 func (*webInvokeGRPCApi) Update(context.Context, *protos.UpdateRequest) (*protos.UpdateResponse, error) {
 	panic("unimplemented")
 }

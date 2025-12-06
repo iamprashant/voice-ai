@@ -50,23 +50,24 @@ func NewAudioResampler() *AudioResampler {
 
 // Resample converts audio data from source format to target format
 func (r *AudioResampler) Resample(data []byte, source, target *AudioConfig) ([]byte, error) {
-	// Step 1: Convert input to normalized float64 samples
+
+	if source.SampleRate == target.SampleRate && source.Channels == target.Channels {
+		return data, nil // No resampling needed
+	}
+
 	samples, err := r.decodeToFloat64(data, source)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode audio: %w", err)
 	}
 
-	// Step 2: Resample if sample rates differ
 	if source.SampleRate != target.SampleRate {
 		samples = r.resampleFloat64(samples, source.SampleRate, target.SampleRate)
 	}
 
-	// Step 3: Handle channel conversion if needed
 	if source.Channels != target.Channels {
 		samples = r.convertChannels(samples, source.Channels, target.Channels)
 	}
 
-	// Step 4: Encode to target format
 	result, err := r.encodeFromFloat64(samples, target)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode audio: %w", err)

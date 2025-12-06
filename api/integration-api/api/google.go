@@ -24,7 +24,7 @@ type googleIntegrationGRPCApi struct {
 	googleIntegrationApi
 }
 
-// Embedding implements lexatic_backend.GoogleServiceServer.
+// Embedding implements protos.GoogleServiceServer.
 func (googAi *googleIntegrationGRPCApi) Embedding(c context.Context, irRequest *integration_api.EmbeddingRequest) (*integration_api.EmbeddingResponse, error) {
 	return googAi.integrationApi.Embedding(
 		c, irRequest,
@@ -57,7 +57,7 @@ func (googleRPC *googleIntegrationRPCApi) Chat(c *gin.Context) {
 	googleRPC.logger.Debugf("Chat from rpc with gin context %v", c)
 }
 
-// StreamChat implements lexatic_backend.GoogleServiceServer.
+// StreamChat implements protos.GoogleServiceServer.
 func (googleGRPc *googleIntegrationGRPCApi) StreamChat(irRequest *integration_api.ChatRequest, stream integration_api.GoogleService_StreamChatServer) error {
 	googleGRPc.logger.Debugf("request for streaming chat google with request %+v", irRequest)
 	return googleGRPc.integrationApi.StreamChat(

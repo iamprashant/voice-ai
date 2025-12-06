@@ -8,7 +8,7 @@ import (
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 type ToolCaller interface {
@@ -19,7 +19,7 @@ type ToolCaller interface {
 	Name() string
 
 	//
-	Definition() (*lexatic_backend.FunctionDefinition, error)
+	Definition() (*protos.FunctionDefinition, error)
 
 	//
 	ExecutionMethod() string
@@ -50,11 +50,11 @@ func (executor *toolCaller) ExecutionMethod() string {
 	return executor.toolOptions.ExecutionMethod
 }
 
-func (executor *toolCaller) Definition() (*lexatic_backend.FunctionDefinition, error) {
-	definition := &lexatic_backend.FunctionDefinition{
+func (executor *toolCaller) Definition() (*protos.FunctionDefinition, error) {
+	definition := &protos.FunctionDefinition{
 		Name:        executor.toolOptions.Name,
 		Description: executor.toolOptions.Description,
-		Parameters:  &lexatic_backend.FunctionParameter{},
+		Parameters:  &protos.FunctionParameter{},
 	}
 	if err := utils.Cast(executor.toolOptions.Fields, definition.Parameters); err != nil {
 		return nil, err

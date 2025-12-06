@@ -5,7 +5,7 @@ import (
 
 	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters/requests"
 	"github.com/rapidaai/pkg/types"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 /*
@@ -92,7 +92,7 @@ type ToolExecutor interface {
 	 * @param com The communication object containing context for function definition retrieval.
 	 * @return A slice of FunctionDefinition pointers representing available functions or tools.
 	 */
-	GetFunctionDefinitions() []*lexatic_backend.FunctionDefinition
+	GetFunctionDefinitions() []*protos.FunctionDefinition
 
 	/**
 	 * Execute performs the execution of a tool call using the provided communication.
@@ -107,7 +107,7 @@ type ToolExecutor interface {
 	Execute(
 		ctx context.Context,
 		messageid string,
-		call *lexatic_backend.ToolCall,
+		call *protos.ToolCall,
 		communication internal_adapter_requests.Communication,
 	) *types.Content
 
@@ -125,6 +125,6 @@ type ToolExecutor interface {
 	ExecuteAll(
 		ctx context.Context,
 		messageid string,
-		calls []*lexatic_backend.ToolCall,
+		calls []*protos.ToolCall,
 		communication internal_adapter_requests.Communication) []*types.Content
 }

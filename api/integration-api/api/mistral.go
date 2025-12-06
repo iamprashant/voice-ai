@@ -24,12 +24,12 @@ type mistralIntegrationGRPCApi struct {
 	mistralIntegrationApi
 }
 
-// StreamChat implements lexatic_backend.MistralServiceServer.
+// StreamChat implements protos.MistralServiceServer.
 func (*mistralIntegrationGRPCApi) StreamChat(*integration_api.ChatRequest, integration_api.MistralService_StreamChatServer) error {
 	panic("unimplemented")
 }
 
-// Embedding implements lexatic_backend.mistralServiceServer.
+// Embedding implements protos.mistralServiceServer.
 func (mistral *mistralIntegrationGRPCApi) Embedding(c context.Context, irRequest *integration_api.EmbeddingRequest) (*integration_api.EmbeddingResponse, error) {
 	return mistral.integrationApi.Embedding(c, irRequest, "MISTRAL", internal_mistral_callers.NewEmbeddingCaller(mistral.logger, irRequest.GetCredential()))
 }

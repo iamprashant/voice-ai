@@ -15,7 +15,7 @@ import (
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 func (md *GenericRequestor) OnRecieveMessage(msg *types.Message) *types.Message {
@@ -90,7 +90,7 @@ func (hk *GenericRequestor) Analysis(
 ) (map[string]interface{}, error) {
 	ivk, err := hk.analyze(
 		hk.Context(),
-		&lexatic_backend.EndpointDefinition{
+		&protos.EndpointDefinition{
 			EndpointId: endpointId,
 			Version:    endpointVersion,
 		},
@@ -256,9 +256,9 @@ func (md *GenericRequestor) Parse(
 
 func (ae *GenericRequestor) analyze(
 	ctx context.Context,
-	endpointDef *lexatic_backend.EndpointDefinition,
+	endpointDef *protos.EndpointDefinition,
 	arguments, metadata, opts map[string]interface{},
-) (*lexatic_backend.InvokeResponse, error) {
+) (*protos.InvokeResponse, error) {
 	inputBuilder := endpoint_client_builders.NewInputInvokeBuilder(ae.logger)
 	return ae.DeploymentCaller().Invoke(
 		ctx,

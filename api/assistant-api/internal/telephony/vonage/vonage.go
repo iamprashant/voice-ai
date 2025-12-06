@@ -70,7 +70,7 @@ func (vt *vonageTelephony) Auth(
 	}
 	clientAuth, err := vonage.CreateAuthFromAppPrivateKey(applicationId.(string), []byte(privateKey.(string)))
 	if err != nil {
-		return nil, fmt.Errorf("illegal vault config application_id is not found")
+		return nil, err
 	}
 	return clientAuth, nil
 }

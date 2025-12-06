@@ -8,7 +8,7 @@ import (
 	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 type endOfConversationCaller struct {
@@ -26,7 +26,7 @@ func (afkTool *endOfConversationCaller) Call(
 	err := communication.
 		Notify(
 			ctx,
-			&lexatic_backend.AssistantMessagingResponse_DisconnectAction{},
+			&protos.AssistantMessagingResponse_DisconnectAction{},
 		)
 	metrics = append(metrics, types.NewTimeTakenMetric(time.Since(start)))
 	if err != nil {

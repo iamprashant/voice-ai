@@ -10,7 +10,7 @@ import (
 	integration_api "github.com/rapidaai/protos"
 )
 
-// Reranking implements lexatic_backend.CohereServiceServer.
+// Reranking implements protos.CohereServiceServer.
 func (iApi *integrationApi) Reranking(
 	c context.Context,
 	irRequest *integration_api.RerankingRequest,

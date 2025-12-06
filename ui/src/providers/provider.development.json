@@ -384,5 +384,24 @@
             }
         ],
         "website": "https://www.assemblyai.com"
+    },
+    {
+        "code": "sarvamai",
+        "name": "Sarvam Ai",
+        "description": "Sarvam AI is an Indian startup that develops large language models (LLMs) and AI platforms specifically for India.",
+        "image": "https://rapida-assets-01.s3.ap-south-1.amazonaws.com/providers/sarvam-ai.jpg",
+        "featureList": [
+            "stt",
+            "tts",
+            "external"
+        ],
+        "configurations": [
+            {
+                "name": "key",
+                "type": "string",
+                "label": "API Key"
+            }
+        ],
+        "website": "https://www.sarvam.ai/"
     }
 ]

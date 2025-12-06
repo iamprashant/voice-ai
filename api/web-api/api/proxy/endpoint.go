@@ -139,7 +139,7 @@ func (endpointGRPCApi *webEndpointGRPCApi) CreateEndpointProviderModel(ctx conte
 	return endpointGRPCApi.endpointClient.CreateEndpointProviderModel(ctx, iAuth, iRequest)
 }
 
-// CreateEndpointCacheConfiguration implements lexatic_backend.EndpointServiceServer.
+// CreateEndpointCacheConfiguration implements protos.EndpointServiceServer.
 func (endpointGRPCApi *webEndpointGRPCApi) CreateEndpointCacheConfiguration(ctx context.Context, iRequest *protos.CreateEndpointCacheConfigurationRequest) (*protos.CreateEndpointCacheConfigurationResponse, error) {
 	endpointGRPCApi.logger.Debugf("Create endpoint provider model request %v, %v", iRequest, ctx)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
@@ -150,7 +150,7 @@ func (endpointGRPCApi *webEndpointGRPCApi) CreateEndpointCacheConfiguration(ctx 
 	return endpointGRPCApi.endpointClient.CreateEndpointCacheConfiguration(ctx, iAuth, iRequest)
 }
 
-// CreateEndpointRetryConfiguration implements lexatic_backend.EndpointServiceServer.
+// CreateEndpointRetryConfiguration implements protos.EndpointServiceServer.
 func (endpointGRPCApi *webEndpointGRPCApi) CreateEndpointRetryConfiguration(ctx context.Context, iRequest *protos.CreateEndpointRetryConfigurationRequest) (*protos.CreateEndpointRetryConfigurationResponse, error) {
 	endpointGRPCApi.logger.Debugf("Create endpoint provider model request %v, %v", iRequest, ctx)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
@@ -161,7 +161,7 @@ func (endpointGRPCApi *webEndpointGRPCApi) CreateEndpointRetryConfiguration(ctx 
 	return endpointGRPCApi.endpointClient.CreateEndpointRetryConfiguration(ctx, iAuth, iRequest)
 }
 
-// CreateEndpointTag implements lexatic_backend.EndpointServiceServer.
+// CreateEndpointTag implements protos.EndpointServiceServer.
 func (endpointGRPCApi *webEndpointGRPCApi) CreateEndpointTag(ctx context.Context, iRequest *protos.CreateEndpointTagRequest) (*protos.GetEndpointResponse, error) {
 	endpointGRPCApi.logger.Debugf("Create endpoint provider model request %v, %v", iRequest, ctx)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
@@ -181,7 +181,7 @@ func (endpointGRPCApi *webEndpointGRPCApi) UpdateEndpointDetail(ctx context.Cont
 	return endpointGRPCApi.endpointClient.UpdateEndpointDetail(ctx, iAuth, iRequest)
 }
 
-// ForkEndpoint implements lexatic_backend.EndpointServiceServer.
+// ForkEndpoint implements protos.EndpointServiceServer.
 func (endpointGRPCApi *webEndpointGRPCApi) ForkEndpoint(ctx context.Context, iRequest *protos.ForkEndpointRequest) (*protos.BaseResponse, error) {
 	endpointGRPCApi.logger.Debugf("Create endpoint provider model request %v, %v", iRequest, ctx)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)

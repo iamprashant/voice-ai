@@ -31,6 +31,11 @@ import {
   ValidateOpenAIOptions,
 } from '@/app/components/providers/speech-to-text/openai';
 import { FC } from 'react';
+import {
+  ConfigureSarvamSpeechToText,
+  GetSarvamDefaultOptions,
+  ValidateSarvamOptions,
+} from '@/app/components/providers/speech-to-text/sarvam';
 
 export const GetDefaultSpeechToTextIfInvalid = (
   provider: string,
@@ -51,6 +56,8 @@ export const GetDefaultSpeechToTextIfInvalid = (
       return GetAssemblyAIDefaultOptions(parameters);
     case 'cartesia':
       return GetCartesiaDefaultOptions(parameters);
+    case 'sarvamai':
+      return GetSarvamDefaultOptions(parameters);
     default:
       return parameters;
   }
@@ -75,6 +82,8 @@ export const ValidateSpeechToTextIfInvalid = (
       return ValidateAssemblyAIOptions(parameters);
     case 'cartesia':
       return ValidateCartesiaOptions(parameters);
+    case 'sarvamai':
+      return ValidateSarvamOptions(parameters);
     default:
       return false;
   }
@@ -157,6 +166,13 @@ export const SpeechToTextConfigComponent: FC<ProviderComponentProps> = ({
     case 'cartesia':
       return (
         <ConfigureCartesiaSpeechToText
+          parameters={parameters}
+          onParameterChange={onChangeParameter}
+        />
+      );
+    case 'sarvamai':
+      return (
+        <ConfigureSarvamSpeechToText
           parameters={parameters}
           onParameterChange={onChangeParameter}
         />

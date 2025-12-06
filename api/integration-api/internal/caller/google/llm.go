@@ -12,7 +12,7 @@ import (
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 	"google.golang.org/genai"
 )
 
@@ -20,13 +20,13 @@ type largeLanguageCaller struct {
 	Google
 }
 
-func NewLargeLanguageCaller(logger commons.Logger, credential *lexatic_backend.Credential) internal_callers.LargeLanguageCaller {
+func NewLargeLanguageCaller(logger commons.Logger, credential *protos.Credential) internal_callers.LargeLanguageCaller {
 	return &largeLanguageCaller{
 		Google: google(logger, credential),
 	}
 }
 
-func (llc *largeLanguageCaller) BuildHistory(allMessages []*lexatic_backend.Message) (*genai.Content, []*genai.Content, genai.Part) {
+func (llc *largeLanguageCaller) BuildHistory(allMessages []*protos.Message) (*genai.Content, []*genai.Content, genai.Part) {
 	history := make([]*genai.Content, 0)
 	for _, msg := range allMessages {
 		switch msg.GetRole() {
@@ -240,7 +240,7 @@ func (llc *largeLanguageCaller) GetContentConfig(
 }
 func (llc *largeLanguageCaller) StreamChatCompletion(
 	ctx context.Context,
-	allMessages []*lexatic_backend.Message,
+	allMessages []*protos.Message,
 	options *internal_callers.ChatCompletionOptions,
 	onStream func(types.Message) error,
 	onMetrics func(*types.Message, types.Metrics) error,
@@ -361,7 +361,7 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 
 func (llc *largeLanguageCaller) GetChatCompletion(
 	ctx context.Context,
-	allMessages []*lexatic_backend.Message,
+	allMessages []*protos.Message,
 	options *internal_callers.ChatCompletionOptions,
 ) (*types.Message, types.Metrics, error) {
 	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)

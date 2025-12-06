@@ -51,7 +51,7 @@ func NewAzureGRPC(config *config.IntegrationConfig, logger commons.Logger, postg
 	}
 }
 
-// Embedding implements lexatic_backend.AzureServiceServer.
+// Embedding implements protos.AzureServiceServer.
 func (oiGRPC *azureIntegrationGRPCApi) Embedding(c context.Context, irRequest *integration_api.EmbeddingRequest) (*integration_api.EmbeddingResponse, error) {
 	return oiGRPC.integrationApi.Embedding(c, irRequest, "AZURE", internal_azure_callers.NewEmbeddingCaller(oiGRPC.logger, irRequest.GetCredential()))
 }

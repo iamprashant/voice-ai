@@ -41,7 +41,7 @@ func NewKnowledgeGRPC(config *config.WebAppConfig, logger commons.Logger, postgr
 	}
 }
 
-// GetAllKnowledgeDocumentSegment implements lexatic_backend.KnowledgeServiceServer.
+// GetAllKnowledgeDocumentSegment implements protos.KnowledgeServiceServer.
 func (knowledge *webKnowledgeGRPCApi) GetAllKnowledgeDocumentSegment(c context.Context, iRequest *protos.GetAllKnowledgeDocumentSegmentRequest) (*protos.GetAllKnowledgeDocumentSegmentResponse, error) {
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(c)
 	if !isAuthenticated {
@@ -105,7 +105,7 @@ func (knowledge *webKnowledgeGRPCApi) CreateKnowledge(c context.Context, iReques
 	return knowledge.knowledgeClient.CreateKnowledge(c, iAuth, iRequest)
 }
 
-// CreateKnowledgeTag implements lexatic_backend.KnowledgeServiceServer.
+// CreateKnowledgeTag implements protos.KnowledgeServiceServer.
 func (knowledgeGRPCApi *webKnowledgeGRPCApi) CreateKnowledgeTag(ctx context.Context, iRequest *protos.CreateKnowledgeTagRequest) (*protos.GetKnowledgeResponse, error) {
 	knowledgeGRPCApi.logger.Debugf("Create knowledge provider model request %v, %v", iRequest, ctx)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
@@ -134,7 +134,7 @@ func (knowledgeGRPCApi *webKnowledgeGRPCApi) CreateKnowledgeDocument(ctx context
 	return knowledgeGRPCApi.knowledgeClient.CreateKnowledgeDocument(ctx, iAuth, iRequest)
 }
 
-// GetAllKnowledgeDocument implements lexatic_backend.KnowledgeServiceServer.
+// GetAllKnowledgeDocument implements protos.KnowledgeServiceServer.
 func (knowledgeGRPCApi *webKnowledgeGRPCApi) GetAllKnowledgeDocument(ctx context.Context, iRequest *protos.GetAllKnowledgeDocumentRequest) (*protos.GetAllKnowledgeDocumentResponse, error) {
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(ctx)
 	if !isAuthenticated {
@@ -144,7 +144,7 @@ func (knowledgeGRPCApi *webKnowledgeGRPCApi) GetAllKnowledgeDocument(ctx context
 	return knowledgeGRPCApi.knowledgeClient.GetAllKnowledgeDocument(ctx, iAuth, iRequest)
 }
 
-// GetAllKnowledgeDocument implements lexatic_backend.KnowledgeServiceServer.
+// GetAllKnowledgeDocument implements protos.KnowledgeServiceServer.
 func (knowledgeGRPCApi *webKnowledgeGRPCApi) DeleteKnowledgeDocumentSegment(ctx context.Context, iRequest *protos.DeleteKnowledgeDocumentSegmentRequest) (*protos.BaseResponse, error) {
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {
@@ -154,7 +154,7 @@ func (knowledgeGRPCApi *webKnowledgeGRPCApi) DeleteKnowledgeDocumentSegment(ctx 
 	return knowledgeGRPCApi.knowledgeClient.DeleteKnowledgeDocumentSegment(ctx, iAuth, iRequest)
 }
 
-// GetAllKnowledgeDocument implements lexatic_backend.KnowledgeServiceServer.
+// GetAllKnowledgeDocument implements protos.KnowledgeServiceServer.
 func (knowledgeGRPCApi *webKnowledgeGRPCApi) UpdateKnowledgeDocumentSegment(ctx context.Context, iRequest *protos.UpdateKnowledgeDocumentSegmentRequest) (*protos.BaseResponse, error) {
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated {

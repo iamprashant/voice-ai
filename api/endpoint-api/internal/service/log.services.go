@@ -7,7 +7,7 @@ import (
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
 	endpoint_grpc_api "github.com/rapidaai/protos"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 type EndpointLogService interface {
@@ -23,7 +23,7 @@ type EndpointLogService interface {
 		ctx context.Context,
 		auth types.SimplePrinciple,
 		logId uint64,
-		metrics []*lexatic_backend.Metric,
+		metrics []*protos.Metric,
 		timeTaken uint64,
 	) (*internal_gorm.EndpointLog, error)
 
@@ -32,5 +32,5 @@ type EndpointLogService interface {
 		endpointId uint64,
 		criterias []*endpoint_grpc_api.Criteria, paginate *endpoint_grpc_api.Paginate) (int64, []*internal_gorm.EndpointLog, error)
 	GetEndpointLog(ctx context.Context, auth types.SimplePrinciple, logId, endpointId uint64) (*internal_gorm.EndpointLog, error)
-	GetAggregatedEndpointAnalytics(ctx context.Context, auth types.SimplePrinciple, endpointId uint64) *lexatic_backend.AggregatedEndpointAnalytics
+	GetAggregatedEndpointAnalytics(ctx context.Context, auth types.SimplePrinciple, endpointId uint64) *protos.AggregatedEndpointAnalytics
 }

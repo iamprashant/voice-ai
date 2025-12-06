@@ -1,8 +1,8 @@
-import { CARTESIA_LANGUAGE, CARTESIA_TEXT_TO_SPEECH_MODEL } from '@/providers';
+import { SARVAM_LANGUAGE, SARVAM_TEXT_TO_SPEECH_MODEL } from '@/providers';
 import { SetMetadata } from '@/utils/metadata';
 import { Metadata } from '@rapidaai/react';
 
-export const GetCartesiaDefaultOptions = (current: Metadata[]): Metadata[] => {
+export const GetSarvamDefaultOptions = (current: Metadata[]): Metadata[] => {
   const mtds: Metadata[] = [];
 
   // Define the keys we want to keep
@@ -11,8 +11,6 @@ export const GetCartesiaDefaultOptions = (current: Metadata[]): Metadata[] => {
     'speak.language',
     'speak.voice.id',
     'speak.model',
-    'speak.voice.__experimental_controls.speed',
-    'speak.voice.__experimental_controls.emotion',
   ];
   const addMetadata = (
     key: string,
@@ -26,17 +24,13 @@ export const GetCartesiaDefaultOptions = (current: Metadata[]): Metadata[] => {
   addMetadata('speak.language');
   addMetadata('speak.voice.id');
   addMetadata('speak.model');
-  addMetadata('speak.voice.__experimental_controls.speed', '', value => true);
-  addMetadata('speak.voice.__experimental_controls.emotion', '', value => true);
-
-  // Only return metadata for the keys we want to keep and non-speak metadata
   return [
     ...mtds.filter(m => keysToKeep.includes(m.getKey())),
     ...current.filter(m => m.getKey().startsWith('speaker.')),
   ];
 };
 
-export const ValidateCartesiaOptions = (options: Metadata[]): boolean => {
+export const ValidateSarvamOptions = (options: Metadata[]): boolean => {
   const credentialID = options.find(
     opt => opt.getKey() === 'rapida.credential_id',
   );
@@ -54,11 +48,15 @@ export const ValidateCartesiaOptions = (options: Metadata[]): boolean => {
   }
 
   const validations = [
-    { key: 'speak.language', validator: CARTESIA_LANGUAGE(), field: 'code' },
+    {
+      key: 'speak.language',
+      validator: SARVAM_LANGUAGE(),
+      field: 'language_id',
+    },
     {
       key: 'speak.model',
-      validator: CARTESIA_TEXT_TO_SPEECH_MODEL(),
-      field: 'id',
+      validator: SARVAM_TEXT_TO_SPEECH_MODEL(),
+      field: 'model_id',
     },
   ];
 

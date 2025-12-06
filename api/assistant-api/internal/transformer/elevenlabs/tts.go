@@ -119,6 +119,7 @@ func (elt *elevenlabsTTS) textToSpeechCallback(ctx context.Context) {
 func (t *elevenlabsTTS) Transform(ctx context.Context, in string, opts *internal_transformer.TextToSpeechOption) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
+
 	if t.connection == nil {
 		return fmt.Errorf("cartesia-stt: websocket connection is not initialized")
 	}

@@ -14,7 +14,7 @@ import (
 	internal_transformer_revai "github.com/rapidaai/api/assistant-api/internal/transformer/revai"
 	internal_transformer_sarvam "github.com/rapidaai/api/assistant-api/internal/transformer/sarvam"
 	"github.com/rapidaai/pkg/commons"
-	lexatic_backend "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
 type AudioTransformer string
@@ -27,7 +27,7 @@ const (
 	GOOGLE_CLOUD AudioTransformer = "google-cloud"
 	AWS          AudioTransformer = "aws"
 	REVAI        AudioTransformer = "revai"
-	SARVAM       AudioTransformer = "sarvam"
+	SARVAM       AudioTransformer = "sarvamai"
 	ELEVENLABS   AudioTransformer = "elevenlabs"
 	ASSEMBLYAI   AudioTransformer = "assemblyai"
 )
@@ -39,7 +39,7 @@ func GetTextToSpeechTransformer(
 	at AudioTransformer,
 	ctx context.Context,
 	logger commons.Logger,
-	credential *lexatic_backend.VaultCredential,
+	credential *protos.VaultCredential,
 	opts *internal_transformer.TextToSpeechInitializeOptions) (internal_transformer.TextToSpeechTransformer, error) {
 
 	switch at {
@@ -67,7 +67,7 @@ func GetTextToSpeechTransformer(
 func GetSpeechToTextTransformer(at AudioTransformer,
 	ctx context.Context,
 	logger commons.Logger,
-	credential *lexatic_backend.VaultCredential,
+	credential *protos.VaultCredential,
 	opts *internal_transformer.SpeechToTextInitializeOptions) (internal_transformer.SpeechToTextTransformer, error) {
 
 	switch at {

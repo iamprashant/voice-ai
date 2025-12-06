@@ -12,14 +12,14 @@ import (
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
 
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 type rerankingCaller struct {
 	Cohere
 }
 
-func NewRerankingCaller(logger commons.Logger, credential *lexatic_backend.Credential) internal_callers.RerankingCaller {
+func NewRerankingCaller(logger commons.Logger, credential *protos.Credential) internal_callers.RerankingCaller {
 	return &rerankingCaller{
 		Cohere: NewCohere(logger, credential),
 	}
@@ -53,9 +53,9 @@ func (rr *rerankingCaller) GetRerankRequest(opts *internal_callers.RerankerOptio
 func (rr *rerankingCaller) GetReranking(ctx context.Context,
 	// providerModel string,
 	query string,
-	content map[int32]*lexatic_backend.Content,
+	content map[int32]*protos.Content,
 	options *internal_callers.RerankerOptions,
-) ([]*lexatic_backend.Reranking, types.Metrics, error) {
+) ([]*protos.Reranking, types.Metrics, error) {
 	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)
 	metrics.OnStart()
 
@@ -95,11 +95,11 @@ func (rr *rerankingCaller) GetReranking(ctx context.Context,
 		return nil, metrics.Build(), err
 	}
 	metrics.OnSuccess()
-	output := make([]*lexatic_backend.Reranking, len(resp.Results))
+	output := make([]*protos.Reranking, len(resp.Results))
 
 	for _, rerankedData := range resp.Results {
 		// preserve the index of the chunk
-		output[rerankedData.Index] = &lexatic_backend.Reranking{
+		output[rerankedData.Index] = &protos.Reranking{
 			Index:          int32(rerankedData.Index),
 			Content:        content[int32(rerankedData.Index)],
 			RelevanceScore: rerankedData.RelevanceScore,

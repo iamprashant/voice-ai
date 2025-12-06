@@ -9,7 +9,7 @@ import (
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	"github.com/rapidaai/pkg/types"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 type textReranker struct {
@@ -31,9 +31,9 @@ func (qe *textReranker) Rerank(ctx context.Context,
 	config *RerankingOption,
 	in []string, query string, additionalData map[string]string) (map[int32]string, error) {
 
-	contents := make(map[int32]*lexatic_backend.Content)
+	contents := make(map[int32]*protos.Content)
 	for idx, s := range in {
-		contents[int32(idx)] = &lexatic_backend.Content{
+		contents[int32(idx)] = &protos.Content{
 			ContentType:   commons.TEXT_CONTENT.String(),
 			ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
 			Content:       []byte(s),

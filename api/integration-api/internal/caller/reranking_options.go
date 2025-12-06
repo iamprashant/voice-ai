@@ -2,7 +2,7 @@ package internal_callers
 
 import (
 	"github.com/rapidaai/pkg/types"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 type RerankerOptions struct {
@@ -11,7 +11,7 @@ type RerankerOptions struct {
 
 func NewRerankerOptions(
 	requestId uint64,
-	irRequest *lexatic_backend.RerankingRequest,
+	irRequest *protos.RerankingRequest,
 	preHook func(rst map[string]interface{}),
 	postHook func(rst map[string]interface{}, metrics types.Metrics),
 ) *RerankerOptions {

@@ -24,7 +24,7 @@ type huggingfaceIntegrationGRPCApi struct {
 	huggingfaceIntegrationApi
 }
 
-// Embedding implements lexatic_backend.huggingfaceServiceServer.
+// Embedding implements protos.huggingfaceServiceServer.
 func (huggingf *huggingfaceIntegrationGRPCApi) Embedding(c context.Context, irRequest *integration_api.EmbeddingRequest) (*integration_api.EmbeddingResponse, error) {
 	return huggingf.integrationApi.Embedding(
 		c, irRequest,

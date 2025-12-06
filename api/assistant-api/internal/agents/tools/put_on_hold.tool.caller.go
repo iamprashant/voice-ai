@@ -12,7 +12,7 @@ import (
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 type putOnHoldToolCaller struct {
@@ -57,7 +57,7 @@ func (afkTool *putOnHoldToolCaller) Call(
 	// duration := afkTool.argument(args)
 	err := communication.Notify(
 		ctx,
-		&lexatic_backend.AssistantConverstationHoldAction{},
+		&protos.AssistantConverstationHoldAction{},
 	)
 	metrics = append(metrics, types.NewTimeTakenMetric(time.Since(start)))
 	if err != nil {

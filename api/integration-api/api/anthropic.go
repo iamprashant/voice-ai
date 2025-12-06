@@ -24,9 +24,9 @@ type anthropicIntegrationGRPCApi struct {
 	anthropicIntegrationApi
 }
 
-// StreamChat implements lexatic_backend.AnthropicServiceServer.
+// StreamChat implements protos.AnthropicServiceServer.
 func (anthropic *anthropicIntegrationGRPCApi) StreamChat(irRequest *protos.ChatRequest, stream protos.AnthropicService_StreamChatServer) error {
-	// StreamChat implements lexatic_backend.CohereServiceServer.
+	// StreamChat implements protos.CohereServiceServer.
 	anthropic.logger.Debugf("request for streaming chat anthropic with request %+v", irRequest)
 	return anthropic.integrationApi.StreamChat(
 		irRequest,

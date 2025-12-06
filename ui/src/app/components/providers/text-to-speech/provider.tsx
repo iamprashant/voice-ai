@@ -36,6 +36,11 @@ import {
   ValidatePlayHTOptions,
 } from '@/app/components/providers/text-to-speech/playht';
 import { ProviderComponentProps } from '@/app/components/providers';
+import {
+  ConfigureSarvamTextToSpeech,
+  GetSarvamDefaultOptions,
+  ValidateSarvamOptions,
+} from '@/app/components/providers/text-to-speech/sarvam';
 
 /**
  *
@@ -108,6 +113,8 @@ export const GetDefaultTextToSpeechIfInvalid = (
       return GetAzureDefaultOptions(parameters);
     case 'cartesia':
       return GetCartesiaDefaultOptions(parameters);
+    case 'sarvamai':
+      return GetSarvamDefaultOptions(parameters);
     default:
       return parameters;
   }
@@ -133,6 +140,8 @@ export const ValidateTextToSpeechIfInvalid = (
       return ValidateAzureOptions(parameters);
     case 'cartesia':
       return ValidateCartesiaOptions(parameters);
+    case 'sarvamai':
+      return ValidateSarvamOptions(parameters);
     default:
       return false;
   }
@@ -190,6 +199,13 @@ export const TextToSpeechConfigComponent: FC<ProviderComponentProps> = ({
     case 'cartesia':
       return (
         <ConfigureCartesiaTextToSpeech
+          parameters={parameters}
+          onParameterChange={onChangeParameter}
+        />
+      );
+    case 'sarvamai':
+      return (
+        <ConfigureSarvamTextToSpeech
           parameters={parameters}
           onParameterChange={onChangeParameter}
         />

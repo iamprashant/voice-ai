@@ -5,7 +5,7 @@ import (
 
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 type ChatCompletionOptions struct {
@@ -104,7 +104,7 @@ func (fpp *FunctionParameterProperty) ToMap() map[string]interface{} {
 
 func NewChatOptions(
 	requestId uint64,
-	irRequest *lexatic_backend.ChatRequest,
+	irRequest *protos.ChatRequest,
 	preHook func(rst map[string]interface{}),
 	postHook func(rst map[string]interface{}, metrics types.Metrics),
 ) *ChatCompletionOptions {

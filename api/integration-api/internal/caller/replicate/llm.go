@@ -11,7 +11,7 @@ import (
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
 	integration_api "github.com/rapidaai/protos"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 	replicate_go "github.com/replicate/replicate-go"
 )
 
@@ -28,7 +28,7 @@ func NewLargeLanguageCaller(logger commons.Logger, credential *integration_api.C
 // StreamChatCompletion implements internal_callers.LargeLanguageCaller.
 func (*largeLanguageCaller) StreamChatCompletion(
 	ctx context.Context,
-	allMessages []*lexatic_backend.Message,
+	allMessages []*protos.Message,
 	options *internal_callers.ChatCompletionOptions,
 	onStream func(types.Message) error,
 	onMetrics func(*types.Message, types.Metrics) error,
@@ -39,7 +39,7 @@ func (*largeLanguageCaller) StreamChatCompletion(
 
 func (llc *largeLanguageCaller) GetChatCompletion(
 	ctx context.Context,
-	allMessages []*lexatic_backend.Message,
+	allMessages []*protos.Message,
 	options *internal_callers.ChatCompletionOptions,
 ) (*types.Message, types.Metrics, error) {
 	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)

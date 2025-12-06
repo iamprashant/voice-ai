@@ -10,7 +10,7 @@ import (
 	"github.com/rapidaai/protos"
 )
 
-// GetAllAssistantConversationTelemetry implements lexatic_backend.AssistantServiceServer.
+// GetAllAssistantConversationTelemetry implements protos.AssistantServiceServer.
 func (assistantApi *assistantGrpcApi) GetAllAssistantTelemetry(ctx context.Context, request *protos.GetAllAssistantTelemetryRequest) (*protos.GetAllAssistantTelemetryResponse, error) {
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(ctx)
 	if !isAuthenticated || !iAuth.HasProject() {

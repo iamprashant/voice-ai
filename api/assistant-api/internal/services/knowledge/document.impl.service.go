@@ -22,7 +22,7 @@ import (
 	storage_files "github.com/rapidaai/pkg/storages/file-storage"
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 	"gorm.io/gorm/clause"
 )
 
@@ -73,7 +73,7 @@ func (knowledge *knowledgeDocumentService) GetCounts(ctx context.Context, auth t
 
 func (knowledge *knowledgeDocumentService) GetAll(ctx context.Context, auth types.SimplePrinciple,
 	knowledgeId uint64,
-	criterias []*lexatic_backend.Criteria, paginate *lexatic_backend.Paginate) (int64, *[]internal_knowledge_gorm.KnowledgeDocument, error) {
+	criterias []*protos.Criteria, paginate *protos.Paginate) (int64, *[]internal_knowledge_gorm.KnowledgeDocument, error) {
 	db := knowledge.postgres.DB(ctx)
 	var knowledgeDocuments []internal_knowledge_gorm.KnowledgeDocument
 	var cnt int64
@@ -120,7 +120,7 @@ func (knowledgeDocument *knowledgeDocumentService) CreateToolDocument(ctx contex
 	knowledge *internal_knowledge_gorm.Knowledge,
 	datasource string,
 	documentStructure string,
-	contents []*lexatic_backend.Content,
+	contents []*protos.Content,
 ) ([]*internal_knowledge_gorm.KnowledgeDocument, error) {
 	db := knowledgeDocument.postgres.DB(ctx)
 	allKnowledge := make([]*internal_knowledge_gorm.KnowledgeDocument, 0)
@@ -159,7 +159,7 @@ func (knowledgeDocument *knowledgeDocumentService) CreateManualDocument(
 	knowledge *internal_knowledge_gorm.Knowledge,
 	datasource string,
 	documentStructure string,
-	contents []*lexatic_backend.Content,
+	contents []*protos.Content,
 ) ([]*internal_knowledge_gorm.KnowledgeDocument, error) {
 
 	db := knowledgeDocument.postgres.DB(ctx)
@@ -281,8 +281,8 @@ func (knowledge *knowledgeDocumentService) GetAllDocumentSegment(
 	auth types.SimplePrinciple,
 	knowledgeId uint64,
 	storageNamespace string,
-	criterias []*lexatic_backend.Criteria,
-	paginate *lexatic_backend.Paginate) (int64, []*lexatic_backend.KnowledgeDocumentSegment, error) {
+	criterias []*protos.Criteria,
+	paginate *protos.Paginate) (int64, []*protos.KnowledgeDocumentSegment, error) {
 	indexs := make([]string, 0)
 	indexs = append(indexs, storageNamespace)
 	// Construct the OpenSearch query
@@ -351,7 +351,7 @@ func (knowledge *knowledgeDocumentService) GetAllDocumentSegment(
 		return 0, nil, err
 	}
 
-	segments := make([]*lexatic_backend.KnowledgeDocumentSegment, 0)
+	segments := make([]*protos.KnowledgeDocumentSegment, 0)
 	for _, hit := range result.Hits.Hits {
 		index, _ := hit["_index"].(string)
 		source, ok := hit["_source"].(map[string]interface{})
@@ -359,7 +359,7 @@ func (knowledge *knowledgeDocumentService) GetAllDocumentSegment(
 			continue
 		}
 
-		segment := &lexatic_backend.KnowledgeDocumentSegment{}
+		segment := &protos.KnowledgeDocumentSegment{}
 		config := &mapstructure.DecoderConfig{
 			TagName: "json",
 			Result:  segment,
@@ -391,7 +391,7 @@ func (knowledge *knowledgeDocumentService) UpdateDocumentSegment(
 	quantities []string,
 	locations []string,
 	industries []string,
-) (*lexatic_backend.KnowledgeDocumentSegment, error) {
+) (*protos.KnowledgeDocumentSegment, error) {
 	// Construct the update query
 	updateQuery := map[string]interface{}{
 		"doc": map[string]interface{}{},
@@ -461,7 +461,7 @@ func (knowledge *knowledgeDocumentService) DeleteDocumentSegment(
 	index string,
 	documentId string,
 	reason string,
-) (*lexatic_backend.KnowledgeDocumentSegment, error) {
+) (*protos.KnowledgeDocumentSegment, error) {
 	// Update the document status directly
 	updateBody := map[string]interface{}{
 		"doc": map[string]interface{}{

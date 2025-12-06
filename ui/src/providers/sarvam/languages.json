@@ -1,0 +1,46 @@
+[
+    {
+        "language_id": "en-IN",
+        "name": "Indian English"
+    },
+    {
+        "language_id": "bn-IN",
+        "name": "Bengali"
+    },
+    {
+        "language_id": "gu-IN",
+        "name": "Gujarati"
+    },
+    {
+        "language_id": "hi-IN",
+        "name": "Hindi"
+    },
+    {
+        "language_id": "kn-IN",
+        "name": "Kannada"
+    },
+    {
+        "language_id": "ml-IN",
+        "name": "Malayalam"
+    },
+    {
+        "language_id": "mr-IN",
+        "name": "Marathi"
+    },
+    {
+        "language_id": "od-IN",
+        "name": "Odia"
+    },
+    {
+        "language_id": "pa-IN",
+        "name": "Punjabi"
+    },
+    {
+        "language_id": "ta-IN",
+        "name": "Tamil"
+    },
+    {
+        "language_id": "te-IN",
+        "name": "Telugu"
+    }
+]

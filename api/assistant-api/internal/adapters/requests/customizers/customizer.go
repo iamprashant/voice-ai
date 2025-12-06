@@ -27,7 +27,7 @@ package internal_adapter_request_customizers
 import (
 	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters/requests"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 type customizer struct {
@@ -36,7 +36,7 @@ type customizer struct {
 	metadata map[string]interface{}
 }
 
-func NewRequestBaseCustomizer(req *lexatic_backend.AssistantConversationConfiguration) (internal_adapter_requests.Customization, error) {
+func NewRequestBaseCustomizer(req *protos.AssistantConversationConfiguration) (internal_adapter_requests.Customization, error) {
 	arg, err := utils.AnyMapToInterfaceMap(req.GetArgs())
 	if err != nil {
 		return nil, err

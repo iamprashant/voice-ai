@@ -134,6 +134,7 @@ func (google *googleTextToSpeech) Transform(ctx context.Context, in string, opts
 	google.logger.Infof("google-tts: speak %s with context id = %s and completed = %t", in, opts.ContextId, opts.IsComplete)
 	google.mu.Lock()
 	defer google.mu.Unlock()
+
 	if google.streamClient == nil {
 		return fmt.Errorf("you are calling transform without initilize")
 	}

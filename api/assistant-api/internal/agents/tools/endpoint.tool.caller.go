@@ -12,7 +12,7 @@ import (
 	endpoint_client_builders "github.com/rapidaai/pkg/clients/endpoint/builders"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 type endpointToolCaller struct {
@@ -65,7 +65,7 @@ func (afkTool *endpointToolCaller) Call(
 		ctx,
 		communication.Auth(),
 		afkTool.inputBuilder.Invoke(
-			&lexatic_backend.EndpointDefinition{
+			&protos.EndpointDefinition{
 				EndpointId: afkTool.endpointId,
 				Version:    "latest",
 			},

@@ -39,7 +39,7 @@ func NewOpenAiGRPC(config *config.IntegrationConfig, logger commons.Logger, post
 	}
 }
 
-// Embedding implements lexatic_backend.OpenAiServiceServer.
+// Embedding implements protos.OpenAiServiceServer.
 func (oiGRPC *openaiIntegrationGRPCApi) Embedding(c context.Context, irRequest *integration_api.EmbeddingRequest) (*integration_api.EmbeddingResponse, error) {
 	return oiGRPC.integrationApi.Embedding(c, irRequest, "OPENAI", internal_openai_callers.NewEmbeddingCaller(oiGRPC.logger, irRequest.GetCredential()))
 }
@@ -56,7 +56,7 @@ only supported for text prompt
 
 */
 
-// StreamChat implements lexatic_backend.GoogleServiceServer.
+// StreamChat implements protos.GoogleServiceServer.
 func (oiGRPC *openaiIntegrationGRPCApi) StreamChat(irRequest *integration_api.ChatRequest, stream integration_api.OpenAiService_StreamChatServer) error {
 	return oiGRPC.integrationApi.StreamChat(
 		irRequest,
@@ -88,7 +88,7 @@ func (dgGRPC *openaiIntegrationApi) VerifyCredential(c context.Context, irReques
 	}, nil
 }
 
-// GetModeration implements lexatic_backend.OpenAiServiceServer.
+// GetModeration implements protos.OpenAiServiceServer.
 func (*openaiIntegrationGRPCApi) GetModeration(context.Context, *integration_api.GetModerationRequest) (*integration_api.GetModerationResponse, error) {
 	panic("unimplemented")
 }

@@ -6,7 +6,7 @@ import (
 
 	internal_audio "github.com/rapidaai/api/assistant-api/internal/audio"
 	internal_text "github.com/rapidaai/api/assistant-api/internal/text"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 type StreamConfig struct {
@@ -64,11 +64,11 @@ type Streamer interface {
 	// Recv receives the next input value from the stream.
 	// It returns the received value and any error encountered.
 	// If the stream is closed, it should return (zero value, io.EOF).
-	Recv() (*lexatic_backend.AssistantMessagingRequest, error)
+	Recv() (*protos.AssistantMessagingRequest, error)
 
 	// Send sends an output value to the stream.
 	// It returns an error if the send operation fails.
-	Send(*lexatic_backend.AssistantMessagingResponse) error
+	Send(*protos.AssistantMessagingResponse) error
 
 	// config of streamer
 	// later few more things can be added that allow more customization for source

@@ -11,7 +11,7 @@ import (
 	integration_api "github.com/rapidaai/protos"
 )
 
-// Embedding implements lexatic_backend.AzureServiceServer.
+// Embedding implements protos.AzureServiceServer.
 func (iApi *integrationApi) Embedding(c context.Context,
 	irRequest *integration_api.EmbeddingRequest,
 	tag string,

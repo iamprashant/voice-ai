@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/rapidaai/pkg/types"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 // Reranking is a generic interface that defines the contract for reranking operations.
@@ -22,7 +22,7 @@ import (
 // The method returns a slice of reranked objects of type O and an error if any occurs during the process.
 
 type RerankingOption struct {
-	ProviderCredential lexatic_backend.VaultCredential
+	ProviderCredential protos.VaultCredential
 	ModelProviderName  string
 	ModelProviderId    uint64
 	Options            map[string]interface{}

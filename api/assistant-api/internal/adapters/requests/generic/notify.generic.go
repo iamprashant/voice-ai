@@ -5,11 +5,11 @@ import (
 
 	internal_adapter_telemetry "github.com/rapidaai/api/assistant-api/internal/telemetry"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 // sendMessage is a helper function that centralizes the logic for sending a response via the stream.
-func (n *GenericRequestor) sendMessage(ctx context.Context, response *lexatic_backend.AssistantMessagingResponse) error {
+func (n *GenericRequestor) sendMessage(ctx context.Context, response *protos.AssistantMessagingResponse) error {
 	if err := n.Streamer().Send(response); err != nil {
 		return nil
 	}
@@ -26,12 +26,12 @@ func (n *GenericRequestor) Notify(
 	defer span.EndSpan(ctx, utils.AssistantNotifyStage)
 	//
 	switch actionData := actionData.(type) {
-	case *lexatic_backend.AssistantConversationUserMessage:
+	case *protos.AssistantConversationUserMessage:
 		utils.Go(ctx, func() {
-			n.sendMessage(ctx, &lexatic_backend.AssistantMessagingResponse{
+			n.sendMessage(ctx, &protos.AssistantMessagingResponse{
 				Code:    200,
 				Success: true,
-				Data: &lexatic_backend.AssistantMessagingResponse_User{
+				Data: &protos.AssistantMessagingResponse_User{
 					User: actionData,
 				},
 			})
@@ -50,7 +50,7 @@ func (n *GenericRequestor) Notify(
 				K: "messageId", V: internal_adapter_telemetry.StringValue(actionData.Id),
 			})
 		switch lt := actionData.Message.(type) {
-		case *lexatic_backend.AssistantConversationUserMessage_Text:
+		case *protos.AssistantConversationUserMessage_Text:
 			span.AddAttributes(ctx,
 				internal_adapter_telemetry.KV{
 					K: "notificaiton_type", V: internal_adapter_telemetry.StringValue("text"),
@@ -64,11 +64,11 @@ func (n *GenericRequestor) Notify(
 		}
 
 		return nil
-	case *lexatic_backend.AssistantConversationAssistantMessage:
-		err := n.sendMessage(ctx, &lexatic_backend.AssistantMessagingResponse{
+	case *protos.AssistantConversationAssistantMessage:
+		err := n.sendMessage(ctx, &protos.AssistantMessagingResponse{
 			Code:    200,
 			Success: true,
-			Data: &lexatic_backend.AssistantMessagingResponse_Assistant{
+			Data: &protos.AssistantMessagingResponse_Assistant{
 				Assistant: actionData,
 			},
 		})
@@ -83,7 +83,7 @@ func (n *GenericRequestor) Notify(
 				K: "messageId", V: internal_adapter_telemetry.StringValue(actionData.Id),
 			})
 		switch lt := actionData.Message.(type) {
-		case *lexatic_backend.AssistantConversationAssistantMessage_Audio:
+		case *protos.AssistantConversationAssistantMessage_Audio:
 			span.AddAttributes(ctx,
 				internal_adapter_telemetry.KV{
 					K: "notificaiton_type", V: internal_adapter_telemetry.StringValue("audio"),
@@ -91,7 +91,7 @@ func (n *GenericRequestor) Notify(
 				internal_adapter_telemetry.KV{
 					K: "content_length", V: internal_adapter_telemetry.IntValue(len(lt.Audio.GetContent())),
 				})
-		case *lexatic_backend.AssistantConversationAssistantMessage_Text:
+		case *protos.AssistantConversationAssistantMessage_Text:
 			span.AddAttributes(ctx,
 				internal_adapter_telemetry.KV{
 					K: "notificaiton_type", V: internal_adapter_telemetry.StringValue("text"),
@@ -104,11 +104,11 @@ func (n *GenericRequestor) Notify(
 				})
 		}
 		return err
-	case *lexatic_backend.AssistantConversationMessage:
-		err := n.sendMessage(ctx, &lexatic_backend.AssistantMessagingResponse{
+	case *protos.AssistantConversationMessage:
+		err := n.sendMessage(ctx, &protos.AssistantMessagingResponse{
 			Code:    200,
 			Success: true,
-			Data: &lexatic_backend.AssistantMessagingResponse_Message{
+			Data: &protos.AssistantMessagingResponse_Message{
 				Message: actionData,
 			},
 		})
@@ -121,12 +121,12 @@ func (n *GenericRequestor) Notify(
 				K: "messageId", V: internal_adapter_telemetry.StringValue(actionData.MessageId),
 			})
 		return err
-	case *lexatic_backend.AssistantConversationInterruption:
+	case *protos.AssistantConversationInterruption:
 		utils.Go(ctx, func() {
-			n.sendMessage(ctx, &lexatic_backend.AssistantMessagingResponse{
+			n.sendMessage(ctx, &protos.AssistantMessagingResponse{
 				Code:    200,
 				Success: true,
-				Data: &lexatic_backend.AssistantMessagingResponse_Interruption{
+				Data: &protos.AssistantMessagingResponse_Interruption{
 					Interruption: actionData,
 				},
 			})
@@ -140,14 +140,14 @@ func (n *GenericRequestor) Notify(
 				K: "messageId", V: internal_adapter_telemetry.StringValue(actionData.Id),
 			})
 
-	case *lexatic_backend.AssistantConversationConfiguration:
+	case *protos.AssistantConversationConfiguration:
 
 		// Handle configuration actions
 		utils.Go(ctx, func() {
-			n.sendMessage(ctx, &lexatic_backend.AssistantMessagingResponse{
+			n.sendMessage(ctx, &protos.AssistantMessagingResponse{
 				Code:    200,
 				Success: true,
-				Data: &lexatic_backend.AssistantMessagingResponse_Configuration{
+				Data: &protos.AssistantMessagingResponse_Configuration{
 					Configuration: actionData,
 				},
 			})
@@ -161,11 +161,11 @@ func (n *GenericRequestor) Notify(
 				K: "activity", V: internal_adapter_telemetry.StringValue("assistant_configuration"),
 			},
 		)
-	case *lexatic_backend.AssistantMessagingResponse_AssistantTransferAction:
+	case *protos.AssistantMessagingResponse_AssistantTransferAction:
 
 		// Handle assistant transfer action
 		utils.Go(ctx, func() {
-			n.sendMessage(ctx, &lexatic_backend.AssistantMessagingResponse{
+			n.sendMessage(ctx, &protos.AssistantMessagingResponse{
 				Code:    200,
 				Success: true,
 				Data:    actionData,
@@ -181,10 +181,10 @@ func (n *GenericRequestor) Notify(
 				K: "activity", V: internal_adapter_telemetry.StringValue("assistant_transfer"),
 			},
 		)
-	case *lexatic_backend.AssistantMessagingResponse_DisconnectAction:
+	case *protos.AssistantMessagingResponse_DisconnectAction:
 
 		utils.Go(ctx, func() {
-			n.sendMessage(ctx, &lexatic_backend.AssistantMessagingResponse{
+			n.sendMessage(ctx, &protos.AssistantMessagingResponse{
 				Code:    200,
 				Success: true,
 				Data:    actionData,

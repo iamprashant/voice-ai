@@ -2,7 +2,7 @@ package internal_callers
 
 import (
 	"github.com/rapidaai/pkg/types"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 type EmbeddingOptions struct {
@@ -11,7 +11,7 @@ type EmbeddingOptions struct {
 
 func NewEmbeddingOptions(
 	requestId uint64,
-	irRequest *lexatic_backend.EmbeddingRequest,
+	irRequest *protos.EmbeddingRequest,
 	preHook func(rst map[string]interface{}),
 	postHook func(rst map[string]interface{}, metrics types.Metrics),
 ) *EmbeddingOptions {

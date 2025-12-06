@@ -15,16 +15,16 @@ import (
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 	"golang.org/x/sync/errgroup"
 )
 
 type modelAssistantExecutor struct {
 	logger             commons.Logger
 	toolExecutor       internal_executors.ToolExecutor
-	providerCredential *lexatic_backend.VaultCredential
+	providerCredential *protos.VaultCredential
 	inputBuilder       integration_client_builders.InputChatBuilder
-	history            []*lexatic_backend.Message
+	history            []*protos.Message
 }
 
 func NewModelAssistantExecutor(
@@ -34,7 +34,7 @@ func NewModelAssistantExecutor(
 		logger:       logger,
 		inputBuilder: integration_client_builders.NewChatInputBuilder(logger),
 		toolExecutor: internal_tool_executors.NewToolExecutor(logger),
-		history:      make([]*lexatic_backend.Message, 0),
+		history:      make([]*protos.Message, 0),
 	}
 
 }
@@ -74,7 +74,7 @@ func (executor *modelAssistantExecutor) Init(
 	)
 	defer span.EndSpan(ctx, utils.AssistantAgentConnectStage)
 	g, ctx := errgroup.WithContext(ctx)
-	var providerCredential *lexatic_backend.VaultCredential
+	var providerCredential *protos.VaultCredential
 
 	// Goroutine to get the provider credential
 	g.Go(func() error {
@@ -144,17 +144,17 @@ func (executor *modelAssistantExecutor) chat(
 	// current messages
 	in *types.Message,
 	// histories or older conversation
-	histories ...*lexatic_backend.Message,
+	histories ...*protos.Message,
 ) error {
 
 	start := time.Now()
 	var (
-		output  *lexatic_backend.Message
-		metrics []*lexatic_backend.Metric
+		output  *protos.Message
+		metrics []*protos.Metric
 	)
 	request := executor.inputBuilder.
 		Chat(
-			&lexatic_backend.Credential{
+			&protos.Credential{
 				Id:    executor.providerCredential.GetId(),
 				Value: executor.providerCredential.GetValue(),
 			},

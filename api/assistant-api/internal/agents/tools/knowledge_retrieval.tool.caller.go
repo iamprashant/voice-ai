@@ -14,7 +14,7 @@ import (
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 type knowledgeRetrievalToolCaller struct {
@@ -23,7 +23,7 @@ type knowledgeRetrievalToolCaller struct {
 	topK               uint32
 	scoreThreshold     float64
 	knowledge          *internal_knowledge_gorm.Knowledge
-	providerCredential *lexatic_backend.VaultCredential
+	providerCredential *protos.VaultCredential
 }
 
 func (tc *knowledgeRetrievalToolCaller) argument(args string) (*string, map[string]interface{}, error) {

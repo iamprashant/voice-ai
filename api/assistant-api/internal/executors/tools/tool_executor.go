@@ -13,7 +13,7 @@ import (
 	internal_adapter_telemetry "github.com/rapidaai/api/assistant-api/internal/telemetry"
 
 	internal_tool_factory "github.com/rapidaai/api/assistant-api/internal/factory/tool"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
@@ -24,7 +24,7 @@ import (
 type toolExecutor struct {
 	logger                 commons.Logger
 	tools                  map[string]internal_agent_tools.ToolCaller
-	availableToolFunctions []*lexatic_backend.FunctionDefinition
+	availableToolFunctions []*protos.FunctionDefinition
 }
 
 func NewToolExecutor(
@@ -33,7 +33,7 @@ func NewToolExecutor(
 	return &toolExecutor{
 		logger:                 logger,
 		tools:                  make(map[string]internal_agent_tools.ToolCaller, 0),
-		availableToolFunctions: make([]*lexatic_backend.FunctionDefinition, 0),
+		availableToolFunctions: make([]*protos.FunctionDefinition, 0),
 	}
 }
 
@@ -73,7 +73,7 @@ func (executor *toolExecutor) Init(
 	return nil
 }
 
-func (executor *toolExecutor) GetFunctionDefinitions() []*lexatic_backend.FunctionDefinition {
+func (executor *toolExecutor) GetFunctionDefinitions() []*protos.FunctionDefinition {
 	return executor.availableToolFunctions
 }
 
@@ -95,7 +95,7 @@ func (executor *toolExecutor) tool(
 func (executor *toolExecutor) Execute(
 	ctx context.Context,
 	messageid string,
-	call *lexatic_backend.ToolCall,
+	call *protos.ToolCall,
 	communication internal_requests.Communication) *types.Content {
 	ctx, span, _ := communication.Tracer().StartSpan(
 		ctx,
@@ -163,7 +163,7 @@ func (executor *toolExecutor) Execute(
 func (executor *toolExecutor) ExecuteAll(
 	ctx context.Context,
 	messageid string,
-	calls []*lexatic_backend.ToolCall,
+	calls []*protos.ToolCall,
 	communication internal_requests.Communication) []*types.Content {
 	start := time.Now()
 	contents := make([]*types.Content, len(calls))

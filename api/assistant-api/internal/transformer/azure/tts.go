@@ -62,6 +62,9 @@ func (azure *azureTextToSpeech) Close(ctx context.Context) error {
 }
 
 func (azure *azureTextToSpeech) Initialize() (err error) {
+	azure.mu.Lock()
+	defer azure.mu.Unlock()
+
 	stream, err := audio.CreatePullAudioOutputStream()
 	if err != nil {
 		azure.logger.Errorf("azure-tts: failed to create audio stream:", err)
@@ -94,6 +97,7 @@ func (azure *azureTextToSpeech) Initialize() (err error) {
 func (azure *azureTextToSpeech) Transform(ctx context.Context, text string, opts *internal_transformer.TextToSpeechOption) error {
 	azure.mu.Lock()
 	defer azure.mu.Unlock()
+
 	azure.contextId = opts.ContextId
 	if azure.client == nil {
 		return fmt.Errorf("azure-tts: you are calling transform without initilize")

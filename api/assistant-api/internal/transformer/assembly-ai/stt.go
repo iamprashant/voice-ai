@@ -119,6 +119,9 @@ func (aai *assemblyaiSTT) speechToTextCallback() {
 	}
 }
 func (aai *assemblyaiSTT) Transform(ctx context.Context, in []byte, opts *internal_transformer.SpeechToTextOption) error {
+	aai.mu.Lock()
+	defer aai.mu.Unlock()
+
 	if aai.connection == nil {
 		return fmt.Errorf("assembly-ai-stt: websocket connection is not initialized")
 	}

@@ -7,9 +7,9 @@ import { Slider } from '@/app/components/form/slider';
 import { Textarea } from '@/app/components/form/textarea';
 import { InputHelper } from '@/app/components/input-helper';
 import {
-  DEEPGRAM_LANGUAGES,
-  DEEPGRAM_MODELS,
-} from '@/app/components/providers/speech-to-text/deepgram/constant';
+  DEEPGRAM_SPEECH_TO_TEXT_LANGUAGE,
+  DEEPGRAM_SPEECH_TO_TEXT_MODEL,
+} from '@/providers';
 export {
   GetDeepgramDefaultOptions,
   ValidateDeepgramOptions,
@@ -49,8 +49,9 @@ export const ConfigureDeepgramSpeechToText: React.FC<{
     {
       label: 'Model',
       key: 'listen.model',
-      options: DEEPGRAM_MODELS,
-      findMatch: (val: string) => DEEPGRAM_MODELS.find(x => x.id === val),
+      options: DEEPGRAM_SPEECH_TO_TEXT_MODEL(),
+      findMatch: (val: string) =>
+        DEEPGRAM_SPEECH_TO_TEXT_MODEL().find(x => x.id === val),
       onChange: (v: { id: string }) => {
         updateParameter('listen.model', v.id);
       },
@@ -58,8 +59,9 @@ export const ConfigureDeepgramSpeechToText: React.FC<{
     {
       label: 'Language',
       key: 'listen.language',
-      options: DEEPGRAM_LANGUAGES,
-      findMatch: (val: string) => DEEPGRAM_LANGUAGES.find(x => x.code === val),
+      options: DEEPGRAM_SPEECH_TO_TEXT_LANGUAGE(),
+      findMatch: (val: string) =>
+        DEEPGRAM_SPEECH_TO_TEXT_LANGUAGE().find(x => x.code === val),
       onChange: v => {
         updateParameter('listen.language', v.code);
       },

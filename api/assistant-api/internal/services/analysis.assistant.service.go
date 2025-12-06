@@ -5,7 +5,7 @@ import (
 
 	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
 	"github.com/rapidaai/pkg/types"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 )
 
 type AssistantAnalysisService interface {
@@ -36,6 +36,6 @@ type AssistantAnalysisService interface {
 	GetAll(ctx context.Context,
 		auth types.SimplePrinciple,
 		assistantId uint64,
-		criterias []*lexatic_backend.Criteria,
-		paginate *lexatic_backend.Paginate) (int64, []*internal_assistant_entity.AssistantAnalysis, error)
+		criterias []*protos.Criteria,
+		paginate *protos.Paginate) (int64, []*internal_assistant_entity.AssistantAnalysis, error)
 }

@@ -9,7 +9,7 @@ import (
 	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -66,12 +66,12 @@ func (io *GenericRequestor) Greeting(ctx context.Context) error {
 	io.
 		Notify(
 			ctx,
-			&lexatic_backend.AssistantConversationAssistantMessage{
+			&protos.AssistantConversationAssistantMessage{
 				Time:      timestamppb.Now(),
 				Id:        inGreet.GetId(),
 				Completed: true,
-				Message: &lexatic_backend.AssistantConversationAssistantMessage_Text{
-					Text: &lexatic_backend.AssistantConversationMessageTextContent{
+				Message: &protos.AssistantConversationAssistantMessage_Text{
+					Text: &protos.AssistantConversationMessageTextContent{
 						Content: greetingCnt,
 					},
 				},
@@ -80,7 +80,7 @@ func (io *GenericRequestor) Greeting(ctx context.Context) error {
 	io.
 		Notify(
 			ctx,
-			&lexatic_backend.AssistantConversationMessage{
+			&protos.AssistantConversationMessage{
 				MessageId:   inGreet.GetId(),
 				AssistantId: io.assistant.Id,
 				Request:     inGreet.ToProto(),

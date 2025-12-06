@@ -9,7 +9,7 @@ import (
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
 	assistant_api "github.com/rapidaai/protos"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -23,7 +23,7 @@ type Telemetry struct {
 	ParentID   string            `json:"parentID"`
 }
 
-func (t *Telemetry) ToProto() *lexatic_backend.Telemetry {
+func (t *Telemetry) ToProto() *protos.Telemetry {
 	var startTimeProto *timestamppb.Timestamp
 	if !t.StartTime.IsZero() {
 		startTimeProto = timestamppb.New(t.StartTime)
@@ -33,7 +33,7 @@ func (t *Telemetry) ToProto() *lexatic_backend.Telemetry {
 	if !t.EndTime.IsZero() {
 		endTimeProto = timestamppb.New(t.EndTime)
 	}
-	return &lexatic_backend.Telemetry{
+	return &protos.Telemetry{
 		StageName:  t.StageName,
 		StartTime:  startTimeProto,
 		EndTime:    endTimeProto,
