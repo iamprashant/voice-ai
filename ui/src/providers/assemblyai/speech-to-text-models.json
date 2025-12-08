@@ -1,0 +1,26 @@
+[
+    {
+        "id": "slam-1",
+        "name": "Slam-1",
+        "description": "Highest accuracy for English pre-recorded audio with fine-tuning support",
+        "bestFor": "English content requiring highest accuracy"
+    },
+    {
+        "id": "universal",
+        "name": "Universal",
+        "description": "Best for out-of-the-box transcription with multi-lingual support",
+        "bestFor": "Production-ready transcription out of the box"
+    },
+    {
+        "id": "nano",
+        "name": "Nano",
+        "description": "Most cost-effective transcription with broad language support",
+        "bestFor": "Cost-sensitive applications with broad language needs"
+    },
+    {
+        "id": "universal-streaming",
+        "name": "Universal-Streaming",
+        "description": "Streaming audio transcription for real-time applications",
+        "bestFor": "Voice agents and real-time voice applications"
+    }
+]

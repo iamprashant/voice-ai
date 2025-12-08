@@ -14,8 +14,6 @@ import { useCurrentCredential } from '@/hooks/use-credential';
 import { useGlobalNavigation } from '@/hooks/use-global-navigator';
 import {
   Bug,
-  ChevronDown,
-  ChevronUp,
   Code,
   ExternalLink,
   Eye,
@@ -135,7 +133,7 @@ export const ConfigureAssistantDeploymentPage = () => {
    *
    */
   return (
-    <div className="flex flex-col w-full flex-1 overflow-auto">
+    <div className="flex flex-col w-full flex-1 overflow-auto bg-white dark:bg-gray-900">
       {assistant?.getPhonedeployment() && (
         <AssistantPhoneCallDeploymentDialog
           modalOpen={isPhoneExpanded}
@@ -250,7 +248,7 @@ export const ConfigureAssistantDeploymentPage = () => {
       <div className="flex flex-col gap-2 p-4">
         {/* debugger */}
         {assistant?.hasDebuggerdeployment() && (
-          <div className="border">
+          <div className="bg-white dark:bg-gray-900 border">
             <div className="flex items-center justify-between border-b">
               <div className="flex items-center gap-2 justify-between px-4">
                 <h3 className="font-semibold truncate">Debugger</h3>

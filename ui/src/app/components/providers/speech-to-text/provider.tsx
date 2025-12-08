@@ -25,11 +25,7 @@ import {
   GetGoogleDefaultOptions,
   ValidateGoogleOptions,
 } from '@/app/components/providers/speech-to-text/google';
-import {
-  ConfigureOpenAISpeechToText,
-  GetOpenAIDefaultOptions,
-  ValidateOpenAIOptions,
-} from '@/app/components/providers/speech-to-text/openai';
+import { ConfigureOpenAISpeechToText } from '@/app/components/providers/speech-to-text/openai';
 import { FC } from 'react';
 import {
   ConfigureSarvamSpeechToText,
@@ -47,8 +43,6 @@ export const GetDefaultSpeechToTextIfInvalid = (
       return GetGoogleDefaultOptions(parameters);
     case 'deepgram':
       return GetDeepgramDefaultOptions(parameters);
-    case 'openai':
-      return GetOpenAIDefaultOptions(parameters);
     case 'azure':
     case 'azure-cloud':
       return GetAzureDefaultOptions(parameters);
@@ -66,15 +60,13 @@ export const GetDefaultSpeechToTextIfInvalid = (
 export const ValidateSpeechToTextIfInvalid = (
   provider: string,
   parameters: Metadata[],
-): boolean => {
+): string | undefined => {
   switch (provider) {
     case 'google-cloud':
     case 'google':
       return ValidateGoogleOptions(parameters);
     case 'deepgram':
       return ValidateDeepgramOptions(parameters);
-    case 'openai':
-      return ValidateOpenAIOptions(parameters);
     case 'azure':
     case 'azure-cloud':
       return ValidateAzureOptions(parameters);
@@ -85,7 +77,7 @@ export const ValidateSpeechToTextIfInvalid = (
     case 'sarvamai':
       return ValidateSarvamOptions(parameters);
     default:
-      return false;
+      return undefined;
   }
 };
 

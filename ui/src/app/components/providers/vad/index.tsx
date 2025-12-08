@@ -26,6 +26,7 @@ export const VADProvider: React.FC<VADProviderProps> = ({
   return (
     <InputGroup
       title="VAD"
+      initiallyExpanded={false}
       className={cn('bg-white dark:bg-gray-900', className)}
     >
       <div className="space-y-6">

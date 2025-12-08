@@ -38,7 +38,9 @@ export const GetAzureDefaultOptions = (current: Metadata[]): Metadata[] => {
   ];
 };
 
-export const ValidateAzureOptions = (options: Metadata[]): boolean => {
+export const ValidateAzureOptions = (
+  options: Metadata[],
+): string | undefined => {
   const credentialID = options.find(
     opt => opt.getKey() === 'rapida.credential_id',
   );
@@ -47,7 +49,7 @@ export const ValidateAzureOptions = (options: Metadata[]): boolean => {
     !credentialID.getValue() ||
     credentialID.getValue().length === 0
   ) {
-    return false;
+    return 'Please provide a valid azure credential for speech to text.';
   }
   // Validate language
   const languageOption = options.find(
@@ -57,8 +59,8 @@ export const ValidateAzureOptions = (options: Metadata[]): boolean => {
     !languageOption ||
     !AZURE_LANGUAGE.some(lang => lang.code === languageOption.getValue())
   ) {
-    return false;
+    return 'Please provide a valid azure language for speech to text.';
   }
 
-  return true;
+  return undefined;
 };

@@ -1,11 +1,11 @@
 import { Metadata } from '@rapidaai/react';
 import { Dropdown } from '@/app/components/dropdown';
-import { ProviderConfig } from '@/app/components/providers';
 import { ConfigureCohereRerankerModel } from '@/app/components/providers/reranker/cohere';
 import { GetCohereRerankerDefaultOptions } from '@/app/components/providers/reranker/cohere/constants';
 import { cn } from '@/utils';
-import { FC } from 'react';
+import { FC, useCallback } from 'react';
 import { RERANKER_PROVIDER } from '@/providers';
+import { ProviderComponentProps } from '@/app/components/providers';
 
 export const GetDefaultRerankerConfigIfInvalid = (
   provider: string,
@@ -20,21 +20,16 @@ export const GetDefaultRerankerConfigIfInvalid = (
 };
 
 export const RerankerConfigComponent: FC<{
-  inputClass?: string;
-  config: ProviderConfig;
-  updateConfig: (config: Partial<ProviderConfig>) => void;
-  disabled?: boolean;
-}> = ({ config, updateConfig, disabled, inputClass }) => {
-  switch (config.provider) {
+  provider;
+  parameters;
+  onChangeParameter;
+}> = ({ provider, parameters, onChangeParameter }) => {
+  switch (provider) {
     case 'cohere':
       return (
         <ConfigureCohereRerankerModel
-          inputClass={inputClass}
-          parameters={config.parameters}
-          onParameterChange={(params: Metadata[]) =>
-            updateConfig({ parameters: params })
-          }
-          disabled={disabled}
+          parameters={parameters}
+          onParameterChange={onChangeParameter}
         />
       );
     default:
@@ -42,16 +37,9 @@ export const RerankerConfigComponent: FC<{
   }
 };
 
-export const RerankerProvider: React.FC<{
-  inputClass?: string;
-  onChangeProvider: (i: string, v: string) => void;
-  onChangeConfig: (config: ProviderConfig) => void;
-  config: ProviderConfig;
-  disabled?: boolean;
-}> = ({ onChangeProvider, onChangeConfig, config, disabled, inputClass }) => {
-  const updateConfig = (newConfig: Partial<ProviderConfig>) => {
-    onChangeConfig({ ...config, ...newConfig } as ProviderConfig);
-  };
+export const RerankerProvider: React.FC<ProviderComponentProps> = props => {
+  const { provider, onChangeProvider } = props;
+
   return (
     <div
       className={cn(
@@ -66,14 +54,12 @@ export const RerankerProvider: React.FC<{
     >
       <div className="w-44 relative">
         <Dropdown
-          disable={disabled}
           className={cn(
             'bg-light-background max-w-full dark:bg-gray-950 focus-within:border-none! focus-within:outline-hidden! border-none! outline-hidden',
-            inputClass,
           )}
-          currentValue={RERANKER_PROVIDER.find(x => x.code === config.provider)}
+          currentValue={RERANKER_PROVIDER.find(x => x.code === provider)}
           setValue={v => {
-            onChangeProvider(v.id, v.name);
+            onChangeProvider(v.code);
           }}
           allValue={RERANKER_PROVIDER}
           placeholder="Select provider"
@@ -110,12 +96,7 @@ export const RerankerProvider: React.FC<{
         />
       </div>
       {/*  */}
-      <RerankerConfigComponent
-        inputClass={inputClass}
-        config={config}
-        updateConfig={updateConfig}
-        disabled={disabled}
-      />
+      <RerankerConfigComponent {...props} />
     </div>
   );
 };

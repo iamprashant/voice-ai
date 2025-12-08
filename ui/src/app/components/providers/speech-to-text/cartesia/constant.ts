@@ -40,7 +40,9 @@ export const GetCartesiaDefaultOptions = (current: Metadata[]): Metadata[] => {
   ];
 };
 
-export const ValidateCartesiaOptions = (options: Metadata[]): boolean => {
+export const ValidateCartesiaOptions = (
+  options: Metadata[],
+): string | undefined => {
   const credentialID = options.find(
     opt => opt.getKey() === 'rapida.credential_id',
   );
@@ -49,7 +51,7 @@ export const ValidateCartesiaOptions = (options: Metadata[]): boolean => {
     !credentialID.getValue() ||
     credentialID.getValue().length === 0
   ) {
-    return false;
+    return 'Please provide valid cartesia credential for speech to text.';
   }
   // Validate language
   const languageOption = options.find(
@@ -59,7 +61,7 @@ export const ValidateCartesiaOptions = (options: Metadata[]): boolean => {
     !languageOption ||
     !CARTESIA_LANGUAGE().some(lang => lang.code === languageOption.getValue())
   ) {
-    return false;
+    return 'Please provide valid cartesia language options for speech to text.';
   }
 
   // Validate model
@@ -70,10 +72,8 @@ export const ValidateCartesiaOptions = (options: Metadata[]): boolean => {
       model => model.id === modelOption.getValue(),
     )
   ) {
-    return false;
+    return 'Please provide valid cartesia model for speech to text.';
   }
 
-  return true;
+  return undefined;
 };
-
-// ... rest of the code ...

@@ -37,6 +37,8 @@ import {
 import { PageActionButtonBlock } from '@/app/components/blocks/page-action-button-block';
 import { connectionConfig } from '@/configs';
 import { ValidateTextToSpeechIfInvalid } from '@/app/components/providers/text-to-speech/provider';
+import { useConfirmDialog } from '@/app/pages/assistant/actions/hooks/use-confirmation';
+import { DebuggerDeploymentSuccessDialog } from '@/app/components/base/modal/debugger-deployment-success-modal';
 
 /**
  *
@@ -66,7 +68,8 @@ const ConfigureAssistantDebuggerDeployment: FC<{ assistantId: string }> = ({
   /**
    * global naviagtion
    */
-  const { goToDeploymentAssistant } = useGlobalNavigation();
+  const { goToDeploymentAssistant, goToAssistantPreview } =
+    useGlobalNavigation();
 
   /**
    * global loading
@@ -121,6 +124,10 @@ const ConfigureAssistantDebuggerDeployment: FC<{ assistantId: string }> = ({
     provider: 'cartesia',
     parameters: GetDefaultSpeechToTextIfInvalid('cartesia', []),
   });
+
+  // show dialog and confirmation
+  const { showDialog, ConfirmDialogComponent } = useConfirmDialog({});
+  const [success, setSuccess] = useState(false);
 
   // Fetch existing deployment on component mount
   useEffect(() => {
@@ -199,15 +206,13 @@ const ConfigureAssistantDebuggerDeployment: FC<{ assistantId: string }> = ({
         );
         return;
       }
-
-      if (
-        !ValidateSpeechToTextIfInvalid(
-          audioInputConfig.provider,
-          audioInputConfig.parameters,
-        )
-      ) {
+      let error = ValidateSpeechToTextIfInvalid(
+        audioInputConfig.provider,
+        audioInputConfig.parameters,
+      );
+      if (error) {
         hideLoader();
-        setErrorMessage('Please provide a valid speech to text options.');
+        setErrorMessage(error);
         return;
       }
     }
@@ -262,7 +267,6 @@ const ConfigureAssistantDebuggerDeployment: FC<{ assistantId: string }> = ({
       outputAudioProvider.setAudiooptionsList(audioOutputConfig.parameters);
       deployment.setOutputaudio(outputAudioProvider);
     }
-
     req.setDebugger(deployment);
     CreateAssistantDebuggerDeployment(
       connectionConfig,
@@ -279,7 +283,7 @@ const ConfigureAssistantDebuggerDeployment: FC<{ assistantId: string }> = ({
           toast.success(
             'Assistant deployment config for debugger has been updated successfully.',
           );
-          goToDeploymentAssistant(assistantId);
+          setSuccess(true);
         } else {
           let err =
             response?.getError()?.getHumanmessage() ||
@@ -298,48 +302,61 @@ const ConfigureAssistantDebuggerDeployment: FC<{ assistantId: string }> = ({
   //
 
   return (
-    <form
-      onSubmit={handleDeployDebugger}
-      method="POST"
-      className="relative flex flex-col flex-1 mx-auto"
-    >
-      <div className="overflow-auto flex flex-col flex-1 pb-20">
-        <ConfigureExperience
-          experienceConfig={experienceConfig}
-          setExperienceConfig={setExperienceConfig}
-        />
+    <>
+      <ConfirmDialogComponent />
+      <DebuggerDeploymentSuccessDialog
+        modalOpen={success}
+        setModalOpen={() => {
+          setSuccess(false);
+          goToDeploymentAssistant(assistantId);
+        }}
+        assistantId={assistantId}
+      />
+      <form
+        onSubmit={handleDeployDebugger}
+        method="POST"
+        className="relative flex flex-col flex-1 mx-auto"
+      >
+        <div className="overflow-auto flex flex-col flex-1 pb-20">
+          <ConfigureExperience
+            experienceConfig={experienceConfig}
+            setExperienceConfig={setExperienceConfig}
+          />
 
-        <ConfigureAudioInputProvider
-          voiceInputEnable={voiceInputEnable}
-          onChangeVoiceInputEnable={setVoiceInputEnable}
-          audioInputConfig={audioInputConfig}
-          setAudioInputConfig={setAudioInputConfig}
-        />
-        <ConfigureAudioOutputProvider
-          voiceOutputEnable={voiceOutputEnable}
-          onChangeVoiceOutputEnable={setVoiceOutputEnable}
-          audioOutputConfig={audioOutputConfig}
-          setAudioOutputConfig={setAudioOutputConfig}
-        />
-      </div>
+          <ConfigureAudioInputProvider
+            voiceInputEnable={voiceInputEnable}
+            onChangeVoiceInputEnable={setVoiceInputEnable}
+            audioInputConfig={audioInputConfig}
+            setAudioInputConfig={setAudioInputConfig}
+          />
+          <ConfigureAudioOutputProvider
+            voiceOutputEnable={voiceOutputEnable}
+            onChangeVoiceOutputEnable={setVoiceOutputEnable}
+            audioOutputConfig={audioOutputConfig}
+            setAudioOutputConfig={setAudioOutputConfig}
+          />
+        </div>
 
-      <PageActionButtonBlock errorMessage={errorMessage}>
-        <ICancelButton
-          className="px-4 rounded-[2px]"
-          onClick={() => {
-            goToDeploymentAssistant(assistantId);
-          }}
-        >
-          Cancel
-        </ICancelButton>
-        <IBlueBGArrowButton
-          type="submit"
-          className="px-4 rounded-[2px]"
-          isLoading={loading}
-        >
-          Deploy Debugger
-        </IBlueBGArrowButton>
-      </PageActionButtonBlock>
-    </form>
+        <PageActionButtonBlock errorMessage={errorMessage}>
+          <ICancelButton
+            className="px-4 rounded-[2px]"
+            onClick={() => {
+              showDialog(() => {
+                goToDeploymentAssistant(assistantId);
+              });
+            }}
+          >
+            Cancel
+          </ICancelButton>
+          <IBlueBGArrowButton
+            type="submit"
+            className="px-4 rounded-[2px]"
+            isLoading={loading}
+          >
+            Deploy Debugger
+          </IBlueBGArrowButton>
+        </PageActionButtonBlock>
+      </form>
+    </>
   );
 };

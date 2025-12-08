@@ -300,9 +300,9 @@ export const CreateKnowledge: FC<{ assistantId: string }> = ({
             </FieldSet>
             <FieldSet>
               <RerankerProvider
-                disabled={!rerankingEnable}
-                config={providerModel}
-                onChangeConfig={setProviderModel}
+                provider={providerModel.provider}
+                parameters={providerModel.parameters}
+                onChangeParameter={() => {}}
                 onChangeProvider={() => {}}
               />
             </FieldSet>

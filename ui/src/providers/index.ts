@@ -19,6 +19,71 @@ export interface RapidaProvider {
   }[];
 }
 
+/**
+ *
+ * @returns
+ */
+
+export const SENTENCE_BOUNDRIES = [
+  '.', // Period
+  '!', // Exclamation mark
+  '?', // Question mark
+  '|', // Pipe
+  ';', // Semicolon
+  ':', // Colon
+  '…', // Ellipsis
+  '。', // Chinese/Japanese full stop
+  '．', // Katakana middle dot
+  '।', // Devanagari Danda (Hindi full stop)
+  '۔', // Arabic full stop
+  '--', // Double dash
+];
+
+export const PRONUNCIATION_DICTIONARIES = [
+  'currency',
+  'date',
+  'time',
+  'numeral',
+  'address',
+  'url',
+  'tech-abbreviation',
+  'role-abbreviation',
+  'general-abbreviation',
+  'symbol',
+];
+
+export const CONJUNCTION_BOUNDARIES = [
+  'for',
+  'and',
+  'nor',
+  'but',
+  'or',
+  'yet',
+  'so',
+  'after',
+  'although',
+  'as',
+  'because',
+  'before',
+  'even',
+  'if',
+  'once',
+  'since',
+  'so that',
+  'than',
+  'that',
+  'though',
+  'unless',
+  'until',
+  'when',
+  'whenever',
+  'where',
+  'wherever',
+  'whereas',
+  'whether',
+  'while',
+];
+
 export const allProvider = (): RapidaProvider[] => {
   const env = process.env.NODE_ENV || 'development';
   return env === 'production' ? productionProvider : developmentProvider;
@@ -208,3 +273,18 @@ export const SARVAM_SPEECH_TO_TEXT_MODEL = () => {
 export const SARVAM_VOICE = () => {
   return require('./sarvam/voices.json');
 };
+
+/**
+ * assembly
+ */
+
+export const ASSEMBLYAI_SPEECH_TO_TEXT_MODEL = () => {
+  return require('./assemblyai/speech-to-text-models.json');
+};
+export const ASSEMBLYAI_LANGUAGE = () => {
+  return require('./assemblyai/languages.json');
+};
+
+/**
+ *
+ */

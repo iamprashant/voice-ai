@@ -461,6 +461,29 @@ export function IRedBGButton(props: ButtonProps) {
   );
 }
 
+export function IGreenBGButton(props: ButtonProps) {
+  return (
+    <button
+      type="button"
+      {...props}
+      className={cn(
+        'cursor-pointer font-medium',
+        'rounded-[2px]',
+        'flex h-9 truncate w-fit justify-center items-center',
+        'text-white',
+        'py-3 px-3 ',
+        'disabled:opacity-80',
+        'bg-green-600 group-hover:bg-green-600',
+        'button',
+        'focus:outline-hidden cursor-pointer',
+        props.className,
+      )}
+    >
+      {props.children}
+    </button>
+  );
+}
+
 export function IRedBorderButton(props: ButtonProps) {
   const { isLoading, ...btnProps } = props;
   return (

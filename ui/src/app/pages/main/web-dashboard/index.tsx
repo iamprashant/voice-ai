@@ -90,7 +90,7 @@ export const HomePage = () => {
       <div className="bg-white dark:bg-gray-950">
         <div className="bg-blue-500/10 border-blue-500 border-b-[0.5px]  p-4 flex flex-col items-center text-center sm:flex-row sm:items-start sm:text-left">
           <div className="flex-1">
-            <h2 className="mb-1 text-lg font-medium">
+            <h2 className="mb-1 text-lg font-semibold">
               Design and Deploy Custom Voice Assistant
             </h2>
             <p className="mb-4 text-base">

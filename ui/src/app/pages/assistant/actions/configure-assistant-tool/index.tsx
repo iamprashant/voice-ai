@@ -134,7 +134,7 @@ const ConfigureAssistantTool: FC<{ assistantId: string }> = ({
           <ExternalLink className="shrink-0 w-4 h-4 ml-1.5" strokeWidth={1.5} />
         </a>
       </YellowNoticeBlock>
-      <div className="overflow-auto flex flex-col flex-1 pb-20">
+      <div className="overflow-auto flex flex-col flex-1 pb-20 bg-white dark:bg-gray-900">
         {axtion.tools.length > 0 ? (
           <div className="p-2 grid sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full">
             {axtion.tools.map((itm, idx) => (

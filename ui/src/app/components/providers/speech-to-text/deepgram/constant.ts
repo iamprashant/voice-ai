@@ -51,7 +51,9 @@ export const GetDeepgramDefaultOptions = (current: Metadata[]): Metadata[] => {
     ...current.filter(m => m.getKey().startsWith('microphone.')),
   ];
 };
-export const ValidateDeepgramOptions = (options: Metadata[]): boolean => {
+export const ValidateDeepgramOptions = (
+  options: Metadata[],
+): string | undefined => {
   const credentialID = options.find(
     opt => opt.getKey() === 'rapida.credential_id',
   );
@@ -60,7 +62,7 @@ export const ValidateDeepgramOptions = (options: Metadata[]): boolean => {
     !credentialID.getValue() ||
     credentialID.getValue().length === 0
   ) {
-    return false;
+    return 'Please provide a valid deepgram credential for speech to text.';
   }
   // Validate language
   const languageOption = options.find(
@@ -72,7 +74,7 @@ export const ValidateDeepgramOptions = (options: Metadata[]): boolean => {
       lang => lang.code === languageOption.getValue(),
     )
   ) {
-    return false;
+    return 'Please provide a valid deepgram language for speech to text.';
   }
 
   // Validate model
@@ -83,8 +85,8 @@ export const ValidateDeepgramOptions = (options: Metadata[]): boolean => {
       model => model.id === modelOption.getValue(),
     )
   ) {
-    return false;
+    return 'Please provide a valid deepgram model for speech to text.';
   }
 
-  return true;
+  return undefined;
 };
