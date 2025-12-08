@@ -67,6 +67,7 @@ export function DeploymentRoute() {
           element={<DeploymentEndpointPage />}
         />
 
+        <Route index element={<Navigate to="assistant/" replace />} />
         <Route
           path={'endpoint/create-endpoint'}
           element={<DeploymentCreateEndpointPage />}

@@ -1,7 +1,9 @@
 import {
+  Bot,
   ChevronRight,
   ExternalLink,
   MessageSquare,
+  Plus,
   TestTube,
 } from 'lucide-react';
 import { ClickableCard } from '@/app/components/base/cards';
@@ -11,26 +13,20 @@ import { EndpointIcon } from '@/app/components/Icon/Endpoint';
 import { AssistantIcon } from '@/app/components/Icon/Assistant';
 import { ModelIcon } from '@/app/components/Icon/Model';
 import { useProviderContext } from '@/context/provider-context';
-import { ILinkButton } from '@/app/components/form/button';
+import {
+  IBlueBGArrowButton,
+  IButton,
+  ILinkBorderButton,
+} from '@/app/components/form/button';
+import {
+  BlueNoticeBlock,
+  YellowNoticeBlock,
+} from '@/app/components/container/message/notice-block';
+import { RightArrowIcon } from '@/app/components/Icon/RightArrow';
+import { useGlobalNavigation } from '@/hooks/use-global-navigator';
 
 export const HomePage = () => {
   const coreFeatures = [
-    {
-      icon: KnowledgeIcon,
-      title: 'Knowledge Hub',
-      description:
-        'Unified repository for documents, training data, and AI knowledge management — the foundation of contextual intelligence.',
-      color: 'bg-blue-500',
-      route: '/knowledge',
-    },
-    {
-      icon: MessageSquare,
-      title: 'Conversational AI',
-      description:
-        'Context-aware, LLM-powered chat experiences that understand user intent and deliver accurate responses.',
-      color: 'bg-yellow-500',
-      route: '/deployment/assistant',
-    },
     {
       icon: AssistantIcon,
       title: 'AI Assistants',
@@ -63,57 +59,74 @@ export const HomePage = () => {
       color: 'bg-indigo-500',
       route: '/logs',
     },
+    {
+      icon: KnowledgeIcon,
+      title: 'Knowledge Hub',
+      description:
+        'Unified repository for documents, training data, and AI knowledge management — the foundation of contextual intelligence.',
+      color: 'bg-blue-500',
+      route: '/knowledge',
+    },
+    {
+      icon: MessageSquare,
+      title: 'Conversational AI',
+      description:
+        'Context-aware, LLM-powered chat experiences that understand user intent and deliver accurate responses.',
+      color: 'bg-yellow-500',
+      route: '/deployment/assistant',
+    },
   ];
   const { user } = useCurrentCredential();
-  const { providerCredentials } = useProviderContext();
+  const { goToCreateAssistant } = useGlobalNavigation();
   return (
     <div className="flex-1 overflow-auto flex flex-col">
       {/* Core Platform Features */}
-      {providerCredentials.length === 0 && (
-        <>
-          <div className="p-4">
-            <h2 className="text-xl font-semibold text-foreground mb-1">
-              Get Started
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Complete these steps to set up your workspace
-            </p>
-          </div>
-          <div className="border-y p-3">
-            <div className="flex justify-between border bg-light-background dark:bg-gray-950 items-center">
-              <div className="p-4">
-                <h1 className="text-base font-semibold">
-                  Connect your ai providers
-                </h1>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Set up the language model, speech-to-text, and text-to-speech
-                  services you want to use.
-                </p>
-              </div>
-              <ILinkButton
-                href="/integration/models"
-                className="p-0 px-2 pl-4 mr-4"
-              >
-                Connect
-                <ExternalLink className="w-4 h-4 ml-2" strokeWidth={1.5} />
-              </ILinkButton>
-            </div>
-          </div>
-        </>
-      )}
 
       <div className="border-b bg-white dark:bg-gray-900 p-4">
         <h1 className="text-xl font-semibold">
           Welcome, {user?.name?.split(/\s+/)[0] || user?.name}{' '}
         </h1>
       </div>
-      <main className="px-6 py-6 bg-white dark:bg-gray-900">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="bg-white dark:bg-gray-950">
+        <div className="bg-blue-500/10 border-blue-500 border-b-[0.5px]  p-4 flex flex-col items-center text-center sm:flex-row sm:items-start sm:text-left">
+          <div className="flex-1">
+            <h2 className="mb-1 text-lg font-medium">
+              Design and Deploy Custom Voice Assistant
+            </h2>
+            <p className="mb-4 text-base">
+              Build intelligent voice assistants that can handle calls, answer
+              questions, and integrate with your existing systems. Deploy across
+              websites, phone systems, or via SDK.
+            </p>
+            <div className="flex flex-col gap-3 sm:flex-row items-center space-x-2">
+              <IBlueBGArrowButton
+                onClick={() => {
+                  goToCreateAssistant();
+                }}
+                className="text-base"
+              >
+                Create Assistant
+              </IBlueBGArrowButton>
+              <a
+                rel="noreferrer"
+                href="https://doc.rapida.ai/assistants/overview"
+                target="_blank"
+                className="text-base text-blue-600 font-medium hover:underline flex items-center space-x-1.5"
+              >
+                <span>View documentations</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <main className="px-6 py-6">
+        <div className="grid grid-cols-1  lg:grid-cols-3 xl:grid-cols-5 gap-4">
           {coreFeatures.map((feature, index) => (
             <ClickableCard
               to={feature.route}
               key={index}
-              className="transition-all duration-200 cursor-pointer group p-4 hover:shadow-lg border-b-2 hover:border-blue-600 h-full border"
+              className="transition-all duration-200 cursor-pointer group p-4 hover:shadow-lg border-b-2 hover:border-blue-600 h-full border col-span-1"
             >
               <div className="flex flex-col space-y-4">
                 <div className="flex items-center justify-between">
@@ -137,20 +150,31 @@ export const HomePage = () => {
           ))}
         </div>
       </main>
-      <div className="border-y p-4 justify-between items-center bg-white dark:bg-gray-900">
-        <h1 className="">
-          Have questions, need support, or want to explore how we can help you
-          build better AI experiences? Our team is always ready to assist.
-        </h1>
+      <div className="border-y p-4 justify-between items-center bg-white dark:bg-gray-900 absolute bottom-0 w-full flex">
         <p>
           Reach out anytime — Get quick help from our team at:
           <a
             href="mailto:tech@rapida.ai"
             className="mx-2 text-blue-600 hover:underline underline-offset-2"
           >
-            tech@rapida.ai
+            contact@rapida.ai
           </a>
         </p>
+        <div className="flex">
+          <p className="sm:px-3">© 2025 Rapida.ai. All rights reserved.</p>
+          <a
+            className="hover:text-gray-950 dark:hover:text-white sm:px-3"
+            href="/static/privacy-policy"
+          >
+            Privacy Policy
+          </a>
+          <a
+            className="hover:text-gray-950 dark:hover:text-white sm:px-3"
+            href="/static/privacy-policy"
+          >
+            Terms and Conditions
+          </a>
+        </div>
       </div>
     </div>
   );

@@ -2,6 +2,8 @@ import { FieldSet } from '@/app/components/form/fieldset';
 import React, { FC } from 'react';
 import { CloseIcon } from '@/app/components/Icon/Close';
 import { Input } from '@/app/components/form/input';
+import { InputHelper } from '@/app/components/input-helper';
+import { FormLabel } from '@/app/components/form-label';
 
 /**
  *
@@ -51,7 +53,7 @@ export const TagInput: FC<TagInputProps> = ({
         })}
       </div>
       <FieldSet>
-        <div className="text-sm">Tags</div>
+        <FormLabel>Tags (Optional)</FormLabel>
         <Input
           type="text"
           className={className}
@@ -64,10 +66,10 @@ export const TagInput: FC<TagInputProps> = ({
           }}
         />
 
-        <div className="text-[0.8rem] text-gray-500">
-          Add tags to make projects easier to find. To add tags, separate them
-          with commas and press Enter.
-        </div>
+        <InputHelper>
+          Add tags to organize and locate items more efficiently. Separate tags
+          with commas and press Enter to add them.
+        </InputHelper>
       </FieldSet>
     </div>
   );

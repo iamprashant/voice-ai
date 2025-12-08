@@ -61,12 +61,16 @@ export const ScrollableResizableTable: FC<ScrollableResizableTableProps> = ({
   }, []);
 
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="w-full flex flex-col flex-1 overflow-x-auto">
       <div
         ref={tableRef}
-        style={{ width: `${tableWidth}px`, minWidth: '100%' }}
+        style={{
+          minWidth: `${tableWidth}px`,
+          //   minWidth: '100%',
+          maxWidth: '100% !important',
+        }}
       >
-        <table className="w-full border-collapse bg-white dark:bg-gray-900 border-y">
+        <table className="w-full border-collapse bg-white dark:bg-gray-900 border-y ">
           <thead className="uppercase">
             <TableRow className="bg-gray-100 dark:bg-gray-950">
               {isActionable && (

@@ -52,7 +52,7 @@ export function GenericModal(props: GenericModalProps) {
           exit={{ opacity: 0 }}
           onClick={() => props.setModalOpen(false)}
           className={cn(
-            'bg-slate-900/20 dark:bg-slate-400/5 backdrop-blur-xs p-8 fixed inset-0 z-50 grid place-items-center overflow-y-scroll cursor-pointer',
+            'bg-slate-900/20 dark:bg-slate-400/5 backdrop-blur-xs p-8 fixed inset-0 z-50 grid place-items-center overflow-y-scroll',
             props.className,
           )}
         >

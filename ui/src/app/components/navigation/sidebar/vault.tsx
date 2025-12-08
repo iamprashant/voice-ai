@@ -51,7 +51,7 @@ export function Vault() {
           >
             <SidebarIconWrapper>
               <FolderKey
-                className={cn('w-4 h-4 opacity-75')}
+                className={cn('w-5 h-5 opacity-75')}
                 strokeWidth={1.5}
               />
             </SidebarIconWrapper>
@@ -63,7 +63,7 @@ export function Vault() {
             navigate="/integration/personal-credential"
           >
             <SidebarIconWrapper>
-              <Key className={cn('w-4 h-4 opacity-75')} strokeWidth={1.5} />
+              <Key className={cn('w-5 h-5 opacity-75')} strokeWidth={1.5} />
             </SidebarIconWrapper>
             <SidebarLabel>Personal Token</SidebarLabel>
           </SidebarSimpleListItem>

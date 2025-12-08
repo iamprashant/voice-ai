@@ -137,7 +137,6 @@ export function EndpointPage() {
           clms={endpointActions.columns.filter(x => {
             return x.visible;
           })}
-          className="w-[2800px]"
         >
           {endpointActions.endpoints.map((ed, idx) => {
             return (

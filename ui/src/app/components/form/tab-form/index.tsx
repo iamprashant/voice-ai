@@ -25,7 +25,7 @@ export const TabForm: FC<TabFormProps> = ({
 }) => {
   return (
     <section className="flex flex-1 max-h-full">
-      <div className="w-96 hidden md:block p-4">
+      <div className="w-96 hidden md:block p-4 border-r">
         <div className="relative p-4">
           <div className="mb-6">
             <h2 className="text-lg font-medium text-foreground mb-1">
@@ -96,14 +96,16 @@ export const TabForm: FC<TabFormProps> = ({
           </div>
         </div>
       </div>
-      <div className={cn('w-2/3 h-full flex-1 relative')}>
+      <div
+        className={cn('w-2/3 h-full flex-1 relative bg-white dark:bg-gray-900')}
+      >
         <div className="h-full flex-1 overflow-auto flex flex-col pb-11">
           {form.map(
             item =>
               item.code === activeTab && (
                 <div
                   key={`form-body-${item.code}`}
-                  className={cn('space-y-6 flex-1 flex flex-col border')}
+                  className={cn('space-y-6 flex-1 flex flex-col')}
                 >
                   {item.body}
                   <PageActionButtonBlock errorMessage={errorMessage}>
