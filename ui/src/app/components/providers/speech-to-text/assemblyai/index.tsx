@@ -7,20 +7,13 @@ import { Slider } from '@/app/components/form/slider';
 import { InputHelper } from '@/app/components/input-helper';
 import {
   ASSEMBLYAI_LANGUAGE,
-  ASSEMBLYAI_MODELS,
-} from '@/app/components/providers/speech-to-text/assemblyai/constant';
+  ASSEMBLYAI_SPEECH_TO_TEXT_MODEL,
+} from '@/providers';
 
 export {
   GetAssemblyAIDefaultOptions,
   ValidateAssemblyAIOptions,
 } from '@/app/components/providers/speech-to-text/assemblyai/constant';
-
-const renderOption = (c: { icon: React.ReactNode; name: string }) => (
-  <span className="inline-flex items-center gap-2 sm:gap-2.5 max-w-full text-sm font-medium">
-    {c.icon}
-    <span className="truncate capitalize">{c.name}</span>
-  </span>
-);
 
 export const ConfigureAssemblyAISpeechToText: React.FC<{
   onParameterChange: (parameters: Metadata[]) => void;
@@ -43,43 +36,61 @@ export const ConfigureAssemblyAISpeechToText: React.FC<{
     onParameterChange(updatedParams);
   };
 
-  const configItems = [
-    {
-      label: 'Language',
-      key: 'listen.language',
-      options: ASSEMBLYAI_LANGUAGE,
-      findMatch: (val: string) => ASSEMBLYAI_LANGUAGE.find(x => x.code === val),
-      onChange: (v: { code: string }) => {
-        updateParameter('listen.language', v.code);
-      },
-    },
-    {
-      label: 'Models',
-      key: 'listen.model',
-      options: ASSEMBLYAI_MODELS,
-      findMatch: (val: string) => ASSEMBLYAI_MODELS.find(x => x.id === val),
-      onChange: v => {
-        updateParameter('listen.model', v.id);
-      },
-    },
-  ];
-
   return (
     <>
-      {configItems.map(({ label, key, options, findMatch, onChange }) => (
-        <FieldSet className="col-span-1 h-fit" key={key}>
-          <FormLabel>{label}</FormLabel>
-          <Dropdown
-            className="bg-light-background dark:bg-gray-950"
-            currentValue={findMatch(getParamValue(key))}
-            setValue={onChange}
-            allValue={options}
-            placeholder={`Select ${label.toLowerCase()}`}
-            option={renderOption}
-            label={renderOption}
-          />
-        </FieldSet>
-      ))}
+      <FieldSet className="col-span-1 h-fit" key="listen.model">
+        <FormLabel>Models</FormLabel>
+        <Dropdown
+          className="bg-light-background dark:bg-gray-950"
+          currentValue={ASSEMBLYAI_SPEECH_TO_TEXT_MODEL().find(
+            x => x.code === getParamValue('listen.model'),
+          )}
+          setValue={(v: { id: string }) =>
+            updateParameter('listen.model', v.id)
+          }
+          allValue={ASSEMBLYAI_SPEECH_TO_TEXT_MODEL()}
+          placeholder="Select model"
+          option={(c: { icon: React.ReactNode; name: string }) => (
+            <span className="inline-flex items-center gap-2 sm:gap-2.5 max-w-full text-sm font-medium">
+              {c.icon}
+              <span className="truncate capitalize">{c.name}</span>
+            </span>
+          )}
+          label={(c: { icon: React.ReactNode; name: string }) => (
+            <span className="inline-flex items-center gap-2 sm:gap-2.5 max-w-full text-sm font-medium">
+              {c.icon}
+              <span className="truncate capitalize">{c.name}</span>
+            </span>
+          )}
+        />
+      </FieldSet>
+      <FieldSet className="col-span-1 h-fit" key="listen.language">
+        <FormLabel>Language</FormLabel>
+        <Dropdown
+          className="bg-light-background dark:bg-gray-950"
+          currentValue={ASSEMBLYAI_LANGUAGE().find(
+            x => x.code === getParamValue('listen.language'),
+          )}
+          setValue={(v: { code: string }) =>
+            updateParameter('listen.language', v.code)
+          }
+          allValue={ASSEMBLYAI_LANGUAGE()}
+          placeholder="Select language"
+          option={(c: { icon: React.ReactNode; name: string }) => (
+            <span className="inline-flex items-center gap-2 sm:gap-2.5 max-w-full text-sm font-medium">
+              {c.icon}
+              <span className="truncate capitalize">{c.name}</span>
+            </span>
+          )}
+          label={(c: { icon: React.ReactNode; name: string }) => (
+            <span className="inline-flex items-center gap-2 sm:gap-2.5 max-w-full text-sm font-medium">
+              {c.icon}
+              <span className="truncate capitalize">{c.name}</span>
+            </span>
+          )}
+        />
+      </FieldSet>
+
       <FieldSet className="col-span-1">
         <FormLabel>Transcript Confidence Threshold</FormLabel>
         <div className="flex space-x-2 justify-center items-center">

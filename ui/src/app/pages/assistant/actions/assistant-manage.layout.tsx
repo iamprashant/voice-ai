@@ -20,7 +20,9 @@ export const AssistantManageLayout: FC<HTMLAttributes<HTMLDivElement>> = () => {
           className="flex items-center hover:text-red-600 hover:cursor-pointer"
         >
           <ChevronLeft className="w-5 h-5 mr-1" strokeWidth={1.5} />
-          <PageTitleBlock>Back to Assistant</PageTitleBlock>
+          <PageTitleBlock className="text-sm/6">
+            Back to Assistant
+          </PageTitleBlock>
         </div>
       </PageHeaderBlock>
       <div className="flex-1 flex relative grow h-full overflow-hidden">

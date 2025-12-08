@@ -3,6 +3,7 @@ import { RapidaIcon } from '@/app/components/Icon/Rapida';
 import { SidebarIconWrapper } from '@/app/components/navigation/sidebar/sidebar-icon-wrapper';
 import { SidebarLabel } from '@/app/components/navigation/sidebar/sidebar-label';
 import { SidebarSimpleListItem } from '@/app/components/navigation/sidebar/sidebar-simple-list-item';
+import { useSidebar } from '@/context/sidebar-context';
 import { cn } from '@/utils';
 import { ChevronDown, FolderKey, Key } from 'lucide-react';
 import { useState } from 'react';
@@ -10,8 +11,9 @@ import { useLocation } from 'react-router-dom';
 
 export function Vault() {
   const location = useLocation();
+  const { open } = useSidebar();
   const { pathname } = location;
-  const [open, setOpen] = useState(
+  const [opt, setOpt] = useState(
     false ||
       pathname.includes('/project-credential') ||
       pathname.includes('/personal-credential'),
@@ -21,9 +23,9 @@ export function Vault() {
     <li>
       <SidebarSimpleListItem
         className={cn('justify-between')}
-        active={open}
+        active={opt}
         onClick={() => {
-          setOpen(!open);
+          setOpt(!opt);
         }}
         navigate="#"
       >
@@ -33,17 +35,22 @@ export function Vault() {
           </SidebarIconWrapper>
           <SidebarLabel>Credentials</SidebarLabel>
         </div>
-        <SidebarIconWrapper className="opacity-0 group-hover:opacity-100 transition-all duration-100">
+        <SidebarIconWrapper className="transition-all duration-100">
           <ChevronDown
             className={cn(
               'w-5 h-5 opacity-70 transition-all duration-200',
-              open && 'rotate-180',
+              opt && 'rotate-180',
             )}
           />
         </SidebarIconWrapper>
       </SidebarSimpleListItem>
-      <Disclosure open={open}>
-        <div className="ml-6 dark:border-gray-800 border-l hidden group-hover:block">
+      <Disclosure open={opt}>
+        <div
+          className={cn(
+            'ml-6 dark:border-gray-800 border-l',
+            open ? 'block' : 'hidden',
+          )}
+        >
           <SidebarSimpleListItem
             className="mx-0 mr-2"
             active={pathname.includes('/project-credential')}

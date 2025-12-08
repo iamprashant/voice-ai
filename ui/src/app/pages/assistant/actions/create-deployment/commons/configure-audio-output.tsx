@@ -12,6 +12,11 @@ import {
   GetDefaultSpeakerConfig,
   GetDefaultTextToSpeechIfInvalid,
 } from '@/app/components/providers/text-to-speech/provider';
+import {
+  CONJUNCTION_BOUNDARIES,
+  PRONUNCIATION_DICTIONARIES,
+  SENTENCE_BOUNDRIES,
+} from '@/providers';
 
 /**
  *
@@ -39,15 +44,13 @@ export const ConfigureAudioOutputProvider: React.FC<
   voiceOutputEnable,
   onChangeVoiceOutputEnable,
 }) => {
-  //
+  // when change the provider reset the parameters for provider
   const onChangeAudioOutputProvider = (providerName: string) => {
     setAudioOutputConfig({
       provider: providerName,
       parameters: GetDefaultTextToSpeechIfInvalid(
         providerName,
-        GetDefaultSpeakerConfig(
-          audioOutputConfig?.parameters ? audioOutputConfig.parameters : [],
-        ),
+        GetDefaultSpeakerConfig([]),
       ),
     });
   };
@@ -114,20 +117,7 @@ export const ConfigureAudioOutputProvider: React.FC<
                   className="bg-light-background dark:bg-gray-950 max-w-6xl"
                   currentValue={getParamValue(
                     'speaker.sentence.boundaries',
-                    [
-                      '.', // Period
-                      '!', // Exclamation mark
-                      '?', // Question mark
-                      '|', // Pipe
-                      ';', // Semicolon
-                      ':', // Colon
-                      '…', // Ellipsis
-                      '。', // Chinese/Japanese full stop
-                      '．', // Katakana middle dot
-                      '।', // Devanagari Danda (Hindi full stop)
-                      '۔', // Arabic full stop
-                      '--', // Double dash
-                    ].join('<|||>'),
+                    SENTENCE_BOUNDRIES.join('<|||>'),
                   ).split('<|||>')}
                   setValue={v => {
                     updateParameter(
@@ -135,20 +125,7 @@ export const ConfigureAudioOutputProvider: React.FC<
                       v.join('<|||>'),
                     );
                   }}
-                  allValue={[
-                    '.', // Period
-                    '!', // Exclamation mark
-                    '?', // Question mark
-                    '|', // Pipe
-                    ';', // Semicolon
-                    ':', // Colon
-                    '…', // Ellipsis
-                    '。', // Chinese/Japanese full stop
-                    '．', // Katakana middle dot
-                    '।', // Devanagari Danda (Hindi full stop)
-                    '۔', // Arabic full stop
-                    '--', // Double dash
-                  ]}
+                  allValue={SENTENCE_BOUNDRIES}
                   placeholder="Select all that applies"
                   option={c => {
                     return (
@@ -194,18 +171,7 @@ export const ConfigureAudioOutputProvider: React.FC<
                       v.join('<|||>'),
                     );
                   }}
-                  allValue={[
-                    'currency',
-                    'date',
-                    'time',
-                    'numeral',
-                    'address',
-                    'url',
-                    'tech-abbreviation',
-                    'role-abbreviation',
-                    'general-abbreviation',
-                    'symbol',
-                  ]}
+                  allValue={PRONUNCIATION_DICTIONARIES}
                   placeholder="Select all that applies"
                   option={c => {
                     return (
@@ -259,37 +225,7 @@ export const ConfigureAudioOutputProvider: React.FC<
                       v.join('<|||>'),
                     );
                   }}
-                  allValue={[
-                    'for',
-                    'and',
-                    'nor',
-                    'but',
-                    'or',
-                    'yet',
-                    'so',
-                    'after',
-                    'although',
-                    'as',
-                    'because',
-                    'before',
-                    'even',
-                    'if',
-                    'once',
-                    'since',
-                    'so that',
-                    'than',
-                    'that',
-                    'though',
-                    'unless',
-                    'until',
-                    'when',
-                    'whenever',
-                    'where',
-                    'wherever',
-                    'whereas',
-                    'whether',
-                    'while',
-                  ]}
+                  allValue={CONJUNCTION_BOUNDARIES}
                   placeholder="Select all that applies"
                   option={c => {
                     return (

@@ -54,9 +54,11 @@ export const useGlobalNavigation = () => {
   const goToManageAssistant = (assistantId: string) => {
     navigate(`/deployment/assistant/${assistantId}/manage`);
   };
+
   const goToDeploymentAssistant = (assistantId: string) => {
     navigate(`/deployment/assistant/${assistantId}/manage/deployment`);
   };
+
   const goToAssistantPreview = (assistantId: string) =>
     window.open(`/preview/chat/${assistantId}`);
 

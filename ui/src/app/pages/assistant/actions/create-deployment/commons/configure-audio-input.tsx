@@ -36,18 +36,18 @@ export const ConfigureAudioInputProvider: React.FC<
   audioInputConfig,
   setAudioInputConfig,
 }) => {
-  //
+  // when changing the provide then reset the config
   const onChangeAudioInputProvider = (providerName: string) => {
     setAudioInputConfig({
       provider: providerName,
       parameters: GetDefaultSpeechToTextIfInvalid(
         providerName,
-        GetDefaultMicrophoneConfig(
-          audioInputConfig?.parameters ? audioInputConfig.parameters : [],
-        ),
+        GetDefaultMicrophoneConfig([]),
       ),
     });
   };
+
+  //   change the parameter for audio input config
   const onChangeAudioInputParameter = (parameters: Metadata[]) => {
     if (audioInputConfig)
       setAudioInputConfig({ ...audioInputConfig, parameters });
@@ -64,6 +64,7 @@ export const ConfigureAudioInputProvider: React.FC<
     [JSON.stringify(audioInputConfig.parameters)],
   );
 
+  //   update the parameters
   const updateParameter = (key: string, value: string) => {
     const updatedParams = (audioInputConfig.parameters || []).map(param => {
       if (param.getKey() === key) {

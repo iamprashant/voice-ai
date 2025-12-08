@@ -354,10 +354,9 @@ export const ConfigureAssistantKnowledgeDialog: FC<
           </FieldSet>
           <FieldSet>
             <RerankerProvider
-              inputClass="bg-white"
-              disabled={!rerankingEnable}
-              config={providerModel}
-              onChangeConfig={setProviderModel}
+              provider={providerModel.provider}
+              parameters={providerModel.parameters}
+              onChangeParameter={() => {}}
               onChangeProvider={() => {}}
             />
           </FieldSet>

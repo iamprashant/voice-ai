@@ -25,6 +25,7 @@ export const EndOfSpeechProvider: React.FC<EndOfSpeechProviderProps> = ({
 }) => {
   return (
     <InputGroup
+      initiallyExpanded={false}
       title="End of speech"
       className={cn('bg-white dark:bg-gray-900', className)}
     >

@@ -49,7 +49,9 @@ export const GetSarvamDefaultOptions = (current: Metadata[]): Metadata[] => {
  * @param options
  * @returns
  */
-export const ValidateSarvamOptions = (options: Metadata[]): boolean => {
+export const ValidateSarvamOptions = (
+  options: Metadata[],
+): string | undefined => {
   const credentialID = options.find(
     opt => opt.getKey() === 'rapida.credential_id',
   );
@@ -58,7 +60,7 @@ export const ValidateSarvamOptions = (options: Metadata[]): boolean => {
     !credentialID.getValue() ||
     credentialID.getValue().length === 0
   ) {
-    return false;
+    return 'Please provide valid sarvam credential for speech to text.';
   }
   // Validate language
   const languageOption = options.find(
@@ -70,7 +72,7 @@ export const ValidateSarvamOptions = (options: Metadata[]): boolean => {
       lang => lang.language_id === languageOption.getValue(),
     )
   ) {
-    return false;
+    return 'Please provide valid sarvam language options for speech to text.';
   }
 
   // Validate model
@@ -81,8 +83,8 @@ export const ValidateSarvamOptions = (options: Metadata[]): boolean => {
       m => m.model_id === modelOption.getValue(),
     )
   ) {
-    return false;
+    return 'Please provide valid sarvam model for speech to text.';
   }
 
-  return true;
+  return undefined;
 };

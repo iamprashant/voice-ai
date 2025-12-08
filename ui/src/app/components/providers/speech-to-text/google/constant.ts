@@ -54,7 +54,7 @@ export const GetGoogleDefaultOptions = (current: Metadata[]): Metadata[] => {
   addMetadata('rapida.credential_id');
 
   // Set language
-  addMetadata('listen.language', 'en', value =>
+  addMetadata('listen.language', 'en-US', value =>
     GOOGLE_LANGUAGE.some(l => l.code === value),
   );
 
@@ -63,8 +63,6 @@ export const GetGoogleDefaultOptions = (current: Metadata[]): Metadata[] => {
     GOOGLE_MODELS.some(m => m.id === value),
   );
 
-  addMetadata('listen.threshold', '0.5');
-
   // Only return metadata for the keys we want to keep
   return [
     ...mtds.filter(m => keysToKeep.includes(m.getKey())),
@@ -72,7 +70,9 @@ export const GetGoogleDefaultOptions = (current: Metadata[]): Metadata[] => {
   ];
 };
 
-export const ValidateGoogleOptions = (options: Metadata[]): boolean => {
+export const ValidateGoogleOptions = (
+  options: Metadata[],
+): string | undefined => {
   const credentialID = options.find(
     opt => opt.getKey() === 'rapida.credential_id',
   );
@@ -81,7 +81,7 @@ export const ValidateGoogleOptions = (options: Metadata[]): boolean => {
     !credentialID.getValue() ||
     credentialID.getValue().length === 0
   ) {
-    return false;
+    return 'Please provide a valid credential for google speech to text.';
   }
   // Validate language
   const languageOption = options.find(
@@ -91,7 +91,7 @@ export const ValidateGoogleOptions = (options: Metadata[]): boolean => {
     !languageOption ||
     !GOOGLE_LANGUAGE.some(lang => lang.code === languageOption.getValue())
   ) {
-    return false;
+    return 'Please provide a valid language options for google speech to text.';
   }
 
   // Validate model
@@ -100,7 +100,7 @@ export const ValidateGoogleOptions = (options: Metadata[]): boolean => {
     !modelOption ||
     !GOOGLE_MODELS.some(m => m.id === modelOption.getValue())
   ) {
-    return false;
+    return 'Please provide a valid model for google speech to text.';
   }
-  return true;
+  return undefined;
 };

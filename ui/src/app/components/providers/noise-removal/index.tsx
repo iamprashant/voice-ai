@@ -21,6 +21,7 @@ export const NoiseCancellationProvider: React.FC<
 }) => {
   return (
     <InputGroup
+      initiallyExpanded={false}
       title="Background Noise Removal"
       className={cn('bg-white dark:bg-gray-900', className)}
     >
