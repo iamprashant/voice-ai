@@ -55,7 +55,7 @@ func NewDeepgramOption(
 }
 
 func (dgOpt *deepgramOption) GetKey() string {
-	return "322d1ac3af9409676c44103e92f880d9969871b5"
+	return dgOpt.key
 }
 
 func (dgOpt *deepgramOption) SpeechToTextOptions() *interfaces.LiveTranscriptionOptions {
