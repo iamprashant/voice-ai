@@ -1,14 +1,10 @@
 [
     {
-        "name": "default",
-        "id": "default"
+        "name": "latest_long",
+        "id": "latest_long"
     },
     {
-        "name": "command_and_search",
-        "id": "command_and_search"
-    },
-    {
-        "name": "telephony",
+        "name": "telephony (only for phone call audio)",
         "id": "telephony"
     }
 ]

@@ -14,9 +14,8 @@ export {
   ValidateGoogleOptions,
 } from '@/app/components/providers/speech-to-text/google/constant';
 
-const renderOption = (c: { icon: React.ReactNode; name: string }) => (
+const renderOption = (c: { name: string }) => (
   <span className="inline-flex items-center gap-2 sm:gap-2.5 max-w-full text-sm font-medium">
-    {c.icon}
     <span className="truncate capitalize">{c.name}</span>
   </span>
 );
@@ -43,45 +42,64 @@ export const ConfigureGoogleSpeechToText: React.FC<{
     onParameterChange(updatedParams);
   };
 
-  const configItems = [
-    {
-      label: 'Language',
-      key: 'listen.language',
-      options: GOOGLE_SPEECH_TO_TEXT_LANGUGAE(),
-      findMatch: (val: string) =>
-        GOOGLE_SPEECH_TO_TEXT_LANGUGAE().find(x => x.code === val),
-      onChange: (v: { code: string }) => {
-        updateParameter('listen.language', v.code);
-      },
-    },
-    {
-      label: 'Model',
-      key: 'listen.model',
-      options: GOOGLE_SPEECH_TO_TEXT_MODEL(),
-      findMatch: (val: string) =>
-        GOOGLE_SPEECH_TO_TEXT_MODEL().find(x => x.id === val),
-      onChange: (v: { id: string }) => {
-        updateParameter('listen.model', v.id);
-      },
-    },
-  ];
-
   return (
     <>
-      {configItems.map(({ label, key, options, findMatch, onChange }) => (
-        <FieldSet className="col-span-1" key={key}>
-          <FormLabel>{label}</FormLabel>
-          <Dropdown
-            className="bg-light-background max-w-full dark:bg-gray-950"
-            currentValue={findMatch(getParamValue(key))}
-            setValue={onChange}
-            allValue={options}
-            placeholder={`Select ${label.toLowerCase()}`}
-            option={renderOption}
-            label={renderOption}
-          />
-        </FieldSet>
-      ))}
+      <FieldSet className="col-span-1">
+        <FormLabel>Model</FormLabel>
+        <Dropdown
+          className="bg-light-background max-w-full dark:bg-gray-950"
+          currentValue={GOOGLE_SPEECH_TO_TEXT_MODEL().find(
+            x => x.id === getParamValue('listen.model'),
+          )}
+          setValue={(v: { id: string }) => {
+            updateParameter('listen.model', v.id);
+          }}
+          allValue={GOOGLE_SPEECH_TO_TEXT_MODEL()}
+          placeholder={`Select model`}
+          option={renderOption}
+          label={renderOption}
+        />
+      </FieldSet>
+      <FieldSet className="col-span-1">
+        <FormLabel>Language</FormLabel>
+        <Dropdown
+          className="bg-light-background max-w-full dark:bg-gray-950"
+          currentValue={GOOGLE_SPEECH_TO_TEXT_LANGUGAE().find(
+            x => x.code === getParamValue('listen.language'),
+          )}
+          setValue={(v: { code: string }) => {
+            updateParameter('listen.language', v.code);
+          }}
+          allValue={GOOGLE_SPEECH_TO_TEXT_LANGUGAE()}
+          placeholder={`Select language`}
+          option={renderOption}
+          label={renderOption}
+        />
+      </FieldSet>
+      <FieldSet className="col-span-1">
+        <FormLabel>Region</FormLabel>
+        <Dropdown
+          className="bg-light-background max-w-full dark:bg-gray-950"
+          currentValue={['global'].find(
+            x => x === getParamValue('listen.region'),
+          )}
+          setValue={(v: string) => {
+            updateParameter('listen.region', v);
+          }}
+          allValue={['global']}
+          placeholder={`Select region`}
+          option={(c: string) => (
+            <span className="inline-flex items-center gap-2 sm:gap-2.5 max-w-full text-sm font-medium">
+              <span className="truncate capitalize">{c}</span>
+            </span>
+          )}
+          label={(c: string) => (
+            <span className="inline-flex items-center gap-2 sm:gap-2.5 max-w-full text-sm font-medium">
+              <span className="truncate capitalize">{c}</span>
+            </span>
+          )}
+        />
+      </FieldSet>
       <FieldSet className="col-span-1">
         <FormLabel>Transcript Confidence Threshold</FormLabel>
         <div className="flex space-x-2 justify-center items-center">

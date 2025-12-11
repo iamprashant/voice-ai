@@ -13,8 +13,8 @@ import (
 	"sync"
 	"time"
 
-	speech "cloud.google.com/go/speech/apiv1"
-	"cloud.google.com/go/speech/apiv1/speechpb"
+	speech "cloud.google.com/go/speech/apiv2"
+	"cloud.google.com/go/speech/apiv2/speechpb"
 	internal_transformer "github.com/rapidaai/api/assistant-api/internal/transformer"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/protos"
@@ -41,8 +41,8 @@ func (google *googleSpeechToText) Transform(c context.Context, byf []byte, opts 
 	defer google.mu.Unlock()
 
 	return google.stream.Send(&speechpb.StreamingRecognizeRequest{
-		StreamingRequest: &speechpb.StreamingRecognizeRequest_AudioContent{
-			AudioContent: byf,
+		StreamingRequest: &speechpb.StreamingRecognizeRequest_Audio{
+			Audio: byf,
 		},
 	})
 }
@@ -68,18 +68,18 @@ func (g *googleSpeechToText) SpeechToTextCallback(ctx context.Context) {
 				g.logger.Warnf("google-stt: received nil response")
 				return
 			}
-			if resp.Error != nil {
-				switch resp.Error.Code {
-				case 3, 11:
-					// reconnect
-					g.Initialize()
-					g.logger.Warnf("google-stt: stream duration limit reached (code=%d): %s", resp.Error.Code, resp.Error.Message)
-				default:
-					g.logger.Errorf("google-stt: recognition error: code=%d message=%s", resp.Error.Code, resp.Error.Message)
-				}
-				return
-			}
-			g.logger.Errorf("google-stt: %s", resp.String())
+			// if resp.Error != nil {
+			// 	switch resp.Error.Code {
+			// 	case 3, 11:
+			// 		g.Initialize()
+			// 		g.logger.Warnf("google-stt: stream duration limit reached (code=%d): %s", resp.Error.Code, resp.Error.Message)
+			// 	default:
+			// 		g.logger.Errorf("google-stt: recognition error: code=%d message=%s", resp.Error.Code, resp.Error.Message)
+			// 	}
+			// 	return
+			// }
+			g.logger.Debugf("google-stt: result received: isFinal=%v", resp.String())
+
 			for _, result := range resp.Results {
 				if len(result.Alternatives) == 0 {
 					continue
@@ -110,7 +110,7 @@ func NewGoogleSpeechToText(
 		return nil, err
 	}
 	client, err := speech.NewClient(ctx,
-		googleOption.GetClientOptions()...,
+		googleOption.GetSpeechToTextClientOptions()...,
 	)
 
 	if err != nil {
@@ -140,11 +140,14 @@ func (google *googleSpeechToText) Initialize() error {
 	}
 	google.stream = stream
 	err = google.stream.Send(&speechpb.StreamingRecognizeRequest{
+		Recognizer: google.GetRecognizer(),
 		StreamingRequest: &speechpb.StreamingRecognizeRequest_StreamingConfig{
 			StreamingConfig: google.SpeechToTextOptions(),
 		},
 	})
+	google.logger.Errorf("google-stt: error creating google-stt stream: %+v", google.SpeechToTextOptions())
 	if err != nil {
+		google.logger.Errorf("google-stt: error creating google-stt stream: %v", err)
 		return err
 	}
 	// Launch callback listener

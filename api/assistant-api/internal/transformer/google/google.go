@@ -7,7 +7,9 @@
 package internal_transformer_google
 
 import (
-	"cloud.google.com/go/speech/apiv1/speechpb"
+	"fmt"
+
+	"cloud.google.com/go/speech/apiv2/speechpb"
 	"cloud.google.com/go/texttospeech/apiv1/texttospeechpb"
 	internal_audio "github.com/rapidaai/api/assistant-api/internal/audio"
 	"github.com/rapidaai/pkg/commons"
@@ -29,6 +31,7 @@ type googleOption struct {
 	clientOptons []option.ClientOption
 	audioConfig  *internal_audio.AudioConfig
 	mdlOpts      utils.Option
+	projectId    string
 }
 
 // NewGoogleOption initializes googleOption with provided credentials, audio configurations, and options.
@@ -58,6 +61,7 @@ func NewGoogleOption(logger commons.Logger,
 		mdlOpts:      opts,
 		clientOptons: co,
 		audioConfig:  audioConfig,
+		projectId:    prj.(string),
 	}, nil
 }
 
@@ -69,24 +73,40 @@ func (gO *googleOption) GetClientOptions() []option.ClientOption {
 // SpeechToTextOptions generates a configuration for Google Speech-to-Text streaming recognition.
 // Default language and model are used unless overridden via mdlOpts.
 func (gog *googleOption) SpeechToTextOptions() *speechpb.StreamingRecognitionConfig {
-	audioEncoding, _ := gog.GetAudioEncoding(gog.audioConfig.Format)
+	audioEncoding := gog.GetSpeechToTextEncoding(gog.audioConfig.Format)
 
 	opts := &speechpb.StreamingRecognitionConfig{
+
 		Config: &speechpb.RecognitionConfig{
-			Encoding:                   audioEncoding,
-			SampleRateHertz:            int32(gog.audioConfig.GetSampleRate()),
-			EnableAutomaticPunctuation: true,
-			EnableWordConfidence:       true,
-			ProfanityFilter:            true,
-			LanguageCode:               DefaultLanguageCode,
-			Model:                      DefaultModel,
+			DecodingConfig: &speechpb.RecognitionConfig_ExplicitDecodingConfig{
+				ExplicitDecodingConfig: &speechpb.ExplicitDecodingConfig{
+					Encoding:          audioEncoding,
+					SampleRateHertz:   int32(gog.audioConfig.GetSampleRate()),
+					AudioChannelCount: 1,
+				},
+			},
+			Features: &speechpb.RecognitionFeatures{
+				EnableAutomaticPunctuation: true,
+				EnableWordConfidence:       true,
+				ProfanityFilter:            true,
+				EnableSpokenPunctuation:    true,
+			},
+			LanguageCodes: []string{DefaultLanguageCode},
+			Model:         "latest_long",
+
+			// global// "latest_long, telephony",
+			// DenoiserConfig: &speechpb.DenoiserConfig{
+			// 	DenoiseAudio: true,
+			// },
 		},
-		InterimResults: true,
+		StreamingFeatures: &speechpb.StreamingRecognitionFeatures{
+			EnableVoiceActivityEvents: false,
+			InterimResults:            true,
+		},
 	}
 
-	// Override language code if specified in options
 	if language, err := gog.mdlOpts.GetString("listen.language"); err == nil {
-		opts.Config.LanguageCode = language
+		opts.Config.LanguageCodes = []string{language}
 	} else {
 		gog.logger.Warn("Language not specified, defaulting to " + DefaultLanguageCode)
 	}
@@ -103,7 +123,7 @@ func (gog *googleOption) SpeechToTextOptions() *speechpb.StreamingRecognitionCon
 
 // TextToSpeechOptions generates a configuration for Google Text-to-Speech streaming synthesis.
 func (goog *googleOption) TextToSpeechOptions() *texttospeechpb.StreamingSynthesizeConfig {
-	_, audioEncoding := goog.GetAudioEncoding(goog.audioConfig.Format)
+	audioEncoding := goog.GetTextToSpeechEncodingByName(goog.audioConfig.Format)
 
 	options := &texttospeechpb.StreamingSynthesizeConfig{
 		Voice: &texttospeechpb.VoiceSelectionParams{
@@ -126,16 +146,6 @@ func (goog *googleOption) TextToSpeechOptions() *texttospeechpb.StreamingSynthes
 }
 
 // GetSpeechToTextEncodingFromString maps internal_audio.AudioFormat to Google's Speech-to-Text encoding.
-func (gog *googleOption) GetSpeechToTextEncodingFromString(encoding internal_audio.AudioFormat) speechpb.RecognitionConfig_AudioEncoding {
-	switch encoding {
-	case internal_audio.Linear16:
-		return speechpb.RecognitionConfig_LINEAR16
-	case internal_audio.MuLaw8:
-		return speechpb.RecognitionConfig_MULAW
-	default:
-		return speechpb.RecognitionConfig_LINEAR16
-	}
-}
 
 // GetTextToSpeechEncodingByName maps internal_audio.AudioFormat to Google's Text-to-Speech encoding.
 func (gog *googleOption) GetTextToSpeechEncodingByName(encoding internal_audio.AudioFormat) texttospeechpb.AudioEncoding {
@@ -151,13 +161,26 @@ func (gog *googleOption) GetTextToSpeechEncodingByName(encoding internal_audio.A
 
 // GetAudioEncoding returns audio encoding for both SpeechToText and TextToSpeech based on internal_audio.AudioFormat.
 // Reduces repetitive logic in audio encoding handling.
-func (gog *googleOption) GetAudioEncoding(audioFormat internal_audio.AudioFormat) (speechpb.RecognitionConfig_AudioEncoding, texttospeechpb.AudioEncoding) {
+func (gog *googleOption) GetSpeechToTextEncoding(audioFormat internal_audio.AudioFormat) speechpb.ExplicitDecodingConfig_AudioEncoding {
 	switch audioFormat {
 	case internal_audio.Linear16:
-		return speechpb.RecognitionConfig_LINEAR16, texttospeechpb.AudioEncoding_PCM
+		return speechpb.ExplicitDecodingConfig_LINEAR16
 	case internal_audio.MuLaw8:
-		return speechpb.RecognitionConfig_MULAW, texttospeechpb.AudioEncoding_MULAW
+		return speechpb.ExplicitDecodingConfig_MULAW
 	default:
-		return speechpb.RecognitionConfig_LINEAR16, texttospeechpb.AudioEncoding_PCM
+		return speechpb.ExplicitDecodingConfig_LINEAR16
 	}
+}
+
+func (gog *googleOption) GetRecognizer() string {
+	return fmt.Sprintf("projects/%s/locations/global/recognizers/_", gog.projectId)
+}
+
+func (gog *googleOption) GetSpeechToTextClientOptions() []option.ClientOption {
+	if region, err := gog.mdlOpts.GetString("listen.region"); err == nil {
+		if region != "global" {
+			return append(gog.clientOptons, option.WithEndpoint(fmt.Sprintf("%s-speech.googleapis.com:443", region)))
+		}
+	}
+	return gog.clientOptons
 }
