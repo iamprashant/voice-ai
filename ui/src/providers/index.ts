@@ -160,6 +160,12 @@ export const AZURE_TEXT_MODEL = () => {
 export const GOOGLE_CLOUD_VOICE = () => {
   return require('./google/interim.voice.json');
 };
+export const GOOGLE_SPEECH_TO_TEXT_MODEL = () => {
+  return require('./google/speech-to-text-model.json');
+};
+export const GOOGLE_SPEECH_TO_TEXT_LANGUGAE = () => {
+  return require('./google/speech-to-text-language.json');
+};
 
 /**
  *

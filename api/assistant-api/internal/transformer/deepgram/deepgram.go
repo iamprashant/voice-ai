@@ -15,7 +15,7 @@ import (
 	utils "github.com/rapidaai/pkg/utils"
 
 	interfaces "github.com/deepgram/deepgram-go-sdk/v3/pkg/client/interfaces"
-	protos "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
 func (dg *deepgramOption) GetEncoding() string {
@@ -59,10 +59,11 @@ func (dgOpt *deepgramOption) GetKey() string {
 }
 
 func (dgOpt *deepgramOption) SpeechToTextOptions() *interfaces.LiveTranscriptionOptions {
+
 	opts := &interfaces.LiveTranscriptionOptions{
-		Model:          "nova-2",
+		Model:          "nova",
 		Language:       "en-US",
-		Channels:       1,
+		Channels:       0,
 		SmartFormat:    true,
 		InterimResults: true,
 		FillerWords:    true,
@@ -71,7 +72,7 @@ func (dgOpt *deepgramOption) SpeechToTextOptions() *interfaces.LiveTranscription
 		Punctuate:      true,
 		NoDelay:        true,
 		Encoding:       dgOpt.GetEncoding(),
-		SampleRate:     dgOpt.audioConfig.SampleRate,
+		SampleRate:     dgOpt.audioConfig.GetSampleRate(),
 		Diarize:        false,
 		Multichannel:   false,
 	}
@@ -79,9 +80,7 @@ func (dgOpt *deepgramOption) SpeechToTextOptions() *interfaces.LiveTranscription
 	if language, err := dgOpt.mdlOpts.GetString("listen.language"); err == nil {
 		opts.Language = language
 	}
-	if channels, err := dgOpt.mdlOpts.GetUint32("listen.channel"); err == nil {
-		opts.Channels = int(channels)
-	}
+
 	if smartFormat, err := dgOpt.mdlOpts.GetBool("listen.smart_format"); err == nil {
 		opts.SmartFormat = smartFormat
 	}
@@ -100,9 +99,6 @@ func (dgOpt *deepgramOption) SpeechToTextOptions() *interfaces.LiveTranscription
 	}
 	if model, err := dgOpt.mdlOpts.GetString("listen.model"); err == nil {
 		opts.Model = model
-	}
-	if utteranceEndMs, err := dgOpt.mdlOpts.GetString("listen.utterance_end"); err == nil {
-		opts.UtteranceEndMs = utteranceEndMs
 	}
 
 	if keywordsRaw, exists := dgOpt.mdlOpts["listen.keyword"]; exists {
@@ -131,7 +127,6 @@ func (dgOpt *deepgramOption) SpeechToTextOptions() *interfaces.LiveTranscription
 
 		}
 	}
-	dgOpt.logger.Debugf("deepgram options %+v", opts)
 	return opts
 }
 

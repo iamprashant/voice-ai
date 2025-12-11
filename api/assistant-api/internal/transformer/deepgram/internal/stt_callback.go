@@ -7,6 +7,8 @@
 package internal_transformer_deepgram_internal
 
 import (
+	"encoding/json"
+
 	msginterfaces "github.com/deepgram/deepgram-go-sdk/v3/pkg/api/listen/v1/websocket/interfaces"
 	"github.com/rapidaai/pkg/commons"
 )
@@ -44,26 +46,24 @@ func (d *deepgramSttCallback) Open(or *msginterfaces.OpenResponse) error {
 
 // Handle incoming transcription messages from Deepgram
 func (d *deepgramSttCallback) Message(mr *msginterfaces.MessageResponse) error {
-	d.logger.Debugf("deepgram-stt: received message %+v", mr)
-	var finalTranscript string
-	var finalConfidence float64
-	var finalLanguage string
-	var isFinal bool
-	for _, alternative := range mr.Channel.Alternatives {
-		if alternative.Transcript != "" {
-			d.logger.Debugf("deepgram-stt: response text %v", alternative)
-			finalTranscript = alternative.Transcript
-			finalConfidence = alternative.Confidence
-			finalLanguage = d.GetMostUsedLanguage(alternative.Languages)
-			isFinal = mr.IsFinal
-			break
-		}
-	}
-	if finalTranscript != "" {
-		d.logger.Debugf("return transcript %v %v %v %v", finalTranscript, finalConfidence, finalLanguage, isFinal)
-		return d.onTranscript(finalTranscript, finalConfidence, finalLanguage, isFinal)
+	jsonBytes, err := json.Marshal(mr)
+	if err != nil {
+		d.logger.Errorf("Failed to serialize JSON for MessageResponse: %v", err)
+	} else {
+		d.logger.Debugf("Complete JSON Message: %s", string(jsonBytes))
 	}
 
+	for _, alternative := range mr.Channel.Alternatives {
+		if alternative.Transcript != "" {
+			d.onTranscript(
+				alternative.Transcript,
+				alternative.Confidence,
+				d.GetMostUsedLanguage(alternative.Languages),
+				mr.IsFinal,
+			)
+			return nil
+		}
+	}
 	return nil
 }
 

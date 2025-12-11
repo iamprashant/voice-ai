@@ -1,35 +1,9 @@
+import {
+  GOOGLE_SPEECH_TO_TEXT_LANGUGAE,
+  GOOGLE_SPEECH_TO_TEXT_MODEL,
+} from '@/providers';
 import { SetMetadata } from '@/utils/metadata';
 import { Metadata } from '@rapidaai/react';
-
-export const GOOGLE_LANGUAGE = [
-  { code: 'en-SG', name: 'English (Singapore)' },
-  { code: 'en-US', name: 'English (United States)' },
-  { code: 'hi-IN', name: 'Hindi (India)' },
-  { code: 'gu-IN', name: 'Gujarati (India)' },
-  { code: 'kn-IN', name: 'Kannada (India)' },
-  { code: 'ta-IN', name: 'Tamil (India)' },
-  { code: 'ms-MY', name: 'Malay (Malaysia)' },
-  { code: 'ml-IN', name: 'Malayalam (India)' },
-  { code: 'en-IN', name: 'English (India)' },
-  { code: 'cmn-Hans-CN', name: 'Chinese (Simplified, China)' },
-  { code: 'th-TH', name: 'Thai (Thailand)' },
-  { code: 'id-ID', name: 'Indonesian (Indonesia)' },
-];
-
-export const GOOGLE_MODELS = [
-  {
-    name: 'chirp_3',
-    id: 'chirp_3',
-  },
-  {
-    name: 'chirp_2',
-    id: 'chirp_2',
-  },
-  {
-    name: 'telephony',
-    id: 'telephony',
-  },
-];
 
 export const GetGoogleDefaultOptions = (current: Metadata[]): Metadata[] => {
   const mtds: Metadata[] = [];
@@ -55,12 +29,12 @@ export const GetGoogleDefaultOptions = (current: Metadata[]): Metadata[] => {
 
   // Set language
   addMetadata('listen.language', 'en-US', value =>
-    GOOGLE_LANGUAGE.some(l => l.code === value),
+    GOOGLE_SPEECH_TO_TEXT_LANGUGAE().some(l => l.code === value),
   );
 
   // Set model
   addMetadata('listen.model', 'default', value =>
-    GOOGLE_MODELS.some(m => m.id === value),
+    GOOGLE_SPEECH_TO_TEXT_MODEL().some(m => m.id === value),
   );
 
   // Only return metadata for the keys we want to keep
@@ -89,7 +63,9 @@ export const ValidateGoogleOptions = (
   );
   if (
     !languageOption ||
-    !GOOGLE_LANGUAGE.some(lang => lang.code === languageOption.getValue())
+    !GOOGLE_SPEECH_TO_TEXT_LANGUGAE().some(
+      lang => lang.code === languageOption.getValue(),
+    )
   ) {
     return 'Please provide a valid language options for google speech to text.';
   }
@@ -98,7 +74,7 @@ export const ValidateGoogleOptions = (
   const modelOption = options.find(opt => opt.getKey() === 'listen.model');
   if (
     !modelOption ||
-    !GOOGLE_MODELS.some(m => m.id === modelOption.getValue())
+    !GOOGLE_SPEECH_TO_TEXT_MODEL().some(m => m.id === modelOption.getValue())
   ) {
     return 'Please provide a valid model for google speech to text.';
   }

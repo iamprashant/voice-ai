@@ -1,0 +1,14 @@
+[
+    {
+        "name": "default",
+        "id": "default"
+    },
+    {
+        "name": "command_and_search",
+        "id": "command_and_search"
+    },
+    {
+        "name": "telephony",
+        "id": "telephony"
+    }
+]

@@ -1,4 +1,4 @@
-package internal_adapter_request_talking_phone
+package internal_adapter_request_generic
 
 import (
 	"context"
@@ -17,7 +17,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func (talking *phoneTalking) Disconnect() {
+func (talking *GenericRequestor) Disconnect() {
 	ctx, span, _ := talking.
 		Tracer().
 		StartSpan(talking.Context(), utils.AssistantDisconnectStage)
@@ -66,7 +66,7 @@ func (talking *phoneTalking) Disconnect() {
 		OnEndConversation()
 	// you do not need to wait for the recorder
 	utils.Go(talking.Context(), func() {
-		byt, err := talking.Recorder().Persist()
+		byt, err := talking.recorder.Persist()
 		if err != nil {
 			talking.logger.Tracef(ctx, "unable to persist the audio %+v", err)
 			return
@@ -78,23 +78,23 @@ func (talking *phoneTalking) Disconnect() {
 		}
 	})
 	span.EndSpan(ctx, utils.AssistantDisconnectStage)
-	talking.Tracer().Export(ctx,
-		talking.Auth(),
+	talking.tracer.Export(ctx,
+		talking.auth,
 		&internal_telemetry.VoiceAgentExportOption{
-			AssistantId:              talking.Assistant().Id,
-			AssistantProviderModelId: talking.Assistant().AssistantProviderId,
-			AssistantConversationId:  talking.Conversation().Id,
+			AssistantId:              talking.assistant.Id,
+			AssistantProviderModelId: talking.assistant.AssistantProviderId,
+			AssistantConversationId:  talking.assistantConversation.Id,
 		},
 	)
-	talking.AssistantExecutor().Disconnect(
+	talking.assistantExecutor.Disconnect(
 		ctx,
-		talking.Assistant().Id,
-		talking.Conversation().Id,
+		talking.assistant.Id,
+		talking.assistantConversation.Id,
 	)
 	talking.logger.Benchmark("talking.OnEndSession", time.Since(start))
 }
 
-func (talking *phoneTalking) Connect(
+func (talking *GenericRequestor) Connect(
 	ctx context.Context,
 	iAuth types.SimplePrinciple,
 	identifier string,
@@ -143,7 +143,7 @@ func (talking *phoneTalking) Connect(
 	return talking.OnCreateSession(ctx, assistant, identifier, customization)
 }
 
-func (talking *phoneTalking) OnCreateSession(
+func (talking *GenericRequestor) OnCreateSession(
 	ctx context.Context,
 	assistant *internal_assistant_entity.Assistant,
 	identifier string,
@@ -156,7 +156,7 @@ func (talking *phoneTalking) OnCreateSession(
 		utils.AssistantCreateConversationStage,
 	)
 	defer span.EndSpan(ctx, utils.AssistantCreateConversationStage)
-	streamInConfg, err := talking.Streamer().Config().GetInputConfig()
+	streamInConfg, err := talking.streamer.Config().GetInputConfig()
 	if err != nil {
 		talking.logger.Errorf("streamConfg is not set, please check the configuration")
 		return err
@@ -168,7 +168,7 @@ func (talking *phoneTalking) OnCreateSession(
 		return err
 	}
 
-	streamOtConfg, err := talking.Streamer().Config().GetOutputConfig()
+	streamOtConfg, err := talking.streamer.Config().GetOutputConfig()
 	if err != nil {
 		talking.logger.Errorf("streamConfg is not set, please check the configuration")
 		return err
@@ -204,7 +204,7 @@ func (talking *phoneTalking) OnCreateSession(
 	wg.Add(1)
 	utils.Go(ctx, func() {
 		defer wg.Done()
-		err := talking.Recorder().
+		err := talking.recorder.
 			Init(audioInConfig, audioOutConfig)
 		if err != nil {
 			talking.logger.Tracef(ctx, "unable to init recorder %+v", err)
@@ -246,7 +246,7 @@ func (talking *phoneTalking) OnCreateSession(
 		defer wg.Done()
 		talking.logger.Debugf("talking.OnStartSession.executor.Init")
 		talking.
-			AssistantExecutor().
+			assistantExecutor.
 			Init(
 				ctx,
 				talking,
@@ -284,8 +284,8 @@ func (talking *phoneTalking) OnCreateSession(
 		talking.logger.Errorf("unable to greet user with error %+v", err)
 	}
 	talking.
-		AssistantExecutor().
-		Connect(ctx, talking.Assistant().Id, talking.Conversation().Id)
+		assistantExecutor.
+		Connect(ctx, talking.assistant.Id, talking.assistantConversation.Id)
 	err = talking.OnBeginConversation()
 	if err != nil {
 		talking.logger.Errorf("unable to call hook for begin conversation with error %+v", err)
@@ -294,7 +294,7 @@ func (talking *phoneTalking) OnCreateSession(
 	return nil
 }
 
-func (talking *phoneTalking) OnResumeSession(
+func (talking *GenericRequestor) OnResumeSession(
 	ctx context.Context,
 	assistant *internal_assistant_entity.Assistant,
 	identifier string,
@@ -307,7 +307,7 @@ func (talking *phoneTalking) OnResumeSession(
 	)
 	defer span.EndSpan(ctx, utils.AssistantResumeConverstaionStage)
 
-	streamInConfg, err := talking.Streamer().Config().GetInputConfig()
+	streamInConfg, err := talking.streamer.Config().GetInputConfig()
 	if err != nil {
 		talking.logger.Errorf("streamConfg is not set, please check the configuration")
 		return err
@@ -319,7 +319,7 @@ func (talking *phoneTalking) OnResumeSession(
 		return err
 	}
 
-	streamOtConfg, err := talking.Streamer().Config().GetOutputConfig()
+	streamOtConfg, err := talking.streamer.Config().GetOutputConfig()
 	if err != nil {
 		talking.logger.Errorf("streamConfg is not set, please check the configuration")
 		return err
@@ -356,7 +356,7 @@ func (talking *phoneTalking) OnResumeSession(
 	wg.Add(1)
 	utils.Go(talking.Context(), func() {
 		defer wg.Done()
-		err := talking.Recorder().Init(
+		err := talking.recorder.Init(
 			audioInConfig,
 			audioOutConfig,
 		)
@@ -408,7 +408,7 @@ func (talking *phoneTalking) OnResumeSession(
 		defer wg.Done()
 		talking.logger.Debugf("talking.OnStartSession.executor.Init")
 		talking.
-			AssistantExecutor().
+			assistantExecutor.
 			Init(
 				ctx,
 				talking,
@@ -432,9 +432,10 @@ func (talking *phoneTalking) OnResumeSession(
 	if err != nil {
 		talking.logger.Errorf("unable to greet user with error %+v", err)
 	}
+
 	talking.
-		AssistantExecutor().
-		Connect(ctx, talking.Assistant().Id, talking.Conversation().Id)
+		assistantExecutor.
+		Connect(ctx, talking.assistant.Id, talking.assistantConversation.Id)
 	talking.OnResumeConversation()
 	return nil
 }

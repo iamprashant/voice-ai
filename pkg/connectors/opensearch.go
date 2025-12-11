@@ -587,7 +587,6 @@ func (openSearch *openSearchConnector) search(ctx context.Context, index []strin
 
 // bulk operation body should contain complete information about action
 func (openSearch *openSearchConnector) Bulk(ctx context.Context, body string) error {
-	openSearch.logger.Debugf("bulk operation started with body %s", body)
 	req := opensearchapi.BulkRequest{
 		Body:    strings.NewReader(body),
 		Refresh: "true",
@@ -598,12 +597,10 @@ func (openSearch *openSearchConnector) Bulk(ctx context.Context, body string) er
 		return err
 	}
 	defer bulkResponse.Body.Close()
-	openSearch.logger.Debugf("response from open search %v", bulkResponse)
 	if bulkResponse.IsError() {
 		openSearch.logger.Errorf("error while bulk operation to opensearch status is not legal: %v", bulkResponse.StatusCode)
 		return err
 	}
-	openSearch.logger.Debugf("bulk operation completed executing with body %s", body)
 	return nil
 }
 

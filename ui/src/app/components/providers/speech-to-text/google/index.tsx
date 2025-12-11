@@ -6,9 +6,9 @@ import { Input } from '@/app/components/form/input';
 import { Slider } from '@/app/components/form/slider';
 import { InputHelper } from '@/app/components/input-helper';
 import {
-  GOOGLE_LANGUAGE,
-  GOOGLE_MODELS,
-} from '@/app/components/providers/speech-to-text/google/constant';
+  GOOGLE_SPEECH_TO_TEXT_LANGUGAE,
+  GOOGLE_SPEECH_TO_TEXT_MODEL,
+} from '@/providers/index';
 export {
   GetGoogleDefaultOptions,
   ValidateGoogleOptions,
@@ -47,8 +47,9 @@ export const ConfigureGoogleSpeechToText: React.FC<{
     {
       label: 'Language',
       key: 'listen.language',
-      options: GOOGLE_LANGUAGE,
-      findMatch: (val: string) => GOOGLE_LANGUAGE.find(x => x.code === val),
+      options: GOOGLE_SPEECH_TO_TEXT_LANGUGAE(),
+      findMatch: (val: string) =>
+        GOOGLE_SPEECH_TO_TEXT_LANGUGAE().find(x => x.code === val),
       onChange: (v: { code: string }) => {
         updateParameter('listen.language', v.code);
       },
@@ -56,8 +57,9 @@ export const ConfigureGoogleSpeechToText: React.FC<{
     {
       label: 'Model',
       key: 'listen.model',
-      options: GOOGLE_MODELS,
-      findMatch: (val: string) => GOOGLE_MODELS.find(x => x.id === val),
+      options: GOOGLE_SPEECH_TO_TEXT_MODEL(),
+      findMatch: (val: string) =>
+        GOOGLE_SPEECH_TO_TEXT_MODEL().find(x => x.id === val),
       onChange: (v: { id: string }) => {
         updateParameter('listen.model', v.id);
       },

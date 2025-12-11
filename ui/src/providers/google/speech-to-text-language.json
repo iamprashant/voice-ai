@@ -1,0 +1,50 @@
+[
+    {
+        "code": "en-SG",
+        "name": "English (Singapore)"
+    },
+    {
+        "code": "en-US",
+        "name": "English (United States)"
+    },
+    {
+        "code": "hi-IN",
+        "name": "Hindi (India)"
+    },
+    {
+        "code": "gu-IN",
+        "name": "Gujarati (India)"
+    },
+    {
+        "code": "kn-IN",
+        "name": "Kannada (India)"
+    },
+    {
+        "code": "ta-IN",
+        "name": "Tamil (India)"
+    },
+    {
+        "code": "ms-MY",
+        "name": "Malay (Malaysia)"
+    },
+    {
+        "code": "ml-IN",
+        "name": "Malayalam (India)"
+    },
+    {
+        "code": "en-IN",
+        "name": "English (India)"
+    },
+    {
+        "code": "cmn-Hans-CN",
+        "name": "Chinese (Simplified, China)"
+    },
+    {
+        "code": "th-TH",
+        "name": "Thai (Thailand)"
+    },
+    {
+        "code": "id-ID",
+        "name": "Indonesian (Indonesia)"
+    }
+]
