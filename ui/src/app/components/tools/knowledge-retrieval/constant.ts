@@ -29,9 +29,14 @@ export const GetKnowledgeRetrievalDefaultOptions = (
   return mtds.filter(m => keysToKeep.includes(m.getKey()));
 };
 
+/**
+ *
+ * @param options
+ * @returns
+ */
 export const ValidateKnowledgeRetrievalDefaultOptions = (
   options: Metadata[],
-): boolean => {
+): string | undefined => {
   const requiredKeys = [
     'tool.search_type',
     'tool.knowledge_id',
@@ -43,7 +48,7 @@ export const ValidateKnowledgeRetrievalDefaultOptions = (
   // Check if all required keys are present
   for (const key of requiredKeys) {
     if (!options.some(option => option.getKey() === key)) {
-      return false;
+      return `Please provide the required metadata key: ${key}.`;
     }
   }
 
@@ -52,13 +57,13 @@ export const ValidateKnowledgeRetrievalDefaultOptions = (
       option.getKey() === 'search_type' &&
       !allowedSearchTypes.includes(option.getValue())
     ) {
-      return false;
+      return `Please provide a valid search type value. Accepted values are ${allowedSearchTypes.join(', ')}.`;
     }
 
     if (option.getKey() === 'top_k') {
       const topK = Number(option.getValue());
       if (isNaN(topK) || topK < 1 || topK > 10) {
-        return false;
+        return 'Please provide a valid top_k value. It must be a number between 1 and 10.';
       }
     }
 
@@ -69,46 +74,10 @@ export const ValidateKnowledgeRetrievalDefaultOptions = (
         scoreThreshold < 0.1 ||
         scoreThreshold > 0.9
       ) {
-        return false;
+        return 'Please provide a valid score_threshold value. It must be a number between 0.1 and 0.9.';
       }
     }
   }
 
-  return true;
-};
-
-export const KnowledgeRetrievalToolDefintion = {
-  name: 'knowledge_query',
-  description:
-    'Use this tool to retrieve specific information or data from provided queries before responding.',
-  parameters: JSON.stringify(
-    {
-      properties: {
-        context: {
-          description:
-            'Concise and searchable description of the users query or topic.',
-          type: 'string',
-        },
-        organizations: {
-          description:
-            'Names of organizations or companies mentioned in the content',
-          items: {
-            type: 'string',
-          },
-          type: 'array',
-        },
-        products: {
-          description: 'Names of products or services mentioned in the content',
-          items: {
-            type: 'string',
-          },
-          type: 'array',
-        },
-      },
-      required: ['context'],
-      type: 'object',
-    },
-    null,
-    2,
-  ),
+  return undefined; // No errors
 };

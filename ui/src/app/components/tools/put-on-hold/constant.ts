@@ -1,26 +1,6 @@
 import { Metadata } from '@rapidaai/react';
 import { SetMetadata } from '@/utils/metadata';
 
-export const PutOnHoldToolDefintion = {
-  name: 'put_on_hold',
-  description:
-    'Use this tool to temporarily pause a process or task. Specify the reason for putting it on hold along with any relevant context.',
-  parameters: JSON.stringify(
-    {
-      properties: {
-        reason: {
-          description: 'The reason for putting the process or task on hold.',
-          type: 'string',
-        },
-      },
-      required: ['reason'],
-      type: 'object',
-    },
-    null,
-    2,
-  ),
-};
-
 export const GetPutOnHoldDefaultOptions = (current: Metadata[]): Metadata[] => {
   const mtds: Metadata[] = [];
 
@@ -39,9 +19,14 @@ export const GetPutOnHoldDefaultOptions = (current: Metadata[]): Metadata[] => {
   return mtds.filter(m => keysToKeep.includes(m.getKey()));
 };
 
+/**
+ *
+ * @param options
+ * @returns
+ */
 export const ValidatePutOnHoldDefaultOptions = (
   options: Metadata[],
-): boolean => {
+): string | undefined => {
   const maxHoldTimeSec = options
     .find(m => m.getKey() === 'tool.max_hold_time')
     ?.getValue();
@@ -49,9 +34,9 @@ export const ValidatePutOnHoldDefaultOptions = (
   if (maxHoldTimeSec) {
     const holdTime = parseInt(maxHoldTimeSec, 10);
     if (isNaN(holdTime) || holdTime < 1 || holdTime > 10) {
-      return false; // Invalid if not a number or outside the range of 1-10 minutes
+      return 'Please provide a valid tool.max_hold_time value. It must be a number between 1 and 10 seconds.';
     }
   }
 
-  return true;
+  return undefined; // No errors
 };

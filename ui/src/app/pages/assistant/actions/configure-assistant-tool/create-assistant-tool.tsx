@@ -89,14 +89,12 @@ export const CreateTool: FC<{ assistantId: string }> = ({ assistantId }) => {
       );
       return false;
     }
-
-    if (
-      !ValidateToolDefaultOptions(
-        buildinToolConfig.code,
-        buildinToolConfig.parameters,
-      )
-    ) {
-      setErrorMessage('Please provide valid expected action options.');
+    const err = ValidateToolDefaultOptions(
+      buildinToolConfig.code,
+      buildinToolConfig.parameters,
+    );
+    if (err) {
+      setErrorMessage(err);
       return false;
     }
 

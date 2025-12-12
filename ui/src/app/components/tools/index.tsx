@@ -2,73 +2,41 @@ import { Metadata } from '@rapidaai/react';
 import { Dropdown } from '@/app/components/dropdown';
 import { ConfigureAPIRequest } from '@/app/components/tools/api-request';
 import {
-  APIRequestToolDefintion,
   GetAPIRequestDefaultOptions,
   ValidateAPIRequestDefaultOptions,
 } from '@/app/components/tools/api-request/constant';
 import { ConfigureEndOfConversation } from '@/app/components/tools/end-of-conversation';
 import {
-  EndOfConverstaionToolDefintion,
   GetEndOfConversationDefaultOptions,
   ValidateEndOfConversationDefaultOptions,
 } from '@/app/components/tools/end-of-conversation/constant';
 import { ConfigureEndpoint } from '@/app/components/tools/endpoint';
 import {
-  EndpointToolDefintion,
   GetEndpointDefaultOptions,
   ValidateEndpointDefaultOptions,
 } from '@/app/components/tools/endpoint/constant';
 import { ConfigureKnowledgeRetrieval } from '@/app/components/tools/knowledge-retrieval';
 import {
   GetKnowledgeRetrievalDefaultOptions,
-  KnowledgeRetrievalToolDefintion,
   ValidateKnowledgeRetrievalDefaultOptions,
 } from '@/app/components/tools/knowledge-retrieval/constant';
 import { ConfigurePutOnHold } from '@/app/components/tools/put-on-hold';
 import {
   GetPutOnHoldDefaultOptions,
-  PutOnHoldToolDefintion,
   ValidatePutOnHoldDefaultOptions,
 } from '@/app/components/tools/put-on-hold/constant';
 import { cn } from '@/utils';
 import { FC } from 'react';
 import { FieldSet } from '@/app/components/form/fieldset';
 import { FormLabel } from '@/app/components/form-label';
-
-export const BUILDIN_TOOLS = [
-  {
-    icon: 'https://cdn-01.rapida.ai/partners/tools/knowledge-retrieval.webp',
-    code: 'knowledge_retrieval',
-    name: 'Knowledge Retrieval',
-  },
-  //   {
-  //     icon: 'https://cdn-01.rapida.ai/partners/tools/web_search.png',
-  //     code: 'web_search',
-  //     name: 'Web Search',
-  //   },
-  {
-    icon: 'https://cdn-01.rapida.ai/partners/tools/api_call.png',
-    code: 'api_request',
-    name: 'API request',
-  },
-  {
-    icon: 'https://cdn-01.rapida.ai/partners/tools/api_call.png',
-    code: 'endpoint',
-    name: 'Endpoint (LLM Call)',
-  },
-  {
-    icon: 'https://cdn-01.rapida.ai/partners/tools/waiting.png',
-    code: 'put_on_hold',
-    name: 'Put on hold',
-  },
-  {
-    icon: 'https://cdn-01.rapida.ai/partners/tools/stop.png',
-    code: 'end_of_conversation',
-    name: 'End of conversation',
-  },
-
-  // Add more tools as needed
-];
+import {
+  APIRequestToolDefintion,
+  BUILDIN_TOOLS,
+  EndOfConverstaionToolDefintion,
+  EndpointToolDefintion,
+  PutOnHoldToolDefintion,
+  KnowledgeRetrievalToolDefintion,
+} from '@/llm-tools';
 
 export interface BuildinToolConfig {
   code: string;
@@ -121,7 +89,7 @@ export const GetDefaultToolConfigIfInvalid = (
 export const ValidateToolDefaultOptions = (
   code: string,
   parameters: Metadata[],
-): boolean => {
+): string | undefined => {
   switch (code) {
     case 'knowledge_retrieval':
       return ValidateKnowledgeRetrievalDefaultOptions(parameters);
@@ -134,7 +102,7 @@ export const ValidateToolDefaultOptions = (
     case 'end_of_conversation':
       return ValidateEndOfConversationDefaultOptions(parameters);
     default:
-      return false;
+      return undefined;
   }
 };
 

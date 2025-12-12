@@ -1,6 +1,6 @@
+import { BUILDIN_TOOLS } from '@/llm-tools';
 import { cn } from '@/utils';
 import { FC, HTMLAttributes, useEffect, useState } from 'react';
-import { BUILDIN_TOOLS } from '@/app/components/tools';
 
 interface ToolActionPillProps extends HTMLAttributes<HTMLSpanElement> {
   code: string;

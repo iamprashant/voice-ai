@@ -2,9 +2,8 @@ import { FC, HTMLAttributes } from 'react';
 import { Card, CardDescription, CardTitle } from '@/app/components/base/cards';
 import { cn } from '@/utils';
 import { CardOptionMenu } from '@/app/components/menu';
-
 import { AssistantTool } from '@rapidaai/react';
-import { BUILDIN_TOOLS } from '@/app/components/tools';
+import { BUILDIN_TOOLS } from '@/llm-tools';
 
 interface ToolCardProps extends HTMLAttributes<HTMLDivElement> {
   tool: AssistantTool;

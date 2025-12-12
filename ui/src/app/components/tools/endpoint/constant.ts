@@ -18,9 +18,10 @@ export const GetEndpointDefaultOptions = (current: Metadata[]): Metadata[] => {
   addMetadata('tool.parameters');
   return mtds.filter(m => keysToKeep.includes(m.getKey()));
 };
+
 export const ValidateEndpointDefaultOptions = (
   options: Metadata[],
-): boolean => {
+): string | undefined => {
   const requiredKeys = ['tool.endpoint_id', 'tool.parameters'];
   const foundKeys = new Set<string>();
 
@@ -31,31 +32,29 @@ export const ValidateEndpointDefaultOptions = (
     if (key === 'tool.endpoint_id') {
       const value = option.getValue();
       if (typeof value !== 'string' || value === '') {
-        return false;
+        return 'Please provide a valid value for tool.endpoint_id. It must be a non-empty string.';
       }
     }
 
     if (key === 'tool.parameters') {
       const value = option.getValue();
       if (typeof value !== 'string' || value === '') {
-        return false;
+        return 'Please provide a valid value for tool.parameters. It must be a non-empty JSON string.';
       }
 
       try {
         const parameters = JSON.parse(value);
-
         if (
           typeof parameters !== 'object' ||
           parameters === null ||
           Array.isArray(parameters)
         ) {
-          return false;
+          return 'Please ensure tool.parameters is a valid JSON object.';
         }
 
         const entries = Object.entries(parameters);
-
         if (entries.length === 0) {
-          return false;
+          return 'Please provide parameter values within tool.parameters. It cannot be an empty object.';
         }
 
         for (const [paramKey, paramValue] of entries) {
@@ -66,39 +65,24 @@ export const ValidateEndpointDefaultOptions = (
             typeof paramValue !== 'string' ||
             paramValue === ''
           ) {
-            return false;
+            return 'Please ensure each parameter key follows the format "type.key" and the values are non-empty strings.';
           }
         }
 
         const values = entries.map(([, value]) => value);
         const uniqueValues = new Set(values);
         if (values.length !== uniqueValues.size) {
-          return false;
+          return 'Please ensure parameter values within tool.parameters are unique.';
         }
       } catch (e) {
-        return false;
+        return 'Please provide a valid JSON string for tool.parameters.';
       }
     }
   }
 
-  return requiredKeys.every(key => foundKeys.has(key));
-};
-export const EndpointToolDefintion = {
-  name: 'llm_call',
-  description:
-    'Use it to make calls to a Language Learning Model. Specify the prompt and optional parameters such as temperature or max_tokens.',
-  parameters: JSON.stringify(
-    {
-      properties: {
-        prompt: {
-          description: 'The input text or prompt for the LLM.',
-          type: 'string',
-        },
-      },
-      required: ['prompt'],
-      type: 'object',
-    },
-    null,
-    2,
-  ),
+  if (!requiredKeys.every(key => foundKeys.has(key))) {
+    return `Please ensure all required metadata keys are present: ${requiredKeys.join(', ')}.`;
+  }
+
+  return undefined; // No errors
 };

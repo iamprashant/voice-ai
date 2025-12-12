@@ -1,42 +1,6 @@
 import { Metadata } from '@rapidaai/react';
 import { SetMetadata } from '@/utils/metadata';
 
-export const APIRequestToolDefintion = {
-  name: 'api_call',
-  description:
-    'Use it to perform API calls by specifying the URL, HTTP verb, and other configurations. Parameters should be simple key-value pairs.',
-  parameters: JSON.stringify(
-    {
-      properties: {
-        context: {
-          description:
-            'Concise and searchable description of the users query or topic.',
-          type: 'string',
-        },
-        organizations: {
-          description:
-            'Names of organizations or companies mentioned in the content',
-          items: {
-            type: 'string',
-          },
-          type: 'array',
-        },
-        products: {
-          description: 'Names of products or services mentioned in the content',
-          items: {
-            type: 'string',
-          },
-          type: 'array',
-        },
-      },
-      required: ['context'],
-      type: 'object',
-    },
-    null,
-    2,
-  ),
-};
-
 export const GetAPIRequestDefaultOptions = (
   current: Metadata[],
 ): Metadata[] => {
@@ -67,7 +31,7 @@ export const GetAPIRequestDefaultOptions = (
 
 export const ValidateAPIRequestDefaultOptions = (
   options: Metadata[],
-): boolean => {
+): string | undefined => {
   const requiredKeys = ['tool.method', 'tool.endpoint', 'tool.parameters'];
   const validMethods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
 
@@ -77,8 +41,7 @@ export const ValidateAPIRequestDefaultOptions = (
   );
 
   if (!hasAllRequiredKeys) {
-    console.error('Missing required metadata keys');
-    return false;
+    return 'Please provide all required metadata keys: tool.method, tool.endpoint, and tool.parameters.';
   }
 
   // Validate method
@@ -89,8 +52,7 @@ export const ValidateAPIRequestDefaultOptions = (
     methodOption &&
     !validMethods.includes(methodOption.getValue().toUpperCase())
   ) {
-    console.error('Invalid HTTP method');
-    return false;
+    return `Please provide HTTP method provided. Supported methods are: ${validMethods.join(', ')}.`;
   }
 
   // Validate endpoint (check for valid URL)
@@ -101,10 +63,10 @@ export const ValidateAPIRequestDefaultOptions = (
     try {
       new URL(endpointOption.getValue());
     } catch (error) {
-      console.error('Invalid endpoint URL');
-      return false;
+      return 'Please provide a valid URL for the endpoint.';
     }
   }
+
   // Validate headers
   const headersOption = options.find(
     option => option.getKey() === 'tool.headers',
@@ -114,8 +76,7 @@ export const ValidateAPIRequestDefaultOptions = (
       !headersOption.getValue() ||
       typeof headersOption.getValue() !== 'string'
     ) {
-      console.error('Invalid headers: must be a string');
-      return false;
+      return 'Please provide valid headers as a string for creating the API request tool.';
     }
     try {
       const headers = JSON.parse(headersOption.getValue());
@@ -126,23 +87,21 @@ export const ValidateAPIRequestDefaultOptions = (
           key.trim() === '' ||
           value.trim() === ''
         ) {
-          console.error('Invalid header:', key, value);
-          return false;
+          return `Please provide a valid header entry detected. Header key and value must be non-empty strings. Key: ${key}, Value: ${value}.`;
         }
       }
     } catch (error) {
-      console.log(error);
-      console.error('Invalid JSON for headers');
-      return false;
+      return 'Please provide valid headers.';
     }
   }
 
-  const parameters = options.find(
+  // Validate parameters
+  const parametersOption = options.find(
     option => option.getKey() === 'tool.parameters',
   );
-  const value = parameters?.getValue();
+  const value = parametersOption?.getValue();
   if (typeof value !== 'string' || value === '') {
-    return false;
+    return 'Please provide valid parameters as a non-empty string.';
   }
 
   try {
@@ -152,13 +111,13 @@ export const ValidateAPIRequestDefaultOptions = (
       parameters === null ||
       Array.isArray(parameters)
     ) {
-      return false;
+      return 'Parameters must be a valid JSON object.';
     }
 
     const entries = Object.entries(parameters);
 
     if (entries.length === 0) {
-      return false;
+      return 'Parameters object must contain at least one key-value pair.';
     }
 
     for (const [paramKey, paramValue] of entries) {
@@ -169,18 +128,19 @@ export const ValidateAPIRequestDefaultOptions = (
         typeof paramValue !== 'string' ||
         paramValue === ''
       ) {
-        return false;
+        return `Please provide a valid parameter format. Key: ${paramKey}, Value: ${paramValue}. Ensure key is in "type.key" format and value is a non-empty string.`;
       }
     }
 
     const values = entries.map(([, value]) => value);
     const uniqueValues = new Set(values);
     if (values.length !== uniqueValues.size) {
-      return false;
+      return 'Please provide a valid parameter, values must be unique.';
     }
   } catch (e) {
-    return false;
+    return 'Please provide valid parameters, must be a valid JSON object.';
   }
 
-  return true;
+  // Return undefined if all validations pass successfully
+  return undefined;
 };
