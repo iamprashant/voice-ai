@@ -1,3 +1,9 @@
+// Copyright (c) Rapida
+// Author: Prashant <prashant@rapida.ai>
+//
+// Licensed under the Rapida internal use license.
+// This file is part of Rapida's proprietary software.
+// Unauthorized copying, modification, or redistribution is strictly prohibited.
 package internal_agent_mcp_tool
 
 import internal_agent_local_tool "github.com/rapidaai/api/assistant-api/internal/agent/tool/local"

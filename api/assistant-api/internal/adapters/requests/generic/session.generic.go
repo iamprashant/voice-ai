@@ -99,27 +99,16 @@ func (talking *GenericRequestor) Disconnect() {
 	talking.logger.Benchmark("talking.OnEndSession", time.Since(start))
 }
 
-func (talking *GenericRequestor) Connect(
-	ctx context.Context,
-	iAuth types.SimplePrinciple,
-	identifier string,
-	req *protos.AssistantConversationConfiguration) error {
-	ctx, span, err := talking.
-		Tracer().StartSpan(
-		ctx,
-		utils.AssistantConnectStage,
-	)
+func (talking *GenericRequestor) Connect(ctx context.Context, iAuth types.SimplePrinciple, identifier string, req *protos.AssistantConversationConfiguration) error {
+	ctx, span, err := talking.Tracer().StartSpan(ctx, utils.AssistantConnectStage)
 	defer span.EndSpan(ctx, utils.AssistantConnectStage)
 
-	customization, err := internal_adapter_request_customizers.
-		NewRequestBaseCustomizer(req)
-
+	customization, err := internal_adapter_request_customizers.NewRequestBaseCustomizer(req)
 	if err != nil {
 		talking.logger.Errorf("unable to initialize customizer %+v", err)
 		return err
 	}
-	talking.
-		SetAuth(iAuth)
+	talking.SetAuth(iAuth)
 
 	assistant, err := talking.
 		GetAssistant(iAuth,
@@ -148,18 +137,9 @@ func (talking *GenericRequestor) Connect(
 	return talking.OnCreateSession(ctx, assistant, identifier, customization)
 }
 
-func (talking *GenericRequestor) OnCreateSession(
-	ctx context.Context,
-	assistant *internal_assistant_entity.Assistant,
-	identifier string,
-	customization internal_adapter_requests.Customization,
+func (talking *GenericRequestor) OnCreateSession(ctx context.Context, assistant *internal_assistant_entity.Assistant, identifier string, customization internal_adapter_requests.Customization,
 ) error {
-
-	ctx, span, err := talking.
-		Tracer().StartSpan(
-		ctx,
-		utils.AssistantCreateConversationStage,
-	)
+	ctx, span, err := talking.Tracer().StartSpan(ctx, utils.AssistantCreateConversationStage)
 	defer span.EndSpan(ctx, utils.AssistantCreateConversationStage)
 	streamInConfg, err := talking.streamer.Config().GetInputConfig()
 	if err != nil {
@@ -193,7 +173,7 @@ func (talking *GenericRequestor) OnCreateSession(
 		return err
 	}
 
-	utils.Go(talking.Context(), func() {
+	utils.Go(ctx, func() {
 		if err := talking.Notify(ctx,
 			&protos.AssistantConversationConfiguration{
 				AssistantConversationId: conversation.Id,
@@ -212,12 +192,11 @@ func (talking *GenericRequestor) OnCreateSession(
 	var wg sync.WaitGroup
 
 	wg.Add(1)
-	utils.Go(talking.Context(), func() {
+	utils.Go(ctx, func() {
 		defer wg.Done()
-		if err := talking.ConnectSpeaker(talking.Context(), audioInConfig, audioOutConfig); err != nil {
+		if err := talking.ConnectSpeaker(ctx, audioInConfig, audioOutConfig); err != nil {
 			talking.logger.Tracef(ctx, "unable to connect speaker %+v", err)
 		}
-		// fire greeting after connect
 		if err := talking.OnGreet(ctx); err != nil {
 			talking.logger.Errorf("unable to greet user with error %+v", err)
 		}
@@ -226,24 +205,24 @@ func (talking *GenericRequestor) OnCreateSession(
 
 	wg.Add(1)
 	// establish listener
-	utils.Go(talking.Context(), func() {
+	utils.Go(ctx, func() {
 		defer wg.Done()
-		if err := talking.ConnectListener(talking.Context(), audioInConfig, audioOutConfig); err != nil {
+		if err := talking.ConnectListener(ctx, audioInConfig, audioOutConfig); err != nil {
 			talking.logger.Tracef(ctx, "unable to init analyzer %+v", err)
 		}
 	})
 
 	// do the conversation
 	wg.Add(1)
-	utils.Go(talking.Context(), func() {
+	utils.Go(ctx, func() {
 		defer wg.Done()
-		if err := talking.assistantExecutor.Initialize(talking.Context(), talking); err != nil {
+		if err := talking.assistantExecutor.Initialize(ctx, talking); err != nil {
 			talking.logger.Tracef(ctx, "unable to init executor %+v", err)
 		}
 	})
 
 	wg.Add(1)
-	utils.Go(talking.Context(), func() {
+	utils.Go(ctx, func() {
 		defer wg.Done()
 		if err := talking.recorder.Initialize(audioInConfig, audioOutConfig); err != nil {
 			talking.logger.Tracef(ctx, "unable to init recorder %+v", err)
@@ -251,7 +230,7 @@ func (talking *GenericRequestor) OnCreateSession(
 	})
 
 	wg.Add(1)
-	utils.Go(talking.Context(), func() {
+	utils.Go(ctx, func() {
 		defer wg.Done()
 		talking.AddMetrics(talking.Auth(), &types.Metric{
 			Name:        type_enums.STATUS.String(),
@@ -261,36 +240,26 @@ func (talking *GenericRequestor) OnCreateSession(
 	})
 
 	wg.Add(1)
-	utils.Go(talking.Context(), func() {
+	utils.Go(ctx, func() {
 		defer wg.Done()
 		if client := types.GetClientInfoFromGrpcContext(ctx); client != nil {
-			clj, _ := client.ToJson()
-			talking.SetMetadata(talking.Auth(), map[string]interface{}{
-				"talk.client_information": clj,
-			})
+			if clj, err := client.ToJson(); err == nil {
+				talking.SetMetadata(talking.Auth(), map[string]interface{}{"talk.client_information": clj})
+			}
 		}
 	})
 
 	//
 	wg.Wait()
 	if err := talking.OnBeginConversation(); err != nil {
-		talking.logger.Errorf("unable to call hook for begin conversation with error %+v", err)
+		talking.logger.Errorf("error while begin conversation error %+v", err)
 	}
 
 	return nil
 }
 
-func (talking *GenericRequestor) OnResumeSession(
-	ctx context.Context,
-	assistant *internal_assistant_entity.Assistant,
-	identifier string,
-	assistantConversationId uint64,
-	customization internal_adapter_requests.Customization) error {
-	ctx, span, err := talking.
-		Tracer().StartSpan(
-		talking.Context(),
-		utils.AssistantResumeConverstaionStage,
-	)
+func (talking *GenericRequestor) OnResumeSession(ctx context.Context, assistant *internal_assistant_entity.Assistant, identifier string, assistantConversationId uint64, customization internal_adapter_requests.Customization) error {
+	ctx, span, err := talking.Tracer().StartSpan(talking.Context(), utils.AssistantResumeConverstaionStage)
 	defer span.EndSpan(ctx, utils.AssistantResumeConverstaionStage)
 
 	streamInConfg, err := talking.streamer.Config().GetInputConfig()
@@ -320,10 +289,9 @@ func (talking *GenericRequestor) OnResumeSession(
 	var wg sync.WaitGroup
 	wg.Add(1)
 	// establish listener
-	utils.Go(talking.Context(), func() {
+	utils.Go(ctx, func() {
 		defer wg.Done()
-		err := talking.ConnectListener(ctx, audioInConfig, audioOutConfig)
-		if err != nil {
+		if err := talking.ConnectListener(ctx, audioInConfig, audioOutConfig); err != nil {
 			talking.logger.Tracef(talking.Context(), "unable to init analyzer %+v", err)
 		}
 	})
@@ -332,8 +300,7 @@ func (talking *GenericRequestor) OnResumeSession(
 	wg.Add(1)
 	utils.Go(talking.Context(), func() {
 		defer wg.Done()
-		err := talking.ConnectSpeaker(ctx, audioInConfig, audioOutConfig)
-		if err != nil {
+		if err := talking.ConnectSpeaker(ctx, audioInConfig, audioOutConfig); err != nil {
 			talking.logger.Tracef(talking.Context(), "unable to init analyzer %+v", err)
 		}
 
@@ -342,11 +309,7 @@ func (talking *GenericRequestor) OnResumeSession(
 	wg.Add(1)
 	utils.Go(talking.Context(), func() {
 		defer wg.Done()
-		err := talking.recorder.Initialize(
-			audioInConfig,
-			audioOutConfig,
-		)
-		if err != nil {
+		if err := talking.recorder.Initialize(audioInConfig, audioOutConfig); err != nil {
 			talking.logger.Tracef(talking.Context(), "unable to init recorder %+v", err)
 		}
 	})
@@ -356,36 +319,28 @@ func (talking *GenericRequestor) OnResumeSession(
 		defer wg.Done()
 		client := types.GetClientInfoFromGrpcContext(talking.Context())
 		if client != nil {
-			clj, _ := client.ToJson()
-			talking.SetMetadata(talking.Auth(), map[string]interface{}{
-				"talk.client_information": clj,
-			})
+			if clj, err := client.ToJson(); err == nil {
+				talking.SetMetadata(talking.Auth(), map[string]interface{}{
+					"talk.client_information": clj,
+				})
+			}
 		}
 	})
 
 	// resume the conversation
-	conversation, err := talking.ResumeConversation(
-		talking.Auth(),
-		assistant,
-		assistantConversationId,
-		identifier)
+	conversation, err := talking.ResumeConversation(talking.Auth(), assistant, assistantConversationId, identifier)
 	if err != nil {
 		talking.logger.Errorf("unable to resume convsersation %+v", err)
 		return err
 	}
-	err = talking.
-		Notify(
-			ctx,
-			&protos.AssistantConversationConfiguration{
-				AssistantConversationId: conversation.Id,
-				Assistant: &protos.AssistantDefinition{
-					AssistantId: assistant.Id,
-					Version:     fmt.Sprintf("vrsn_%d", assistant.AssistantProviderId),
-				},
-				Time: timestamppb.Now(),
-			},
-		)
-	if err != nil {
+	if err := talking.Notify(ctx, &protos.AssistantConversationConfiguration{
+		AssistantConversationId: conversation.Id,
+		Assistant: &protos.AssistantDefinition{
+			AssistantId: assistant.Id,
+			Version:     fmt.Sprintf("vrsn_%d", assistant.AssistantProviderId),
+		},
+		Time: timestamppb.Now(),
+	}); err != nil {
 		talking.logger.Errorf("Error sending configuration: %v\n", err)
 	}
 
@@ -393,12 +348,9 @@ func (talking *GenericRequestor) OnResumeSession(
 	utils.Go(talking.Context(), func() {
 		defer wg.Done()
 		talking.logger.Debugf("talking.OnStartSession.executor.Init")
-		talking.
-			assistantExecutor.
-			Initialize(
-				ctx,
-				talking,
-			)
+		if err := talking.assistantExecutor.Initialize(ctx, talking); err != nil {
+			talking.logger.Errorf("Error Initialize assistantExecutor: %v", err)
+		}
 	})
 
 	wg.Add(1)
@@ -414,6 +366,8 @@ func (talking *GenericRequestor) OnResumeSession(
 	})
 	wg.Wait()
 
-	talking.OnResumeConversation()
+	if err := talking.OnResumeConversation(); err != nil {
+		talking.logger.Errorf("Error while resume the conversation: %v", err)
+	}
 	return nil
 }

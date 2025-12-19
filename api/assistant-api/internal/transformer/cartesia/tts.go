@@ -53,10 +53,12 @@ func NewCartesiaTextToSpeech(
 func (ct *cartesiaTTS) Initialize() error {
 	conn, _, err := websocket.DefaultDialer.Dial(ct.GetTextToSpeechConnectionString(), nil)
 	if err != nil {
+		ct.logger.Errorf("cartesia-stt: unable to dial %v", err)
 		return err
 	}
 	ct.connection = conn
 	go ct.textToSpeechCallback(ct.ctx)
+	ct.logger.Debugf("cartesia-stt: connection established")
 	return nil
 }
 

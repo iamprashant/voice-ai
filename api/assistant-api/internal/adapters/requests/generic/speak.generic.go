@@ -99,8 +99,7 @@ func (spk *GenericRequestor) ConnectSpeaker(ctx context.Context, audioInConfig, 
 	defer span.EndSpan(context, utils.AssistantSpeakConnectStage)
 
 	start := time.Now()
-	outputTransformer, err := spk.
-		GetTextToSpeechTransformer()
+	outputTransformer, err := spk.GetTextToSpeechTransformer()
 	if err != nil {
 		spk.logger.Errorf("no output transformer, so skipping it or error occured %v", err)
 		return err
@@ -121,28 +120,13 @@ func (spk *GenericRequestor) ConnectSpeaker(ctx context.Context, audioInConfig, 
 	wg.Add(1)
 	utils.Go(context, func() {
 		defer wg.Done()
-		if tokenizer, err := internal_tokenizer.NewSentenceTokenizer(
-			spk.logger,
-			spk.OnCompleteSentence,
-			speakerOpts,
-		); err == nil {
+		if tokenizer, err := internal_tokenizer.NewSentenceTokenizer(spk.logger, spk.OnCompleteSentence, speakerOpts); err == nil {
 			spk.tokenizer = tokenizer
 		}
-
-		if normalizer, err := internal_synthesizers.NewSentenceNormalizeSynthesizer(
-			spk.logger, internal_synthesizers.SynthesizerOptions{
-				SpeakerOptions: speakerOpts,
-			},
-		); err == nil {
+		if normalizer, err := internal_synthesizers.NewSentenceNormalizeSynthesizer(spk.logger, internal_synthesizers.SynthesizerOptions{SpeakerOptions: speakerOpts}); err == nil {
 			spk.synthesizers = append(spk.synthesizers, normalizer)
 		}
-
-		// format the sentence
-		if formatter, err := internal_synthesizers.NewSentenceFormattingSynthesizer(
-			spk.logger, internal_synthesizers.SynthesizerOptions{
-				SpeakerOptions: speakerOpts,
-			},
-		); err == nil {
+		if formatter, err := internal_synthesizers.NewSentenceFormattingSynthesizer(spk.logger, internal_synthesizers.SynthesizerOptions{SpeakerOptions: speakerOpts}); err == nil {
 			spk.synthesizers = append(spk.synthesizers, formatter)
 		}
 		spk.logger.Benchmark("speak.GetAudioOutputTransformer.synthesizers", time.Since(start))
@@ -175,21 +159,13 @@ func (spk *GenericRequestor) ConnectSpeaker(ctx context.Context, audioInConfig, 
 			return
 		}
 
-		atransformer, err := internal_adapter_transformer_factory.
-			GetTextToSpeechTransformer(
-				internal_adapter_transformer_factory.AudioTransformer(outputTransformer.GetName()),
-				context,
-				spk.logger,
-				credential,
-				opts,
-			)
+		atransformer, err := internal_adapter_transformer_factory.GetTextToSpeechTransformer(internal_adapter_transformer_factory.AudioTransformer(outputTransformer.GetName()), context, spk.logger, credential, opts)
 		if err != nil {
 			spk.logger.Errorf("unable to create input audio transformer with error %v", err)
 			return
 		}
 		spk.logger.Benchmark("speak.transformer.GetOutputAudioTransformer", time.Since(start))
-		err = atransformer.Initialize()
-		if err != nil {
+		if err := atransformer.Initialize(); err != nil {
 			spk.logger.Errorf("unable to initilize transformer %v", err)
 			return
 		}
