@@ -93,11 +93,12 @@ func (communication *GenericRequestor) OnError(ctx context.Context, messageId st
 		communication.logger.Warnf("no on error message setup for assistant.")
 		return nil
 	}
-	mistakeContent := communication.templateParser.Parse(*behavior.Mistake, communication.GetArgs())
-	if strings.TrimSpace(mistakeContent) == "" {
-		communication.logger.Warnf("empty on error message, could be space in the table or argument contains space")
-		mistakeContent = "Oops! It looks like something went wrong. Let me look into that for you right away. I really appreciate your patience—hang tight while I get this sorted!"
+
+	mistakeContent := "Oops! It looks like something went wrong. Let me look into that for you right away. I really appreciate your patience—hang tight while I get this sorted!"
+	if behavior.Mistake != nil {
+		mistakeContent = communication.templateParser.Parse(*behavior.Mistake, communication.GetArgs())
 	}
+
 	msg := types.NewMessage(
 		"assistant", &types.Content{
 			ContentType:   commons.TEXT_CONTENT.String(),
