@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"time"
 
-	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters/requests"
+	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters"
 	internal_agent_embeddings "github.com/rapidaai/api/assistant-api/internal/agent/embedding"
 	internal_knowledge_gorm "github.com/rapidaai/api/assistant-api/internal/entity/knowledges"
 	"github.com/rapidaai/pkg/connectors"

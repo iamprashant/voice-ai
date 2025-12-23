@@ -7,7 +7,7 @@
 package internal_adapter_request_customizers
 
 import (
-	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters/requests"
+	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters"
 	"github.com/rapidaai/pkg/utils"
 	protos "github.com/rapidaai/protos"
 )

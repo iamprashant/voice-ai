@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	internal_requests "github.com/rapidaai/api/assistant-api/internal/adapters/requests"
+	internal_requests "github.com/rapidaai/api/assistant-api/internal/adapters"
 	internal_agent_tools "github.com/rapidaai/api/assistant-api/internal/agent/tool/local"
 	internal_adapter_telemetry "github.com/rapidaai/api/assistant-api/internal/telemetry"
 

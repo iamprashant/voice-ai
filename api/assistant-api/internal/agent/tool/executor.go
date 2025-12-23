@@ -9,7 +9,7 @@ package internal_agent_tool
 import (
 	"context"
 
-	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters/requests"
+	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters"
 	"github.com/rapidaai/pkg/types"
 	protos "github.com/rapidaai/protos"
 )

@@ -51,8 +51,7 @@ func (spk *GenericRequestor) FinishSpeaking(
 		)
 	// keep it sync or blocking
 	if spk.textToSpeechTransformer != nil {
-		spk.textToSpeechTransformer.Transform(
-			ctx,
+		spk.textToSpeechTransformer.Transform(ctx,
 			"",
 			&internal_transformer.TextToSpeechOption{
 				ContextId:  contextId,
@@ -63,17 +62,11 @@ func (spk *GenericRequestor) FinishSpeaking(
 
 }
 
-func (spk *GenericRequestor) Speak(
-	contextId string,
-	msg string,
-) error {
-	_, err := spk.
-		GetTextToSpeechTransformer()
-	if err != nil {
+func (spk *GenericRequestor) Speak(contextId string, msg string) error {
+	if _, err := spk.GetTextToSpeechTransformer(); err != nil {
 		spk.logger.Warnf("no output transformer, skipping speak")
 		return err
 	}
-
 	ctx, span, _ := spk.Tracer().StartSpan(spk.Context(), utils.AssistantTranscribeStage)
 	defer span.EndSpan(ctx, utils.AssistantTranscribeStage)
 	span.AddAttributes(ctx,
@@ -84,10 +77,7 @@ func (spk *GenericRequestor) Speak(
 			K: "chunk", V: internal_adapter_telemetry.StringValue(msg),
 		},
 	)
-	return spk.
-		tokenizer.Tokenize(
-		ctx,
-		contextId, msg, false)
+	return spk.tokenizer.Tokenize(ctx, contextId, msg, false)
 
 }
 
@@ -205,15 +195,10 @@ func (spk *GenericRequestor) OnCompleteSentence(
 		},
 	)
 	if spk.textToSpeechTransformer != nil {
-		spk.
-			textToSpeechTransformer.
-			Transform(
-				spk.Context(),
-				output,
-				&internal_transformer.TextToSpeechOption{
-					ContextId:  contextId,
-					IsComplete: false,
-				})
+		spk.textToSpeechTransformer.Transform(spk.Context(), output, &internal_transformer.TextToSpeechOption{
+			ContextId:  contextId,
+			IsComplete: false,
+		})
 
 	}
 	return nil
@@ -221,9 +206,7 @@ func (spk *GenericRequestor) OnCompleteSentence(
 
 func (spk *GenericRequestor) CloseSpeaker() error {
 	if spk.textToSpeechTransformer != nil {
-		if err := spk.
-			textToSpeechTransformer.
-			Close(spk.Context()); err != nil {
+		if err := spk.textToSpeechTransformer.Close(spk.Context()); err != nil {
 			spk.logger.Errorf("cancel all output transformer with error %v", err)
 		}
 	}

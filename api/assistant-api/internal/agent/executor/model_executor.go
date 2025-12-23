@@ -13,7 +13,7 @@ import (
 	"io"
 	"time"
 
-	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters/requests"
+	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters"
 	internal_agent_tool "github.com/rapidaai/api/assistant-api/internal/agent/tool"
 	internal_executors "github.com/rapidaai/api/assistant-api/internal/agent/tool"
 	internal_adapter_telemetry "github.com/rapidaai/api/assistant-api/internal/telemetry"

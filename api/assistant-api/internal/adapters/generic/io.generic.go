@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"time"
 
-	internal_adapter_request_customizers "github.com/rapidaai/api/assistant-api/internal/adapters/requests/customizers"
+	internal_adapter_request_customizers "github.com/rapidaai/api/assistant-api/internal/adapters/customizers"
 	internal_end_of_speech "github.com/rapidaai/api/assistant-api/internal/end_of_speech"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
@@ -214,56 +214,72 @@ func (io *GenericRequestor) OutputAudio(
 	return nil
 }
 
-func (io *GenericRequestor) Output(
-	ctx context.Context,
-	contextId string,
-	msg *types.Message,
-	completed bool,
-) error {
+func (io *GenericRequestor) Output(ctx context.Context, contextId string, msg *types.Message, completed bool) error {
+	// Determine the message content
 	aMsg := msg.String()
 	if len(msg.ToolCalls) > 0 {
 		aMsg = " "
 	}
+
+	// Transition the messaging state to agent speaking
 	if err := io.messaging.Transition(internal_adapter_request_customizers.AgentSpeaking); err != nil {
 		return nil
 	}
-	if err := io.Notify(
-		ctx,
-		&protos.AssistantConversationAssistantMessage{
-			Time:      timestamppb.Now(),
-			Id:        contextId,
-			Completed: completed,
-			Message: &protos.AssistantConversationAssistantMessage_Text{
-				Text: &protos.AssistantConversationMessageTextContent{
-					Content: aMsg,
-				},
+
+	// Notify the system of the assistant message
+	if err := io.Notify(ctx, &protos.AssistantConversationAssistantMessage{
+		Time:      timestamppb.Now(),
+		Id:        contextId,
+		Completed: completed,
+		Message: &protos.AssistantConversationAssistantMessage_Text{
+			Text: &protos.AssistantConversationMessageTextContent{
+				Content: aMsg,
 			},
 		},
-	); err != nil {
-		io.logger.Tracef(ctx, "error while outputing chunk to the user: %w", err)
+	}); err != nil {
+		io.logger.Tracef(ctx, "error while outputting chunk to the user: %w", err)
 	}
+
+	// Handle completion logic
 	if completed {
 		if io.messaging.GetMode().Audio() {
 			io.FinishSpeaking(contextId)
 		}
-		io.Notify(
-			ctx,
-			&protos.AssistantConversationMessage{
+
+		// Attempt to get the user's message and send a completion notification
+		if in, err := io.messaging.GetMessage(type_enums.UserActor); err == nil {
+			if err := io.Notify(ctx, &protos.AssistantConversationMessage{
 				MessageId:               contextId,
 				AssistantId:             io.assistant.Id,
 				AssistantConversationId: io.assistantConversation.Id,
-				// Request:                 inputMessxage.ToProto(),
-				Response: msg.ToProto(),
-			},
-		)
+				Request:                 in.ToProto(),
+				Response:                msg.ToProto(),
+			}); err != nil {
+				io.logger.Tracef(ctx, "error while outputting chunk to the user: %w", err)
+			}
+			io.messaging.Transition(internal_adapter_request_customizers.AgentCompleted)
+			return nil
+		}
+
+		// Notify the response if there is no user message
+		if err := io.Notify(ctx, &protos.AssistantConversationMessage{
+			MessageId:               contextId,
+			AssistantId:             io.assistant.Id,
+			AssistantConversationId: io.assistantConversation.Id,
+			Response:                msg.ToProto(),
+		}); err != nil {
+			io.logger.Tracef(ctx, "error while outputting chunk to the user: %w", err)
+		}
 		io.messaging.Transition(internal_adapter_request_customizers.AgentCompleted)
 		return nil
 	}
 
+	// Handle audio mode logic if not completed
 	if io.messaging.GetMode().Audio() {
 		if err := io.Speak(contextId, aMsg); err != nil {
 			io.logger.Errorf("unable to speak for the user, please check the config error = %+v", err)
 		}
 	}
+
 	return nil
 }

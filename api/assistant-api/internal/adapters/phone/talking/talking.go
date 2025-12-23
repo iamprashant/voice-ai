@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/rapidaai/api/assistant-api/config"
-	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters/requests"
-	internal_adapter_request_generic "github.com/rapidaai/api/assistant-api/internal/adapters/requests/generic"
+	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters"
+	internal_adapter_request_generic "github.com/rapidaai/api/assistant-api/internal/adapters/generic"
 	internal_streamers "github.com/rapidaai/api/assistant-api/internal/streamers"
 
 	"github.com/rapidaai/pkg/commons"
@@ -65,9 +65,8 @@ func (talking *phoneTalking) Talk(
 	auth types.SimplePrinciple,
 	identifier string) error {
 	talking.StartedAt = time.Now()
-	var initialized = true
+	var initialized = false
 	for {
-		// Check if context is done
 		select {
 		case <-ctx.Done():
 			if initialized {
@@ -91,7 +90,10 @@ func (talking *phoneTalking) Talk(
 		switch msg := req.GetRequest().(type) {
 		case *protos.AssistantMessagingRequest_Message:
 			if initialized {
-				talking.Input(req.GetMessage())
+				// talking.logger.Benchmark("accepting input after", time.Since(talking.StartedAt))
+				if err := talking.Input(req.GetMessage()); err != nil {
+					talking.logger.Errorf("error while accepting input %v", err)
+				}
 			}
 		case *protos.AssistantMessagingRequest_Configuration:
 			if err := talking.Connect(ctx, auth, identifier, msg.Configuration); err != nil {

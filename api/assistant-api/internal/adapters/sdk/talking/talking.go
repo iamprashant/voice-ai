@@ -4,7 +4,7 @@
 // Licensed under the Rapida internal use license.
 // This file is part of Rapida's proprietary software.
 // Unauthorized copying, modification, or redistribution is strictly prohibited.
-package internal_adapter_request_talking_web_plugin
+package internal_adapter_request_talking_sdk
 
 import (
 	"context"
@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/rapidaai/api/assistant-api/config"
-	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters/requests"
-	internal_adapter_request_generic "github.com/rapidaai/api/assistant-api/internal/adapters/requests/generic"
+	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters"
+	internal_adapter_request_generic "github.com/rapidaai/api/assistant-api/internal/adapters/generic"
 	internal_streamers "github.com/rapidaai/api/assistant-api/internal/streamers"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
@@ -26,13 +26,13 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type webpluginTalking struct {
+type sdkTalking struct {
 	internal_adapter_request_generic.GenericRequestor
 	logger commons.Logger
 }
 
 // GetMessage implements internal_adapter_requests.Talking.
-func NewTalking(
+func NewSDKTalking(
 	ctx context.Context,
 	config *config.AssistantConfig,
 	logger commons.Logger,
@@ -40,19 +40,12 @@ func NewTalking(
 	opensearch connectors.OpenSearchConnector,
 	redis connectors.RedisConnector,
 	storage storages.Storage,
-	stream internal_streamers.Streamer,
+	streamer internal_streamers.Streamer,
 ) (internal_adapter_requests.Talking, error) {
-	return &webpluginTalking{
-		logger: logger,
-		GenericRequestor: internal_adapter_request_generic.NewGenericRequestor(
-			ctx,
-			config,
-			logger,
-			utils.WebPlugin,
-			postgres,
-			opensearch,
-			redis,
-			storage, stream),
+
+	return &sdkTalking{
+		logger:           logger,
+		GenericRequestor: internal_adapter_request_generic.NewGenericRequestor(ctx, config, logger, utils.SDK, postgres, opensearch, redis, storage, streamer),
 	}, nil
 }
 
@@ -61,15 +54,14 @@ func NewTalking(
 * It initializes the transformer, processes incoming requests, and handles different content types.//+
 * The function continues to listen until an EOF or a Canceled error is received.//+
 * //+
-* This method doesn't take any parameters as it operates on the debuggerTalking struct.//+
+* This method doesn't take any parameters as it operates on the sdkTalking struct.//+
 * //+
 * The function doesn't return any value. It runs asynchronously in a separate goroutine.//+
  */
-func (talking *webpluginTalking) Talk(
+func (talking *sdkTalking) Talk(
 	ctx context.Context,
 	auth types.SimplePrinciple,
 	identifier string) error {
-
 	talking.StartedAt = time.Now()
 	var initialized = false
 	for {
@@ -98,7 +90,10 @@ func (talking *webpluginTalking) Talk(
 		switch msg := req.GetRequest().(type) {
 		case *protos.AssistantMessagingRequest_Message:
 			if initialized {
-				talking.Input(req.GetMessage())
+				// talking.logger.Benchmark("accepting input after", time.Since(talking.StartedAt))
+				if err := talking.Input(req.GetMessage()); err != nil {
+					talking.logger.Errorf("error while accepting input %v", err)
+				}
 			}
 		case *protos.AssistantMessagingRequest_Configuration:
 			if err := talking.Connect(ctx, auth, identifier, msg.Configuration); err != nil {

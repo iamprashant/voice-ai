@@ -147,7 +147,6 @@ func (n *GenericRequestor) Notify(
 			})
 
 	case *protos.AssistantConversationConfiguration:
-
 		// Handle configuration actions
 		utils.Go(ctx, func() {
 			n.sendMessage(ctx, &protos.AssistantMessagingResponse{
@@ -168,7 +167,6 @@ func (n *GenericRequestor) Notify(
 			},
 		)
 	case *protos.AssistantMessagingResponse_AssistantTransferAction:
-
 		// Handle assistant transfer action
 		utils.Go(ctx, func() {
 			n.sendMessage(ctx, &protos.AssistantMessagingResponse{
@@ -188,7 +186,6 @@ func (n *GenericRequestor) Notify(
 			},
 		)
 	case *protos.AssistantMessagingResponse_DisconnectAction:
-
 		utils.Go(ctx, func() {
 			n.sendMessage(ctx, &protos.AssistantMessagingResponse{
 				Code:    200,
