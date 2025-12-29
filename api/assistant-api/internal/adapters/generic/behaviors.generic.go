@@ -10,11 +10,14 @@ import (
 	"errors"
 	"strings"
 
+	internal_adapter_request_customizers "github.com/rapidaai/api/assistant-api/internal/adapters/customizers"
 	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
+	"github.com/rapidaai/protos"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func (gr *GenericRequestor) GetBehavior() (*internal_assistant_entity.AssistantDeploymentBehavior, error) {
@@ -44,12 +47,7 @@ func (gr *GenericRequestor) GetBehavior() (*internal_assistant_entity.AssistantD
 }
 
 func (communication *GenericRequestor) OnGreet(ctx context.Context) error {
-	message := communication.messaging.Create(type_enums.UserActor, "")
-	utils.Go(ctx, func() {
-		if err := communication.OnCreateMessage(ctx, message.GetId(), message); err != nil {
-			communication.logger.Errorf("Error in OnCreateMessage: %v", err)
-		}
-	})
+
 	behavior, err := communication.GetBehavior()
 	if err != nil {
 		communication.logger.Errorf("error while fetching deployment behavior: %v", err)
@@ -65,24 +63,53 @@ func (communication *GenericRequestor) OnGreet(ctx context.Context) error {
 		communication.logger.Warnf("empty greeting message, could be space in the table or argument contains space")
 		return nil
 	}
-	greetings := types.NewMessage(
-		"assistant", &types.Content{
+
+	message := communication.messaging.Create(type_enums.UserActor, "")
+	utils.Go(ctx, func() {
+		if err := communication.OnCreateMessage(ctx, message.GetId(), message); err != nil {
+			communication.logger.Errorf("Error in OnCreateMessage: %v", err)
+		}
+	})
+
+	greetings := &types.Message{
+		Id:   message.GetId(),
+		Role: "assistant",
+		Contents: []*types.Content{{
 			ContentType:   commons.TEXT_CONTENT.String(),
 			ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
 			Content:       []byte(greetingCnt),
+		}}}
+
+	if err := communication.Notify(ctx, &protos.AssistantConversationAssistantMessage{
+		Time:      timestamppb.Now(),
+		Id:        greetings.GetId(),
+		Completed: true,
+		Message: &protos.AssistantConversationAssistantMessage_Text{
+			Text: &protos.AssistantConversationMessageTextContent{
+				Content: greetingCnt,
+			},
 		},
-	)
-
-	// sending greeting
-	if err := communication.OnGeneration(ctx, message.GetId(), greetings); err != nil {
-		communication.logger.Errorf("error while sending greeting message: %v", err)
-		return nil
+	}); err != nil {
+		communication.logger.Tracef(ctx, "error while outputting chunk to the user: %w", err)
 	}
 
-	// mark complete of greeting
-	if err := communication.OnGenerationComplete(ctx, message.GetId(), greetings, nil); err != nil {
-		communication.logger.Errorf("error while completing greeting message: %v", err)
+	communication.AssistantCallback(ctx, greetings.GetId(), greetings, nil)
+	// audio processing
+	if communication.messaging.GetInputMode().Audio() {
+		if err := communication.Speak(greetings.GetId(), greetingCnt); err != nil {
+			communication.FinishSpeaking(greetings.GetId())
+		}
 	}
+	// Notify the response if there is no user message
+	if err := communication.Notify(ctx, &protos.AssistantConversationMessage{
+		MessageId:               greetings.GetId(),
+		AssistantId:             communication.assistant.Id,
+		AssistantConversationId: communication.assistantConversation.Id,
+		Response:                greetings.ToProto(),
+	}); err != nil {
+		communication.logger.Tracef(ctx, "error while outputting chunk to the user: %w", err)
+	}
+	communication.messaging.Transition(internal_adapter_request_customizers.AgentCompleted)
 	return nil
 }
 

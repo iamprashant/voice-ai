@@ -48,9 +48,7 @@ func (executor *modelAssistantExecutor) Name() string {
 	return "model"
 }
 
-func (executor *modelAssistantExecutor) Initialize(
-	ctx context.Context,
-	communication internal_adapter_requests.Communication,
+func (executor *modelAssistantExecutor) Initialize(ctx context.Context, communication internal_adapter_requests.Communication,
 ) error {
 	start := time.Now()
 	ctx, span, _ := communication.
@@ -66,37 +64,6 @@ func (executor *modelAssistantExecutor) Initialize(
 	defer span.EndSpan(ctx, utils.AssistantAgentConnectStage)
 	g, ctx := errgroup.WithContext(ctx)
 	var providerCredential *protos.VaultCredential
-
-	// g.Go(func() error {
-	// 	behavior, err := communication.GetBehavior()
-	// 	if err != nil {
-	// 		executor.logger.Errorf("error while fetching deployment behavior: %v", err)
-	// 		return nil
-	// 	}
-
-	// 	if behavior.Greeting == nil {
-	// 		executor.logger.Errorf("error while fetching deployment behavior: %v", err)
-	// 		return nil
-	// 	}
-	// 	greetingCnt := executor.templateParser.Parse(*behavior.Greeting, communication.GetArgs())
-	// 	if strings.TrimSpace(greetingCnt) == "" {
-	// 		executor.logger.Warnf("empty greeting message, could be space in the table or argument contains space")
-	// 		return nil
-	// 	}
-	// 	greetings := types.NewMessage(
-	// 		"assistant", &types.Content{
-	// 			ContentType:   commons.TEXT_CONTENT.String(),
-	// 			ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
-	// 			Content:       []byte(greetingCnt),
-	// 		},
-	// 	)
-	// 	communication.OnGeneration(ctx, greetings.Id, greetings)
-	// 	communication.OnGenerationComplete(ctx, greetings.Id, greetings, nil)
-	// 	executor.history = append(executor.history, greetings.ToProto())
-
-	// 	return nil
-	// })
-	// Goroutine to get the provider credential
 	g.Go(func() error {
 		credentialId, err := communication.Assistant().AssistantProviderModel.GetOptions().GetUint64("rapida.credential_id")
 		if err != nil {
@@ -211,16 +178,7 @@ func (executor *modelAssistantExecutor) chat(
 				histories...), in.ToProto())...,
 		)
 
-	res, err := communication.
-		IntegrationCaller().
-		StreamChat(
-			ctx,
-			communication.
-				Auth(),
-			communication.
-				Assistant().AssistantProviderModel.
-				ModelProviderName,
-			request)
+	res, err := communication.IntegrationCaller().StreamChat(ctx, communication.Auth(), communication.Assistant().AssistantProviderModel.ModelProviderName, request)
 	if err != nil {
 		executor.logger.Errorf("error while streaming chat request: %v", err)
 		return err
@@ -230,41 +188,14 @@ func (executor *modelAssistantExecutor) chat(
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				executor.logger.Benchmark("executor.chat", time.Since(start))
-				executor.history = append(
-					executor.history,
-					in.ToProto(),
-					output,
-				)
-				executor.llm(
-					messageid,
-					communication,
-					in,
-					types.ToMessage(output),
-					types.ToMetrics(metrics))
-
-				//tool call resolve
+				executor.llm(messageid, communication, in, types.ToMessage(output), types.ToMetrics(metrics))
 				toolCalls := output.GetToolCalls()
 				if len(toolCalls) > 0 {
-					toolExecution := executor.toolExecutor.ExecuteAll(
-						ctx,
-						messageid,
-						toolCalls,
-						communication,
-					)
-					return executor.chat(
-						ctx,
-						messageid,
-						communication,
-						&types.Message{Contents: toolExecution, Role: "tool"},
-						append(histories, in.ToProto(), output)...,
-					)
+					// append history of tool call
+					toolExecution := executor.toolExecutor.ExecuteAll(ctx, messageid, toolCalls, communication)
+					return executor.chat(ctx, messageid, communication, &types.Message{Contents: toolExecution, Role: "tool"}, append(histories, in.ToProto(), output)...)
 				}
-				communication.OnGenerationComplete(
-					ctx,
-					messageid,
-					types.ToMessage(output).WithMetadata(in.Meta),
-					types.ToMetrics(metrics),
-				)
+				communication.OnGenerationComplete(ctx, messageid, types.ToMessage(output).WithMetadata(in.Meta), types.ToMetrics(metrics))
 				return nil
 			}
 			return err
@@ -272,51 +203,42 @@ func (executor *modelAssistantExecutor) chat(
 		metrics = msg.GetMetrics()
 		output = msg.GetData()
 		if output != nil && metrics == nil && len(output.GetContents()) > 0 {
-			communication.OnGeneration(
-				ctx,
-				messageid,
-				types.ToMessage(msg.GetData()).WithMetadata(in.Meta),
-			)
+			communication.OnGeneration(ctx, messageid, types.ToMessage(msg.GetData()).WithMetadata(in.Meta))
 		}
 
 	}
 }
 
-func (executor *modelAssistantExecutor) llm(
-	messageid string,
-	communication internal_adapter_requests.Communication,
-	in, out *types.Message,
-	metrics []*types.Metric) error {
+func (executor *modelAssistantExecutor) llm(messageid string, communication internal_adapter_requests.Communication, in, out *types.Message, metrics []*types.Metric) error {
+	// build local history
+	if in != nil {
+		executor.history = append(executor.history, in.ToProto())
+	}
+	if out != nil {
+		executor.history = append(executor.history, out.ToProto())
+	}
+	// persist it to storage
 	utils.Go(context.Background(), func() {
-		communication.
-			CreateConversationMessageLog(
-				messageid, in, out, metrics,
-			)
+		communication.CreateConversationMessageLog(messageid, in, out, metrics)
 	})
 	return nil
 }
 
-func (executor *modelAssistantExecutor) Talk(
-	ctx context.Context,
-	messageid string,
-	msg *types.Message,
-	communication internal_adapter_requests.Communication) error {
-	ctx, span, _ := communication.Tracer().StartSpan(ctx,
-		utils.AssistantAgentTextGenerationStage,
-		internal_adapter_telemetry.MessageKV(messageid))
+// when assistant trigger a message
+func (executor *modelAssistantExecutor) Assistant(ctx context.Context, messageid string, msg *types.Message, communication internal_adapter_requests.Communication) error {
+	executor.llm(messageid, communication, nil, msg, nil)
+	return nil
+}
+
+// when user tigger a message
+func (executor *modelAssistantExecutor) User(ctx context.Context, messageid string, msg *types.Message, communication internal_adapter_requests.Communication) error {
+	ctx, span, _ := communication.Tracer().StartSpan(ctx, utils.AssistantAgentTextGenerationStage, internal_adapter_telemetry.MessageKV(messageid))
 	defer span.EndSpan(ctx, utils.AssistantAgentTextGenerationStage)
-	return executor.chat(
-		ctx,
-		messageid,
-		communication,
-		msg,
-		executor.history...)
+	return executor.chat(ctx, messageid, communication, msg, executor.history...)
 
 }
 
-func (a *modelAssistantExecutor) Close(
-	ctx context.Context,
-	communication internal_adapter_requests.Communication,
-) error {
+func (executor *modelAssistantExecutor) Close(ctx context.Context, communication internal_adapter_requests.Communication) error {
+	executor.history = make([]*protos.Message, 0)
 	return nil
 }

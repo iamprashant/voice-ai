@@ -88,8 +88,12 @@ func (a *websocketExecutor) Name() string {
 	return "websocket"
 }
 
+func (executor *websocketExecutor) Assistant(ctx context.Context, messageid string, msg *types.Message, communication internal_adapter_requests.Communication) error {
+	return nil
+}
+
 // Talk implements internal_executors.AssistantExecutor.
-func (a *websocketExecutor) Talk(ctx context.Context, messageid string, msg *types.Message, communcation internal_adapter_requests.Communication) error {
+func (a *websocketExecutor) User(ctx context.Context, messageid string, msg *types.Message, communication internal_adapter_requests.Communication) error {
 	panic("unimplemented")
 }
 

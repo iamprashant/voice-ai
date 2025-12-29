@@ -19,6 +19,7 @@ import (
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
 	"github.com/rapidaai/protos"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -131,6 +132,7 @@ func (talking *GenericRequestor) Connect(ctx context.Context, iAuth types.Simple
 func (talking *GenericRequestor) OnCreateSession(ctx context.Context, inCfg, strmCfg *protos.StreamConfig, assistant *internal_assistant_entity.Assistant, identifier string, customization internal_adapter_requests.Customization) error {
 	ctx, span, err := talking.Tracer().StartSpan(ctx, utils.AssistantCreateConversationStage)
 	defer span.EndSpan(ctx, utils.AssistantCreateConversationStage)
+	wg, _ := errgroup.WithContext(ctx)
 
 	conversation, err := talking.BeginConversation(talking.Auth(), assistant, type_enums.DIRECTION_INBOUND, identifier, customization.GetArgs(), customization.GetMetadata(), customization.GetOptions())
 	if err != nil {
@@ -148,24 +150,30 @@ func (talking *GenericRequestor) OnCreateSession(ctx context.Context, inCfg, str
 		talking.messaging.SwitchOutputMode(type_enums.AudioMode)
 	}
 	//
-	if err := talking.assistantExecutor.Initialize(ctx, talking); err != nil {
-		talking.logger.Tracef(ctx, "unable to init executor %+v", err)
-		// break the flow as there is no one to respond
-		return err
-	}
 
-	if err := talking.Notify(ctx,
-		&protos.AssistantConversationConfiguration{
-			AssistantConversationId: conversation.Id,
-			Assistant: &protos.AssistantDefinition{
-				AssistantId: assistant.Id,
-				Version:     fmt.Sprintf("vrsn_%d", assistant.AssistantProviderId),
+	wg.Go(func() error {
+		if err := talking.assistantExecutor.Initialize(ctx, talking); err != nil {
+			talking.logger.Tracef(ctx, "unable to init executor %+v", err)
+			return err
+		}
+		return nil
+	})
+
+	wg.Go(func() error {
+		if err := talking.Notify(ctx,
+			&protos.AssistantConversationConfiguration{
+				AssistantConversationId: conversation.Id,
+				Assistant: &protos.AssistantDefinition{
+					AssistantId: assistant.Id,
+					Version:     fmt.Sprintf("vrsn_%d", assistant.AssistantProviderId),
+				},
+				Time: timestamppb.Now(),
 			},
-			Time: timestamppb.Now(),
-		},
-	); err != nil {
-		talking.logger.Errorf("Error sending configuration: %v\n", err)
-	}
+		); err != nil {
+			talking.logger.Errorf("Error sending configuration: %v\n", err)
+		}
+		return nil
+	})
 
 	utils.Go(ctx, func() {
 		if audioInConfig != nil && audioOutConfig != nil {
@@ -175,7 +183,7 @@ func (talking *GenericRequestor) OnCreateSession(ctx context.Context, inCfg, str
 		}
 	})
 
-	utils.Go(ctx, func() {
+	wg.Go(func() error {
 		if audioOutConfig != nil {
 			if err := talking.ConnectSpeaker(ctx, audioOutConfig); err != nil {
 				talking.logger.Tracef(ctx, "unable to connect speaker %+v", err)
@@ -184,7 +192,7 @@ func (talking *GenericRequestor) OnCreateSession(ctx context.Context, inCfg, str
 		if err := talking.OnGreet(ctx); err != nil {
 			talking.logger.Errorf("unable to greet user with error %+v", err)
 		}
-
+		return nil
 	})
 
 	// establish listener
@@ -217,8 +225,7 @@ func (talking *GenericRequestor) OnCreateSession(ctx context.Context, inCfg, str
 			talking.logger.Errorf("error while begin conversation error %+v", err)
 		}
 	})
-
-	return nil
+	return wg.Wait()
 }
 
 // OnResumeSession resumes an existing assistant session, re-initializes listeners and speakers,
@@ -226,6 +233,7 @@ func (talking *GenericRequestor) OnCreateSession(ctx context.Context, inCfg, str
 func (talking *GenericRequestor) OnResumeSession(ctx context.Context, inCfg, strmCfg *protos.StreamConfig, assistant *internal_assistant_entity.Assistant, identifier string, assistantConversationId uint64, customization internal_adapter_requests.Customization) error {
 	ctx, span, err := talking.Tracer().StartSpan(talking.Context(), utils.AssistantResumeConverstaionStage)
 	defer span.EndSpan(ctx, utils.AssistantResumeConverstaionStage)
+	wg, _ := errgroup.WithContext(ctx)
 
 	// resume the conversation
 	conversation, err := talking.ResumeConversation(talking.Auth(), assistant, assistantConversationId, identifier)
@@ -244,20 +252,29 @@ func (talking *GenericRequestor) OnResumeSession(ctx context.Context, inCfg, str
 		talking.messaging.SwitchOutputMode(type_enums.AudioMode)
 	}
 
-	if err := talking.assistantExecutor.Initialize(ctx, talking); err != nil {
-		talking.logger.Tracef(ctx, "unable to init executor %+v", err)
-	}
+	// important to handle the llm request
+	// need to initilize before
+	wg.Go(func() error {
+		if err := talking.assistantExecutor.Initialize(ctx, talking); err != nil {
+			talking.logger.Tracef(ctx, "unable to init executor %+v", err)
+		}
+		return nil
+	})
 
-	if err := talking.Notify(ctx, &protos.AssistantConversationConfiguration{
-		AssistantConversationId: conversation.Id,
-		Assistant: &protos.AssistantDefinition{
-			AssistantId: assistant.Id,
-			Version:     fmt.Sprintf("vrsn_%d", assistant.AssistantProviderId),
-		},
-		Time: timestamppb.Now(),
-	}); err != nil {
-		talking.logger.Errorf("Error sending configuration: %v\n", err)
-	}
+	// notify the configuration
+	wg.Go(func() error {
+		if err := talking.Notify(ctx, &protos.AssistantConversationConfiguration{
+			AssistantConversationId: conversation.Id,
+			Assistant: &protos.AssistantDefinition{
+				AssistantId: assistant.Id,
+				Version:     fmt.Sprintf("vrsn_%d", assistant.AssistantProviderId),
+			},
+			Time: timestamppb.Now(),
+		}); err != nil {
+			talking.logger.Errorf("Error sending configuration: %v\n", err)
+		}
+		return nil
+	})
 
 	utils.Go(ctx, func() {
 		if audioOutConfig != nil && audioInConfig != nil {
@@ -267,7 +284,8 @@ func (talking *GenericRequestor) OnResumeSession(ctx context.Context, inCfg, str
 		}
 	})
 
-	utils.Go(ctx, func() {
+	// if voice then we need to support reconnecting the speaker
+	wg.Go(func() error {
 		if audioOutConfig != nil {
 			if err := talking.ConnectSpeaker(ctx, audioOutConfig); err != nil {
 				talking.logger.Tracef(ctx, "unable to connect speaker %+v", err)
@@ -275,6 +293,7 @@ func (talking *GenericRequestor) OnResumeSession(ctx context.Context, inCfg, str
 			// changing to audio mode
 			talking.messaging.SwitchOutputMode(type_enums.AudioMode)
 		}
+		return nil
 
 	})
 
@@ -311,5 +330,5 @@ func (talking *GenericRequestor) OnResumeSession(ctx context.Context, inCfg, str
 	if err := talking.OnResumeConversation(); err != nil {
 		talking.logger.Errorf("Error while resume the conversation: %v", err)
 	}
-	return nil
+	return wg.Wait()
 }

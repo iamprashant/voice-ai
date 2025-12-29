@@ -77,10 +77,11 @@ func (io *GenericRequestor) OnSilenceBreak(
 		return nil
 	}
 	io.messaging.Transition(internal_adapter_request_customizers.LLMGenerating)
-	return io.Execute(
+	return io.UserCallback(
 		ctx,
 		msg.GetId(),
 		msg,
+		nil,
 	)
 }
 
@@ -206,7 +207,7 @@ func (io *GenericRequestor) OutputAudio(
 	return nil
 }
 
-func (io *GenericRequestor) Output(ctx context.Context, contextId string, msg *types.Message, completed bool) error {
+func (io *GenericRequestor) Output(ctx context.Context, contextId string, msg *types.Message, completed bool, metrics []*types.Metric) error {
 	// Determine the message content
 	aMsg := msg.String()
 	if len(msg.ToolCalls) > 0 {
@@ -237,7 +238,6 @@ func (io *GenericRequestor) Output(ctx context.Context, contextId string, msg *t
 		if io.messaging.GetInputMode().Audio() {
 			io.FinishSpeaking(contextId)
 		}
-
 		// Attempt to get the user's message and send a completion notification
 		if in, err := io.messaging.GetMessage(type_enums.UserActor); err == nil {
 			if err := io.Notify(ctx, &protos.AssistantConversationMessage{

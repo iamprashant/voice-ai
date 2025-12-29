@@ -48,6 +48,7 @@ export const ConversationMessages: FC<{ vag: VoiceAgent }> = ({ vag }) => {
         return msg.role === MessageRole.User ? (
           <div
             key={`user-${idx}`}
+            data-id={`user-${idx}`}
             className="message-cntnt p-2.5 pb-4 group relative grid grid-cols-[auto_minmax(0,1fr)] auto-rows-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 hover:bg-gray-100 rounded-xl dark:hover:bg-gray-950"
           >
             <div className="row-span-2 min-w-(--space-9)">
@@ -158,6 +159,7 @@ export const ConversationMessages: FC<{ vag: VoiceAgent }> = ({ vag }) => {
         ) : (
           <div
             key={`assistant-${idx}`}
+            data-id={`user-${idx}`}
             className="message-cntnt p-2.5 pb-4 group relative grid grid-cols-[auto_minmax(0,1fr)] auto-rows-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 hover:bg-gray-100 rounded-xl dark:hover:bg-gray-950"
           >
             <div className="row-span-2 min-w-(--space-9)">

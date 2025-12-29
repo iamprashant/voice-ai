@@ -18,9 +18,6 @@ import (
 *  default executor or remote executor
  */
 func (talking *GenericRequestor) OnGenerationComplete(ctx context.Context, messageid string, ouput *types.Message, metrics []*types.Metric) error {
-	if err := talking.Output(ctx, messageid, ouput, true); err != nil {
-		talking.logger.Errorf("unable to output text for the message %s", messageid)
-	}
 	utils.Go(talking.Context(), func() {
 		if err := talking.OnUpdateMessage(talking.Context(), messageid, ouput, type_enums.RECORD_COMPLETE); err != nil {
 			talking.logger.Errorf("Error in OnUpdateMessage: %v", err)
@@ -31,22 +28,52 @@ func (talking *GenericRequestor) OnGenerationComplete(ctx context.Context, messa
 
 	})
 	utils.Go(talking.Context(), func() {
-		// if there are metrics generated from the generation, we need to log them
 		if len(metrics) > 0 {
 			if err := talking.OnMessageMetric(talking.Context(), messageid, metrics); err != nil {
 				talking.logger.Errorf("Error in OnUpdateMessage: %v", err)
 			}
 		}
 	})
+	if err := talking.Output(ctx, messageid, ouput, true, metrics); err != nil {
+		talking.logger.Errorf("unable to output text for the message %s", messageid)
+	}
+
 	return nil
 }
 
 /**/
 func (talking *GenericRequestor) OnGeneration(ctx context.Context, messageid string, out *types.Message) error {
-	return talking.Output(ctx, messageid, out, false)
+	return talking.Output(ctx, messageid, out, false, nil)
 }
 
-func (talking *GenericRequestor) Execute(ctx context.Context, messageid string, in *types.Message) error {
+// after finish assistant message the assistant callback will be triggered
+func (talking *GenericRequestor) AssistantCallback(ctx context.Context, messageid string, msg *types.Message, metrics []*types.Metric) error {
+
+	utils.Go(talking.Context(), func() {
+		if err := talking.OnUpdateMessage(talking.Context(), messageid, msg, type_enums.RECORD_COMPLETE); err != nil {
+			talking.logger.Errorf("Error in OnUpdateMessage: %v", err)
+		}
+		if msg.Meta != nil {
+			talking.OnMessageMetadata(talking.Context(), messageid, msg.Meta)
+		}
+
+	})
+	utils.Go(talking.Context(), func() {
+		if len(metrics) > 0 {
+			if err := talking.OnMessageMetric(talking.Context(), messageid, metrics); err != nil {
+				talking.logger.Errorf("Error in OnUpdateMessage: %v", err)
+			}
+		}
+	})
+	if err := talking.assistantExecutor.Assistant(ctx, messageid, msg, talking); err != nil {
+		talking.OnError(ctx, messageid)
+		return nil
+	}
+	return nil
+}
+
+// after finish user message the user callback will be triggered
+func (talking *GenericRequestor) UserCallback(ctx context.Context, messageid string, in *types.Message, metrics []*types.Metric) error {
 	in = talking.OnRecieveMessage(in)
 	utils.Go(ctx, func() {
 		if err := talking.OnCreateMessage(ctx, messageid, in); err != nil {
@@ -58,7 +85,7 @@ func (talking *GenericRequestor) Execute(ctx context.Context, messageid string, 
 			talking.logger.Errorf("Error in OnMessageMetadata: %v", err)
 		}
 	})
-	if err := talking.assistantExecutor.Talk(ctx, messageid, in, talking); err != nil {
+	if err := talking.assistantExecutor.User(ctx, messageid, in, talking); err != nil {
 		talking.OnError(ctx, messageid)
 		return nil
 	}

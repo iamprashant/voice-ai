@@ -93,8 +93,7 @@ func (conversationService *assistantConversationService) CreateLLMAction(
 		conversationService.logger.Errorf("error while creating message action %v", tx.Error)
 		return nil, tx.Error
 	}
-	_, err := conversationService.ApplyToolMetrics(ctx, auth, assistantConversationId, aca.Id, messageId, metrics)
-	if err != nil {
+	if _, err := conversationService.ApplyToolMetrics(ctx, auth, assistantConversationId, aca.Id, messageId, metrics); err != nil {
 		conversationService.logger.Errorf("error while creating message action metrics %v", tx.Error)
 	}
 	conversationService.logger.Benchmark("assistantService.CreateLLMAction", time.Since(start))

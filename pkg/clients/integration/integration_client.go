@@ -53,39 +53,29 @@ type integrationServiceClient struct {
 }
 
 func NewIntegrationServiceClientGRPC(config *config.AppConfig, logger commons.Logger, redis connectors.RedisConnector) IntegrationServiceClient {
-	logger.Debugf("conntecting to integration client with %s", config.IntegrationHost)
-
-	grpcOpts := []grpc.DialOption{
+	lightConnection, err := grpc.NewClient(config.IntegrationHost, []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithDefaultCallOptions(
-			grpc.MaxCallRecvMsgSize(commons.MaxRecvMsgSize),
-			grpc.MaxCallSendMsgSize(commons.MaxSendMsgSize),
-		),
-	}
-	conn, err := grpc.NewClient(config.IntegrationHost,
-		grpcOpts...)
-
+	}...)
 	if err != nil {
 		logger.Fatalf("Unable to create connection %v", err)
 	}
-
 	return &integrationServiceClient{
 		InternalClient:    clients.NewInternalClient(config, logger, redis),
 		cfg:               config,
 		logger:            logger,
-		cohereClient:      integration_api.NewCohereServiceClient(conn),
-		replicateClient:   integration_api.NewReplicateServiceClient(conn),
-		openAiClient:      integration_api.NewOpenAiServiceClient(conn),
-		anthropicClient:   integration_api.NewAnthropicServiceClient(conn),
-		googleClient:      integration_api.NewGoogleServiceClient(conn),
-		mistralClient:     integration_api.NewMistralServiceClient(conn),
-		togetherAiClient:  integration_api.NewTogetherAiServiceClient(conn),
-		deepInfraCLient:   integration_api.NewDeepInfraServiceClient(conn),
-		voyageAiClient:    integration_api.NewVoyageAiServiceClient(conn),
-		bedrockClient:     integration_api.NewBedrockServiceClient(conn),
-		azureAiClient:     integration_api.NewAzureServiceClient(conn),
-		huggingfaceClient: integration_api.NewHuggingfaceServiceClient(conn),
-		awsbedrockClient:  integration_api.NewBedrockServiceClient(conn),
+		cohereClient:      integration_api.NewCohereServiceClient(lightConnection),
+		replicateClient:   integration_api.NewReplicateServiceClient(lightConnection),
+		openAiClient:      integration_api.NewOpenAiServiceClient(lightConnection),
+		anthropicClient:   integration_api.NewAnthropicServiceClient(lightConnection),
+		googleClient:      integration_api.NewGoogleServiceClient(lightConnection),
+		mistralClient:     integration_api.NewMistralServiceClient(lightConnection),
+		togetherAiClient:  integration_api.NewTogetherAiServiceClient(lightConnection),
+		deepInfraCLient:   integration_api.NewDeepInfraServiceClient(lightConnection),
+		voyageAiClient:    integration_api.NewVoyageAiServiceClient(lightConnection),
+		bedrockClient:     integration_api.NewBedrockServiceClient(lightConnection),
+		azureAiClient:     integration_api.NewAzureServiceClient(lightConnection),
+		huggingfaceClient: integration_api.NewHuggingfaceServiceClient(lightConnection),
+		awsbedrockClient:  integration_api.NewBedrockServiceClient(lightConnection),
 	}
 }
 
@@ -156,7 +146,6 @@ func (client *integrationServiceClient) Chat(c context.Context,
 
 // StreamChat implements IntegrationServiceClient.
 func (client *integrationServiceClient) StreamChat(c context.Context, auth types.SimplePrinciple, providerName string, request *integration_api.ChatRequest) (integration_api.OpenAiService_StreamChatClient, error) {
-
 	switch providerName := strings.ToLower(providerName); providerName {
 	case "openai":
 		return client.openAiClient.StreamChat(client.WithAuth(c, auth), request)

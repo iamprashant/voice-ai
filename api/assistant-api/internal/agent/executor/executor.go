@@ -40,25 +40,17 @@ making it easier to maintain and evolve the codebase over time.
 type AssistantExecutor interface {
 
 	// init after creation to intilize all fields
-	Initialize(
-		ctx context.Context,
-		communication internal_adapter_requests.Communication,
-	) error
+	Initialize(ctx context.Context, communication internal_adapter_requests.Communication) error
 
 	// name
 	Name() string
 
-	// conversation
-	Talk(
-		ctx context.Context,
-		messageid string,
-		msg *types.Message,
-		communcation internal_adapter_requests.Communication,
-	) error
+	// when assistant trigger a message
+	Assistant(ctx context.Context, messageid string, msg *types.Message, communication internal_adapter_requests.Communication) error
+
+	// when a user trigger a message
+	User(ctx context.Context, messageid string, msg *types.Message, communication internal_adapter_requests.Communication) error
 
 	// disconnect
-	Close(
-		ctx context.Context,
-		communcation internal_adapter_requests.Communication,
-	) error
+	Close(ctx context.Context, communication internal_adapter_requests.Communication) error
 }

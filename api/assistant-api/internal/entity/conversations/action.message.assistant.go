@@ -57,15 +57,20 @@ func (acm *AssistantConversationAction) ResponseMessage() *protos.Message {
 
 func (acm *AssistantConversationAction) SetLLMCall(in, out *types.Message) {
 	acm.ActionType = type_enums.ACTION_LLM_CALL
-	acm.Request = map[string]interface{}{
-		"role":      in.GetRole(),
-		"contents":  in.GetContents(),
-		"toolCalls": in.GetToolCalls(),
+	if in != nil {
+		acm.Request = map[string]interface{}{
+			"role":      in.GetRole(),
+			"contents":  in.GetContents(),
+			"toolCalls": in.GetToolCalls(),
+		}
 	}
-	acm.Response = map[string]interface{}{
-		"role":      out.GetRole(),
-		"contents":  out.GetContents(),
-		"toolCalls": out.GetToolCalls(),
+
+	if out != nil {
+		acm.Response = map[string]interface{}{
+			"role":      out.GetRole(),
+			"contents":  out.GetContents(),
+			"toolCalls": out.GetToolCalls(),
+		}
 	}
 }
 
