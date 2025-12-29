@@ -2,6 +2,7 @@ package internal_transformer_factory
 
 import (
 	"context"
+	"fmt"
 
 	internal_transformer "github.com/rapidaai/api/assistant-api/internal/transformer"
 	internal_transformer_assemblyai "github.com/rapidaai/api/assistant-api/internal/transformer/assembly-ai"
@@ -60,7 +61,7 @@ func GetTextToSpeechTransformer(
 	case ELEVENLABS:
 		return internal_transformer_elevenlabs.NewElevenlabsTextToSpeech(ctx, logger, credential, opts)
 	default:
-		return internal_transformer_deepgram.NewDeepgramTextToSpeech(ctx, logger, credential, opts)
+		return nil, fmt.Errorf("illegal text to speech idenitfier")
 	}
 }
 
@@ -88,6 +89,6 @@ func GetSpeechToTextTransformer(at AudioTransformer,
 	case CARTESIA:
 		return internal_transformer_cartesia.NewCartesiaSpeechToText(ctx, logger, credential, opts)
 	default:
-		return internal_transformer_deepgram.NewDeepgramSpeechToText(ctx, logger, credential, opts)
+		return nil, fmt.Errorf("illegal speech to text idenitfier")
 	}
 }

@@ -9,7 +9,8 @@ import (
 	"sync"
 
 	"github.com/gorilla/websocket"
-	internal_streamers "github.com/rapidaai/api/assistant-api/internal/streamers"
+	internal_audio "github.com/rapidaai/api/assistant-api/internal/audio"
+	streamers "github.com/rapidaai/api/assistant-api/internal/streamers"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/protos"
 )
@@ -48,7 +49,7 @@ func NewExotelWebsocketStreamer(
 	assistantId uint64,
 	version string,
 	conversationId uint64,
-) internal_streamers.Streamer {
+) streamers.Streamer {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &exotelWebsocketStreamer{
 		logger:     logger,
@@ -97,31 +98,50 @@ func (exotel *exotelWebsocketStreamer) Recv() (*protos.AssistantMessagingRequest
 		return nil, nil
 	}
 
-	if exotel.streamSid == "" && mediaEvent.StreamSid != "" {
-		exotel.streamSid = mediaEvent.StreamSid
-		exotel.logger.Debug("Captured Exotel streamSid", "streamSid", exotel.streamSid)
-	}
 	switch mediaEvent.Event {
+	case "connected":
+		return exotel.handleConnectEvent(mediaEvent)
 	case "start":
+		exotel.handleStartEvent(mediaEvent)
 		return nil, nil
-
 	case "media":
 		return exotel.handleMediaEvent(mediaEvent)
-
 	case "dtmf":
-		// Handle DTMF if needed
 		return nil, nil
-
 	case "stop":
-		// exotel.logger.Info("Exotel stream stopped", "reason", mediaEvent.Stop.Reason)
 		exotel.cancelFunc()
 		return nil, io.EOF
-
 	default:
 		exotel.logger.Warn("Unhandled Exotel event", "event", mediaEvent.Event)
 		return nil, nil
 	}
 }
+
+// start event contains streamSid to be used for subsequent media messages
+func (exotel *exotelWebsocketStreamer) handleStartEvent(mediaEvent ExotelMediaEvent) {
+	exotel.streamSid = mediaEvent.StreamSid
+}
+
+// when exotel is connected then connect the assistant
+func (exotel *exotelWebsocketStreamer) handleConnectEvent(mediaEvent ExotelMediaEvent) (*protos.AssistantMessagingRequest, error) {
+	return &protos.AssistantMessagingRequest{
+		Request: &protos.AssistantMessagingRequest_Configuration{
+			Configuration: &protos.AssistantConversationConfiguration{
+				AssistantConversationId: exotel.assistantConversationId,
+				Assistant: &protos.AssistantDefinition{
+					AssistantId: exotel.assistant.AssistantId,
+					Version:     "latest",
+				},
+				InputConfig: &protos.StreamConfig{
+					Audio: internal_audio.NewLinear8khzMonoAudioConfig(),
+				},
+				OutputConfig: &protos.StreamConfig{
+					Audio: internal_audio.NewLinear8khzMonoAudioConfig(),
+				},
+			},
+		}}, nil
+}
+
 func (exotel *exotelWebsocketStreamer) handleMediaEvent(mediaEvent ExotelMediaEvent) (*protos.AssistantMessagingRequest, error) {
 	payloadBytes, err := exotel.encoder.DecodeString(mediaEvent.Media.Payload)
 	if err != nil {

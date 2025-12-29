@@ -44,25 +44,12 @@ func NewTalking(
 ) (internal_adapter_requests.Talking, error) {
 
 	return &phoneTalking{
-		logger: logger,
-		GenericRequestor: internal_adapter_request_generic.NewGenericRequestor(
-			ctx,
-			config,
-			logger,
-			utils.PhoneCall,
-			postgres,
-			opensearch,
-			redis,
-			storage,
-			streamer,
-		),
+		logger:           logger,
+		GenericRequestor: internal_adapter_request_generic.NewGenericRequestor(ctx, config, logger, utils.PhoneCall, postgres, opensearch, redis, storage, streamer),
 	}, nil
 }
 
-func (talking *phoneTalking) Talk(
-	ctx context.Context,
-	auth types.SimplePrinciple,
-	identifier string) error {
+func (talking *phoneTalking) Talk(ctx context.Context, auth types.SimplePrinciple, identifier string) error {
 	talking.StartedAt = time.Now()
 	var initialized = false
 	for {
@@ -95,7 +82,7 @@ func (talking *phoneTalking) Talk(
 				}
 			}
 		case *protos.AssistantMessagingRequest_Configuration:
-			talking.logger.Debugf("connection changed for assistant")
+			// talking.logger.Debugf("connection changed for assistant")
 			initialized = false
 			if err := talking.Connect(ctx, auth, identifier, msg.Configuration); err != nil {
 				talking.logger.Errorf("unexpected error while connect assistant, might be problem in configuration %+v", err)

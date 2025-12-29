@@ -148,6 +148,7 @@ func (spk *GenericRequestor) ConnectSpeaker(ctx context.Context, audioOutConfig 
 			return
 		}
 
+		spk.logger.Debugf("creating output audio transformer with options %+v and name %v", opts, outputTransformer.GetName())
 		atransformer, err := internal_adapter_transformer_factory.GetTextToSpeechTransformer(internal_adapter_transformer_factory.AudioTransformer(outputTransformer.GetName()), context, spk.logger, credential, opts)
 		if err != nil {
 			spk.logger.Errorf("unable to create input audio transformer with error %v", err)

@@ -18,7 +18,6 @@ import (
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
-	"github.com/rapidaai/protos"
 )
 
 func (cApi *ConversationApi) UnviersalCallback(c *gin.Context) {
@@ -189,7 +188,7 @@ func (cApi *ConversationApi) CallTalker(c *gin.Context) {
 		cApi.logger.Errorf("illegal while upgrading vonage talker with error %v", err)
 		return
 	}
-	cApi.logger.Benchmark("ConversationApi.VonageCallTalker.upgradeConnection", time.Since(start))
+	cApi.logger.Benchmark("ConversationApi.CallTalker.upgradeConnection", time.Since(start))
 
 	auth, isAuthenticated := types.GetAuthPrinciple(c)
 	if !isAuthenticated {
@@ -198,7 +197,7 @@ func (cApi *ConversationApi) CallTalker(c *gin.Context) {
 		return
 	}
 
-	cApi.logger.Benchmark("conversationapi.VonageCallTalker.GetAuthPrinciple", time.Since(start))
+	cApi.logger.Benchmark("conversationapi.CallTalker.GetAuthPrinciple", time.Since(start))
 	// Extract the client source from the stream context
 	assistantId, err := strconv.ParseUint(c.Param("assistantId"), 10, 64)
 	if err != nil {
@@ -245,25 +244,10 @@ func (cApi *ConversationApi) CallTalker(c *gin.Context) {
 		cApi.logger.Errorf("illegal to get talker %v", err)
 		return
 	}
-	cidentifier := internal_factory.
-		Identifier(utils.PhoneCall, c, auth, identifier)
-
-	err = talker.Connect(
-		c, auth, cidentifier, &protos.AssistantConversationConfiguration{
-			AssistantConversationId: conversationId,
-			Assistant: &protos.AssistantDefinition{
-				AssistantId: assistantId,
-				Version:     "latest",
-			},
-		},
-	)
-	if err != nil {
-		cApi.logger.Errorf("illegal to connect with talker %v", err)
-		return
-	}
 	talker.Talk(
 		c,
 		auth,
-		cidentifier,
+		internal_factory.
+			Identifier(utils.PhoneCall, c, auth, identifier),
 	)
 }

@@ -71,6 +71,7 @@ func (rt *sarvamTextToSpeech) Initialize() error {
 		return err
 	}
 
+	rt.logger.Debugf("sarvam-tts: connection established")
 	go rt.textToSpeechCallback(rt.ctx)
 	return nil
 }

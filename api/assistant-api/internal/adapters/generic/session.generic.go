@@ -105,6 +105,7 @@ func (talking *GenericRequestor) Connect(ctx context.Context, iAuth types.Simple
 	}
 	talking.SetAuth(iAuth)
 	assistant, err := talking.GetAssistant(iAuth, req.Assistant.AssistantId, req.Assistant.Version)
+
 	if err != nil {
 		talking.logger.Errorf("unable to initialize assistant %+v", err)
 		return err
@@ -292,6 +293,9 @@ func (talking *GenericRequestor) OnResumeSession(ctx context.Context, inCfg, str
 			}
 			// changing to audio mode
 			talking.messaging.SwitchOutputMode(type_enums.AudioMode)
+		}
+		if err := talking.OnGreet(ctx); err != nil {
+			talking.logger.Errorf("unable to greet user with error %+v", err)
 		}
 		return nil
 
