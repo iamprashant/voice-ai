@@ -147,6 +147,12 @@ func (talking *GenericRequestor) OnCreateSession(ctx context.Context, inCfg, str
 	if audioOutConfig != nil {
 		talking.messaging.SwitchOutputMode(type_enums.AudioMode)
 	}
+	//
+	if err := talking.assistantExecutor.Initialize(ctx, talking); err != nil {
+		talking.logger.Tracef(ctx, "unable to init executor %+v", err)
+		// break the flow as there is no one to respond
+		return err
+	}
 
 	if err := talking.Notify(ctx,
 		&protos.AssistantConversationConfiguration{
@@ -161,13 +167,6 @@ func (talking *GenericRequestor) OnCreateSession(ctx context.Context, inCfg, str
 		talking.logger.Errorf("Error sending configuration: %v\n", err)
 	}
 
-	// do the conversation
-	utils.Go(ctx, func() {
-		if err := talking.assistantExecutor.Initialize(ctx, talking); err != nil {
-			talking.logger.Tracef(ctx, "unable to init executor %+v", err)
-		}
-	})
-	//  voice recording enabled before voice in or out
 	utils.Go(ctx, func() {
 		if audioInConfig != nil && audioOutConfig != nil {
 			if err := talking.recorder.Initialize(audioInConfig, audioOutConfig); err != nil {
@@ -245,6 +244,10 @@ func (talking *GenericRequestor) OnResumeSession(ctx context.Context, inCfg, str
 		talking.messaging.SwitchOutputMode(type_enums.AudioMode)
 	}
 
+	if err := talking.assistantExecutor.Initialize(ctx, talking); err != nil {
+		talking.logger.Tracef(ctx, "unable to init executor %+v", err)
+	}
+
 	if err := talking.Notify(ctx, &protos.AssistantConversationConfiguration{
 		AssistantConversationId: conversation.Id,
 		Assistant: &protos.AssistantDefinition{
@@ -255,12 +258,6 @@ func (talking *GenericRequestor) OnResumeSession(ctx context.Context, inCfg, str
 	}); err != nil {
 		talking.logger.Errorf("Error sending configuration: %v\n", err)
 	}
-
-	utils.Go(ctx, func() {
-		if err := talking.assistantExecutor.Initialize(ctx, talking); err != nil {
-			talking.logger.Tracef(ctx, "unable to init executor %+v", err)
-		}
-	})
 
 	utils.Go(ctx, func() {
 		if audioOutConfig != nil && audioInConfig != nil {

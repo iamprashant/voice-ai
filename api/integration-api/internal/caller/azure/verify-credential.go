@@ -7,14 +7,14 @@ import (
 	"github.com/openai/openai-go"
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	"github.com/rapidaai/pkg/commons"
-	integration_api "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
 type verifyCredentialCaller struct {
 	AzureAi
 }
 
-func NewVerifyCredentialCaller(logger commons.Logger, credential *integration_api.Credential) internal_callers.Verifier {
+func NewVerifyCredentialCaller(logger commons.Logger, credential *protos.Credential) internal_callers.Verifier {
 	return &verifyCredentialCaller{
 		AzureAi: azure(logger, credential),
 	}
