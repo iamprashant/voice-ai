@@ -41,21 +41,28 @@ func (a *assistantExecutor) Name() string {
 }
 
 // Talk implements internal_executors.AssistantExecutor.
-func (a *assistantExecutor) Talk(ctx context.Context, messageid string, msg *types.Message, communcation internal_adapter_requests.Communication) error {
+func (a *assistantExecutor) User(ctx context.Context, messageid string, msg *types.Message, communication internal_adapter_requests.Communication) error {
 	if a.executor == nil {
 		return errors.New("assistant executor not initialized")
 	}
-	return a.executor.Talk(ctx, messageid, msg, communcation)
+	return a.executor.User(ctx, messageid, msg, communication)
+}
+
+func (a *assistantExecutor) Assistant(ctx context.Context, messageid string, msg *types.Message, communication internal_adapter_requests.Communication) error {
+	if a.executor == nil {
+		return errors.New("assistant executor not initialized")
+	}
+	return a.executor.Assistant(ctx, messageid, msg, communication)
 }
 
 func (a *assistantExecutor) Close(
 	ctx context.Context,
-	communcation internal_adapter_requests.Communication,
+	communication internal_adapter_requests.Communication,
 ) error {
 	if a.executor == nil {
 		return errors.New("assistant executor not initialized")
 	}
-	return a.executor.Close(ctx, communcation)
+	return a.executor.Close(ctx, communication)
 }
 
 func NewAssistantExecutor(

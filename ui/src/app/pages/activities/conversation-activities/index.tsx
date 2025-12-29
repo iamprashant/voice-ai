@@ -425,24 +425,27 @@ export const ListingPage: FC<{}> = ({}) => {
                   <SourceIndicator source={row.getSource()} />
                 </TableCell>
               )}
-              {conversationLogAction.visibleColumn('request') &&
-                row.getRequest() && (
-                  <TableCell>
+
+              {conversationLogAction.visibleColumn('request') && (
+                <TableCell>
+                  {row.getRequest() ? (
                     <p className="line-clamp-2">
                       {toContentText(row.getRequest()?.getContentsList())}
                     </p>
-                  </TableCell>
-                )}
-              {conversationLogAction.visibleColumn('response') &&
-              row.getResponse() ? (
-                <TableCell>
-                  <p className="line-clamp-2">
-                    {toContentText(row.getResponse()?.getContentsList())}
-                  </p>
+                  ) : (
+                    <p className="line-clamp-2 opacity-65">Not available</p>
+                  )}
                 </TableCell>
-              ) : (
+              )}
+              {conversationLogAction.visibleColumn('response') && (
                 <TableCell>
-                  <p className="line-clamp-2 opacity-65">Not available</p>
+                  {row.getResponse() ? (
+                    <p className="line-clamp-2">
+                      {toContentText(row.getResponse()?.getContentsList())}
+                    </p>
+                  ) : (
+                    <p className="line-clamp-2 opacity-65">Not available</p>
+                  )}
                 </TableCell>
               )}
               {conversationLogAction.visibleColumn('created_date') && (

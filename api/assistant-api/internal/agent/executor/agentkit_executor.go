@@ -173,8 +173,12 @@ func (executor *agentkitExecutor) TalkListener(ctx context.Context, communicatio
 	return nil
 }
 
+func (executor *agentkitExecutor) Assistant(ctx context.Context, messageid string, msg *types.Message, communication internal_adapter_requests.Communication) error {
+	return nil
+}
+
 // Talk implements AssistantExecutor.
-func (executor *agentkitExecutor) Talk(ctx context.Context, messageid string, msg *types.Message, communcation internal_adapter_requests.Communication) error {
+func (executor *agentkitExecutor) User(ctx context.Context, messageid string, msg *types.Message, communication internal_adapter_requests.Communication) error {
 	executor.logger.Debugf("sending communication request")
 	if executor.talker != nil {
 		executor.talker.Send(&protos.AgentTalkRequest{

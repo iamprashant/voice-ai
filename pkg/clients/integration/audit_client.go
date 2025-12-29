@@ -12,24 +12,24 @@ import (
 
 	"github.com/rapidaai/config"
 	"github.com/rapidaai/pkg/clients"
-	commons "github.com/rapidaai/pkg/commons"
+	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	"github.com/rapidaai/pkg/types"
-	integration_api "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 type AuditServiceClient interface {
-	GetAuditLog(c context.Context, auth types.SimplePrinciple, auditId uint64) (*integration_api.GetAuditLogResponse, error)
-	GetAllAuditLog(c context.Context, auth types.SimplePrinciple, req *integration_api.GetAllAuditLogRequest) (*integration_api.GetAllAuditLogResponse, error)
+	GetAuditLog(c context.Context, auth types.SimplePrinciple, auditId uint64) (*protos.GetAuditLogResponse, error)
+	GetAllAuditLog(c context.Context, auth types.SimplePrinciple, req *protos.GetAllAuditLogRequest) (*protos.GetAllAuditLogResponse, error)
 }
 
 type auditServiceClient struct {
 	clients.InternalClient
 	cfg                *config.AppConfig
 	logger             commons.Logger
-	auditLoggingClient integration_api.AuditLoggingServiceClient
+	auditLoggingClient protos.AuditLoggingServiceClient
 }
 
 func NewAuditServiceClient(config *config.AppConfig, logger commons.Logger, redis connectors.RedisConnector) AuditServiceClient {
@@ -52,14 +52,14 @@ func NewAuditServiceClient(config *config.AppConfig, logger commons.Logger, redi
 		InternalClient:     clients.NewInternalClient(config, logger, redis),
 		cfg:                config,
 		logger:             logger,
-		auditLoggingClient: integration_api.NewAuditLoggingServiceClient(conn),
+		auditLoggingClient: protos.NewAuditLoggingServiceClient(conn),
 	}
 }
 
-func (client *auditServiceClient) GetAuditLog(c context.Context, auth types.SimplePrinciple, auditId uint64) (*integration_api.GetAuditLogResponse, error) {
+func (client *auditServiceClient) GetAuditLog(c context.Context, auth types.SimplePrinciple, auditId uint64) (*protos.GetAuditLogResponse, error) {
 	client.logger.Debugf("Calling to get audit log with org and project")
 	start := time.Now()
-	res, err := client.auditLoggingClient.GetAuditLog(client.WithAuth(c, auth), &integration_api.GetAuditLogRequest{
+	res, err := client.auditLoggingClient.GetAuditLog(client.WithAuth(c, auth), &protos.GetAuditLogRequest{
 		Id: auditId,
 	})
 	if err != nil {
@@ -69,7 +69,7 @@ func (client *auditServiceClient) GetAuditLog(c context.Context, auth types.Simp
 	client.logger.Debugf("Benchmarking: auditServiceClient.GetAuditLog time taken %v", time.Since(start))
 	return res, nil
 }
-func (client *auditServiceClient) GetAllAuditLog(c context.Context, auth types.SimplePrinciple, req *integration_api.GetAllAuditLogRequest) (*integration_api.GetAllAuditLogResponse, error) {
+func (client *auditServiceClient) GetAllAuditLog(c context.Context, auth types.SimplePrinciple, req *protos.GetAllAuditLogRequest) (*protos.GetAllAuditLogResponse, error) {
 	client.logger.Debugf("Calling to get audit log with org and project")
 	start := time.Now()
 	res, err := client.auditLoggingClient.GetAllAuditLog(client.WithAuth(c, auth), req)
