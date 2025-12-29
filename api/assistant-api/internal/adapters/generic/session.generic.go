@@ -128,17 +128,24 @@ func (talking *GenericRequestor) Connect(ctx context.Context, iAuth types.Simple
 
 // OnCreateSession initializes a new assistant session, sets up listeners and speakers,
 // starts voice recording, and sends configuration notifications.
-func (talking *GenericRequestor) OnCreateSession(ctx context.Context, inCfg, strmCfg *protos.StreamConfig, assistant *internal_assistant_entity.Assistant, identifier string, customization internal_adapter_requests.Customization,
-) error {
+func (talking *GenericRequestor) OnCreateSession(ctx context.Context, inCfg, strmCfg *protos.StreamConfig, assistant *internal_assistant_entity.Assistant, identifier string, customization internal_adapter_requests.Customization) error {
 	ctx, span, err := talking.Tracer().StartSpan(ctx, utils.AssistantCreateConversationStage)
 	defer span.EndSpan(ctx, utils.AssistantCreateConversationStage)
 
-	//
-	//
 	conversation, err := talking.BeginConversation(talking.Auth(), assistant, type_enums.DIRECTION_INBOUND, identifier, customization.GetArgs(), customization.GetMetadata(), customization.GetOptions())
 	if err != nil {
 		talking.logger.Errorf("unable to begin convsersation %+v", err)
 		return err
+	}
+
+	audioInConfig := inCfg.GetAudio()
+	if audioInConfig != nil {
+		talking.messaging.SwitchInputMode(type_enums.AudioMode)
+	}
+
+	audioOutConfig := strmCfg.GetAudio()
+	if audioOutConfig != nil {
+		talking.messaging.SwitchOutputMode(type_enums.AudioMode)
 	}
 
 	if err := talking.Notify(ctx,
@@ -162,26 +169,15 @@ func (talking *GenericRequestor) OnCreateSession(ctx context.Context, inCfg, str
 	})
 	//  voice recording enabled before voice in or out
 	utils.Go(ctx, func() {
-
-		audioInConfig := inCfg.GetAudio()
-		if audioInConfig == nil {
-			talking.logger.Errorf("audio in config is nil, recorder is not intialized")
-			return
-		}
-
-		audioOutConfig := strmCfg.GetAudio()
-		if audioOutConfig == nil {
-			talking.logger.Errorf("audio out config is nil, recorder is not intialized")
-			return
-		}
-
-		if err := talking.recorder.Initialize(audioInConfig, audioOutConfig); err != nil {
-			talking.logger.Tracef(ctx, "unable to init recorder %+v", err)
+		if audioInConfig != nil && audioOutConfig != nil {
+			if err := talking.recorder.Initialize(audioInConfig, audioOutConfig); err != nil {
+				talking.logger.Tracef(ctx, "unable to init recorder %+v", err)
+			}
 		}
 	})
 
 	utils.Go(ctx, func() {
-		if audioOutConfig := strmCfg.GetAudio(); audioOutConfig != nil {
+		if audioOutConfig != nil {
 			if err := talking.ConnectSpeaker(ctx, audioOutConfig); err != nil {
 				talking.logger.Tracef(ctx, "unable to connect speaker %+v", err)
 			}
@@ -194,7 +190,7 @@ func (talking *GenericRequestor) OnCreateSession(ctx context.Context, inCfg, str
 
 	// establish listener
 	utils.Go(ctx, func() {
-		if audioInConfig := inCfg.GetAudio(); audioInConfig != nil {
+		if audioInConfig != nil {
 			if err := talking.ConnectListener(ctx, audioInConfig); err != nil {
 				talking.logger.Tracef(ctx, "unable to init analyzer %+v", err)
 			}
@@ -239,6 +235,16 @@ func (talking *GenericRequestor) OnResumeSession(ctx context.Context, inCfg, str
 		return err
 	}
 
+	audioInConfig := inCfg.GetAudio()
+	if audioInConfig != nil {
+		talking.messaging.SwitchInputMode(type_enums.AudioMode)
+	}
+
+	audioOutConfig := strmCfg.GetAudio()
+	if audioOutConfig != nil {
+		talking.messaging.SwitchOutputMode(type_enums.AudioMode)
+	}
+
 	if err := talking.Notify(ctx, &protos.AssistantConversationConfiguration{
 		AssistantConversationId: conversation.Id,
 		Assistant: &protos.AssistantDefinition{
@@ -257,36 +263,27 @@ func (talking *GenericRequestor) OnResumeSession(ctx context.Context, inCfg, str
 	})
 
 	utils.Go(ctx, func() {
-
-		audioInConfig := inCfg.GetAudio()
-		if audioInConfig == nil {
-			talking.logger.Errorf("audio in config is nil, recorder is not intialized")
-			return
-		}
-
-		audioOutConfig := strmCfg.GetAudio()
-		if audioOutConfig == nil {
-			talking.logger.Errorf("audio out config is nil, recorder is not intialized")
-			return
-		}
-
-		if err := talking.recorder.Initialize(audioInConfig, audioOutConfig); err != nil {
-			talking.logger.Tracef(ctx, "unable to init recorder %+v", err)
+		if audioOutConfig != nil && audioInConfig != nil {
+			if err := talking.recorder.Initialize(audioInConfig, audioOutConfig); err != nil {
+				talking.logger.Tracef(ctx, "unable to init recorder %+v", err)
+			}
 		}
 	})
 
 	utils.Go(ctx, func() {
-		if audioOutConfig := strmCfg.GetAudio(); audioOutConfig != nil {
+		if audioOutConfig != nil {
 			if err := talking.ConnectSpeaker(ctx, audioOutConfig); err != nil {
 				talking.logger.Tracef(ctx, "unable to connect speaker %+v", err)
 			}
+			// changing to audio mode
+			talking.messaging.SwitchOutputMode(type_enums.AudioMode)
 		}
 
 	})
 
 	// establish listener
 	utils.Go(ctx, func() {
-		if audioInConfig := inCfg.GetAudio(); audioInConfig != nil {
+		if audioInConfig != nil {
 			if err := talking.ConnectListener(ctx, audioInConfig); err != nil {
 				talking.logger.Tracef(ctx, "unable to init analyzer %+v", err)
 			}

@@ -90,7 +90,7 @@ func (io *GenericRequestor) OnInterrupt(ctx context.Context, source string) erro
 		if err := io.messaging.Transition(internal_adapter_request_customizers.Interrupted); err != nil {
 			return nil
 		}
-		if io.messaging.GetMode().Audio() {
+		if io.messaging.GetInputMode().Audio() {
 			io.recorder.Interrupt()
 		}
 		io.Notify(ctx,
@@ -102,7 +102,7 @@ func (io *GenericRequestor) OnInterrupt(ctx context.Context, source string) erro
 		if err := io.messaging.Transition(internal_adapter_request_customizers.Interrupt); err != nil {
 			return nil
 		}
-		if io.messaging.GetMode().Audio() {
+		if io.messaging.GetInputMode().Audio() {
 			io.recorder.Interrupt()
 		}
 		io.Notify(ctx, &protos.AssistantConversationInterruption{
@@ -129,19 +129,15 @@ func (io *GenericRequestor) Input(message *protos.AssistantConversationUserMessa
 }
 
 func (io *GenericRequestor) InputAudio(ctx context.Context, in []byte) error {
-	io.messaging.SwitchMode(type_enums.AudioMode)
-	v, _ := io.ListenAudio(ctx, in)
-	utils.Go(context.Background(), func() {
-		io.recorder.User(v)
-	})
+	if v, err := io.ListenAudio(ctx, in); err != nil {
+		utils.Go(context.Background(), func() {
+			io.recorder.User(v)
+		})
+	}
 	return nil
 }
 
 func (io *GenericRequestor) InputText(ctx context.Context, msg string) error {
-
-	// changing to text mode
-	io.messaging.SwitchMode(type_enums.TextMode)
-
 	// mark it interrupted
 	io.messaging.Transition(internal_adapter_request_customizers.Interrupted)
 	//
@@ -238,7 +234,7 @@ func (io *GenericRequestor) Output(ctx context.Context, contextId string, msg *t
 
 	// Handle completion logic
 	if completed {
-		if io.messaging.GetMode().Audio() {
+		if io.messaging.GetInputMode().Audio() {
 			io.FinishSpeaking(contextId)
 		}
 
@@ -271,7 +267,7 @@ func (io *GenericRequestor) Output(ctx context.Context, contextId string, msg *t
 	}
 
 	// Handle audio mode logic if not completed
-	if io.messaging.GetMode().Audio() {
+	if io.messaging.GetInputMode().Audio() {
 		if err := io.Speak(contextId, aMsg); err != nil {
 			io.logger.Errorf("unable to speak for the user, please check the config error = %+v", err)
 		}
