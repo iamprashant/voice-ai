@@ -13,7 +13,7 @@ import (
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
-	protos "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
 type largeLanguageCaller struct {
@@ -267,7 +267,7 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 	completionsOptions := llc.ChatCompletionOptions(options)
 	completionsOptions.Messages = llc.BuildHistory(allMessages)
 	options.AIOptions.PreHook(utils.ToJson(completionsOptions))
-	llc.logger.Benchmark("Openai.llm.GetChatCompletion.llmRequestPrepare", time.Since(start))
+	llc.logger.Benchmark("azure.llm.GetChatCompletion.llmRequestPrepare", time.Since(start))
 
 	// Get streaming response
 	resp := client.Chat.Completions.NewStreaming(ctx, completionsOptions)

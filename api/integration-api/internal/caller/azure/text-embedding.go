@@ -12,14 +12,14 @@ import (
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
-	integration_api "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
 type embeddingCaller struct {
 	AzureAi
 }
 
-func NewEmbeddingCaller(logger commons.Logger, credential *integration_api.Credential) internal_callers.EmbeddingCaller {
+func NewEmbeddingCaller(logger commons.Logger, credential *protos.Credential) internal_callers.EmbeddingCaller {
 	return &embeddingCaller{
 		AzureAi: azure(logger, credential),
 	}
@@ -56,7 +56,7 @@ func (ec *embeddingCaller) GetEmbeddingNewParams(opts *internal_callers.Embeddin
 func (ec *embeddingCaller) GetEmbedding(ctx context.Context,
 	// providerModel string,
 	content map[int32]string,
-	options *internal_callers.EmbeddingOptions) ([]*integration_api.Embedding, types.Metrics, error) {
+	options *internal_callers.EmbeddingOptions) ([]*protos.Embedding, types.Metrics, error) {
 
 	mertics := internal_caller_metrics.NewMetricBuilder(options.RequestId)
 	mertics.OnStart()
@@ -96,7 +96,7 @@ func (ec *embeddingCaller) GetEmbedding(ctx context.Context,
 		return nil, mertics.Build(), err
 	}
 	mertics.OnSuccess()
-	output := make([]*integration_api.Embedding, len(resp.Data))
+	output := make([]*protos.Embedding, len(resp.Data))
 
 	// all the usages into the metrics
 	mertics.OnAddMetrics(&types.Metric{
@@ -111,7 +111,7 @@ func (ec *embeddingCaller) GetEmbedding(ctx context.Context,
 
 	for _, embeddingData := range resp.Data {
 		// preserve the index of the chunk
-		output[embeddingData.Index] = &integration_api.Embedding{
+		output[embeddingData.Index] = &protos.Embedding{
 			Index:     int32(embeddingData.Index),
 			Embedding: embeddingData.Embedding,
 			// Base64:    embeddingData.EmbeddingBase64,

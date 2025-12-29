@@ -10,7 +10,7 @@ import (
 
 	internal_adapter_telemetry "github.com/rapidaai/api/assistant-api/internal/telemetry"
 	"github.com/rapidaai/pkg/utils"
-	protos "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
 // sendMessage is a helper function that centralizes the logic for sending a response via the stream.
@@ -22,24 +22,20 @@ func (n *GenericRequestor) sendMessage(ctx context.Context, response *protos.Ass
 }
 
 // notify to websocket when any event
-func (n *GenericRequestor) Notify(
-	ctx context.Context,
-	actionData interface{},
-) error {
+func (n *GenericRequestor) Notify(ctx context.Context, actionData interface{}) error {
 	// Process actions based on their type
 	ctx, span, _ := n.Tracer().StartSpan(ctx, utils.AssistantNotifyStage)
 	defer span.EndSpan(ctx, utils.AssistantNotifyStage)
 	//
+
 	switch actionData := actionData.(type) {
 	case *protos.AssistantConversationUserMessage:
-		utils.Go(ctx, func() {
-			n.sendMessage(ctx, &protos.AssistantMessagingResponse{
-				Code:    200,
-				Success: true,
-				Data: &protos.AssistantMessagingResponse_User{
-					User: actionData,
-				},
-			})
+		n.sendMessage(ctx, &protos.AssistantMessagingResponse{
+			Code:    200,
+			Success: true,
+			Data: &protos.AssistantMessagingResponse_User{
+				User: actionData,
+			},
 		})
 		span.AddAttributes(ctx,
 			internal_adapter_telemetry.KV{
@@ -70,7 +66,7 @@ func (n *GenericRequestor) Notify(
 
 		return nil
 	case *protos.AssistantConversationAssistantMessage:
-		err := n.sendMessage(ctx, &protos.AssistantMessagingResponse{
+		n.sendMessage(ctx, &protos.AssistantMessagingResponse{
 			Code:    200,
 			Success: true,
 			Data: &protos.AssistantMessagingResponse_Assistant{
@@ -108,9 +104,9 @@ func (n *GenericRequestor) Notify(
 					K: "content", V: internal_adapter_telemetry.StringValue(lt.Text.Content),
 				})
 		}
-		return err
+		return nil
 	case *protos.AssistantConversationMessage:
-		err := n.sendMessage(ctx, &protos.AssistantMessagingResponse{
+		n.sendMessage(ctx, &protos.AssistantMessagingResponse{
 			Code:    200,
 			Success: true,
 			Data: &protos.AssistantMessagingResponse_Message{
@@ -125,16 +121,14 @@ func (n *GenericRequestor) Notify(
 			}, internal_adapter_telemetry.KV{
 				K: "messageId", V: internal_adapter_telemetry.StringValue(actionData.MessageId),
 			})
-		return err
+		return nil
 	case *protos.AssistantConversationInterruption:
-		utils.Go(ctx, func() {
-			n.sendMessage(ctx, &protos.AssistantMessagingResponse{
-				Code:    200,
-				Success: true,
-				Data: &protos.AssistantMessagingResponse_Interruption{
-					Interruption: actionData,
-				},
-			})
+		n.sendMessage(ctx, &protos.AssistantMessagingResponse{
+			Code:    200,
+			Success: true,
+			Data: &protos.AssistantMessagingResponse_Interruption{
+				Interruption: actionData,
+			},
 		})
 		span.AddAttributes(ctx,
 			internal_adapter_telemetry.KV{
@@ -144,7 +138,6 @@ func (n *GenericRequestor) Notify(
 			}, internal_adapter_telemetry.KV{
 				K: "messageId", V: internal_adapter_telemetry.StringValue(actionData.Id),
 			})
-
 	case *protos.AssistantConversationConfiguration:
 		// Handle configuration actions
 		utils.Go(ctx, func() {
@@ -166,12 +159,10 @@ func (n *GenericRequestor) Notify(
 			},
 		)
 	case *protos.AssistantMessagingResponse_Action:
-		utils.Go(ctx, func() {
-			n.sendMessage(ctx, &protos.AssistantMessagingResponse{
-				Code:    200,
-				Success: true,
-				Data:    actionData,
-			})
+		n.sendMessage(ctx, &protos.AssistantMessagingResponse{
+			Code:    200,
+			Success: true,
+			Data:    actionData,
 		})
 		span.AddAttributes(
 			ctx,
