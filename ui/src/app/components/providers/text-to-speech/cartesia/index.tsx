@@ -79,7 +79,7 @@ export const ConfigureCartesiaTextToSpeech: React.FC<{
           <CustomValueDropdown
             searchable
             className="bg-light-background max-w-full dark:bg-gray-950"
-            currentValue={CARTESIA_VOICE().find(
+            currentValue={filteredVoices.find(
               x => x.id === getParamValue('speak.voice.id'),
             )}
             setValue={(v: { id: string }) => {
@@ -108,6 +108,8 @@ export const ConfigureCartesiaTextToSpeech: React.FC<{
             }}
             onAddCustomValue={vl => {
               updateParameter('speak.voice.id', vl);
+              //   adding to display
+              filteredVoices.push({ id: vl, name: vl });
             }}
           />
           <ILinkBorderButton

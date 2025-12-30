@@ -1,6 +1,5 @@
 import { Metadata } from '@rapidaai/react';
 import { SetMetadata } from '@/utils/metadata';
-import { AZURE_FOUNDRY_TEXT_MODEL } from '@/providers';
 
 export const GetAzureTextProviderDefaultOptions = (
   current: Metadata[],
@@ -31,14 +30,8 @@ export const GetAzureTextProviderDefaultOptions = (
     if (metadata) mtds.push(metadata);
   };
 
-  addMetadata('model.id', AZURE_FOUNDRY_TEXT_MODEL()[0].id, value =>
-    AZURE_FOUNDRY_TEXT_MODEL().some(model => model.id === value),
-  );
-
-  // Add validation for model.name
-  addMetadata('model.name', AZURE_FOUNDRY_TEXT_MODEL()[0].name, value =>
-    AZURE_FOUNDRY_TEXT_MODEL().some(model => model.name === value),
-  );
+  addMetadata('model.id');
+  addMetadata('model.name');
   addMetadata('model.frequency_penalty');
   addMetadata('model.temperature');
   addMetadata('model.top_p');
@@ -66,13 +59,8 @@ export const ValidateAzureTextProviderDefaultOptions = (
     return 'Please check and provide a valid credentials for azure openai';
   }
   const modelIdOption = options.find(opt => opt.getKey() === 'model.id');
-  if (
-    !modelIdOption ||
-    !AZURE_FOUNDRY_TEXT_MODEL().some(
-      model => model.id === modelIdOption.getValue(),
-    )
-  ) {
-    return 'Please check and select valid model from dropdown.';
+  if (!modelIdOption) {
+    return 'Please check and select valid model.';
   }
 
   const frequencyPenaltyOption = options.find(

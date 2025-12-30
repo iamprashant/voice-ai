@@ -1,5 +1,4 @@
 import { Metadata } from '@rapidaai/react';
-import { Dropdown } from '@/app/components/dropdown';
 import { FormLabel } from '@/app/components/form-label';
 import { IButton } from '@/app/components/form/button';
 import { FieldSet } from '@/app/components/form/fieldset';
@@ -13,6 +12,7 @@ import { InputHelper } from '@/app/components/input-helper';
 import { Textarea } from '@/app/components/form/textarea';
 import { Select } from '@/app/components/form/select';
 import { AZURE_FOUNDRY_TEXT_MODEL } from '@/providers';
+import { CustomValueDropdown } from '@/app/components/dropdown/custom-value-dropdown';
 export {
   GetAzureTextProviderDefaultOptions,
   ValidateAzureTextProviderDefaultOptions,
@@ -21,6 +21,10 @@ export const ConfigureAzureTextProviderModel: React.FC<{
   onParameterChange: (parameters: Metadata[]) => void;
   parameters: Metadata[] | null;
 }> = ({ onParameterChange, parameters }) => {
+  //
+  const textModel = AZURE_FOUNDRY_TEXT_MODEL();
+
+  //
   const getParamValue = useCallback(
     (key: string) => {
       return parameters?.find(p => p.getKey() === key)?.getValue() ?? '';
@@ -55,13 +59,23 @@ export const ConfigureAzureTextProviderModel: React.FC<{
 
   return (
     <div className="flex-1 flex items-center divide-x">
-      <Dropdown
+      <CustomValueDropdown
+        customValue
         className="max-w-full focus-within:border-none! focus-within:outline-hidden! border-none!"
-        currentValue={AZURE_FOUNDRY_TEXT_MODEL().find(
-          x =>
-            x.id === getParamValue('model.id') &&
-            x.name === getParamValue('model.name'),
-        )}
+        currentValue={
+          textModel.find(
+            x =>
+              x.id === getParamValue('model.id') &&
+              x.name === getParamValue('model.name'),
+          ) ||
+          // Fallback mechanism: If model.id or model.name is undefined, create a default placeholder
+          (getParamValue('model.id') && getParamValue('model.name')
+            ? {
+                id: getParamValue('model.id'),
+                name: getParamValue('model.name'),
+              }
+            : undefined)
+        }
         setValue={v => {
           const updatedParams = [...(parameters || [])];
           const newIdParam = new Metadata();
@@ -79,7 +93,25 @@ export const ConfigureAzureTextProviderModel: React.FC<{
           filteredParams.push(newIdParam, newNameParam);
           onParameterChange(filteredParams);
         }}
-        allValue={AZURE_FOUNDRY_TEXT_MODEL()}
+        onAddCustomValue={vl => {
+          const updatedParams = [...(parameters || [])];
+          const newIdParam = new Metadata();
+          newIdParam.setKey('model.id');
+          newIdParam.setValue(vl);
+
+          const newNameParam = new Metadata();
+          newNameParam.setKey('model.name');
+          newNameParam.setValue(vl);
+
+          // Remove existing parameters if they exist
+          const filteredParams = updatedParams.filter(
+            p => p.getKey() !== 'model.id' && p.getKey() !== 'model.name',
+          );
+          filteredParams.push(newIdParam, newNameParam);
+          onParameterChange(filteredParams);
+          textModel.push({ name: vl, id: vl });
+        }}
+        allValue={textModel}
         placeholder="Select model"
         option={c => {
           return (

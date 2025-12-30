@@ -1,50 +1,26 @@
 [
     {
-        "id": "vertexai/gemini-3-pro-preview",
-        "provide": "gemini",
-        "name": "gemini-3-pro-preview",
-        "description": "The best model in the world for multimodal understanding, and our most powerful agentic and vibe-coding model yet.",
-        "human_name": "Gemini 3 Pro",
-        "category": "text"
+        "id": "publishers/google/models/gemini-3-pro-preview",
+        "name": "publishers/google/models/gemini-3-pro-preview"
     },
     {
-        "id": "vertexai/gemini-2.5-pro",
-        "provide": "gemini",
-        "name": "gemini-2.5-pro",
-        "description": "Enhanced thinking and reasoning, multimodal understanding, advanced coding, and more",
-        "human_name": "Gemini 2.5 Pro",
-        "category": "text"
+        "id": "publishers/google/models/gemini-2.5-pro",
+        "name": "publishers/google/models/gemini-2.5-pro"
     },
     {
-        "id": "vertexai/gemini-2.5-flash",
-        "provide": "gemini",
-        "name": "gemini-2.5-flash",
-        "description": "Adaptive thinking, cost efficiency",
-        "human_name": "Gemini 2.5 Flash",
-        "category": "text"
+        "id": "publishers/google/models/gemini-2.5-flash",
+        "name": "publishers/google/models/gemini-2.5-flash"
     },
     {
-        "id": "vertexai/gemini-2.5-lite",
-        "provide": "gemini",
-        "name": "gemini-2.5-lite",
-        "description": "Our smallest and most cost effective model, built for at scale usage.",
-        "human_name": "Gemini 2.5 Lite",
-        "category": "text"
+        "id": "publishers/google/models/gemini-2.5-lite",
+        "name": "publishers/google/models/gemini-2.5-lite"
     },
     {
-        "id": "vertexai/gemini-2.0-flash",
-        "provide": "gemini",
-        "name": "gemini-2.0-flash",
-        "description": "Next generation features, speed, and realtime streaming.",
-        "human_name": "Gemini 2.0 Flash",
-        "category": "text"
+        "id": "publishers/google/models/gemini-2.0-flash",
+        "name": "publishers/google/models/gemini-2.0-flash"
     },
     {
-        "id": "vertexai/gemini-2.0-flash-lite",
-        "provide": "gemini",
-        "name": "gemini-2.0-flash-lite",
-        "description": "Cost efficiency and low latency",
-        "human_name": "Gemini 2.0 Flash-Lite",
-        "category": "text"
+        "id": "publishers/google/models/gemini-2.0-flash-lite",
+        "name": "publishers/google/models/gemini-2.0-flash-lite"
     }
 ]

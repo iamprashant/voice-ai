@@ -159,7 +159,7 @@ export function CustomValueDropdown(props: CustomValueDropdownProps<any>) {
 
                 {props.customValue && (
                   <FieldSet className="px-3 py-1 sticky bottom-0 bg-light-background dark:bg-gray-900 z-10 border-t">
-                    <FormLabel>Or enter custom voice ID</FormLabel>
+                    <FormLabel>Or enter custom value</FormLabel>
                     <div className="flex">
                       <Input
                         className="bg-white dark:bg-gray-950"

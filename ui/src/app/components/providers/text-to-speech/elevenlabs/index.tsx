@@ -108,6 +108,7 @@ export const ConfigureElevanLabTextToSpeech: React.FC<{
               setFilteredVoices(voices);
             }}
             onAddCustomValue={vl => {
+              filteredVoices.push({ voice_id: vl, name: vl });
               updateParameter('speak.voice.id', vl);
             }}
             placeholder="Select voice"

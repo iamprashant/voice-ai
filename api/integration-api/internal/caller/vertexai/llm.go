@@ -29,7 +29,227 @@ func NewLargeLanguageCaller(logger commons.Logger, credential *protos.Credential
 	}
 }
 
-func (llc *largeLanguageCaller) BuildHistory(allMessages []*protos.Message) (*genai.Content, []*genai.Content, genai.Part) {
+// StreamChatCompletion streams the chat response piece-by-piece from the AI model.
+// Parameters:
+// - ctx: Context for managing request lifecycle.
+// - allMessages: List of all previous messages exchanged in the chat.
+// - options: Configuration options for the chat completion request.
+// - onStream: Callback function to handle streaming chunks of type `types.Message`.
+// - onMetrics: Callback to collect metrics for processing completion.
+// - onError: Callback to handle errors encountered during processing.
+// Returns:
+// - error: Any errors encountered during processing.
+
+func (llc *largeLanguageCaller) StreamChatCompletion(
+	ctx context.Context,
+	allMessages []*protos.Message,
+	options *internal_callers.ChatCompletionOptions,
+	onStream func(types.Message) error,
+	onMetrics func(*types.Message, types.Metrics) error,
+	onError func(err error),
+) error {
+	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)
+	metrics.OnStart()
+	client, err := llc.GetClient()
+	if err != nil {
+		options.AIOptions.PostHook(map[string]interface{}{
+			"error": err,
+		}, metrics.OnFailure().Build())
+		onMetrics(nil, metrics.OnFailure().Build())
+		onError(err)
+		return err
+	}
+
+	// Setting up timeout for streaming
+	ctx, cancel := context.WithTimeout(ctx, time.Minute)
+	defer cancel()
+
+	instruction, history, current := llc.buildHistory(allMessages)
+	model, config := llc.getGenerationConfig(options)
+	config.SystemInstruction = instruction
+	chat, err := client.Chats.Create(ctx,
+		model,
+		config,
+		history,
+	)
+	if err != nil {
+		options.AIOptions.PostHook(map[string]interface{}{
+			"error": err,
+		}, metrics.OnFailure().Build())
+		onMetrics(nil, metrics.OnFailure().Build())
+		onError(err)
+		return err
+	}
+
+	options.AIOptions.PreHook(llc.toSimplifiedJson(model, config, history, current))
+	completeMsg := types.Message{
+		Role: "model",
+	}
+	isToolCall := false
+	accumlator := &GoogleChatCompletionAccumulator{}
+	for resp, err := range chat.SendMessageStream(ctx, current) {
+		if err != nil {
+			options.AIOptions.PostHook(map[string]interface{}{
+				"result": utils.ToJson(resp),
+				"error":  err,
+			}, metrics.OnFailure().Build())
+			onMetrics(nil, metrics.OnFailure().Build())
+			onError(err)
+			return err
+		}
+		accumlator.AddChunk(resp)
+		for _, choice := range resp.Candidates {
+			if choice.Content != nil {
+				for _, part := range choice.Content.Parts {
+					if part.FunctionCall != nil {
+						isToolCall = true
+						if completeMsg.ToolCalls == nil {
+							completeMsg.ToolCalls = make([]*types.ToolCall, 0)
+						}
+						for len(completeMsg.ToolCalls) <= int(choice.Index) {
+							completeMsg.ToolCalls = append(completeMsg.ToolCalls, nil)
+						}
+						argsJSON, err := json.Marshal(part.FunctionCall.Args)
+						if err != nil {
+							llc.logger.Errorf("Error marshaling function args: %v", err)
+							argsJSON = []byte("{}")
+						}
+						completeMsg.ToolCalls[int(choice.Index)] = &types.ToolCall{
+							Id:   &part.FunctionCall.ID,
+							Type: utils.Ptr("function"),
+							Function: &types.FunctionCall{
+								Name:      &part.FunctionCall.Name,
+								Arguments: utils.Ptr(string(argsJSON)),
+							},
+						}
+					}
+					if part.Text != "" {
+						if !isToolCall {
+							onStream(types.Message{
+								Contents: []*types.Content{
+									{
+										ContentType:   commons.TEXT_CONTENT.String(),
+										ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
+										Content:       []byte(part.Text),
+									},
+								},
+								Role: choice.Content.Role,
+							})
+						}
+
+						if completeMsg.Contents == nil {
+							completeMsg.Contents = make([]*types.Content, 0)
+						}
+						for len(completeMsg.Contents) <= int(choice.Index) {
+							completeMsg.Contents = append(completeMsg.Contents, &types.Content{
+								ContentType:   commons.TEXT_CONTENT.String(),
+								ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
+								Content:       []byte{},
+							})
+						}
+						completeMsg.Contents[int(choice.Index)].Content = append(completeMsg.Contents[int(choice.Index)].Content, []byte(part.Text)...)
+					}
+				}
+			}
+		}
+	}
+	options.AIOptions.PostHook(map[string]interface{}{
+		"result": accumlator,
+	}, metrics.OnSuccess().Build())
+	metrics.OnAddMetrics(llc.UsageMetrics(accumlator.UsageMetadata)...)
+	onMetrics(&completeMsg, metrics.OnSuccess().Build())
+	return nil
+}
+
+// GetChatCompletion performs a synchronous request for a single chat completion response.
+// Parameters:
+// - ctx: Context for managing request lifecycle.
+// - allMessages: List of all previous messages exchanged in the chat.
+// - options: Configuration options for the chat completion request.
+// Returns:
+// - *types.Message: Constructed message response.
+// - types.Metrics: Metrics collected during execution.
+// - error: Any errors encountered during processing.
+
+func (llc *largeLanguageCaller) GetChatCompletion(
+	ctx context.Context,
+	allMessages []*protos.Message,
+	options *internal_callers.ChatCompletionOptions,
+) (*types.Message, types.Metrics, error) {
+	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)
+	metrics.OnStart()
+	client, err := llc.GetClient()
+	if err != nil {
+		llc.logger.Errorf("getting error for chat completion %v", err)
+		return nil, metrics.OnFailure().Build(), err
+	}
+
+	if len(allMessages) == 0 {
+		err := errors.New("no messages in the input")
+		llc.logger.Errorf("invalid input: %v", err)
+		return nil, metrics.OnFailure().Build(), err
+	}
+
+	//
+	ctx, cancel := context.WithTimeout(ctx, time.Minute)
+	defer cancel()
+
+	instruction, histories, current := llc.buildHistory(allMessages)
+	model, config := llc.getGenerationConfig(options)
+	config.SystemInstruction = instruction
+	chat, err := client.Chats.Create(ctx,
+		model,
+		config,
+		histories)
+
+	if err != nil {
+		llc.logger.Errorf("error creating chat: %v", err)
+		return nil, metrics.OnFailure().Build(), err
+	}
+
+	options.AIOptions.PreHook(llc.toSimplifiedJson(model, config, histories, current))
+	resp, err := chat.SendMessage(ctx, current)
+	if err != nil {
+		llc.logger.Errorf("getting error for chat completion %+v %+v", err, resp)
+		metrics.OnFailure()
+		options.AIOptions.PostHook(map[string]interface{}{"result": resp, "error": err}, metrics.Build())
+		return nil, metrics.Build(), err
+	}
+
+	output := make([]*types.Content, len(resp.Candidates))
+	metrics.OnSuccess()
+	metrics.OnAddMetrics(llc.UsageMetrics(resp.UsageMetadata)...)
+	for _, choice := range resp.Candidates {
+		if choice.Content != nil {
+			buf := strings.Builder{}
+			if choice.Content != nil {
+				for _, part := range choice.Content.Parts {
+					_, _ = buf.WriteString(part.Text)
+				}
+			}
+			output[choice.Index] = &types.Content{
+				ContentType:   commons.TEXT_CONTENT.String(),
+				ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
+				Content:       []byte(buf.String()),
+			}
+		}
+	}
+	options.AIOptions.PostHook(map[string]interface{}{"result": resp}, metrics.Build())
+	return &types.Message{
+		Role:     "model",
+		Contents: output,
+	}, metrics.Build(), nil
+}
+
+// buildHistory constructs the historical context for the chat session.
+// Parameters:
+// - allMessages: List of all previous messages exchanged in the chat.
+// Returns:
+// - *genai.Content: System instructions extracted.
+// - []*genai.Content: Conversation history sent as input.
+// - genai.Part: Last conversation part extracted.
+
+func (llc *largeLanguageCaller) buildHistory(allMessages []*protos.Message) (*genai.Content, []*genai.Content, genai.Part) {
 	history := make([]*genai.Content, 0)
 	for _, msg := range allMessages {
 		switch msg.GetRole() {
@@ -122,7 +342,12 @@ func (llc *largeLanguageCaller) BuildHistory(allMessages []*protos.Message) (*ge
 	return history[0], history[1:], lastPart
 }
 
-func (llc *largeLanguageCaller) ToGoogleSchema(fp *internal_callers.FunctionParameter) *genai.Schema {
+// buildFunctionParameter converts internal function parameter definitions into Vertex AI schemas.
+// Parameters:
+// - fp: Internal representation of function parameters.
+// Returns:
+// - *genai.Schema: Converted schema in Vertex AI format.
+func (llc *largeLanguageCaller) buildFunctionParameter(fp *internal_callers.FunctionParameter) *genai.Schema {
 	schema := &genai.Schema{
 		Type:       genai.Type(fp.Type),
 		Properties: make(map[string]*genai.Schema),
@@ -131,12 +356,17 @@ func (llc *largeLanguageCaller) ToGoogleSchema(fp *internal_callers.FunctionPara
 		schema.Required = fp.Required
 	}
 	for key, prop := range fp.Properties {
-		schema.Properties[key] = llc.GoogleFunctionParameterPropertyToSchema(&prop)
+		schema.Properties[key] = llc.buildFunctionProperties(&prop)
 	}
 	return schema
 }
 
-func (llc *largeLanguageCaller) GoogleFunctionParameterPropertyToSchema(fpp *internal_callers.FunctionParameterProperty) *genai.Schema {
+// buildFunctionProperties maps function property details to Vertex AI schema properties.
+// Parameters:
+// - fpp: Function parameter property details.
+// Returns:
+// - *genai.Schema: Converted schema in Vertex AI format.
+func (llc *largeLanguageCaller) buildFunctionProperties(fpp *internal_callers.FunctionParameterProperty) *genai.Schema {
 	schema := &genai.Schema{
 		Type:        genai.Type(fpp.Type),
 		Description: fpp.Description,
@@ -157,7 +387,13 @@ func (llc *largeLanguageCaller) GoogleFunctionParameterPropertyToSchema(fpp *int
 	return schema
 }
 
-func (llc *largeLanguageCaller) GetContentConfig(
+// getGenerationConfig converts user-provided options into Vertex AI configuration.
+// Parameters:
+// - opts: User-defined chat completion options.
+// Returns:
+// - mdl: Model name used for the request.
+// - config: Generated configuration for the request.
+func (llc *largeLanguageCaller) getGenerationConfig(
 	opts *internal_callers.ChatCompletionOptions,
 ) (mdl string, config *genai.GenerateContentConfig) {
 	config = &genai.GenerateContentConfig{}
@@ -174,7 +410,7 @@ func (llc *largeLanguageCaller) GetContentConfig(
 						Description: fn.Description,
 					}
 					if fn.Parameters != nil {
-						funcDef.Parameters = llc.ToGoogleSchema(fn.Parameters)
+						funcDef.Parameters = llc.buildFunctionParameter(fn.Parameters)
 					}
 					fd[idx] = funcDef
 				}
@@ -255,198 +491,16 @@ func (llc *largeLanguageCaller) GetContentConfig(
 	}
 	return
 }
-func (llc *largeLanguageCaller) StreamChatCompletion(
-	ctx context.Context,
-	allMessages []*protos.Message,
-	options *internal_callers.ChatCompletionOptions,
-	onStream func(types.Message) error,
-	onMetrics func(*types.Message, types.Metrics) error,
-	onError func(err error),
-) error {
-	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)
-	metrics.OnStart()
-	client, err := llc.GetClient()
-	if err != nil {
-		options.AIOptions.PostHook(map[string]interface{}{
-			"error": err,
-		}, metrics.OnFailure().Build())
-		onMetrics(nil, metrics.OnFailure().Build())
-		onError(err)
-		return err
-	}
 
-	// Setting up timeout for streaming
-	ctx, cancel := context.WithTimeout(ctx, time.Minute)
-	defer cancel()
-
-	instruction, history, current := llc.BuildHistory(allMessages)
-	model, config := llc.GetContentConfig(options)
-	config.SystemInstruction = instruction
-	chat, err := client.Chats.Create(ctx,
-		model,
-		config,
-		history,
-	)
-	if err != nil {
-		options.AIOptions.PostHook(map[string]interface{}{
-			"error": err,
-		}, metrics.OnFailure().Build())
-		onMetrics(nil, metrics.OnFailure().Build())
-		onError(err)
-		return err
-	}
-
-	options.AIOptions.PreHook(llc.MessageJson(model, config, history, current))
-	completeMsg := types.Message{
-		Role: "model",
-	}
-	isToolCall := false
-	accumlator := &GoogleChatCompletionAccumulator{}
-	for resp, err := range chat.SendMessageStream(ctx, current) {
-		if err != nil {
-			options.AIOptions.PostHook(map[string]interface{}{
-				"result": utils.ToJson(resp),
-				"error":  err,
-			}, metrics.OnFailure().Build())
-			onMetrics(nil, metrics.OnFailure().Build())
-			onError(err)
-			return err
-		}
-		accumlator.AddChunk(resp)
-		for _, choice := range resp.Candidates {
-			if choice.Content != nil {
-				for _, part := range choice.Content.Parts {
-					if part.FunctionCall != nil {
-						isToolCall = true
-						if completeMsg.ToolCalls == nil {
-							completeMsg.ToolCalls = make([]*types.ToolCall, 0)
-						}
-						for len(completeMsg.ToolCalls) <= int(choice.Index) {
-							completeMsg.ToolCalls = append(completeMsg.ToolCalls, nil)
-						}
-						argsJSON, err := json.Marshal(part.FunctionCall.Args)
-						if err != nil {
-							llc.logger.Errorf("Error marshaling function args: %v", err)
-							argsJSON = []byte("{}")
-						}
-						completeMsg.ToolCalls[int(choice.Index)] = &types.ToolCall{
-							Id:   &part.FunctionCall.ID,
-							Type: utils.Ptr("function"),
-							Function: &types.FunctionCall{
-								Name:      &part.FunctionCall.Name,
-								Arguments: utils.Ptr(string(argsJSON)),
-							},
-						}
-					}
-					if part.Text != "" {
-						if !isToolCall {
-							onStream(types.Message{
-								Contents: []*types.Content{
-									{
-										ContentType:   commons.TEXT_CONTENT.String(),
-										ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
-										Content:       []byte(part.Text),
-									},
-								},
-								Role: choice.Content.Role,
-							})
-						}
-
-						if completeMsg.Contents == nil {
-							completeMsg.Contents = make([]*types.Content, 0)
-						}
-						for len(completeMsg.Contents) <= int(choice.Index) {
-							completeMsg.Contents = append(completeMsg.Contents, &types.Content{
-								ContentType:   commons.TEXT_CONTENT.String(),
-								ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
-								Content:       []byte{},
-							})
-						}
-						completeMsg.Contents[int(choice.Index)].Content = append(completeMsg.Contents[int(choice.Index)].Content, []byte(part.Text)...)
-					}
-				}
-			}
-		}
-	}
-	options.AIOptions.PostHook(map[string]interface{}{
-		"result": accumlator,
-	}, metrics.OnSuccess().Build())
-	metrics.OnAddMetrics(llc.UsageMetrics(accumlator.UsageMetadata)...)
-	onMetrics(&completeMsg, metrics.OnSuccess().Build())
-	return nil
-}
-
-func (llc *largeLanguageCaller) GetChatCompletion(
-	ctx context.Context,
-	allMessages []*protos.Message,
-	options *internal_callers.ChatCompletionOptions,
-) (*types.Message, types.Metrics, error) {
-	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)
-	metrics.OnStart()
-	client, err := llc.GetClient()
-	if err != nil {
-		llc.logger.Errorf("getting error for chat completion %v", err)
-		return nil, metrics.OnFailure().Build(), err
-	}
-
-	if len(allMessages) == 0 {
-		err := errors.New("no messages in the input")
-		llc.logger.Errorf("invalid input: %v", err)
-		return nil, metrics.OnFailure().Build(), err
-	}
-
-	//
-	ctx, cancel := context.WithTimeout(ctx, time.Minute)
-	defer cancel()
-
-	instruction, histories, current := llc.BuildHistory(allMessages)
-	model, config := llc.GetContentConfig(options)
-	config.SystemInstruction = instruction
-	chat, err := client.Chats.Create(ctx,
-		model,
-		config,
-		histories)
-
-	if err != nil {
-		llc.logger.Errorf("error creating chat: %v", err)
-		return nil, metrics.OnFailure().Build(), err
-	}
-
-	options.AIOptions.PreHook(llc.MessageJson(model, config, histories, current))
-	resp, err := chat.SendMessage(ctx, current)
-	if err != nil {
-		llc.logger.Errorf("getting error for chat completion %+v %+v", err, resp)
-		metrics.OnFailure()
-		options.AIOptions.PostHook(map[string]interface{}{"result": resp, "error": err}, metrics.Build())
-		return nil, metrics.Build(), err
-	}
-
-	output := make([]*types.Content, len(resp.Candidates))
-	metrics.OnSuccess()
-	metrics.OnAddMetrics(llc.UsageMetrics(resp.UsageMetadata)...)
-	for _, choice := range resp.Candidates {
-		if choice.Content != nil {
-			buf := strings.Builder{}
-			if choice.Content != nil {
-				for _, part := range choice.Content.Parts {
-					_, _ = buf.WriteString(part.Text)
-				}
-			}
-			output[choice.Index] = &types.Content{
-				ContentType:   commons.TEXT_CONTENT.String(),
-				ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
-				Content:       []byte(buf.String()),
-			}
-		}
-	}
-	options.AIOptions.PostHook(map[string]interface{}{"result": resp}, metrics.Build())
-	return &types.Message{
-		Role:     "model",
-		Contents: output,
-	}, metrics.Build(), nil
-}
-
-func (llc *largeLanguageCaller) MessageJson(model string, cfg *genai.GenerateContentConfig, history []*genai.Content, ct genai.Part) map[string]interface{} {
+// toSimplifiedJson simplifies the JSON representation of the final request payload.
+// Parameters:
+// - model: Model name used for the request.
+// - cfg: Configuration settings used.
+// - history: Historical context provided.
+// - ct: Current conversation part.
+// Returns:
+// - map[string]interface{}: Simplified JSON payload.
+func (llc *largeLanguageCaller) toSimplifiedJson(model string, cfg *genai.GenerateContentConfig, history []*genai.Content, ct genai.Part) map[string]interface{} {
 	wt := struct {
 		Config               *genai.GenerateContentConfig
 		Current              genai.Part

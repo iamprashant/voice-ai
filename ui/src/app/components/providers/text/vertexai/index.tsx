@@ -1,5 +1,4 @@
 import { Metadata } from '@rapidaai/react';
-import { Dropdown } from '@/app/components/dropdown';
 import { FormLabel } from '@/app/components/form-label';
 import { IButton } from '@/app/components/form/button';
 import { FieldSet } from '@/app/components/form/fieldset';
@@ -13,11 +12,13 @@ import { InputHelper } from '@/app/components/input-helper';
 
 import { Textarea } from '@/app/components/form/textarea';
 import { VERTEXAI_MODEL } from '@/providers';
+import { CustomValueDropdown } from '@/app/components/dropdown/custom-value-dropdown';
 
 export const ConfigureVertexAiTextProviderModel: React.FC<{
   onParameterChange: (parameters: Metadata[]) => void;
   parameters: Metadata[] | null;
 }> = ({ onParameterChange, parameters }) => {
+  const vertexModel = VERTEXAI_MODEL();
   const getParamValue = (key: string) =>
     parameters?.find(p => p.getKey() === key)?.getValue() ?? '';
 
@@ -41,13 +42,27 @@ export const ConfigureVertexAiTextProviderModel: React.FC<{
     const newValue = e.target.value;
     updateParameter('model.response_format', newValue);
   };
+
+  const handleThinkingConfigChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+  ) => {
+    const newValue = e.target.value;
+    updateParameter('model.response_format', newValue);
+  };
   return (
     <div className="flex-1 flex items-center divide-x">
-      <Dropdown
-        className="max-w-full  focus-within:border-none! focus-within:outline-hidden! border-none!"
-        currentValue={VERTEXAI_MODEL().find(
-          x => x.id === getParamValue('model.id'),
-        )}
+      <CustomValueDropdown
+        customValue
+        className="max-w-full focus-within:border-none! focus-within:outline-hidden! border-none!"
+        currentValue={
+          vertexModel.find(x => x.id === getParamValue('model.id')) ||
+          (getParamValue('model.id') && getParamValue('model.name')
+            ? {
+                id: getParamValue('model.id'),
+                name: getParamValue('model.name'),
+              }
+            : undefined)
+        }
         setValue={v => {
           const updatedParams = [...(parameters || [])];
           const newIdParam = new Metadata();
@@ -65,19 +80,37 @@ export const ConfigureVertexAiTextProviderModel: React.FC<{
           filteredParams.push(newIdParam, newNameParam);
           onParameterChange(filteredParams);
         }}
-        allValue={VERTEXAI_MODEL()}
+        onAddCustomValue={vl => {
+          const updatedParams = [...(parameters || [])];
+          const newIdParam = new Metadata();
+          const newNameParam = new Metadata();
+
+          newIdParam.setKey('model.id');
+          newIdParam.setValue(vl);
+          newNameParam.setKey('model.name');
+          newNameParam.setValue(vl);
+
+          // Remove existing parameters if they exist
+          const filteredParams = updatedParams.filter(
+            p => p.getKey() !== 'model.id' && p.getKey() !== 'model.name',
+          );
+          filteredParams.push(newIdParam, newNameParam);
+          onParameterChange(filteredParams);
+          vertexModel.push({ name: vl, id: vl });
+        }}
+        allValue={vertexModel}
         placeholder="Select vertexai model ID"
         option={c => {
           return (
             <span className="inline-flex items-center gap-2 sm:gap-2.5 max-w-full text-sm font-medium">
-              <span className="truncate capitalize">{c.name}</span>
+              <span className="truncate">{c.name}</span>
             </span>
           );
         }}
         label={c => {
           return (
             <span className="inline-flex items-center gap-2 sm:gap-2.5 max-w-full text-sm font-medium">
-              <span className="truncate capitalize">{c.name}</span>
+              <span className="truncate">{c.name}</span>
             </span>
           );
         }}
@@ -189,19 +222,6 @@ export const ConfigureVertexAiTextProviderModel: React.FC<{
           </FieldSet>
 
           <FieldSet>
-            <FormLabel>Seed</FormLabel>
-            <Input
-              type="number"
-              value={getParamValue('model.seed')}
-              placeholder="Seed"
-              onChange={e => updateParameter('model.seed', e.target.value)}
-            />
-            <InputHelper className="text-xs">
-              Seed for deterministic sampling.
-            </InputHelper>
-          </FieldSet>
-
-          <FieldSet>
             <FormLabel>Max Output Tokens</FormLabel>
             <Input
               type="number"
@@ -290,7 +310,7 @@ export const ConfigureVertexAiTextProviderModel: React.FC<{
               existing frequency.
             </InputHelper>
           </FieldSet>
-          <FieldSet className="col-span-2">
+          <FieldSet className="col-span-1">
             <FormLabel>Response schema</FormLabel>
             <Textarea
               placeholder="Enter as JSON"
@@ -299,6 +319,17 @@ export const ConfigureVertexAiTextProviderModel: React.FC<{
             />
             <InputHelper className="text-xs">
               Specifies the format for model output.
+            </InputHelper>
+          </FieldSet>
+          <FieldSet className="col-span-1">
+            <FormLabel>Thinking Config</FormLabel>
+            <Textarea
+              placeholder="Enter as JSON"
+              value={getParamValue('model.thinking') || ''}
+              onChange={handleThinkingConfigChange}
+            />
+            <InputHelper className="text-xs">
+              Provide thinking config.
             </InputHelper>
           </FieldSet>
         </Popover>
