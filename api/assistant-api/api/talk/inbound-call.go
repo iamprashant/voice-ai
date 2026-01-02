@@ -66,18 +66,12 @@ func (cApi *ConversationApi) Callback(c *gin.Context) {
 		return
 	}
 
-	_, err = cApi.
-		assistantConversationService.
-		ApplyConversationTelephonyEvent(c, iAuth, tlp, assistantId, conversationId, evts)
-	if err != nil {
+	if _, err := cApi.assistantConversationService.ApplyConversationTelephonyEvent(c, iAuth, tlp, assistantId, conversationId, evts); err != nil {
 		c.Status(http.StatusOK)
 		return
 	}
 
-	_, err = cApi.
-		assistantConversationService.
-		ApplyConversationMetrics(c, iAuth, assistantId, conversationId, mtr)
-	if err != nil {
+	if _, err := cApi.assistantConversationService.ApplyConversationMetrics(c, iAuth, assistantId, conversationId, mtr); err != nil {
 		c.Status(http.StatusOK)
 		return
 	}
@@ -107,11 +101,7 @@ func (cApi *ConversationApi) CallReciever(c *gin.Context) {
 	}
 
 	tlp := c.Param("telephony")
-	_telephony, err := telephony.GetTelephony(
-		telephony.Telephony(tlp),
-		cApi.cfg,
-		cApi.logger,
-	)
+	_telephony, err := telephony.GetTelephony(telephony.Telephony(tlp), cApi.cfg, cApi.logger)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Telephony is not connected"})
@@ -120,53 +110,28 @@ func (cApi *ConversationApi) CallReciever(c *gin.Context) {
 
 	clientNumber, ok := _telephony.GetCaller(c)
 	if !ok {
-		cApi.logger.Debugf("Missing 'Caller' OR 'from' number in Twilio request")
+		cApi.logger.Debugf("Missing 'Caller' OR 'from' number in Phone request")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing 'Caller' number"})
 		return
 	}
 
-	assistant, err := cApi.
-		assistantService.
-		Get(c,
-			iAuth,
-			assistantId,
-			utils.
-				GetVersionDefinition("latest"),
-			&internal_services.
-				GetAssistantOption{
-				InjectPhoneDeployment: true,
-			})
+	assistant, err := cApi.assistantService.Get(c, iAuth, assistantId, utils.GetVersionDefinition("latest"), &internal_services.GetAssistantOption{InjectPhoneDeployment: true})
 	if err != nil {
 		cApi.logger.Debugf("illegal unable to find assistant %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unable to initiate talker"})
 		return
 	}
 
-	conversation, err := cApi.
-		assistantConversationService.
-		CreateConversation(
-			c,
-			iAuth,
-			internal_factory.Identifier(utils.PhoneCall, c, iAuth, clientNumber),
-			assistant.Id,
-			assistant.AssistantProviderId,
-			type_enums.DIRECTION_INBOUND,
-			utils.PhoneCall,
-		)
+	conversation, err := cApi.assistantConversationService.CreateConversation(c, iAuth, internal_factory.Identifier(utils.PhoneCall, c, iAuth, clientNumber), assistant.Id, assistant.AssistantProviderId, type_enums.DIRECTION_INBOUND, utils.PhoneCall)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "unable to initiate talker"})
 		return
 	}
+	if _, err := cApi.assistantConversationService.ApplyConversationMetrics(c, iAuth, assistantId, conversation.Id, []*types.Metric{types.NewStatusMetric(type_enums.RECORD_CONNECTED)}); err != nil {
+		cApi.logger.Errorf("error while applying metrics %v", err)
+	}
 
-	cApi.
-		assistantConversationService.
-		ApplyConversationMetrics(
-			c, iAuth,
-			assistantId,
-			conversation.Id, []*types.Metric{types.NewStatusMetric(type_enums.RECORD_CONNECTED)},
-		)
-	err = _telephony.ReceiveCall(c, iAuth, assistant.Id, clientNumber, conversation.Id)
-	if err != nil {
+	if err := _telephony.ReceiveCall(c, iAuth, assistant.Id, clientNumber, conversation.Id); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "unable to initiate talker"})
 		return
 	}
@@ -215,39 +180,18 @@ func (cApi *ConversationApi) CallTalker(c *gin.Context) {
 
 	identifier := c.Param("identifier")
 	tlp := c.Param("telephony")
-	_telephony, err := telephony.GetTelephony(
-		telephony.Telephony(tlp),
-		cApi.cfg,
-		cApi.logger,
-	)
+	_telephony, err := telephony.GetTelephony(telephony.Telephony(tlp), cApi.cfg, cApi.logger)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid telephony"})
 		return
 	}
 
-	talker, err := internal_factory.GetTalker(
-		utils.PhoneCall,
-		c,
-		cApi.cfg,
-		cApi.logger,
-		cApi.postgres,
-		cApi.opensearch,
-		cApi.redis,
-		cApi.storage,
-		_telephony.Streamer(
-			c,
-			websocketConnection,
-			assistantId, "latest", conversationId,
-		),
-	)
+	talker, err := internal_factory.GetTalker(utils.PhoneCall, c, cApi.cfg, cApi.logger, cApi.postgres, cApi.opensearch, cApi.redis, cApi.storage, _telephony.Streamer(c, websocketConnection, assistantId, "latest", conversationId))
 	if err != nil {
 		cApi.logger.Errorf("illegal to get talker %v", err)
 		return
 	}
-	talker.Talk(
-		c,
-		auth,
-		internal_factory.
-			Identifier(utils.PhoneCall, c, auth, identifier),
-	)
+	if err := talker.Talk(c, auth, internal_factory.Identifier(utils.PhoneCall, c, auth, identifier)); err != nil {
+		cApi.logger.Errorf("illegal while initiating talker %v", err)
+	}
 }
