@@ -123,28 +123,20 @@ cd voice-ai
 
 ### 2. Create Necessary Directories
 
-Ensure the following directories exist for containerized services to mount their data:
+Ensure the following directories (along with proper permissions) exist for containerized services to mount their data:
 
 ```bash
-mkdir -p ${HOME}/rapida-data/
+make setup-local
 ```
 For more about how the data is structured for services https://doc.rapida.ai
 
-### 3. Set Permissions for Docker Access
-
-Grant `docker` group access to the created directories to ensure proper mounting:
-
-```bash
-sudo setfacl -m g:docker:rwx ${HOME}/rapida-data/
-```
-
-### 4. Build the Services
+### 3. Build the Services
 
 ```bash
 make build-all
 ```
 
-### 5. Start the Services
+### 4. Start the Services
 
 Start all services:
 
@@ -158,7 +150,7 @@ Alternatively, start specific services (e.g., just PostgreSQL):
 make up-db
 ```
 
-### 6. Stop the Services
+### 5. Stop the Services
 
 Stop all running services:
 
