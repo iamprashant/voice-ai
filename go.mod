@@ -25,7 +25,7 @@ require (
 	github.com/go-gorm/caches/v4 v4.0.5
 	github.com/go-playground/validator/v10 v10.11.1
 	github.com/go-resty/resty/v2 v2.13.1
-	github.com/golang-jwt/jwt/v5 v5.2.2
+	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/golang-migrate/migrate/v4 v4.19.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
@@ -41,7 +41,7 @@ require (
 	github.com/soheilhy/cmux v0.1.5
 	github.com/spf13/viper v1.13.0
 	github.com/streamer45/silero-vad-go v0.2.1
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	github.com/twilio/twilio-go v1.28.5
 	github.com/vonage/vonage-go-sdk v0.14.0
 	github.com/weaviate/weaviate-go-client/v4 v4.14.0

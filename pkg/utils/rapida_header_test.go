@@ -1,3 +1,8 @@
+// Copyright (c) 2023-2025 RapidaAI
+// Author: Prashant Srivastav <prashant@rapida.ai>
+//
+// Licensed under GPL-2.0 with Rapida Additional Terms.
+// See LICENSE.md or contact sales@rapida.ai for commercial usage.
 package utils
 
 import "testing"
@@ -19,5 +24,5 @@ func TestHeaderConstants(t *testing.T) {
 	if HEADER_REGION_KEY == "" {
 		t.Error("HEADER_REGION_KEY should not be empty")
 	}
-	// Add more if needed, but since they are just constants, this is sufficient
+
 }
