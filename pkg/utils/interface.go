@@ -1,3 +1,8 @@
+// Copyright (c) 2023-2025 RapidaAI
+// Author: Prashant Srivastav <prashant@rapida.ai>
+//
+// Licensed under GPL-2.0 with Rapida Additional Terms.
+// See LICENSE.md or contact sales@rapida.ai for commercial usage.
 package utils
 
 import (
@@ -321,5 +326,82 @@ func (m Option) GetBool(key string) (bool, error) {
 		return m.GetBool(t.String())
 	default:
 		return false, fmt.Errorf("unsupported type %T for %q", v, key)
+	}
+}
+
+func NormalizeInterface(argument map[string]interface{}) map[string]interface{} {
+	normalized := make(map[string]interface{})
+	for key, value := range argument {
+		// Normalize key to lowercase
+		normalizedKey := key
+
+		// Normalize value based on type
+		switch v := value.(type) {
+		case string:
+			// Try to parse as JSON first
+			trimmed := v
+			if len(trimmed) > 0 && (trimmed[0] == '{' || trimmed[0] == '[') {
+				var parsed interface{}
+				if err := json.Unmarshal([]byte(trimmed), &parsed); err == nil {
+					// Successfully parsed JSON, normalize the result
+					normalized[normalizedKey] = normalizeValue(parsed)
+					break
+				}
+			}
+			// If not JSON, treat as regular string
+			normalized[normalizedKey] = trimmed
+		case float64:
+			// Keep numbers as-is
+			normalized[normalizedKey] = v
+		case bool:
+			// Keep booleans as-is
+			normalized[normalizedKey] = v
+		case nil:
+			// Skip nil values
+			continue
+		case map[string]interface{}:
+			// Recursively normalize nested maps
+			normalized[normalizedKey] = NormalizeInterface(v)
+		case []interface{}:
+			// Normalize array elements
+			normalized[normalizedKey] = normalizeArray(v)
+		default:
+			// Keep other types as-is
+			normalized[normalizedKey] = v
+		}
+	}
+
+	return normalized
+}
+
+// normalizeArray handles normalization of array elements
+func normalizeArray(arr []interface{}) []interface{} {
+	normalized := make([]interface{}, 0, len(arr))
+	for _, item := range arr {
+		normalized = append(normalized, normalizeValue(item))
+	}
+	return normalized
+}
+
+// normalizeValue handles normalization of a single value
+func normalizeValue(value interface{}) interface{} {
+	switch v := value.(type) {
+	case string:
+		trimmed := strings.TrimSpace(v)
+		if len(trimmed) > 0 && (trimmed[0] == '{' || trimmed[0] == '[') {
+			var parsed interface{}
+			if err := json.Unmarshal([]byte(trimmed), &parsed); err == nil {
+				return normalizeValue(parsed)
+			}
+		}
+		return strings.ToLower(trimmed)
+	case float64, bool, nil:
+		return v
+	case map[string]interface{}:
+		return NormalizeInterface(v)
+	case []interface{}:
+		return normalizeArray(v)
+	default:
+		return v
 	}
 }

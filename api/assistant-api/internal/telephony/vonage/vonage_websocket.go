@@ -202,15 +202,14 @@ func (vng *vonageWebsocketStreamer) Send(response *protos.AssistantMessagingResp
 			}
 		}
 	case *protos.AssistantMessagingResponse_Interruption:
-		vng.logger.Debugf("clearing action")
-		vng.audioBufferLock.Lock()
-		defer vng.audioBufferLock.Unlock()
-		vng.outputAudioBuffer.Reset()
-
-		// Clear the buffer after flushing
-		err := vng.conn.WriteMessage(websocket.TextMessage, []byte(`{"action":"clear"}`))
-		if err != nil {
-			vng.logger.Errorf("Error sending clear command:", err)
+		if data.Interruption.Type == protos.AssistantConversationInterruption_INTERRUPTION_TYPE_WORD {
+			vng.audioBufferLock.Lock()
+			defer vng.audioBufferLock.Unlock()
+			vng.outputAudioBuffer.Reset()
+			// Clear the buffer after flushing
+			if err := vng.conn.WriteMessage(websocket.TextMessage, []byte(`{"action":"clear"}`)); err != nil {
+				vng.logger.Errorf("Error sending clear command:", err)
+			}
 		}
 	case *protos.AssistantMessagingResponse_Action:
 		if data.Action.GetAction() == protos.AssistantConversationAction_END_CONVERSATION {

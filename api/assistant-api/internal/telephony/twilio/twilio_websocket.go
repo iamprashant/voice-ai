@@ -111,13 +111,6 @@ func (tws *twilioWebsocketStreamer) Recv() (*protos.AssistantMessagingRequest, e
 	}
 }
 
-func (tws *twilioWebsocketStreamer) captureStreamSid(streamSid string) {
-	if tws.streamSid == "" && streamSid != "" {
-		tws.streamSid = streamSid
-		tws.logger.Debug("Captured Twilio streamSid", "streamSid", tws.streamSid)
-	}
-}
-
 // start event contains streamSid to be used for subsequent media messages
 func (tws *twilioWebsocketStreamer) handleStartEvent(mediaEvent TwilioMediaEvent) {
 	tws.streamSid = mediaEvent.StreamSid
@@ -223,13 +216,13 @@ func (tws *twilioWebsocketStreamer) Send(response *protos.AssistantMessagingResp
 			}
 		}
 	case *protos.AssistantMessagingResponse_Interruption:
-		tws.logger.Debugf("clearing action")
-		tws.audioBufferLock.Lock()
-		defer tws.audioBufferLock.Unlock()
-		tws.outputAudioBuffer.Reset() // Clear the buffer after flushing
-		err := tws.sendTwilioMessage("clear", nil)
-		if err != nil {
-			tws.logger.Errorf("Error sending clear command:", err)
+		if data.Interruption.Type == protos.AssistantConversationInterruption_INTERRUPTION_TYPE_WORD {
+			tws.audioBufferLock.Lock()
+			defer tws.audioBufferLock.Unlock()
+			tws.outputAudioBuffer.Reset() // Clear the buffer after flushing
+			if err := tws.sendTwilioMessage("clear", nil); err != nil {
+				tws.logger.Errorf("Error sending clear command:", err)
+			}
 		}
 	case *protos.AssistantMessagingResponse_Action:
 		if data.Action.GetAction() == protos.AssistantConversationAction_END_CONVERSATION {

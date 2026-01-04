@@ -10,7 +10,7 @@ import (
 	gorm_types "github.com/rapidaai/pkg/models/gorm/types"
 	"github.com/rapidaai/pkg/parsers"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -27,22 +27,22 @@ func NewChatInputBuilder(logger commons.Logger) InputChatBuilder {
 	}
 }
 
-func (in *inputChatBuilder) Credential(i uint64, dp *structpb.Struct) *lexatic_backend.Credential {
-	return &lexatic_backend.Credential{
+func (in *inputChatBuilder) Credential(i uint64, dp *structpb.Struct) *protos.Credential {
+	return &protos.Credential{
 		Id:    i,
 		Value: dp,
 	}
 }
 
 func (in *inputChatBuilder) Chat(
-	credential *lexatic_backend.Credential,
+	credential *protos.Credential,
 	modelOpts map[string]*anypb.Any,
-	tools []*lexatic_backend.FunctionDefinition,
+	tools []*protos.FunctionDefinition,
 	additionalData map[string]string,
-	conversations ...*lexatic_backend.Message,
-) *lexatic_backend.ChatRequest {
+	conversations ...*protos.Message,
+) *protos.ChatRequest {
 
-	request := &lexatic_backend.ChatRequest{
+	request := &protos.ChatRequest{
 		Credential:      credential,
 		Conversations:   conversations,
 		ModelParameters: modelOpts,
@@ -50,9 +50,9 @@ func (in *inputChatBuilder) Chat(
 	}
 	for _, tl := range tools {
 		if request.ToolDefinitions == nil {
-			request.ToolDefinitions = make([]*lexatic_backend.ToolDefinition, 0)
+			request.ToolDefinitions = make([]*protos.ToolDefinition, 0)
 		}
-		request.ToolDefinitions = append(request.ToolDefinitions, &lexatic_backend.ToolDefinition{
+		request.ToolDefinitions = append(request.ToolDefinitions, &protos.ToolDefinition{
 			Type:               "function",
 			FunctionDefinition: tl,
 		})
@@ -60,10 +60,10 @@ func (in *inputChatBuilder) Chat(
 	return request
 }
 
-func (in *inputChatBuilder) WithinMessage(role, prompt string) *lexatic_backend.Message {
-	return &lexatic_backend.Message{
+func (in *inputChatBuilder) WithinMessage(role, prompt string) *protos.Message {
+	return &protos.Message{
 		Role: role,
-		Contents: []*lexatic_backend.Content{{
+		Contents: []*protos.Content{{
 			ContentType:   commons.TEXT_CONTENT.String(),
 			ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
 			Content:       []byte(prompt),
@@ -73,8 +73,8 @@ func (in *inputChatBuilder) WithinMessage(role, prompt string) *lexatic_backend.
 
 func (in *inputChatBuilder) Message(
 	template []*gorm_types.PromptTemplate,
-	arguments map[string]interface{}) []*lexatic_backend.Message {
-	msg := make([]*lexatic_backend.Message, 0)
+	arguments map[string]interface{}) []*protos.Message {
+	msg := make([]*protos.Message, 0)
 	for _, v := range template {
 		content := in.templateParser.Parse(v.GetContent(), arguments)
 		msg = append(msg, in.WithinMessage(v.GetRole(), content))
@@ -82,9 +82,7 @@ func (in *inputChatBuilder) Message(
 	return msg
 }
 
-func (in *inputChatBuilder) Arguments(
-	variables []*gorm_types.PromptVariable,
-	arguments map[string]*anypb.Any) map[string]interface{} {
+func (in *inputChatBuilder) Arguments(variables []*gorm_types.PromptVariable, arguments map[string]*anypb.Any) map[string]interface{} {
 	args, err := utils.AnyMapToInterfaceMap(arguments)
 	if err != nil {
 	}

@@ -7,26 +7,26 @@ package integration_client_builders
 
 import (
 	gorm_types "github.com/rapidaai/pkg/models/gorm/types"
-	lexatic_backend "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type InputChatBuilder interface {
-	Credential(i uint64, dp *structpb.Struct) *lexatic_backend.Credential
+	Credential(i uint64, dp *structpb.Struct) *protos.Credential
 
 	Chat(
-		credential *lexatic_backend.Credential,
+		credential *protos.Credential,
 		modelOpts map[string]*anypb.Any,
-		tools []*lexatic_backend.FunctionDefinition,
+		tools []*protos.FunctionDefinition,
 		additionalData map[string]string,
-		conversations ...*lexatic_backend.Message,
-	) *lexatic_backend.ChatRequest
+		conversations ...*protos.Message,
+	) *protos.ChatRequest
 
 	Message(
 		templates []*gorm_types.PromptTemplate,
 		arguments map[string]interface{},
-	) []*lexatic_backend.Message
+	) []*protos.Message
 
 	Options(
 		opts map[string]interface{},
@@ -44,26 +44,26 @@ type InputChatBuilder interface {
 }
 
 type InputEmbeddingBuilder interface {
-	Credential(i uint64, dp *structpb.Struct) *lexatic_backend.Credential
+	Credential(i uint64, dp *structpb.Struct) *protos.Credential
 	Embedding(
-		credential *lexatic_backend.Credential,
+		credential *protos.Credential,
 		modelOpts map[string]*anypb.Any,
 		additionalData map[string]string,
 		contents map[int32]string,
-	) *lexatic_backend.EmbeddingRequest
+	) *protos.EmbeddingRequest
 	Options(
 		opts map[string]interface{},
 		options map[string]*anypb.Any) map[string]*anypb.Any
 }
 
 type InputRerankingBuilder interface {
-	Credential(i uint64, dp *structpb.Struct) *lexatic_backend.Credential
+	Credential(i uint64, dp *structpb.Struct) *protos.Credential
 	Reranking(
-		credential *lexatic_backend.Credential,
+		credential *protos.Credential,
 		modelOpts map[string]*anypb.Any,
 		additionalData map[string]string,
-		contents map[int32]*lexatic_backend.Content,
-	) *lexatic_backend.RerankingRequest
+		contents map[int32]*protos.Content,
+	) *protos.RerankingRequest
 	Options(
 		opts map[string]interface{},
 		options map[string]*anypb.Any) map[string]*anypb.Any

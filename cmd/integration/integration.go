@@ -1,3 +1,8 @@
+// Copyright (c) 2023-2025 RapidaAI
+// Author: Prashant Srivastav <prashant@rapida.ai>
+//
+// Licensed under GPL-2.0 with Rapida Additional Terms.
+// See LICENSE.md or contact sales@rapida.ai for commercial usage.
 package main
 
 import (
@@ -49,8 +54,7 @@ func main() {
 	appRunner := AppRunner{E: gin.New(), S: grpc.NewServer()}
 
 	// resolving configuration
-	err := appRunner.ResolveConfig()
-	if err != nil {
+	if err := appRunner.ResolveConfig(); err != nil {
 		panic(err)
 	}
 
@@ -96,9 +100,7 @@ func main() {
 		),
 	)
 	// init
-	err = appRunner.Init(ctx)
-
-	if err != nil {
+	if err := appRunner.Init(ctx); err != nil {
 		panic(err)
 	}
 
@@ -171,14 +173,16 @@ func main() {
 	<-quit
 }
 
-func (app *AppRunner) Logging() {
-	aLogger := commons.NewApplicationLoggerWithOptions(
+func (app *AppRunner) Logging() error {
+	aLogger, err := commons.NewApplicationLoggerWithOptions(
 		commons.Level(app.Cfg.LogLevel),
 		commons.Name(app.Cfg.Name),
 	)
-	aLogger.InitLogger()
-	aLogger.Info("Added Logger middleware to the application.")
+	if err != nil {
+		return err
+	}
 	app.Logger = aLogger
+	return nil
 }
 
 func (g *AppRunner) AllConnectors() {
@@ -253,27 +257,14 @@ func (g *AppRunner) AllRouters() {
 
 // all middleware
 func (g *AppRunner) AllMiddlewares() {
-	g.LoggerMiddleware()
 	g.RecoveryMiddleware()
 	g.CorsMiddleware()
 	g.RequestLoggerMiddleware()
 	// g.E.Use(middlewares.AuthenticationMiddleware(g.db, g.Logger))
 }
 
-// Logger middleware
-func (g *AppRunner) LoggerMiddleware() {
-	aLogger := commons.NewApplicationLoggerWithOptions(
-		commons.Level(g.Cfg.LogLevel),
-		commons.Name(g.Cfg.Name),
-	)
-	aLogger.InitLogger()
-	aLogger.Info("Added Logger middleware to the application.")
-	g.Logger = aLogger
-}
-
 // Recovery middleware
 func (g *AppRunner) RecoveryMiddleware() {
-	g.Logger.Info("Added Default Recovery middleware to the application.")
 	g.E.Use(gin.Recovery())
 }
 

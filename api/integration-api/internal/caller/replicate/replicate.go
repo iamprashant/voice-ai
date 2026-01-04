@@ -75,19 +75,19 @@ func (replicate *Replicate) UsageMetrics(usages *replicate_go.PredictionMetrics)
 
 		metrics = append(metrics, &types.Metric{
 			Name:        type_enums.OUTPUT_TOKEN.String(),
-			Value:       fmt.Sprintf("%f", *usages.InputTokenCount),
+			Value:       fmt.Sprintf("%d", *usages.InputTokenCount),
 			Description: "Input token",
 		})
 
 		metrics = append(metrics, &types.Metric{
 			Name:        type_enums.INPUT_TOKEN.String(),
-			Value:       fmt.Sprintf("%f", *usages.OutputTokenCount),
+			Value:       fmt.Sprintf("%d", *usages.OutputTokenCount),
 			Description: "Output Token",
 		})
 
 		metrics = append(metrics, &types.Metric{
 			Name:        type_enums.TOTAL_TOKEN.String(),
-			Value:       fmt.Sprintf("%f", *usages.InputTokenCount+*usages.OutputTokenCount),
+			Value:       fmt.Sprintf("%d", *usages.InputTokenCount+*usages.OutputTokenCount),
 			Description: "Total Token",
 		})
 	}

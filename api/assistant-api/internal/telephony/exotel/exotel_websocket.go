@@ -221,11 +221,14 @@ func (exotel *exotelWebsocketStreamer) Send(response *protos.AssistantMessagingR
 			}
 		}
 	case *protos.AssistantMessagingResponse_Interruption:
-		exotel.audioBufferLock.Lock()
-		defer exotel.audioBufferLock.Unlock()
-		exotel.outputAudioBuffer.Reset() // Clear the buffer after flushing
-		if err := exotel.sendingExotelMessage("clear", nil); err != nil {
-			exotel.logger.Errorf("Error sending clear command:", err)
+		// interrupt on word given by stt
+		if data.Interruption.Type == protos.AssistantConversationInterruption_INTERRUPTION_TYPE_WORD {
+			exotel.audioBufferLock.Lock()
+			defer exotel.audioBufferLock.Unlock()
+			exotel.outputAudioBuffer.Reset()
+			if err := exotel.sendingExotelMessage("clear", nil); err != nil {
+				exotel.logger.Errorf("Error sending clear command:", err)
+			}
 		}
 	case *protos.AssistantMessagingResponse_Action:
 		if data.Action.GetAction() == protos.AssistantConversationAction_END_CONVERSATION {

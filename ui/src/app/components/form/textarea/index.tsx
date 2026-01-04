@@ -200,26 +200,26 @@ export const TextTextarea = React.forwardRef<
     />
   );
 });
+
 export const JsonTextarea = React.forwardRef<
   HTMLTextAreaElement,
   TextAreaProps
->((props, ref) => {
-  const { children, onChange, className } = props;
-
+>((attr, ref) => {
   return (
-    <CodeEditor
-      placeholder="Provide a tool parameters that will be passed to llm"
-      value={children as string}
-      onChange={value =>
-        onChange &&
-        onChange({
-          target: { value },
-        } as React.ChangeEvent<HTMLTextAreaElement>)
-      }
-      className={cn(
-        'min-h-40 max-h-dvh bg-light-background dark:bg-gray-950',
-        className,
-      )}
+    <ScalableTextarea
+      ref={ref}
+      placeholder="Enter variable value..."
+      spellCheck="false"
+      className="form-input"
+      wrapperClassName={`
+        p-0 
+        border-transparent!
+        outline-hidden!
+        shadow-none!
+        bg-transparent
+      `}
+      {...attr}
+      required
     />
   );
 });

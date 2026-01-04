@@ -1,3 +1,8 @@
+// Copyright (c) 2023-2025 RapidaAI
+// Author: Prashant Srivastav <prashant@rapida.ai>
+//
+// Licensed under GPL-2.0 with Rapida Additional Terms.
+// See LICENSE.md or contact sales@rapida.ai for commercial usage.
 package main
 
 import (
@@ -23,9 +28,9 @@ import (
 	"github.com/rapidaai/api/web-api/config"
 	web_router "github.com/rapidaai/api/web-api/router"
 	"github.com/rapidaai/pkg/authenticators"
-	commons "github.com/rapidaai/pkg/commons"
+	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
-	middlewares "github.com/rapidaai/pkg/middlewares"
+	"github.com/rapidaai/pkg/middlewares"
 	"github.com/soheilhy/cmux"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -48,12 +53,13 @@ func main() {
 
 	appRunner := AppRunner{E: gin.New()}
 	// resolving configuration
-	err := appRunner.ResolveConfig()
-	if err != nil {
+	if err := appRunner.ResolveConfig(); err != nil {
 		panic(err)
 	}
 	// logging
-	appRunner.Logging()
+	if err := appRunner.Logging(); err != nil {
+		panic(err)
+	}
 
 	// adding all connectors
 	appRunner.AllConnectors()
@@ -91,8 +97,7 @@ func main() {
 		grpc.MaxRecvMsgSize(commons.MaxRecvMsgSize), // 10 MB
 		grpc.MaxSendMsgSize(commons.MaxSendMsgSize), // 10 MB
 	)
-	err = appRunner.Init(ctx)
-	if err != nil {
+	if err := appRunner.Init(ctx); err != nil {
 		panic(err)
 	}
 
@@ -169,14 +174,16 @@ func main() {
 	<-quit
 }
 
-func (app *AppRunner) Logging() {
-	aLogger := commons.NewApplicationLoggerWithOptions(
+func (app *AppRunner) Logging() error {
+	aLogger, err := commons.NewApplicationLoggerWithOptions(
 		commons.Level(app.Cfg.LogLevel),
 		commons.Name(app.Cfg.Name),
 	)
-	aLogger.InitLogger()
-	aLogger.Info("Added Logger middleware to the application.")
+	if err != nil {
+		return err
+	}
 	app.Logger = aLogger
+	return nil
 }
 
 func (g *AppRunner) AllConnectors() {
@@ -254,22 +261,10 @@ func (g *AppRunner) AllProxyRouter() {
 
 // all middleware
 func (g *AppRunner) AllMiddlewares() {
-	g.LoggerMiddleware()
 	g.RecoveryMiddleware()
 	g.CorsMiddleware()
 	g.RequestLoggerMiddleware()
 	g.E.Use(middlewares.NewAuthenticationMiddleware(web_authenticators.GetUserAuthenticator(g.Logger, g.Postgres), g.Logger))
-}
-
-// Logger middleware
-func (g *AppRunner) LoggerMiddleware() {
-	aLogger := commons.NewApplicationLoggerWithOptions(
-		commons.Level(g.Cfg.LogLevel),
-		commons.Name(g.Cfg.Name),
-	)
-	aLogger.InitLogger()
-	aLogger.Info("Added Logger middleware to the application.")
-	g.Logger = aLogger
 }
 
 // Recovery middleware

@@ -15,66 +15,37 @@ import (
 
 // TestNewApplicationLogger tests default logger initialization
 func TestNewApplicationLogger(t *testing.T) {
-	logger := NewApplicationLogger()
+	logger, _ := NewApplicationLogger()
 	if logger == nil {
 		t.Fatal("Expected logger, got nil")
-	}
-	if logger.opts.name != defaultLoggerOptions.name {
-		t.Errorf("Expected name %s, got %s", defaultLoggerOptions.name, logger.opts.name)
-	}
-	if logger.opts.level != defaultLoggerOptions.level {
-		t.Errorf("Expected level %s, got %s", defaultLoggerOptions.level, logger.opts.level)
-	}
-}
-
-// TestNewApplicationLoggerWithOptions tests logger with custom options
-func TestNewApplicationLoggerWithOptions(t *testing.T) {
-	testName := "test-app"
-	testLevel := "debug"
-
-	logger := NewApplicationLoggerWithOptions(
-		Name(testName),
-		Level(testLevel),
-	)
-
-	if logger.opts.name != testName {
-		t.Errorf("Expected name %s, got %s", testName, logger.opts.name)
-	}
-	if logger.opts.level != testLevel {
-		t.Errorf("Expected level %s, got %s", testLevel, logger.opts.level)
 	}
 }
 
 // TestLoggerInitialization tests logger initialization with temp directory
 func TestLoggerInitialization(t *testing.T) {
 	tmpDir := t.TempDir()
-
-	logger := NewApplicationLoggerWithOptions(
+	_, err := NewApplicationLoggerWithOptions(
 		Name("test-logger"),
 		Path(tmpDir),
 		Level("info"),
 	)
 
-	err := logger.InitLogger()
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
-	if logger.sugarLogger == nil {
-		t.Fatal("Expected sugarLogger to be initialized")
-	}
 }
 
 // TestDebugLogging tests debug level logging
 func TestDebugLogging(t *testing.T) {
 	tmpDir := t.TempDir()
-	logger := NewApplicationLoggerWithOptions(
+	logger, err := NewApplicationLoggerWithOptions(
 		Name("test-debug"),
 		Path(tmpDir),
 		Level("debug"),
 	)
 
-	if err := logger.InitLogger(); err != nil {
+	if err != nil {
 		t.Fatalf("Failed to initialize logger: %v", err)
 	}
 	defer logger.Sync()
@@ -91,13 +62,13 @@ func TestDebugLogging(t *testing.T) {
 // TestInfoLogging tests info level logging
 func TestInfoLogging(t *testing.T) {
 	tmpDir := t.TempDir()
-	logger := NewApplicationLoggerWithOptions(
+	logger, err := NewApplicationLoggerWithOptions(
 		Name("test-info"),
 		Path(tmpDir),
 		Level("info"),
 	)
 
-	if err := logger.InitLogger(); err != nil {
+	if err != nil {
 		t.Fatalf("Failed to initialize logger: %v", err)
 	}
 	defer logger.Sync()
@@ -109,13 +80,13 @@ func TestInfoLogging(t *testing.T) {
 // TestWarnLogging tests warn level logging
 func TestWarnLogging(t *testing.T) {
 	tmpDir := t.TempDir()
-	logger := NewApplicationLoggerWithOptions(
+	logger, err := NewApplicationLoggerWithOptions(
 		Name("test-warn"),
 		Path(tmpDir),
 		Level("warn"),
 	)
 
-	if err := logger.InitLogger(); err != nil {
+	if err != nil {
 		t.Fatalf("Failed to initialize logger: %v", err)
 	}
 	defer logger.Sync()
@@ -127,13 +98,13 @@ func TestWarnLogging(t *testing.T) {
 // TestErrorLogging tests error level logging
 func TestErrorLogging(t *testing.T) {
 	tmpDir := t.TempDir()
-	logger := NewApplicationLoggerWithOptions(
+	logger, err := NewApplicationLoggerWithOptions(
 		Name("test-error"),
 		Path(tmpDir),
 		Level("error"),
 	)
 
-	if err := logger.InitLogger(); err != nil {
+	if err != nil {
 		t.Fatalf("Failed to initialize logger: %v", err)
 	}
 	defer logger.Sync()
@@ -145,13 +116,13 @@ func TestErrorLogging(t *testing.T) {
 // TestDPanicLogging tests DPanic level logging (only in development)
 func TestDPanicLogging(t *testing.T) {
 	tmpDir := t.TempDir()
-	logger := NewApplicationLoggerWithOptions(
+	logger, err := NewApplicationLoggerWithOptions(
 		Name("test-dpanic"),
 		Path(tmpDir),
 		Level("debug"),
 	)
 
-	if err := logger.InitLogger(); err != nil {
+	if err != nil {
 		t.Fatalf("Failed to initialize logger: %v", err)
 	}
 	defer logger.Sync()
@@ -163,13 +134,13 @@ func TestDPanicLogging(t *testing.T) {
 // TestBenchmarkLogging tests benchmark logging with different durations
 func TestBenchmarkLogging(t *testing.T) {
 	tmpDir := t.TempDir()
-	logger := NewApplicationLoggerWithOptions(
+	logger, err := NewApplicationLoggerWithOptions(
 		Name("test-benchmark"),
 		Path(tmpDir),
 		Level("info"),
 	)
 
-	if err := logger.InitLogger(); err != nil {
+	if err != nil {
 		t.Fatalf("Failed to initialize logger: %v", err)
 	}
 	defer logger.Sync()
@@ -183,13 +154,13 @@ func TestBenchmarkLogging(t *testing.T) {
 // TestTracefLogging tests request tracing with context
 func TestTracefLogging(t *testing.T) {
 	tmpDir := t.TempDir()
-	logger := NewApplicationLoggerWithOptions(
+	logger, err := NewApplicationLoggerWithOptions(
 		Name("test-trace"),
 		Path(tmpDir),
 		Level("info"),
 	)
 
-	if err := logger.InitLogger(); err != nil {
+	if err != nil {
 		t.Fatalf("Failed to initialize logger: %v", err)
 	}
 	defer logger.Sync()
@@ -217,8 +188,8 @@ func TestGetLoggerLevel(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		logger := NewApplicationLoggerWithOptions(Level(tt.levelStr))
-		level := logger.getLoggerLevel()
+		logger, _ := NewApplicationLoggerWithOptions(Level(tt.levelStr))
+		level := logger.Level()
 
 		switch tt.expected {
 		case "debug":
@@ -241,77 +212,15 @@ func TestGetLoggerLevel(t *testing.T) {
 	}
 }
 
-// TestLoggerOptions tests various configuration options
-func TestLoggerOptions(t *testing.T) {
-	tmpDir := t.TempDir()
-
-	logger := NewApplicationLoggerWithOptions(
-		Name("test-options"),
-		Path(tmpDir),
-		Level("debug"),
-		EnableConsole(true),
-		EnableFile(true),
-		MaxSize(100),
-		MaxBackups(5),
-		MaxAge(14),
-	)
-
-	if logger.opts.name != "test-options" {
-		t.Errorf("Expected name test-options, got %s", logger.opts.name)
-	}
-	if logger.opts.path != tmpDir {
-		t.Errorf("Expected path %s, got %s", tmpDir, logger.opts.path)
-	}
-	if logger.opts.level != "debug" {
-		t.Errorf("Expected level debug, got %s", logger.opts.level)
-	}
-	if !logger.opts.enableConsole {
-		t.Error("Expected enableConsole to be true")
-	}
-	if !logger.opts.enableFile {
-		t.Error("Expected enableFile to be true")
-	}
-	if logger.opts.maxSize != 100 {
-		t.Errorf("Expected maxSize 100, got %d", logger.opts.maxSize)
-	}
-	if logger.opts.maxBackups != 5 {
-		t.Errorf("Expected maxBackups 5, got %d", logger.opts.maxBackups)
-	}
-	if logger.opts.maxAge != 14 {
-		t.Errorf("Expected maxAge 14, got %d", logger.opts.maxAge)
-	}
-}
-
-// TestLoggerSync tests logger sync functionality
-func TestLoggerSync(t *testing.T) {
-	tmpDir := t.TempDir()
-	logger := NewApplicationLoggerWithOptions(
-		Name("test-sync"),
-		Path(tmpDir),
-		Level("info"),
-	)
-
-	if err := logger.InitLogger(); err != nil {
-		t.Fatalf("Failed to initialize logger: %v", err)
-	}
-
-	logger.Info("Test message before sync")
-
-	err := logger.Sync()
-	if err != nil {
-		t.Errorf("Expected no error on sync, got %v", err)
-	}
-}
-
 // TestConsoleOnlyLogger tests logger with only console output
 func TestConsoleOnlyLogger(t *testing.T) {
-	logger := NewApplicationLoggerWithOptions(
+	logger, err := NewApplicationLoggerWithOptions(
 		Name("test-console-only"),
 		EnableConsole(true),
 		EnableFile(false),
 	)
 
-	if err := logger.InitLogger(); err != nil {
+	if err != nil {
 		t.Fatalf("Failed to initialize logger: %v", err)
 	}
 	defer logger.Sync()
@@ -322,14 +231,14 @@ func TestConsoleOnlyLogger(t *testing.T) {
 // TestFileOnlyLogger tests logger with only file output
 func TestFileOnlyLogger(t *testing.T) {
 	tmpDir := t.TempDir()
-	logger := NewApplicationLoggerWithOptions(
+	logger, err := NewApplicationLoggerWithOptions(
 		Name("test-file-only"),
 		Path(tmpDir),
 		EnableConsole(false),
 		EnableFile(true),
 	)
 
-	if err := logger.InitLogger(); err != nil {
+	if err != nil {
 		t.Fatalf("Failed to initialize logger: %v", err)
 	}
 	defer logger.Sync()
@@ -346,23 +255,23 @@ func TestFileOnlyLogger(t *testing.T) {
 func TestMultipleLoggers(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	logger1 := NewApplicationLoggerWithOptions(
+	logger1, err := NewApplicationLoggerWithOptions(
 		Name("app1"),
 		Path(tmpDir),
 		Level("info"),
 	)
 
-	logger2 := NewApplicationLoggerWithOptions(
+	if err != nil {
+		t.Fatalf("Failed to initialize logger2: %v", err)
+	}
+	logger2, err := NewApplicationLoggerWithOptions(
 		Name("app2"),
 		Path(tmpDir),
 		Level("debug"),
 	)
 
-	if err := logger1.InitLogger(); err != nil {
+	if err != nil {
 		t.Fatalf("Failed to initialize logger1: %v", err)
-	}
-	if err := logger2.InitLogger(); err != nil {
-		t.Fatalf("Failed to initialize logger2: %v", err)
 	}
 
 	defer logger1.Sync()

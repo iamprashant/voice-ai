@@ -3,6 +3,7 @@ import {
   EndpointDefinition,
   Invoke,
   InvokeRequest,
+  JSONToAny,
   StringToAny,
 } from '@rapidaai/react';
 import { Endpoint, EndpointProviderModel } from '@rapidaai/react';
@@ -119,7 +120,7 @@ export function TryChatComplete(props: {
         setError('Unable to execute the endpoint, please try again.');
       })
       .catch(error => {
-        showLoader();
+        hideLoader();
         setError('Unable to execute the endpoint, please try again.');
       });
   };

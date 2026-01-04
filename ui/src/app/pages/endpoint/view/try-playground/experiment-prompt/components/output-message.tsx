@@ -79,11 +79,11 @@ export const OutputMessage: FC<{
         formError={isValid ? undefined : errors}
       />
       <Tab
-        active="ouput"
+        active="output"
         className={cn('text-sm/6 bg-white dark:bg-gray-900')}
         tabs={[
           {
-            label: 'ouput',
+            label: 'output',
             element: (
               <div className="flex-1 bg-white dark:bg-gray-900">
                 <div className="min-h-[250px] max-h-[450px] flex flex-col justify-start items-center relative">

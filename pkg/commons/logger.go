@@ -22,9 +22,7 @@ import (
 // ============================================================================
 
 type Logger interface {
-	// Initialization
-	InitLogger() error
-
+	Level() zapcore.Level
 	// Standard logging levels
 	Debug(args ...interface{})
 	Debugf(template string, args ...interface{})
@@ -180,24 +178,32 @@ type applicationLogger struct {
 }
 
 // NewApplicationLogger returns a logger with default options
-func NewApplicationLogger() *applicationLogger {
-	return &applicationLogger{opts: defaultLoggerOptions}
+func NewApplicationLogger() (Logger, error) {
+	al := &applicationLogger{opts: defaultLoggerOptions}
+	if err := al.init(); err != nil {
+		return nil, err
+	}
+	return al, nil
 }
 
 // NewApplicationLoggerWithOptions returns a logger with custom options
-func NewApplicationLoggerWithOptions(opts ...LoggerOption) *applicationLogger {
+func NewApplicationLoggerWithOptions(opts ...LoggerOption) (Logger, error) {
 	options := defaultLoggerOptions
 	for _, opt := range opts {
 		opt.apply(&options)
 	}
-	return &applicationLogger{opts: options}
+	al := &applicationLogger{opts: options}
+	if err := al.init(); err != nil {
+		return nil, err
+	}
+	return al, nil
 }
 
 // ============================================================================
 // Logger Initialization
 // ============================================================================
 
-func (l *applicationLogger) getLoggerLevel() zapcore.Level {
+func (l *applicationLogger) Level() zapcore.Level {
 	switch l.opts.level {
 	case "debug":
 		return zapcore.DebugLevel
@@ -261,9 +267,9 @@ func getWriteSyncer(path, name string) zapcore.WriteSyncer {
 }
 
 // InitLogger initializes the logger with console and file writers
-func (l *applicationLogger) InitLogger() error {
+func (l *applicationLogger) init() error {
 	var cores []zapcore.Core
-	level := zap.NewAtomicLevelAt(l.getLoggerLevel())
+	level := zap.NewAtomicLevelAt(l.Level())
 
 	// Console output
 	if l.opts.enableConsole {

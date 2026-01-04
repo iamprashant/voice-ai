@@ -1,3 +1,8 @@
+// Copyright (c) 2023-2025 RapidaAI
+// Author: Prashant Srivastav <prashant@rapida.ai>
+//
+// Licensed under GPL-2.0 with Rapida Additional Terms.
+// See LICENSE.md or contact sales@rapida.ai for commercial usage.
 package parsers
 
 import (
@@ -9,7 +14,8 @@ import (
 )
 
 func TestPongo2MessageTemplateParser_Parse(t *testing.T) {
-	parser := NewPongo2MessageTemplateParser(commons.NewApplicationLogger())
+	logger, _ := commons.NewApplicationLogger()
+	parser := NewPongo2MessageTemplateParser(logger)
 	tests := []struct {
 		name     string
 		template *types.Message
@@ -109,8 +115,8 @@ func TestPongo2StringTemplateParser_Parse(t *testing.T) {
 			expected: "Hi Alice! You are 30 years old.",
 		},
 	}
-
-	parser := NewPongo2StringTemplateParser(commons.NewApplicationLogger())
+	logger, _ := commons.NewApplicationLogger()
+	parser := NewPongo2StringTemplateParser(logger)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := parser.Parse(tt.template, tt.argument)
@@ -132,16 +138,11 @@ func TestPongo2TemplateParser_Parse(t *testing.T) {
 			template: `IMPORTANT: If the message does not clearly relate to any of the growth areas listed above, set "primary_area" to "None" and explain why in the reasoning.
 Consider the conversation context when determining the growth area - sometimes the meaning is clearer with context.
 Output ONLY a JSON object with this format:
-{
-"growth_area_analysis": {
-"primary_area": "THE EXACT NAME OF ONE OF THE GROWTH AREAS LISTED ABOVE OR 'None'",
-"reasoning": "Brief explanation of your analysis that considers both the message and context"
-}
-}
+{"growth_area_analysis": {"primary_area": "THE EXACT NAME OF ONE OF THE GROWTH AREAS LISTED ABOVE OR 'None'","reasoning": "Brief explanation of your analysis that considers both the message and context"}}
 <COACHING_SESSION>
-{% for message in messages %}
+{% autoescape off %}{% for message in messages %}
 {{ message.role }}: {{ message.text }}
-{% endfor %}
+{% endfor %}{% endautoescape %}
 </COACHING_SESSION>`,
 			argument: map[string]interface{}{
 				"messages": []map[string]string{
@@ -182,20 +183,21 @@ Output ONLY a JSON object with this format:
 			expected: `IMPORTANT: If the message does not clearly relate to any of the growth areas listed above, set "primary_area" to "None" and explain why in the reasoning.
 Consider the conversation context when determining the growth area - sometimes the meaning is clearer with context.
 Output ONLY a JSON object with this format:
-{
-"growth_area_analysis": {
-"primary_area": "THE EXACT NAME OF ONE OF THE GROWTH AREAS LISTED ABOVE OR 'None'",
-"reasoning": "Brief explanation of your analysis that considers both the message and context"
-}
-}
+{"growth_area_analysis": {"primary_area": "THE EXACT NAME OF ONE OF THE GROWTH AREAS LISTED ABOVE OR 'None'","reasoning": "Brief explanation of your analysis that considers both the message and context"}}
 <COACHING_SESSION>
+
 user: Hello how are you doing?
+
 assistant: Hello Akshay! It's great to meet you! I'm doing well, thank you for asking. How are you doing today? Is there anything I can help you with to make your day a bit easier?
+
 user: I wanted to discuss about change in my job
+
 assistant: Of course, Akshay! Job changes can be a significant topic to think through. I'm here to listen and help however I can.
 Are you considering making a change from your current job, or are you dealing with changes happening within your current role? Feel free to share what's on your mind - whether it's about new opportunities you're exploring, challenges you're facing, or just needing someone to bounce ideas off of.
 What aspects of this job change would you like to discuss?
+
 user: It's significant they are expecting me to do alot of thing with so less money
+
 assistant: I hear you, Akshay. That's a really frustrating situation to be in - when the workload and expectations keep increasing but the compensation doesn't match the effort and value you're bringing to the table. It's one of the most common yet challenging workplace issues.
 A few thoughts that might help:
 1. **Document everything** - Keep track of all the additional responsibilities you've taken on. This will be valuable if you decide to negotiate for better pay or look elsewhere.
@@ -203,14 +205,17 @@ A few thoughts that might help:
 3. **Know your worth** - Research what others in similar roles with your responsibilities are earning. This gives you leverage whether negotiating or job hunting.
 4. **Set boundaries** - While looking for solutions, try to maintain work-life balance and avoid burnout.
 How long has this been going on, and have you had any conversations with your management about adjusting your compensation to match your responsibilities?
+
 user: Thank
+
 assistant: You're welcome, Akshay! I know it's not an easy situation to deal with. If you want to continue talking about it or need help with anything else - whether it's preparing for that conversation with your manager, updating your resume, or just venting more about the situation - I'm here for you.
 Take care of yourself, and remember that recognizing your worth is the first step toward positive change. Feel free to reach out anytime you need support or advice!
+
 </COACHING_SESSION>`,
 		},
 	}
-
-	parser := NewPongo2StringTemplateParser(commons.NewApplicationLogger())
+	logger, _ := commons.NewApplicationLogger()
+	parser := NewPongo2StringTemplateParser(logger)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := parser.Parse(tt.template, tt.argument)

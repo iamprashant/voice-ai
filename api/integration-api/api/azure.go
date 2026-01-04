@@ -61,7 +61,6 @@ func (oiGRPC *azureIntegrationGRPCApi) Embedding(c context.Context, irRequest *i
 
 // all grpc handler
 func (oiGRPC *azureIntegrationGRPCApi) Chat(c context.Context, irRequest *integration_api.ChatRequest) (*integration_api.ChatResponse, error) {
-	oiGRPC.logger.Debugf("request for chat azure with request %+v", irRequest)
 	return oiGRPC.integrationApi.Chat(c, irRequest, "AZURE-FOUNDRY", internal_azure_callers.NewLargeLanguageCaller(oiGRPC.logger, irRequest.GetCredential()))
 }
 

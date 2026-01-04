@@ -75,6 +75,7 @@ func (invokeApi *invokerGRPCApi) Invoke(ctx context.Context, iRequest *invoker_a
 	if err != nil {
 		return utils.ErrorWithCode[invoker_api.InvokeResponse](400, err, "Please check and provide a valid arguments.")
 	}
+
 	mtds, err := utils.AnyMapToInterfaceMap(iRequest.GetMetadata())
 	if err != nil {
 		return utils.ErrorWithCode[invoker_api.InvokeResponse](400, err, "Please check and provide a valid metadata.")

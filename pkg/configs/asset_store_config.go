@@ -22,10 +22,14 @@ type AssetStoreConfig struct {
 }
 
 func (cfg *AssetStoreConfig) Type() StorageType {
-	if cfg.StorageType == string(S3) {
+	switch cfg.StorageType {
+	case string(S3):
 		return S3
+	case string(CDN):
+		return CDN
+	default:
+		return LOCAL
 	}
-	return LOCAL
 }
 
 func (cfg *AssetStoreConfig) IsLocal() bool {
