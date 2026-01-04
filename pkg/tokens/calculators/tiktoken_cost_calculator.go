@@ -1,3 +1,8 @@
+// Copyright (c) 2023-2025 RapidaAI
+// Author: Prashant Srivastav <prashant@rapida.ai>
+//
+// Licensed under GPL-2.0 with Rapida Additional Terms.
+// See LICENSE.md or contact sales@rapida.ai for commercial usage.
 package token_tiktoken_calculators
 
 import (
@@ -32,14 +37,6 @@ func (occ *tikTokenCostCalculator) Token(in []*types.Message, out *types.Message
 	totalTokens := ti + to
 	mt = append(mt, types.NewTotalTokenMetric(totalTokens))
 
-	// If you have cost information, you can add those metrics too
-	inputCost := float64(ti) * (occ.InputCost() / 1_000_000)
-	outputCost := float64(to) * (occ.OutputCost() / 1_000_000)
-	totalCost := inputCost + outputCost
-
-	mt = append(mt, types.NewInputCostMetric(inputCost))
-	mt = append(mt, types.NewOutputCostMetric(outputCost))
-	mt = append(mt, types.NewTotalCostMetric(totalCost))
 	return mt
 }
 
@@ -84,26 +81,4 @@ func (occ *tikTokenCostCalculator) token(name string,
 	outputToken += len(tkm.Encode("assistant", nil, nil))
 
 	return inTokenCount, outputToken
-}
-
-func (occ *tikTokenCostCalculator) InputCost() float64 {
-	// for _, meta := range occ.providerModel.GetMetadatas() {
-	// 	if meta.GetKey() == tokens.INPUT_COST_PER_MIL.String() {
-	// 		if v, err := strconv.ParseFloat(meta.GetValue(), 64); err == nil {
-	// 			return v
-	// 		}
-	// 	}
-	// }
-	return 0
-}
-
-func (occ *tikTokenCostCalculator) OutputCost() float64 {
-	// for _, meta := range occ.providerModel.GetMetadatas() {
-	// 	if meta.GetKey() == tokens.OUTPUT_COST_PER_MIL.String() {
-	// 		if v, err := strconv.ParseFloat(meta.GetValue(), 64); err == nil {
-	// 			return v
-	// 		}
-	// 	}
-	// }
-	return 0
 }
