@@ -22,9 +22,7 @@ import (
 func (spk *GenericRequestor) FinishSpeaking(
 	contextId string,
 ) error {
-	_, err := spk.
-		GetTextToSpeechTransformer()
-	if err != nil {
+	if _, err := spk.GetTextToSpeechTransformer(); err != nil {
 		spk.logger.Warnf("no output transformer, skipping finish speak.")
 		return err
 	}
@@ -40,14 +38,7 @@ func (spk *GenericRequestor) FinishSpeaking(
 			K: "activity", V: internal_adapter_telemetry.StringValue("finish_speaking"),
 		},
 	)
-	spk.
-		tokenizer.
-		Tokenize(
-			ctx,
-			contextId,
-			"",
-			true,
-		)
+	spk.tokenizer.Tokenize(ctx, contextId, "", true)
 	// keep it sync or blocking
 	if spk.textToSpeechTransformer != nil {
 		spk.textToSpeechTransformer.Transform(ctx,

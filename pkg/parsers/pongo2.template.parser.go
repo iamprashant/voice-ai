@@ -1,9 +1,15 @@
+// Copyright (c) 2023-2025 RapidaAI
+// Author: Prashant Srivastav <prashant@rapida.ai>
+//
+// Licensed under GPL-2.0 with Rapida Additional Terms.
+// See LICENSE.md or contact sales@rapida.ai for commercial usage.
 package parsers
 
 import (
 	"github.com/flosch/pongo2/v6"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
+	"github.com/rapidaai/pkg/utils"
 )
 
 type pongo2TemplateParser struct {
@@ -31,19 +37,16 @@ func NewPongo2MessageTemplateParser(logger commons.Logger) MessageTemplateParser
 }
 
 func (stp *pongo2StringTemplateParser) Parse(template string, argument map[string]interface{}) string {
-	stp.logger.Debugf("parsing %+v and %+v", template, argument)
 	tpl, err := pongo2.FromString(template)
 	if err != nil {
 		stp.logger.Errorf("error while parsing the template with pongo2: %v", err)
 		return template
 	}
-
-	formattedTemplate, err := tpl.Execute(pongo2.Context(argument))
+	formattedTemplate, err := tpl.Execute(pongo2.Context(utils.NormalizeInterface(argument)))
 	if err != nil {
 		stp.logger.Errorf("error while executing the template with pongo2: %v", err)
 		return template
 	}
-
 	return formattedTemplate
 }
 

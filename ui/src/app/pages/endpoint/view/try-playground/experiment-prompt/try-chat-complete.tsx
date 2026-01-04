@@ -3,6 +3,7 @@ import {
   EndpointDefinition,
   Invoke,
   InvokeRequest,
+  JSONToAny,
   StringToAny,
 } from '@rapidaai/react';
 import { Endpoint, EndpointProviderModel } from '@rapidaai/react';
