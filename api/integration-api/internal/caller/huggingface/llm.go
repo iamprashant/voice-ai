@@ -10,15 +10,14 @@ import (
 	internal_caller_metrics "github.com/rapidaai/api/integration-api/internal/caller/metrics"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
-	integration_api "github.com/rapidaai/protos"
-	protos "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
 type largeLanguageCaller struct {
 	Huggingface
 }
 
-func NewLargeLanguageCaller(logger commons.Logger, credential *integration_api.Credential) internal_callers.LargeLanguageCaller {
+func NewLargeLanguageCaller(logger commons.Logger, credential *protos.Credential) internal_callers.LargeLanguageCaller {
 	return &largeLanguageCaller{
 		Huggingface: huggingface(logger,
 			DEFUALT_URL, credential),
@@ -103,7 +102,7 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 	requestBody["messages"] = msg
 	headers := map[string]string{}
 	options.AIOptions.PreHook(requestBody)
-	res, err := llc.Call(ctx, fmt.Sprintf("models/%s"), // providerModel,
+	res, err := llc.Call(ctx, fmt.Sprintf("models/%s", ""),
 		"POST", headers, requestBody)
 
 	//

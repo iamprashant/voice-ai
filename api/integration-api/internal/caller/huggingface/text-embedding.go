@@ -13,14 +13,14 @@ import (
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
-	integration_api "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
 type embeddingCaller struct {
 	Huggingface
 }
 
-func NewEmbeddingCaller(logger commons.Logger, credential *integration_api.Credential) internal_callers.EmbeddingCaller {
+func NewEmbeddingCaller(logger commons.Logger, credential *protos.Credential) internal_callers.EmbeddingCaller {
 	return &embeddingCaller{
 		Huggingface: huggingface(logger,
 			DEFUALT_URL,
@@ -31,7 +31,7 @@ func NewEmbeddingCaller(logger commons.Logger, credential *integration_api.Crede
 // GetText2Speech implements internal_callers.Text2SpeechCaller.
 func (ec *embeddingCaller) GetEmbedding(ctx context.Context,
 	content map[int32]string,
-	options *internal_callers.EmbeddingOptions) ([]*integration_api.Embedding, types.Metrics, error) {
+	options *internal_callers.EmbeddingOptions) ([]*protos.Embedding, types.Metrics, error) {
 
 	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)
 	metrics.OnStart()
@@ -52,7 +52,7 @@ func (ec *embeddingCaller) GetEmbedding(ctx context.Context,
 	// options.AIOptions.PreHook(ec.toString(request))
 	res, err := ec.Call(ctx, fmt.Sprintf("pipeline/%s/%s",
 		"embedding",
-	// providerModel
+		"providerModel",
 	), "POST", headers, request)
 
 	//
@@ -76,11 +76,11 @@ func (ec *embeddingCaller) GetEmbedding(ctx context.Context,
 		return nil, metrics.Build(), err
 	}
 
-	output := make([]*integration_api.Embedding, len(resp))
+	output := make([]*protos.Embedding, len(resp))
 
 	for ix, embeddingData := range resp {
 		// preserve the index of the chunk
-		output[ix] = &integration_api.Embedding{
+		output[ix] = &protos.Embedding{
 			Index:     int32(ix),
 			Embedding: utils.EmbeddingToFloat64(embeddingData),
 			Base64:    utils.EmbeddingToBase64(utils.EmbeddingToFloat64(embeddingData)),
