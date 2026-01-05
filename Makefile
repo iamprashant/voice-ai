@@ -72,10 +72,24 @@ help:
 	@echo "  make clean-volumes       - Remove only volumes"
 	@echo "  make status              - Show container status and ports"
 	@echo ""
+	@echo "SETUP:"
+	@echo "  make setup-local         - Create directories and set permissions (sudo required)"
+	@echo ""
 
 # ============================================================================
 # STARTUP TARGETS - Individual Services
 # ============================================================================
+
+setup-local:
+	@echo "Creating local data directories..."
+	mkdir -p ${HOME}/rapida-data/assets/opensearch
+	mkdir -p ${HOME}/rapida-data/assets/db
+	mkdir -p ${HOME}/rapida-data/assets/redis
+	@echo "Setting permissions (sudo required)..."
+	sudo setfacl -m g:docker:rwx ${HOME}/rapida-data/
+	sudo chown -R 1000:1000 ${HOME}/rapida-data/assets/opensearch
+	@echo "✓ Setup complete. You can now run 'make up-all'"
+
 
 up-all:
 	@echo "Starting all services..."
