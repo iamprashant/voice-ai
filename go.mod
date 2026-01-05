@@ -10,6 +10,7 @@ require (
 	cloud.google.com/go/auth v0.16.4
 	cloud.google.com/go/speech v1.28.1
 	cloud.google.com/go/texttospeech v1.16.0
+	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/Microsoft/cognitive-services-speech-sdk-go v1.43.0
 	github.com/anthropics/anthropic-sdk-go v1.16.0
 	github.com/aws/aws-sdk-go v1.49.6
@@ -54,6 +55,7 @@ require (
 	google.golang.org/protobuf v1.36.7
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gorm.io/driver/postgres v1.5.4
+	gorm.io/driver/sqlite v1.6.0
 	gorm.io/gorm v1.30.0
 	moul.io/number-to-words v0.7.0
 )
@@ -101,6 +103,7 @@ require (
 	github.com/go-openapi/validate v0.21.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
+	github.com/go-redis/redismock/v9 v9.2.0 // indirect
 	github.com/goccy/go-json v0.9.11 // indirect
 	github.com/golang-jwt/jwt v3.2.1+incompatible // indirect
 	github.com/golang/mock v1.6.0 // indirect
@@ -172,7 +175,6 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gorm.io/driver/sqlite v1.6.0 // indirect
 	k8s.io/klog/v2 v2.110.1 // indirect
 	nhooyr.io/websocket v1.8.6 // indirect
 )

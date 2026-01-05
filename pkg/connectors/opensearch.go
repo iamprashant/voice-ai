@@ -510,8 +510,11 @@ func (openSearch *openSearchConnector) Name() string {
 
 // call info and check if the connection can be establish for any opensearch operation
 func (openSearch *openSearchConnector) IsConnected(ctx context.Context) bool {
-
 	openSearch.logger.Debugf("Calling info for opensearch.")
+	if openSearch.Connection == nil {
+		openSearch.logger.Debugf("Connection is not yet established")
+		return false
+	}
 	infoQuery := opensearchapi.InfoRequest{
 		ErrorTrace: true,
 	}
@@ -521,7 +524,6 @@ func (openSearch *openSearchConnector) IsConnected(ctx context.Context) bool {
 	}
 	defer infoResponse.Body.Close()
 
-	openSearch.logger.Debugf("Completed info call for opensearch.")
 	// some case opensearch do not raise any error when using with aws sts and role base IAM authentication
 	if infoResponse.StatusCode != 200 {
 		openSearch.logger.Debugf("Recieve the response from opensearch for INFO %v", infoResponse)

@@ -102,8 +102,9 @@ func (redisC *redisConnector) GetConnection() *redis.Client {
 
 // Return boolean status if connected or not
 func (redisC *redisConnector) IsConnected(ctx context.Context) bool {
-
-	redisC.logger.Debug("Pinging redis server.")
+	if redisC.Connection == nil {
+		return false
+	}
 	pingResponse, err := redisC.Connection.Ping(ctx).Result()
 	if err != nil {
 		redisC.logger.Errorf("Error while pinging redis server. %v", err)
@@ -137,7 +138,6 @@ func (redisC *redisConnector) Cmd(ctx context.Context, cmd string, args []string
 func (redisC *redisConnector) Cmds(ctx context.Context, cmd string, args *[]string) *RedisResponse {
 
 	start := time.Now()
-
 	// pipeline start
 	redisC.logger.Debugf("started executing redis cmds %s in pipeline no of commands %d", cmd, len(*args))
 	pipe := redisC.Connection.Pipeline()
@@ -172,16 +172,15 @@ func (redisC *redisConnector) Cmds(ctx context.Context, cmd string, args *[]stri
 
 // closing connection
 func (redisC *redisConnector) Disconnect(ctx context.Context) error {
-	redisC.logger.Debug("Disconnecting with redis client.")
-
+	if redisC.Connection == nil {
+		return nil
+	}
 	err := redisC.Connection.Close()
+	redisC.Connection = nil
 	if err != nil {
 		redisC.logger.Errorf("Failed to disconnect redis client. %v", err)
 		return err
 	}
-	redisC.logger.Debug("Disconnected successful redis client.")
-	// anyway nil the connection reference
-	redisC.Connection = nil
 	return err
 
 }

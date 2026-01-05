@@ -25,19 +25,16 @@ type PostgresConnector interface {
 }
 
 type postgresConnector struct {
+	logger commons.Logger
 	cfg    *configs.PostgresConfig
 	db     *gorm.DB
-	logger commons.Logger
 }
 
-func NewPostgresConnector(
-	config *configs.PostgresConfig,
-	logger commons.Logger) PostgresConnector {
+func NewPostgresConnector(config *configs.PostgresConfig, logger commons.Logger) PostgresConnector {
 	return &postgresConnector{cfg: config, logger: logger}
 }
 
 func (psql *postgresConnector) DB(ctx context.Context) *gorm.DB {
-	// need to remove in prod
 	return psql.db.WithContext(ctx)
 }
 
@@ -89,9 +86,11 @@ func (psql *postgresConnector) Connect(ctx context.Context) error {
 func (psql *postgresConnector) Name() string {
 	return fmt.Sprintf("PSQL psql://%s:%d", psql.cfg.Host, psql.cfg.Port)
 }
-func (psql *postgresConnector) IsConnected(ctx context.Context) bool {
 
-	psql.logger.Debugf("Calling ping for postgres.")
+func (psql *postgresConnector) IsConnected(ctx context.Context) bool {
+	if psql.db == nil {
+		return false
+	}
 	db, err := psql.db.DB()
 	if err != nil {
 		psql.logger.Errorf("Failed to get postgres client %s.", err)
@@ -107,6 +106,7 @@ func (psql *postgresConnector) IsConnected(ctx context.Context) bool {
 func (psql *postgresConnector) Disconnect(ctx context.Context) error {
 	psql.logger.Debug("Disconnecting with postgres client.")
 	db, err := psql.db.DB()
+	psql.db = nil
 	if err != nil {
 		psql.logger.Errorf("Disconnecting with postgres client %s.", err)
 		return err
@@ -116,7 +116,7 @@ func (psql *postgresConnector) Disconnect(ctx context.Context) error {
 		psql.logger.Debug("Disconnecting with postgres client %s.", err)
 		return err
 	}
-	psql.db = nil
+
 	return nil
 }
 
