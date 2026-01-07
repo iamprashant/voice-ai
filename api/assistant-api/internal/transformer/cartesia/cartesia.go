@@ -12,62 +12,11 @@ import (
 	"strings"
 	"time"
 
+	cartesia_internal "github.com/rapidaai/api/assistant-api/internal/transformer/cartesia/internal"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/utils"
 	"github.com/rapidaai/protos"
 )
-
-type TextToSpeechVoice struct {
-	Mode string `json:"mode"`
-	ID   string `json:"id"`
-}
-
-type TextToSpeechExperimentalControls struct {
-	Speed   string   `json:"speed"`
-	Emotion []string `json:"emotion"`
-}
-
-type TextToSpeechOutputFormat struct {
-	Container  string `json:"container"`
-	Encoding   string `json:"encoding"`
-	SampleRate int    `json:"sample_rate"`
-}
-
-type TextToSpeechInput struct {
-	ModelID              string                           `json:"model_id"`
-	ContextID            string                           `json:"context_id"`
-	Transcript           string                           `json:"transcript"`
-	Voice                TextToSpeechVoice                `json:"voice"`
-	ExperimentalControls TextToSpeechExperimentalControls `json:"__experimental_controls"`
-	OutputFormat         TextToSpeechOutputFormat         `json:"output_format"`
-	Language             string                           `json:"language"`
-	Continue             bool                             `json:"continue"`
-	AddTimestamps        bool                             `json:"add_timestamps"`
-}
-
-type TextToSpeechOuput struct {
-	Type       string `json:"type"`
-	Data       string `json:"data"`
-	Done       bool   `json:"done"`
-	StatusCode int    `json:"status_code"`
-	ContextID  string `json:"context_id"`
-}
-
-type TranscriptWord struct {
-	Word  string  `json:"word"`
-	Start float64 `json:"start"`
-	End   float64 `json:"end"`
-}
-
-type SpeechToTextOutput struct {
-	Type      string           `json:"type"`
-	IsFinal   bool             `json:"is_final"`
-	RequestID string           `json:"request_id"`
-	Text      string           `json:"text"`
-	Duration  float64          `json:"duration"`
-	Language  string           `json:"language"`
-	Words     []TranscriptWord `json:"words"`
-}
 
 const (
 	URL                  = "wss://api.cartesia.ai/stt/websocket"
@@ -114,14 +63,14 @@ func NewCartesiaOption(logger commons.Logger,
 func (co *cartesiaOption) GetTextToSpeechInput(
 	transcript string,
 	overriddenOpts map[string]interface{},
-) TextToSpeechInput {
-	opts := TextToSpeechInput{
+) cartesia_internal.TextToSpeechInput {
+	opts := cartesia_internal.TextToSpeechInput{
 		ModelID: "sonic-2-2025-03-07",
-		Voice: TextToSpeechVoice{
+		Voice: cartesia_internal.TextToSpeechVoice{
 			Mode: "id",
 			ID:   "c2ac25f9-ecc4-4f56-9095-651354df60c0",
 		},
-		OutputFormat: TextToSpeechOutputFormat{
+		OutputFormat: cartesia_internal.TextToSpeechOutputFormat{
 			Container:  "raw",
 			Encoding:   co.GetEncoding(),
 			SampleRate: int(co.audioConfig.GetSampleRate()),
@@ -146,7 +95,7 @@ func (co *cartesiaOption) GetTextToSpeechInput(
 		opts.ModelID = model
 	}
 	if voice, err := co.mdlOpts.GetString("speak.voice.id"); err == nil {
-		opts.Voice = TextToSpeechVoice{
+		opts.Voice = cartesia_internal.TextToSpeechVoice{
 			Mode: "id",
 			ID:   voice,
 		}

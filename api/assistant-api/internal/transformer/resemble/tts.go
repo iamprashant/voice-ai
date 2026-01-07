@@ -22,7 +22,12 @@ import (
 
 type resembleTTS struct {
 	*resembleOption
+
+	// context management
 	ctx       context.Context
+	ctxCancel context.CancelFunc
+
+	// mutex
 	mu        sync.Mutex
 	contextId string
 
@@ -37,18 +42,17 @@ func NewResembleTextToSpeech(
 	credential *protos.VaultCredential,
 	options *internal_transformer.TextToSpeechInitializeOptions,
 ) (internal_transformer.TextToSpeechTransformer, error) {
-	rsmblOpts, err := NewResembleOption(
-		logger,
-		credential,
-		options.AudioConfig,
-		options.ModelOptions)
+	rsmblOpts, err := NewResembleOption(logger, credential, options.AudioConfig, options.ModelOptions)
 	if err != nil {
 		logger.Errorf("resemble-tts: intializing resembleai failed %+v", err)
 		return nil, err
 	}
+
+	ct, ctxCancel := context.WithCancel(ctx)
 	return &resembleTTS{
 		resembleOption: rsmblOpts,
-		ctx:            ctx,
+		ctx:            ct,
+		ctxCancel:      ctxCancel,
 		logger:         logger,
 		options:        options,
 	}, nil
@@ -132,6 +136,7 @@ func (rt *resembleTTS) Transform(ctx context.Context, in string, opts *internal_
 }
 
 func (rt *resembleTTS) Close(ctx context.Context) error {
+	rt.ctxCancel()
 	if rt.connection != nil {
 		rt.connection.Close()
 	}

@@ -21,7 +21,10 @@ import (
 
 type sarvamTextToSpeech struct {
 	*sarvamOption
+	// context management
 	ctx       context.Context
+	ctxCancel context.CancelFunc
+
 	mu        sync.Mutex
 	contextId string
 
@@ -30,22 +33,16 @@ type sarvamTextToSpeech struct {
 	options    *internal_transformer.TextToSpeechInitializeOptions
 }
 
-func NewSarvamTextToSpeech(
-	ctx context.Context,
-	logger commons.Logger,
-	credential *protos.VaultCredential,
-	opts *internal_transformer.TextToSpeechInitializeOptions) (internal_transformer.TextToSpeechTransformer, error) {
-	sarvamOpts, err := NewSarvamOption(logger,
-		credential,
-		opts.AudioConfig,
-		opts.ModelOptions)
+func NewSarvamTextToSpeech(ctx context.Context, logger commons.Logger, credential *protos.VaultCredential, opts *internal_transformer.TextToSpeechInitializeOptions) (internal_transformer.TextToSpeechTransformer, error) {
+	sarvamOpts, err := NewSarvamOption(logger, credential, opts.AudioConfig, opts.ModelOptions)
 	if err != nil {
 		logger.Errorf("sarvam-stt: intializing sarvam failed %+v", err)
 		return nil, err
 	}
-
+	ct, ctxCancel := context.WithCancel(ctx)
 	return &sarvamTextToSpeech{
-		ctx:          ctx,
+		ctx:          ct,
+		ctxCancel:    ctxCancel,
 		logger:       logger,
 		sarvamOption: sarvamOpts,
 		options:      opts,
@@ -161,6 +158,7 @@ func (rt *sarvamTextToSpeech) Transform(ctx context.Context, in string, opts *in
 }
 
 func (rt *sarvamTextToSpeech) Close(ctx context.Context) error {
+	rt.ctxCancel()
 	if rt.connection != nil {
 		rt.connection.Close()
 	}

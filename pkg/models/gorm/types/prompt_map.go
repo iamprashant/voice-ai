@@ -84,25 +84,5 @@ func (jsonField *PromptMap) GetTextChatCompleteTemplate() (template *TextChatCom
 	if err = json.Unmarshal(jsonData, &template); err != nil {
 		return
 	}
-
-	if len(template.Variables) == 0 {
-		return nil
-	}
 	return
 }
-
-// func (jsonField *PromptMap) GetAgentPromptTemplate() (template *AgentPromptTemplate) {
-// 	jsonData, err := json.Marshal(jsonField)
-// 	if err != nil {
-// 		return
-// 	}
-// 	if err = json.Unmarshal(jsonData, &template); err != nil {
-// 		return
-// 	}
-
-// 	if len(template.Variables) > 0 {
-// 		return
-// 	}
-
-// 	return
-// }

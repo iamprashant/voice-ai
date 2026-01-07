@@ -14,40 +14,22 @@ import (
 
 	"github.com/dvonthenen/websocket"
 	internal_transformer "github.com/rapidaai/api/assistant-api/internal/transformer"
+	sarvam_internal "github.com/rapidaai/api/assistant-api/internal/transformer/sarvam/internal"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/protos"
 )
 
 type sarvamSpeechToText struct {
 	*sarvamOption
-	mu                 sync.Mutex
-	logger             commons.Logger
-	ctx                context.Context
+	// context management
+	ctx       context.Context
+	ctxCancel context.CancelFunc
+
+	mu     sync.Mutex
+	logger commons.Logger
+
 	connection         *websocket.Conn
 	transformerOptions *internal_transformer.SpeechToTextInitializeOptions
-}
-
-type SpeechToTextTranscriptionData struct {
-	RequestID  string `json:"request_id"`
-	Transcript string `json:"transcript"`
-	Metrics    struct {
-		AudioDuration     float64 `json:"audio_duration"`
-		ProcessingLatency float64 `json:"processing_latency"`
-	} `json:"metrics"`
-	Timestamps         interface{} `json:"timestamps,omitempty"`
-	DiarizedTranscript interface{} `json:"diarized_transcript,omitempty"`
-	LanguageCode       string      `json:"language_code,omitempty"`
-}
-type ErrorData struct {
-	Error string `json:"error"` // The error message
-	Code  string `json:"code"`  // The error code
-}
-
-type EventsData struct {
-	EventType  string  `json:"event_type,omitempty"`  // Optional: Type of event
-	Timestamp  string  `json:"timestamp,omitempty"`   // Optional: Timestamp of the event
-	SignalType string  `json:"signal_type,omitempty"` // Optional: Voice Activity Detection (VAD) signal type, e.g., "START_SPEECH", "END_SPEECH"
-	OccurredAt float64 `json:"occurred_at,omitempty"` // Optional: Epoch timestamp when the event occurred
 }
 
 // Name implements internal_transformer.SpeechToTextTransformer.
@@ -60,17 +42,16 @@ func NewSarvamSpeechToText(
 	logger commons.Logger,
 	credential *protos.VaultCredential,
 	opts *internal_transformer.SpeechToTextInitializeOptions) (internal_transformer.SpeechToTextTransformer, error) {
-	sarvamOpts, err := NewSarvamOption(logger,
-		credential,
-		opts.AudioConfig,
-		opts.ModelOptions)
+	sarvamOpts, err := NewSarvamOption(logger, credential, opts.AudioConfig, opts.ModelOptions)
 	if err != nil {
 		logger.Errorf("sarvam-stt: intializing sarvam failed %+v", err)
 		return nil, err
 	}
 
+	ct, ctxCancel := context.WithCancel(ctx)
 	return &sarvamSpeechToText{
-		ctx:                ctx,
+		ctx:                ct,
+		ctxCancel:          ctxCancel,
 		logger:             logger,
 		sarvamOption:       sarvamOpts,
 		transformerOptions: opts,
@@ -100,7 +81,7 @@ func (cst *sarvamSpeechToText) speechToTextCallback(ctx context.Context) {
 
 			switch response.Type {
 			case "data":
-				var transcriptionData SpeechToTextTranscriptionData
+				var transcriptionData sarvam_internal.SpeechToTextTranscriptionData
 				if err := json.Unmarshal(response.Data, &transcriptionData); err == nil {
 					cst.logger.Debugf("sarvam-stt: transcription received: %+v", transcriptionData)
 					if cst.transformerOptions.OnTranscript != nil {
@@ -113,7 +94,7 @@ func (cst *sarvamSpeechToText) speechToTextCallback(ctx context.Context) {
 					}
 				}
 			case "error":
-				var errorData ErrorData
+				var errorData sarvam_internal.ErrorData
 				if err := json.Unmarshal(response.Data, &errorData); err == nil {
 					cst.logger.Errorf("sarvam-stt: error from server: %v", errorData)
 				}
@@ -162,6 +143,7 @@ func (cst *sarvamSpeechToText) Transform(ctx context.Context, in []byte, opts *i
 }
 
 func (cst *sarvamSpeechToText) Close(ctx context.Context) error {
+	cst.ctxCancel()
 	if cst.connection != nil {
 		err := cst.connection.Close()
 		if err != nil {

@@ -15,24 +15,6 @@ import (
 	"github.com/rapidaai/protos"
 )
 
-type TranscriptMessage struct {
-	TurnOrder           int     `json:"turn_order"`
-	TurnIsFormatted     bool    `json:"turn_is_formatted"`
-	EndOfTurn           bool    `json:"end_of_turn"`
-	Transcript          string  `json:"transcript"`
-	EndOfTurnConfidence float64 `json:"end_of_turn_confidence"`
-	Words               []Word  `json:"words"`
-	Type                string  `json:"type"`
-}
-
-type Word struct {
-	Start       int     `json:"start"`
-	End         int     `json:"end"`
-	Text        string  `json:"text"`
-	Confidence  float64 `json:"confidence"`
-	WordIsFinal bool    `json:"word_is_final"`
-}
-
 func (opts *assemblyaiOption) GetEncoding() string {
 	switch opts.audioConfig.GetAudioFormat() {
 	case protos.AudioConfig_LINEAR16:

@@ -15,14 +15,18 @@ import (
 
 	"github.com/gorilla/websocket"
 	internal_transformer "github.com/rapidaai/api/assistant-api/internal/transformer"
+	cartesia_internal "github.com/rapidaai/api/assistant-api/internal/transformer/cartesia/internal"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/protos"
 )
 
 type cartesiaTTS struct {
 	*cartesiaOption
-	mu         sync.Mutex
-	ctx        context.Context
+	mu sync.Mutex
+	// context management
+	ctx       context.Context
+	ctxCancel context.CancelFunc
+
 	logger     commons.Logger
 	connection *websocket.Conn
 	options    *internal_transformer.TextToSpeechInitializeOptions
@@ -42,10 +46,12 @@ func NewCartesiaTextToSpeech(
 		return nil, err
 	}
 
+	ct, ctxCancel := context.WithCancel(ctx)
 	return &cartesiaTTS{
 		cartesiaOption: cartesiaOpts,
 		logger:         logger,
-		ctx:            ctx,
+		ctx:            ct,
+		ctxCancel:      ctxCancel,
 		options:        opts,
 	}, nil
 }
@@ -69,11 +75,15 @@ func (cst *cartesiaTTS) textToSpeechCallback(ctx context.Context) {
 			cst.logger.Infof("cartesia-tts: context cancelled, stopping response listener")
 			return
 		default:
+			if cst.connection == nil {
+				cst.logger.Errorf("cartesia-tts: WebSocket connection is either closed or not connected")
+				return
+			}
 			_, msg, err := cst.connection.ReadMessage()
 			if err != nil {
 				return
 			}
-			var payload TextToSpeechOuput
+			var payload cartesia_internal.TextToSpeechOuput
 			if err := json.Unmarshal(msg, &payload); err != nil {
 				cst.logger.Errorf("cartesia-tts: invalid json from cartesia error : %v", err)
 				continue
@@ -121,6 +131,7 @@ func (ct *cartesiaTTS) Transform(ctx context.Context, in string, opts *internal_
 }
 
 func (ct *cartesiaTTS) Close(ctx context.Context) error {
+	ct.ctxCancel()
 	if ct.connection != nil {
 		_ = ct.connection.Close()
 	}

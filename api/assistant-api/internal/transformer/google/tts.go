@@ -22,8 +22,11 @@ import (
 // googleTextToSpeech is the main struct handling Google Text-to-Speech functionality.
 type googleTextToSpeech struct {
 	*googleOption
-	mu                 sync.Mutex // Ensures thread-safe operations.
-	ctx                context.Context
+	mu sync.Mutex // Ensures thread-safe operations.
+
+	ctx       context.Context
+	ctxCancel context.CancelFunc
+
 	contextId          string                                                // Tracks context ID for audio synthesis.
 	logger             commons.Logger                                        // Logger for debugging and error reporting.
 	client             *texttospeech.Client                                  // Google TTS client.
@@ -55,9 +58,11 @@ func NewGoogleTextToSpeech(
 		return nil, err
 	}
 
+	xctx, contextCancel := context.WithCancel(ctx)
 	// Return configured TTS instance.
 	return &googleTextToSpeech{
-		ctx:                ctx,
+		ctx:                xctx,
+		ctxCancel:          contextCancel,
 		logger:             logger,
 		transformerOptions: opts,
 		client:             client,
@@ -67,6 +72,7 @@ func NewGoogleTextToSpeech(
 
 // Close safely shuts down the TTS client and streaming client.
 func (g *googleTextToSpeech) Close(ctx context.Context) error {
+	g.ctxCancel()
 	var combinedErr error
 	if g.streamClient != nil {
 		// Attempt to close the streaming client.

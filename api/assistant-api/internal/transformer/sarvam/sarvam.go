@@ -35,10 +35,7 @@ type sarvamOption struct {
 	resampler   *internal_audio.AudioResampler
 }
 
-func NewSarvamOption(logger commons.Logger,
-	vaultCredential *protos.VaultCredential,
-	audioConfig *protos.AudioConfig, option utils.Option) (*sarvamOption, error) {
-
+func NewSarvamOption(logger commons.Logger, vaultCredential *protos.VaultCredential, audioConfig *protos.AudioConfig, option utils.Option) (*sarvamOption, error) {
 	cx, ok := vaultCredential.GetValue().AsMap()["key"]
 	if !ok {
 		return nil, fmt.Errorf("sarvam: illegal vault config")

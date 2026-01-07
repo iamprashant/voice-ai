@@ -28,7 +28,10 @@ type googleSpeechToText struct {
 	client  *speech.Client
 	stream  speechpb.Speech_StreamingRecognizeClient
 	options *internal_transformer.SpeechToTextInitializeOptions
-	ctx     context.Context
+
+	// context management
+	ctx       context.Context
+	ctxCancel context.CancelFunc
 }
 
 // Name implements internal_transformer.SpeechToTextTransformer.
@@ -48,8 +51,8 @@ func (google *googleSpeechToText) Transform(c context.Context, byf []byte, opts 
 	})
 }
 
-// SpeechToTextCallback processes streaming responses with context awareness.
-func (g *googleSpeechToText) SpeechToTextCallback(ctx context.Context) {
+// speechToTextCallback processes streaming responses with context awareness.
+func (g *googleSpeechToText) speechToTextCallback(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -123,10 +126,12 @@ func NewGoogleSpeechToText(
 		return nil, err
 	}
 
+	xctx, contextCancel := context.WithCancel(ctx)
 	// Context for callback management
 	logger.Benchmark("google.NewGoogleSpeechToText", time.Since(start))
 	return &googleSpeechToText{
-		ctx:          ctx,
+		ctx:          xctx,
+		ctxCancel:    contextCancel,
 		logger:       logger,
 		client:       client,
 		googleOption: googleOption,
@@ -154,12 +159,13 @@ func (google *googleSpeechToText) Initialize() error {
 		return err
 	}
 	// Launch callback listener
-	go google.SpeechToTextCallback(google.ctx)
+	go google.speechToTextCallback(google.ctx)
 	google.logger.Debugf("google-stt: connection established")
 	return nil
 }
 
 func (g *googleSpeechToText) Close(ctx context.Context) error {
+	g.ctxCancel()
 	var combinedErr error
 	if g.stream != nil {
 		// Attempt to close the streaming client.

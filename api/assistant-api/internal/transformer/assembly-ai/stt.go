@@ -16,14 +16,21 @@ import (
 
 	"github.com/gorilla/websocket"
 	internal_transformer "github.com/rapidaai/api/assistant-api/internal/transformer"
+	assemblyai_internal "github.com/rapidaai/api/assistant-api/internal/transformer/assembly-ai/internal"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/protos"
 )
 
 type assemblyaiSTT struct {
 	*assemblyaiOption
-	ctx        context.Context
-	mu         sync.Mutex
+
+	// context management
+	ctx       context.Context
+	ctxCancel context.CancelFunc
+
+	// mutex
+	mu sync.Mutex
+
 	logger     commons.Logger
 	connection *websocket.Conn
 	options    *internal_transformer.SpeechToTextInitializeOptions
@@ -45,8 +52,10 @@ func NewAssemblyaiSpeechToText(
 		logger.Errorf("assembly-ai-stt: key from credential failed %v", err)
 		return nil, err
 	}
+	ct, ctxCancel := context.WithCancel(ctx)
 	return &assemblyaiSTT{
-		ctx:              ctx,
+		ctx:              ct,
+		ctxCancel:        ctxCancel,
 		logger:           logger,
 		options:          iOption,
 		assemblyaiOption: ayOptions,
@@ -70,23 +79,27 @@ func (aai *assemblyaiSTT) Initialize() error {
 		return fmt.Errorf("failed to connect to assemblyai websocket: %w", err)
 	}
 	aai.connection = conenction
-	go aai.speechToTextCallback()
+	go aai.speechToTextCallback(aai.ctx)
 	return nil
 }
 
-func (aai *assemblyaiSTT) speechToTextCallback() {
+func (aai *assemblyaiSTT) speechToTextCallback(ctx context.Context) {
 	for {
 		select {
-		case <-aai.ctx.Done():
+		case <-ctx.Done():
 			aai.logger.Info("assembly-ai-stt: read goroutine exiting due to context cancellation")
 			return
 		default:
+			if aai.connection == nil {
+				aai.logger.Errorf("assembly-ai-stt: WebSocket connection is either closed or not connected")
+				return
+			}
 			_, msg, err := aai.connection.ReadMessage()
 			if err != nil {
 				aai.logger.Error("assembly-ai-stt: read error: ", err)
 				return
 			}
-			var transcript TranscriptMessage
+			var transcript assemblyai_internal.TranscriptMessage
 			if err := json.Unmarshal(msg, &transcript); err != nil {
 				continue
 			}
@@ -132,6 +145,7 @@ func (aai *assemblyaiSTT) Transform(ctx context.Context, in []byte, opts *intern
 }
 
 func (aai *assemblyaiSTT) Close(ctx context.Context) error {
+	aai.ctxCancel()
 	if aai.connection != nil {
 		return aai.connection.Close()
 	}

@@ -17,13 +17,19 @@ import (
 	"github.com/gorilla/websocket"
 	internal_transformer "github.com/rapidaai/api/assistant-api/internal/transformer"
 	"github.com/rapidaai/pkg/commons"
-	protos "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
 type elevenlabsTTS struct {
 	*elevenLabsOption
-	ctx        context.Context
-	mu         sync.Mutex
+	// context management
+	ctx       context.Context
+	ctxCancel context.CancelFunc
+
+	// mutex
+	mu sync.Mutex
+
+	//
 	logger     commons.Logger
 	connection *websocket.Conn
 	options    *internal_transformer.TextToSpeechInitializeOptions
@@ -34,18 +40,15 @@ func NewElevenlabsTextToSpeech(
 	logger commons.Logger,
 	credential *protos.VaultCredential,
 	opts *internal_transformer.TextToSpeechInitializeOptions) (internal_transformer.TextToSpeechTransformer, error) {
-	eleOpts, err := NewElevenLabsOption(
-		logger,
-		credential,
-		opts.AudioConfig,
-		opts.ModelOptions)
+	eleOpts, err := NewElevenLabsOption(logger, credential, opts.AudioConfig, opts.ModelOptions)
 	if err != nil {
 		logger.Errorf("elevenlabs-tts: intializing elevenlabs failed %+v", err)
 		return nil, err
 	}
-
+	context, contextCancel := context.WithCancel(ctx)
 	return &elevenlabsTTS{
-		ctx:              ctx,
+		ctx:              context,
+		ctxCancel:        contextCancel,
 		options:          opts,
 		logger:           logger,
 		elevenLabsOption: eleOpts,
@@ -76,13 +79,16 @@ func (*elevenlabsTTS) Name() string {
 }
 
 func (elt *elevenlabsTTS) textToSpeechCallback(ctx context.Context) {
-
 	for {
 		select {
 		case <-ctx.Done():
 			elt.logger.Infof("elevenlabs-tts: context cancelled, stopping response listener")
 			return
 		default:
+			if elt.connection == nil {
+				elt.logger.Errorf("elevenlabs-tts: WebSocket connection is either closed or not connected")
+				return
+			}
 			_, audioChunk, err := elt.connection.ReadMessage()
 			if err != nil {
 				elt.logger.Errorf("elevenlab-tts: Error reading from TTS WebSocket: %v", err)
@@ -137,6 +143,7 @@ func (t *elevenlabsTTS) Transform(ctx context.Context, in string, opts *internal
 }
 
 func (t *elevenlabsTTS) Close(ctx context.Context) error {
+	t.ctxCancel()
 	if t.connection != nil {
 		t.connection.Close()
 	}
