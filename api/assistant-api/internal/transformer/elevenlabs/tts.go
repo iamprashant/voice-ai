@@ -32,7 +32,6 @@ type elevenlabsTTS struct {
 	// mutex
 	mu sync.Mutex
 
-	//
 	logger     commons.Logger
 	connection *websocket.Conn
 	options    *internal_transformer.TextToSpeechInitializeOptions

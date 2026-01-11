@@ -36,11 +36,7 @@ type assemblyaiSTT struct {
 	options *internal_transformer.SpeechToTextInitializeOptions
 }
 
-func NewAssemblyaiSpeechToText(
-	ctx context.Context,
-	logger commons.Logger,
-	credential *protos.VaultCredential,
-	iOption *internal_transformer.SpeechToTextInitializeOptions,
+func NewAssemblyaiSpeechToText(ctx context.Context, logger commons.Logger, credential *protos.VaultCredential, iOption *internal_transformer.SpeechToTextInitializeOptions,
 ) (internal_transformer.SpeechToTextTransformer, error) {
 	ayOptions, err := NewAssemblyaiOption(
 		logger,
@@ -96,55 +92,44 @@ func (aai *assemblyaiSTT) speechToTextCallback(conn *websocket.Conn, ctx context
 			aai.logger.Infof("assembly-ai-stt: read goroutine exiting due to context cancellation")
 			return
 		default:
-		}
+			_, msg, err := conn.ReadMessage()
+			if err != nil {
+				aai.logger.Errorf("assembly-ai-stt: read error: %v", err)
+				return
+			}
 
-		_, msg, err := conn.ReadMessage()
-		if err != nil {
-			aai.logger.Errorf("assembly-ai-stt: read error: %v", err)
-			return
-		}
-
-		var transcript assemblyai_internal.TranscriptMessage
-		if err := json.Unmarshal(msg, &transcript); err != nil {
-			aai.logger.Errorf("assembly-ai-stt: error unmarshalling transcript: %v", err)
-			continue
-		}
-
-		switch transcript.Type {
-		case "Turn":
-			if len(transcript.Words) == 0 {
-				aai.logger.Warnf("assembly-ai-stt: received Turn message with no words")
+			var transcript assemblyai_internal.TranscriptMessage
+			if err := json.Unmarshal(msg, &transcript); err != nil {
+				aai.logger.Errorf("assembly-ai-stt: error unmarshalling transcript: %v", err)
 				continue
 			}
 
-			confidence := 0.0
-			for _, v := range transcript.Words {
-				confidence += v.Confidence
+			switch transcript.Type {
+			case "Turn":
+				if len(transcript.Words) == 0 {
+					aai.logger.Warnf("assembly-ai-stt: received Turn message with no words")
+					continue
+				}
+
+				confidence := 0.0
+				for _, v := range transcript.Words {
+					confidence += v.Confidence
+				}
+				averageConfidence := confidence / float64(len(transcript.Words))
+				if transcript.EndOfTurn {
+					aai.options.OnTranscript(transcript.Transcript, averageConfidence, "en", true)
+				} else {
+					aai.options.OnTranscript(transcript.Transcript, averageConfidence, "en", false)
+				}
+
+			case "Begin":
+				aai.logger.Debugf("assembly-ai-stt: received Begin message")
+
+			default:
+				aai.logger.Debugf("assembly-ai-stt: received unknown message type: %s", transcript.Type)
 			}
-			averageConfidence := confidence / float64(len(transcript.Words))
-
-			if transcript.EndOfTurn {
-				aai.options.OnTranscript(
-					transcript.Transcript,
-					averageConfidence,
-					"en",
-					true,
-				)
-			} else {
-				aai.options.OnTranscript(
-					transcript.Transcript,
-					averageConfidence,
-					"en",
-					false,
-				)
-			}
-
-		case "Begin":
-			aai.logger.Debugf("assembly-ai-stt: received Begin message")
-
-		default:
-			aai.logger.Debugf("assembly-ai-stt: received unknown message type: %s", transcript.Type)
 		}
+
 	}
 }
 

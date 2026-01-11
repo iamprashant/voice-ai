@@ -36,24 +36,28 @@ type googleOption struct {
 
 // NewGoogleOption initializes googleOption with provided credentials, audio configurations, and options.
 // Improves error handling and logging for better debugging and robustness.
-func NewGoogleOption(logger commons.Logger,
-	vaultCredential *protos.VaultCredential,
-	audioConfig *protos.AudioConfig,
-	opts utils.Option) (*googleOption, error) {
+func NewGoogleOption(logger commons.Logger, vaultCredential *protos.VaultCredential, audioConfig *protos.AudioConfig, opts utils.Option) (*googleOption, error) {
+
 	co := make([]option.ClientOption, 0)
+	var projectID string
 	credentialsMap := vaultCredential.GetValue().AsMap()
-	cx, ok := credentialsMap["key"]
-	if ok {
-		co = append(co, option.WithAPIKey(cx.(string)))
+	if v, ok := credentialsMap["key"]; ok {
+		if key, ok := v.(string); ok && key != "" {
+			co = append(co, option.WithAPIKey(key))
+		}
 	}
-	prj, ok := credentialsMap["project_id"]
-	if ok {
-		co = append(co, option.WithQuotaProject(prj.(string)))
+
+	if v, ok := credentialsMap["project_id"]; ok {
+		if prj, ok := v.(string); ok && prj != "" {
+			projectID = prj
+			co = append(co, option.WithQuotaProject(prj))
+		}
 	}
-	serviceCrd, ok := credentialsMap["service_account_key"]
-	if ok {
-		serviceCrdJSON := []byte(serviceCrd.(string)) // Convert string to []byte
-		co = append(co, option.WithCredentialsJSON(serviceCrdJSON))
+
+	if v, ok := credentialsMap["service_account_key"]; ok {
+		if serviceCrd, ok := v.(string); ok && serviceCrd != "" {
+			co = append(co, option.WithCredentialsJSON([]byte(serviceCrd)))
+		}
 	}
 
 	return &googleOption{
@@ -61,7 +65,7 @@ func NewGoogleOption(logger commons.Logger,
 		mdlOpts:      opts,
 		clientOptons: co,
 		audioConfig:  audioConfig,
-		projectId:    prj.(string),
+		projectId:    projectID,
 	}, nil
 }
 

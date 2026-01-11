@@ -34,12 +34,13 @@ type googleTextToSpeech struct {
 	transformerOptions *internal_transformer.TextToSpeechInitializeOptions   // Options for TTS initialization.
 }
 
+// Name returns the name of this transformer implementation.
+func (*googleTextToSpeech) Name() string {
+	return "google-text-to-speech"
+}
+
 // NewGoogleTextToSpeech creates a new instance of googleTextToSpeech.
-func NewGoogleTextToSpeech(
-	ctx context.Context,
-	logger commons.Logger,
-	credential *protos.VaultCredential,
-	opts *internal_transformer.TextToSpeechInitializeOptions) (internal_transformer.TextToSpeechTransformer, error) {
+func NewGoogleTextToSpeech(ctx context.Context, logger commons.Logger, credential *protos.VaultCredential, opts *internal_transformer.TextToSpeechInitializeOptions) (internal_transformer.TextToSpeechTransformer, error) {
 	// Initialize Google TTS options.
 	googleOption, err := NewGoogleOption(logger, credential, opts.AudioConfig, opts.ModelOptions)
 	if err != nil {
@@ -103,11 +104,6 @@ func (google *googleTextToSpeech) Initialize() error {
 	go google.textToSpeechCallback(stream, google.ctx)
 	google.logger.Debugf("google-tts: connection established")
 	return nil
-}
-
-// Name returns the name of this transformer implementation.
-func (*googleTextToSpeech) Name() string {
-	return "google-text-to-speech"
 }
 
 // Transform handles streaming synthesis requests for input text.
