@@ -26,16 +26,8 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-func (listening *GenericRequestor) listenTranscript(
-	transcript string,
-	confidence float64,
-	language string,
-	isCompleted bool,
-) error {
-	ctx, span, _ := listening.
-		Tracer().StartSpan(
-		listening.Context(),
-		utils.AssistantListeningStage,
+func (listening *GenericRequestor) listenTranscript(transcript string, confidence float64, language string, isCompleted bool) error {
+	ctx, span, _ := listening.Tracer().StartSpan(listening.Context(), utils.AssistantListeningStage,
 		internal_telemetry.KV{
 			K: "transcript",
 			V: internal_telemetry.StringValue(transcript),
@@ -50,34 +42,21 @@ func (listening *GenericRequestor) listenTranscript(
 
 	//
 	if transcript != "" {
-		_, err := listening.OnRecieveTranscript(
-			ctx,
-			transcript,
-			confidence,
-			language,
-			isCompleted)
-		if err != nil {
+		if _, err := listening.OnRecieveTranscript(ctx, transcript, confidence, language, isCompleted); err != nil {
 			listening.logger.Info("OnRecieveTranscript error %s", err)
 		}
-		err = listening.ListenText(
-			ctx,
-			&internal_end_of_speech.STTEndOfSpeechInput{
-				Message:    transcript,
-				IsComplete: isCompleted,
-				Time:       time.Now(),
-			})
-		if err != nil {
+		if err := listening.ListenText(ctx, &internal_end_of_speech.STTEndOfSpeechInput{
+			Message:    transcript,
+			IsComplete: isCompleted,
+			Time:       time.Now(),
+		}); err != nil {
 			listening.logger.Info("ListenText error %s", err)
 		}
 	}
 	return nil
 }
 
-func (listening *GenericRequestor) initializeSpeechToText(
-	ctx context.Context,
-	transformerConfig *internal_assistant_entity.AssistantDeploymentAudio,
-	audioConfig *protos.AudioConfig,
-	options utils.Option) error {
+func (listening *GenericRequestor) initializeSpeechToText(ctx context.Context, transformerConfig *internal_assistant_entity.AssistantDeploymentAudio, audioConfig *protos.AudioConfig, options utils.Option) error {
 	credentialId, err := options.GetUint64("rapida.credential_id")
 	if err != nil {
 		listening.logger.Errorf("unable to find credential from options %+v", err)
@@ -346,10 +325,7 @@ func (listening *GenericRequestor) ListenText(
 	return listening.OnSilenceBreak(ctx)
 }
 
-func (listening *GenericRequestor) ListenAudio(
-	ctx context.Context,
-	in []byte,
-) ([]byte, error) {
+func (listening *GenericRequestor) ListenAudio(ctx context.Context, in []byte) ([]byte, error) {
 	if listening.denoiser != nil {
 		dnOut, _, err := listening.denoiser.Denoise(ctx, in)
 		if err != nil {

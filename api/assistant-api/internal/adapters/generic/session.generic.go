@@ -49,9 +49,7 @@ func (talking *GenericRequestor) Disconnect() {
 	wg.Add(1)
 	utils.Go(talking.Context(), func() {
 		defer wg.Done()
-		err := talking.
-			CloseListener(ctx)
-		if err != nil {
+		if err := talking.CloseListener(ctx); err != nil {
 			talking.logger.Tracef(ctx, "unable to cleanup input transformer with error %+v", err)
 			return
 		}
@@ -59,9 +57,7 @@ func (talking *GenericRequestor) Disconnect() {
 	wg.Add(1)
 	utils.Go(talking.Context(), func() {
 		defer wg.Done()
-		err := talking.
-			CloseSpeaker()
-		if err != nil {
+		if err := talking.CloseSpeaker(); err != nil {
 			talking.logger.Tracef(ctx, "unable to cleanup input transformer with error %+v", err)
 			return
 		}
@@ -74,8 +70,7 @@ func (talking *GenericRequestor) Disconnect() {
 			talking.logger.Tracef(ctx, "unable to persist the audio %+v", err)
 			return
 		}
-		err = talking.CreateConversationRecording(byt)
-		if err != nil {
+		if err = talking.CreateConversationRecording(byt); err != nil {
 			talking.logger.Tracef(ctx, "unable to create conversation recording %+v", err)
 			return
 		}

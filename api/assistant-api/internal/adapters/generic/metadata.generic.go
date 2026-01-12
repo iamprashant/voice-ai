@@ -32,9 +32,7 @@ func (tc *GenericRequestor) GetMetadata() map[string]interface{} {
 	return tc.metadata
 }
 
-func (tc *GenericRequestor) AddMetadata(
-	auth types.SimplePrinciple,
-	k string, v interface{}) {
+func (tc *GenericRequestor) AddMetadata(auth types.SimplePrinciple, k string, v interface{}) {
 	vl, ok := tc.metadata[k]
 	if ok && vl == v {
 		return
@@ -42,19 +40,15 @@ func (tc *GenericRequestor) AddMetadata(
 	tc.metadata[k] = v
 	utils.Go(context.Background(), func() {
 		start := time.Now()
-		tc.conversationService.
-			ApplyConversationMetadata(
-				context.Background(),
-				auth, tc.assistant.Id, tc.assistantConversation.Id,
-				[]*types.Metadata{types.NewMetadata(k, v)})
+		tc.conversationService.ApplyConversationMetadata(
+			context.Background(),
+			auth, tc.assistant.Id, tc.assistantConversation.Id,
+			[]*types.Metadata{types.NewMetadata(k, v)})
 		tc.logger.Benchmark("GenericRequestor.AddMetadata", time.Since(start))
 	})
 }
 
-func (tc *GenericRequestor) SetMetadata(
-	auth types.SimplePrinciple,
-	mt map[string]interface{}) {
-
+func (tc *GenericRequestor) SetMetadata(auth types.SimplePrinciple, mt map[string]interface{}) {
 	modified := make(map[string]interface{})
 	for k, v := range mt {
 		vl, ok := tc.metadata[k]
@@ -66,10 +60,9 @@ func (tc *GenericRequestor) SetMetadata(
 	}
 	utils.Go(context.Background(), func() {
 		start := time.Now()
-		tc.conversationService.
-			ApplyConversationMetadata(
-				context.Background(),
-				auth, tc.assistant.Id, tc.assistantConversation.Id, types.NewMetadataList(modified))
+		tc.conversationService.ApplyConversationMetadata(
+			context.Background(),
+			auth, tc.assistant.Id, tc.assistantConversation.Id, types.NewMetadataList(modified))
 		tc.logger.Benchmark("GenericRequestor.SetMetadata", time.Since(start))
 	})
 
