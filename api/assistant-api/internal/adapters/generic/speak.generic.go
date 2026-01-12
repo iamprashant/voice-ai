@@ -217,7 +217,6 @@ func (spk *GenericRequestor) CloseSpeaker() error {
 			spk.logger.Errorf("cancel all output transformer with error %v", err)
 		}
 	}
-
 	if spk.tokenizer != nil {
 		spk.tokenizer.Close()
 	}

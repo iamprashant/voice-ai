@@ -42,6 +42,7 @@ func (md *GenericRequestor) OnBeginConversation() error {
 	})
 	return nil
 }
+
 func (md *GenericRequestor) OnResumeConversation() error {
 	for _, webhook := range md.assistant.AssistantWebhooks {
 		if slices.Contains(webhook.AssistantEvents, utils.ConversationBegin.Get()) {
@@ -51,6 +52,7 @@ func (md *GenericRequestor) OnResumeConversation() error {
 	}
 	return nil
 }
+
 func (md *GenericRequestor) OnErrorConversation() error {
 	for _, webhook := range md.assistant.AssistantWebhooks {
 		if slices.Contains(webhook.AssistantEvents, utils.ConversationFailed.Get()) {
@@ -60,6 +62,7 @@ func (md *GenericRequestor) OnErrorConversation() error {
 	}
 	return nil
 }
+
 func (md *GenericRequestor) OnEndConversation() error {
 	utils.Go(md.Context(), func() {
 		if len(md.assistant.AssistantAnalyses) > 0 {

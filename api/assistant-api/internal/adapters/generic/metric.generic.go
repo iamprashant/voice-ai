@@ -40,9 +40,7 @@ func (tc *GenericRequestor) GetMetrics() []*types.Metric {
 	return tc.metrics
 }
 
-func (tc *GenericRequestor) AddMetrics(
-	auth types.SimplePrinciple,
-	metrics ...*types.Metric) {
+func (tc *GenericRequestor) AddMetrics(auth types.SimplePrinciple, metrics ...*types.Metric) {
 	tc.metrics = append(tc.metrics, metrics...)
 	utils.Go(tc.ctx, func() {
 		start := time.Now()
@@ -60,9 +58,7 @@ func (tc *GenericRequestor) AddMetrics(
 	})
 }
 
-func (tc *GenericRequestor) AddMetric(
-	auth types.SimplePrinciple,
-	metric *types.Metric) {
+func (tc *GenericRequestor) AddMetric(auth types.SimplePrinciple, metric *types.Metric) {
 	tc.metrics = append(tc.metrics, metric)
 	utils.Go(tc.ctx, func() {
 		start := time.Now()
