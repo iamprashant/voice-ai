@@ -17,14 +17,13 @@ class AssistantMessagingRequest(_message.Message):
     def __init__(self, configuration: _Optional[_Union[_common_pb2.AssistantConversationConfiguration, _Mapping]] = ..., message: _Optional[_Union[_common_pb2.AssistantConversationUserMessage, _Mapping]] = ...) -> None: ...
 
 class AssistantMessagingResponse(_message.Message):
-    __slots__ = ("code", "success", "configuration", "interruption", "user", "assistant", "message", "action", "error")
+    __slots__ = ("code", "success", "configuration", "interruption", "user", "assistant", "action", "error")
     CODE_FIELD_NUMBER: _ClassVar[int]
     SUCCESS_FIELD_NUMBER: _ClassVar[int]
     CONFIGURATION_FIELD_NUMBER: _ClassVar[int]
     INTERRUPTION_FIELD_NUMBER: _ClassVar[int]
     USER_FIELD_NUMBER: _ClassVar[int]
     ASSISTANT_FIELD_NUMBER: _ClassVar[int]
-    MESSAGE_FIELD_NUMBER: _ClassVar[int]
     ACTION_FIELD_NUMBER: _ClassVar[int]
     ERROR_FIELD_NUMBER: _ClassVar[int]
     code: int
@@ -33,10 +32,9 @@ class AssistantMessagingResponse(_message.Message):
     interruption: _common_pb2.AssistantConversationInterruption
     user: _common_pb2.AssistantConversationUserMessage
     assistant: _common_pb2.AssistantConversationAssistantMessage
-    message: _common_pb2.AssistantConversationMessage
     action: _common_pb2.AssistantConversationAction
     error: _common_pb2.Error
-    def __init__(self, code: _Optional[int] = ..., success: bool = ..., configuration: _Optional[_Union[_common_pb2.AssistantConversationConfiguration, _Mapping]] = ..., interruption: _Optional[_Union[_common_pb2.AssistantConversationInterruption, _Mapping]] = ..., user: _Optional[_Union[_common_pb2.AssistantConversationUserMessage, _Mapping]] = ..., assistant: _Optional[_Union[_common_pb2.AssistantConversationAssistantMessage, _Mapping]] = ..., message: _Optional[_Union[_common_pb2.AssistantConversationMessage, _Mapping]] = ..., action: _Optional[_Union[_common_pb2.AssistantConversationAction, _Mapping]] = ..., error: _Optional[_Union[_common_pb2.Error, _Mapping]] = ...) -> None: ...
+    def __init__(self, code: _Optional[int] = ..., success: bool = ..., configuration: _Optional[_Union[_common_pb2.AssistantConversationConfiguration, _Mapping]] = ..., interruption: _Optional[_Union[_common_pb2.AssistantConversationInterruption, _Mapping]] = ..., user: _Optional[_Union[_common_pb2.AssistantConversationUserMessage, _Mapping]] = ..., assistant: _Optional[_Union[_common_pb2.AssistantConversationAssistantMessage, _Mapping]] = ..., action: _Optional[_Union[_common_pb2.AssistantConversationAction, _Mapping]] = ..., error: _Optional[_Union[_common_pb2.Error, _Mapping]] = ...) -> None: ...
 
 class CreateMessageMetricRequest(_message.Message):
     __slots__ = ("assistantId", "assistantConversationId", "messageId", "metrics")

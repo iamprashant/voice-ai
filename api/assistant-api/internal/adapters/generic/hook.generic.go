@@ -15,9 +15,9 @@ import (
 	"time"
 
 	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
+	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	endpoint_client_builders "github.com/rapidaai/pkg/clients/endpoint/builders"
 	"github.com/rapidaai/pkg/clients/rest"
-	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
 	"github.com/rapidaai/protos"
@@ -182,6 +182,17 @@ func (md *GenericRequestor) Webhook(
 	})
 }
 
+func (md *GenericRequestor) SimplifyHistoy(msgs []internal_type.MessagePacket) []map[string]string {
+	out := make([]map[string]string, 0)
+	for _, msg := range msgs {
+		out = append(out, map[string]string{
+			"role":    msg.Role(),
+			"message": msg.Content(),
+		})
+	}
+	return out
+}
+
 func (md *GenericRequestor) Parse(
 	event utils.AssistantWebhookEvent,
 	mapping map[string]string,
@@ -206,7 +217,7 @@ func (md *GenericRequestor) Parse(
 					},
 					"conversation": map[string]interface{}{
 						"id":       fmt.Sprintf("%d", md.assistantConversation.Id),
-						"messages": types.ToSimpleMessage(md.GetHistories()),
+						"messages": md.SimplifyHistoy(md.GetHistories()),
 					},
 					"analysis": analysisData,
 				}
@@ -225,7 +236,7 @@ func (md *GenericRequestor) Parse(
 			case "id":
 				arguments[value] = fmt.Sprintf("%d", md.assistantConversation.Id)
 			case "messages":
-				arguments[value] = types.ToSimpleMessage(md.GetHistories())
+				arguments[value] = md.SimplifyHistoy(md.GetHistories())
 			}
 		}
 		if k, ok := strings.CutPrefix(key, "argument."); ok {

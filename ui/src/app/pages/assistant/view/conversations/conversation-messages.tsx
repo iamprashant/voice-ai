@@ -95,8 +95,7 @@ export const ConversationMessages: FC<{
     const csvContent = [
       'role,message',
       ...conversations.flatMap((row: AssistantConversationMessage) => [
-        `user,${csvEscape(toContentText(row.getRequest()?.getContentsList()))}`,
-        `system,${csvEscape(toContentText(row.getResponse()?.getContentsList()))}`,
+        `${row.getRole()},${csvEscape(row.getBody())}`,
       ]),
     ].join('\n');
     const url = URL.createObjectURL(
@@ -155,37 +154,33 @@ export const ConversationMessages: FC<{
             className="flex flex-col w-full  bg-white dark:bg-gray-900 relative border-b-[0.5px] dark:border-gray-800"
             key={idx}
           >
-            {x.getRequest() && (
+            {x.getBody() && (
               <div className="flex items-start space-x-4 px-6 py-4  hover:bg-gray-50 dark:hover:bg-gray-900 border-b-[0.5px] dark:border-gray-800">
-                <div className="h-9 w-9 rounded-[2px] flex-shrink-0 bg-zinc-200/80 dark:bg-zinc-800/80 border-[0.5px] flex items-center justify-center dark:border-gray-700">
-                  <span className="font-bold text-sm opacity-80">U</span>
-                </div>
+                {x.getRole() === 'rapida' ? (
+                  <div className="h-9 w-9 rounded-[2px] flex-shrink-0 bg-blue-100/80 dark:bg-blue-900/80 border-[0.5px] flex items-center justify-center dark:border-gray-700">
+                    <RapidaIcon className="h-5 w-5 text-blue-600" />
+                  </div>
+                ) : x.getRole() === 'assistant' ? (
+                  <div className="h-9 w-9 rounded-[2px] flex-shrink-0 bg-emerald-100/80 dark:bg-emerald-900/80 border-[0.5px] flex items-center justify-center dark:border-gray-700">
+                    <span className="font-bold text-sm opacity-80">A</span>
+                  </div>
+                ) : (
+                  <div className="h-9 w-9 rounded-[2px] flex-shrink-0 bg-zinc-200/80 dark:bg-zinc-800/80 border-[0.5px] flex items-center justify-center dark:border-gray-700">
+                    <span className="font-bold text-sm opacity-80">U</span>
+                  </div>
+                )}
+
                 <div className="flex-1 min-w-0">
-                  <div className="text-base font-semibold mb-2 dark:text-gray-500 text-gray-600">
-                    User
+                  <div className="text-base font-semibold mb-2 dark:text-gray-500 text-gray-600 capitalize">
+                    {x.getRole()}
                   </div>
                   <div className="text-md [&_:is([data-link],a:link,a:visited,a:hover,a:active)]:text-primary [&_:is([data-link],a:link,a:visited,a:hover,a:active):hover]:underline [&_:is(code,div[data-lang])]:font-mono [&_:is(code,div[data-lang])]:bg-overlay [&_:is(code,div[data-lang])]:rounded-[2px] [&_is:(code)]:p-0.5 [&_div[data-lang]]:p-2 [&_div[data-lang]]:overflow-auto [&_:is(p,ul,ol,dl,table,blockquote,div[data-lang],h4,h5,h6,hr):not(:first-child)]:mt-2 [&_:is(p,ul,ol,dl,table,blockquote,div[data-lang],h3,h4,h5,h6,hr):not(:last-child)]:mb-2 [&_:is(ul,ol)]:pl-5 [&_ul]:list-disc [&_ol]:list-decimal [&_ol>li>ol]:list-[lower-alpha] [&_ol>li>ol>li>ol]:list-[lower-roman] [&_ol>li>ol>li>ol>li>ol]:list-[list-decimal] [&_[data-user]]:text-primary [&_:is(strong,h1,h2,h3,h4,h5,h6)]:font-semibold [&_:is(h1)]:text-2xl [&_:is(h2)]:text-lg [&_:is(h3)]:text-md [&_h1:not(:first-child)]:mt-8 [&_h1:not(:last-child)]:mb-6 [&_h2:not(:first-child)]:mt-6 [&_h2:not(:last-child)]:mb-4 [&_h3:not(:first-child)]:mt-4 whitespace-pre-wrap break-words">
-                    {toContentText(x.getRequest()?.getContentsList())}
+                    {x.getBody()}
                   </div>
                 </div>
               </div>
             )}
 
-            {x.getResponse() && x.getStatus() !== 'FAILED' && (
-              <div className="flex items-start space-x-4 px-6 py-4 overflow-hidden hover:bg-gray-50 dark:hover:bg-gray-900 relative">
-                <RapidaIcon className="h-8 w-8 text-blue-600 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="text-base font-semibold mb-2 dark:text-gray-500 text-gray-600">
-                    Rapida
-                  </div>
-                  <MarkdownPreview
-                    source={toContentText(x.getResponse()?.getContentsList())}
-                    className="!text-gray-700 dark:!text-gray-400 prose prose-base break-words !max-w-none prose-img:rounded-xl prose-headings:underline prose-a:text-blue-600 prose-strong:font-bold prose-headings:font-bold dark:prose-strong:text-white dark:prose-headings:text-white"
-                    style={{ background: 'transparent' }}
-                  />
-                </div>
-              </div>
-            )}
             <div className="flex justify-end items-center ">
               <div className="mr-2 text-xs/4 ">
                 {toHumanReadableDateTime(x.getCreateddate()!)}

@@ -99,8 +99,7 @@ func (cr *GenericRequestor) GetConversationLogs() []*protos.Message {
 	return messages
 }
 
-func (cr *GenericRequestor) CreateConversationMessageLog(
-	messageid string, in, out *types.Message, metrics []*types.Metric) error {
+func (cr *GenericRequestor) CreateConversationMessageLog(messageid string, in, out *types.Message, metrics []*types.Metric) error {
 	cr.conversationService.CreateLLMAction(
 		cr.Context(),
 		cr.Auth(),

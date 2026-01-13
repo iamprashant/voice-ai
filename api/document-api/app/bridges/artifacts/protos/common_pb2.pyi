@@ -314,12 +314,12 @@ class TextChatCompletePrompt(_message.Message):
     def __init__(self, prompt: _Optional[_Iterable[_Union[TextPrompt, _Mapping]]] = ..., promptVariables: _Optional[_Iterable[_Union[Variable, _Mapping]]] = ...) -> None: ...
 
 class AssistantConversationMessage(_message.Message):
-    __slots__ = ("id", "messageId", "assistantConversationId", "request", "response", "source", "metrics", "status", "createdBy", "updatedBy", "createdDate", "updatedDate", "assistantId", "assistantProviderModelId", "metadata")
+    __slots__ = ("id", "messageId", "assistantConversationId", "role", "body", "source", "metrics", "status", "createdBy", "updatedBy", "createdDate", "updatedDate", "assistantId", "assistantProviderModelId", "metadata")
     ID_FIELD_NUMBER: _ClassVar[int]
     MESSAGEID_FIELD_NUMBER: _ClassVar[int]
     ASSISTANTCONVERSATIONID_FIELD_NUMBER: _ClassVar[int]
-    REQUEST_FIELD_NUMBER: _ClassVar[int]
-    RESPONSE_FIELD_NUMBER: _ClassVar[int]
+    ROLE_FIELD_NUMBER: _ClassVar[int]
+    BODY_FIELD_NUMBER: _ClassVar[int]
     SOURCE_FIELD_NUMBER: _ClassVar[int]
     METRICS_FIELD_NUMBER: _ClassVar[int]
     STATUS_FIELD_NUMBER: _ClassVar[int]
@@ -333,8 +333,8 @@ class AssistantConversationMessage(_message.Message):
     id: int
     messageId: str
     assistantConversationId: int
-    request: Message
-    response: Message
+    role: str
+    body: str
     source: str
     metrics: _containers.RepeatedCompositeFieldContainer[Metric]
     status: str
@@ -345,7 +345,7 @@ class AssistantConversationMessage(_message.Message):
     assistantId: int
     assistantProviderModelId: int
     metadata: _containers.RepeatedCompositeFieldContainer[Metadata]
-    def __init__(self, id: _Optional[int] = ..., messageId: _Optional[str] = ..., assistantConversationId: _Optional[int] = ..., request: _Optional[_Union[Message, _Mapping]] = ..., response: _Optional[_Union[Message, _Mapping]] = ..., source: _Optional[str] = ..., metrics: _Optional[_Iterable[_Union[Metric, _Mapping]]] = ..., status: _Optional[str] = ..., createdBy: _Optional[int] = ..., updatedBy: _Optional[int] = ..., createdDate: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., updatedDate: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., assistantId: _Optional[int] = ..., assistantProviderModelId: _Optional[int] = ..., metadata: _Optional[_Iterable[_Union[Metadata, _Mapping]]] = ...) -> None: ...
+    def __init__(self, id: _Optional[int] = ..., messageId: _Optional[str] = ..., assistantConversationId: _Optional[int] = ..., role: _Optional[str] = ..., body: _Optional[str] = ..., source: _Optional[str] = ..., metrics: _Optional[_Iterable[_Union[Metric, _Mapping]]] = ..., status: _Optional[str] = ..., createdBy: _Optional[int] = ..., updatedBy: _Optional[int] = ..., createdDate: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., updatedDate: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., assistantId: _Optional[int] = ..., assistantProviderModelId: _Optional[int] = ..., metadata: _Optional[_Iterable[_Union[Metadata, _Mapping]]] = ...) -> None: ...
 
 class AssistantConversationContext(_message.Message):
     __slots__ = ("id", "metadata", "result", "query")

@@ -15,6 +15,7 @@ import (
 	internal_streamers "github.com/rapidaai/api/assistant-api/internal/streamers"
 	internal_assistant_telemetry "github.com/rapidaai/api/assistant-api/internal/telemetry/assistant"
 	internal_assistant_telemetry_exporters "github.com/rapidaai/api/assistant-api/internal/telemetry/assistant/exporters"
+	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 
 	internal_agent_embeddings "github.com/rapidaai/api/assistant-api/internal/agent/embedding"
 	internal_agent_executor "github.com/rapidaai/api/assistant-api/internal/agent/executor"
@@ -101,7 +102,7 @@ type GenericRequestor struct {
 	// states
 	assistant             *internal_assistant_entity.Assistant
 	assistantConversation *internal_conversation_gorm.AssistantConversation
-	histories             []*types.Message
+	histories             []internal_type.MessagePacket
 	metrics               []*types.Metric
 	args                  map[string]interface{}
 	metadata              map[string]interface{}
@@ -162,7 +163,7 @@ func NewGenericRequestor(
 
 		// will change
 
-		histories: make([]*types.Message, 0),
+		histories: make([]internal_type.MessagePacket, 0),
 		metrics:   make([]*types.Metric, 0),
 		metadata:  make(map[string]interface{}),
 		args:      make(map[string]interface{}),
@@ -184,23 +185,10 @@ func (dm *GenericRequestor) Streamer() internal_streamers.Streamer {
 	return dm.streamer
 }
 
-func (deb *GenericRequestor) OnCreateMessage(
-	ctx context.Context,
-	messageId string,
-	in *types.Message) error {
-
+func (deb *GenericRequestor) OnCreateMessage(ctx context.Context, in internal_type.MessagePacket) error {
 	start := time.Now()
 	deb.histories = append(deb.histories, in)
-	//
-	_, err := deb.conversationService.CreateConversationMessage(
-		ctx,
-		deb.Auth(),
-		deb.Source(),
-		messageId,
-		deb.Assistant().Id,
-		deb.Assistant().AssistantProviderId,
-		deb.Conversation().Id,
-		in)
+	_, err := deb.conversationService.CreateConversationMessage(ctx, deb.Auth(), deb.Source(), deb.Assistant().Id, deb.Assistant().AssistantProviderId, deb.Conversation().Id, in.ContextId(), in.Role(), in.Content())
 
 	if err != nil {
 		deb.logger.Error("unable to create message for the user")
@@ -211,43 +199,7 @@ func (deb *GenericRequestor) OnCreateMessage(
 
 }
 
-/*
-UpdateMessage updates an existing assistant conversation message in the database.
-
-This function performs the following tasks:
-1. Starts a timer to measure the execution time.
-2. Initializes span metadata for tracking.
-3. Starts an event for message creation using the event manager.
-4. Calls the conversation service to update the message in the database.
-5. Logs the execution time for benchmarking purposes.
-6. Handles any errors that occur during the update process.
-7. Updates the span metadata with status information.
-8. Returns the updated message or an error.
-
-Parameters:
-- message: A pointer to the AssistantConversationMessage to be updated.
-
-Returns:
-- A pointer to the updated internal_gorm.AssistantConversationMessage.
-- An error if the update operation fails.
-*/
-func (deb *GenericRequestor) OnUpdateMessage(
-	ctx context.Context,
-	messageId string,
-	message *types.Message,
-	status type_enums.RecordState) error {
-	deb.histories = append(deb.histories, message)
-	if _, err := deb.conversationService.UpdateConversationMessage(ctx, deb.Auth(), deb.Conversation().Id, messageId, message, status); err != nil {
-		deb.logger.Errorf("error updating conversation message: %v", err)
-		return err
-	}
-	return nil
-}
-
-func (deb *GenericRequestor) OnMessageMetric(
-	ctx context.Context,
-	messageId string,
-	metrics []*types.Metric) error {
+func (deb *GenericRequestor) OnMessageMetric(ctx context.Context, messageId string, metrics []*types.Metric) error {
 	if _, err := deb.
 		conversationService.ApplyMessageMetrics(ctx, deb.Auth(), deb.Conversation().Id, messageId, metrics); err != nil {
 		deb.logger.Errorf("error updating metrics for message: %v", err)
@@ -272,12 +224,7 @@ func (dm *GenericRequestor) Tracer() internal_telemetry.VoiceAgentTracer {
 	return dm.tracer
 }
 
-func (gr *GenericRequestor) GetAssistantConversation(
-	auth types.SimplePrinciple,
-	assistantId uint64,
-	assistantConversationId uint64,
-	identifier string,
-) (*internal_conversation_gorm.AssistantConversation, error) {
+func (gr *GenericRequestor) GetAssistantConversation(auth types.SimplePrinciple, assistantId uint64, assistantConversationId uint64, identifier string) (*internal_conversation_gorm.AssistantConversation, error) {
 	start := time.Now()
 	defer gr.logger.Benchmark("GenericRequestor.GetAssistantConversation", time.Since(start))
 	return gr.conversationService.GetConversation(gr.Context(), auth, identifier, assistantId, assistantConversationId, &internal_services.
@@ -290,16 +237,7 @@ func (gr *GenericRequestor) GetAssistantConversation(
 	)
 }
 
-func (gr *GenericRequestor) CreateAssistantConversation(
-	auth types.SimplePrinciple,
-	assistantId uint64,
-	assistantProviderModelId uint64,
-	identifier string,
-	direction type_enums.ConversationDirection,
-	arguments map[string]interface{},
-	metadata map[string]interface{},
-	options map[string]interface{},
-) (*internal_conversation_gorm.AssistantConversation, error) {
+func (gr *GenericRequestor) CreateAssistantConversation(auth types.SimplePrinciple, assistantId uint64, assistantProviderModelId uint64, identifier string, direction type_enums.ConversationDirection, arguments map[string]interface{}, metadata map[string]interface{}, options map[string]interface{}) (*internal_conversation_gorm.AssistantConversation, error) {
 	conversation, err := gr.conversationService.CreateConversation(gr.Context(), auth, identifier, assistantId, assistantProviderModelId, direction, gr.Source())
 	if err != nil {
 		return conversation, err
@@ -408,7 +346,7 @@ func (gr *GenericRequestor) GetOptions() map[string]interface{} {
 	return gr.options
 }
 
-func (dm *GenericRequestor) GetHistories() []*types.Message {
+func (dm *GenericRequestor) GetHistories() []internal_type.MessagePacket {
 	return dm.histories
 }
 

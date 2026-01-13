@@ -41,7 +41,6 @@ import { PageTitleBlock } from '@/app/components/blocks/page-title-block';
 import { ConversationTelemetryDialog } from '@/app/components/base/modal/conversation-telemetry-modal';
 import { TableCell } from '@/app/components/base/tables/table-cell';
 import { CustomLink } from '@/app/components/custom-link';
-import { cn } from '@/utils';
 import { TableRow } from '@/app/components/base/tables/table-row';
 import { StatusIndicator } from '@/app/components/indicators/status';
 import SourceIndicator from '@/app/components/indicators/source';
@@ -213,14 +212,10 @@ export const ListingPage: FC<{}> = ({}) => {
                   return row.getAssistantid();
                 case 'source':
                   return row.getSource();
-                case 'request':
-                  return csvEscape(
-                    toContentText(row.getRequest()?.getContentsList()),
-                  );
-                case 'response':
-                  return csvEscape(
-                    toContentText(row.getResponse()?.getContentsList()),
-                  );
+                case 'role':
+                  return csvEscape(row.getRole());
+                case 'message':
+                  return csvEscape(row.getBody());
                 case 'created_date':
                   return row.getCreateddate()
                     ? toDate(row.getCreateddate()!)
@@ -426,23 +421,19 @@ export const ListingPage: FC<{}> = ({}) => {
                 </TableCell>
               )}
 
-              {conversationLogAction.visibleColumn('request') && (
+              {conversationLogAction.visibleColumn('role') && (
                 <TableCell>
-                  {row.getRequest() ? (
-                    <p className="line-clamp-2">
-                      {toContentText(row.getRequest()?.getContentsList())}
-                    </p>
+                  {row.getRole() ? (
+                    <p className="line-clamp-2 uppercase">{row.getRole()}</p>
                   ) : (
                     <p className="line-clamp-2 opacity-65">Not available</p>
                   )}
                 </TableCell>
               )}
-              {conversationLogAction.visibleColumn('response') && (
+              {conversationLogAction.visibleColumn('message') && (
                 <TableCell>
-                  {row.getResponse() ? (
-                    <p className="line-clamp-2">
-                      {toContentText(row.getResponse()?.getContentsList())}
-                    </p>
+                  {row.getBody() ? (
+                    <p className="line-clamp-2">{row.getBody()}</p>
                   ) : (
                     <p className="line-clamp-2 opacity-65">Not available</p>
                   )}

@@ -94,8 +94,6 @@ func (o *GetConversationOption) WithInjectRecording(inject bool) *GetConversatio
 type GetMessageOption struct {
 	InjectMetadata bool
 	InjectMetric   bool
-	InjectRequest  bool
-	InjectResponse bool
 }
 
 func NewGetMessageOption() *GetMessageOption {
@@ -106,8 +104,6 @@ func NewDefaultGetMessageOption() *GetMessageOption {
 	return &GetMessageOption{
 		InjectMetadata: true,
 		InjectMetric:   true,
-		InjectRequest:  true,
-		InjectResponse: true,
 	}
 }
 
@@ -118,10 +114,6 @@ func (gco *GetMessageOption) WithFieldSelector(selectors []*workflow_api.FieldSe
 			gco.InjectMetadata = true
 		case "metric":
 			gco.InjectMetric = true
-		case "request":
-			gco.InjectRequest = true
-		case "response":
-			gco.InjectResponse = true
 
 		}
 	}
@@ -214,21 +206,21 @@ type AssistantConversationService interface {
 		ctx context.Context,
 		auth types.SimplePrinciple,
 		source utils.RapidaSource,
-		assistantConversationMessageId string,
-		assistantId uint64,
-		assistantProviderModelId uint64,
+		assistantId, assistantProviderModelId,
 		assistantConversationId uint64,
-		message *types.Message,
+		messageId string,
+		role string,
+		message string,
 	) (*internal_message_gorm.AssistantConversationMessage, error)
 
 	//
-	UpdateConversationMessage(ctx context.Context,
-		auth types.SimplePrinciple,
-		assistantConversationId uint64,
-		assistantConversationMessageId string,
-		message *types.Message,
-		status type_enums.RecordState,
-	) (*internal_message_gorm.AssistantConversationMessage, error)
+	// UpdateConversationMessage(ctx context.Context,
+	// 	auth types.SimplePrinciple,
+	// 	assistantConversationId uint64,
+	// 	assistantConversationMessageId string,
+	// 	message *types.Message,
+	// 	status type_enums.RecordState,
+	// ) (*internal_message_gorm.AssistantConversationMessage, error)
 
 	ApplyMessageMetadata(
 		ctx context.Context,

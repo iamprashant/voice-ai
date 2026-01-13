@@ -82,18 +82,3 @@ func ToMessages(msgs []*lexatic_backend.Message) []*Message {
 	}
 	return out
 }
-
-func ToSimpleMessage(msgs []*Message) []map[string]string {
-	out := make([]map[string]string, 0)
-	for _, msg := range msgs {
-		stringContent := OnlyStringContent(msg.GetContents())
-		if strings.TrimSpace(stringContent) != "" {
-			out = append(out, map[string]string{
-				"role":    msg.GetRole(),
-				"message": OnlyStringContent(msg.GetContents()),
-				"time":    msg.GetTime(),
-			})
-		}
-	}
-	return out
-}

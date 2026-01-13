@@ -269,39 +269,3 @@ func TestToMessages(t *testing.T) {
 		t.Errorf("ToMessages() length = %v, want %v", len(msgs), 2)
 	}
 }
-
-func TestToSimpleMessage(t *testing.T) {
-	msgs := []*Message{
-		{
-			Role: "user",
-			Contents: []*Content{
-				{
-					ContentType:   string(commons.TEXT_CONTENT),
-					ContentFormat: string(commons.TEXT_CONTENT_FORMAT_RAW),
-					Content:       []byte("hello"),
-				},
-			},
-			Time: time.Now(),
-		},
-		{
-			Role: "assistant",
-			Contents: []*Content{
-				{
-					ContentType: string(commons.AUDIO_CONTENT),
-				},
-			},
-			Time: time.Now(),
-		},
-	}
-
-	simple := ToSimpleMessage(msgs)
-	if len(simple) != 1 {
-		t.Errorf("ToSimpleMessage() length = %v, want %v", len(simple), 1)
-	}
-	if simple[0]["role"] != "user" {
-		t.Errorf("ToSimpleMessage()[0][role] = %v, want %v", simple[0]["role"], "user")
-	}
-	if simple[0]["message"] != "hello" {
-		t.Errorf("ToSimpleMessage()[0][message] = %v, want %v", simple[0]["message"], "hello")
-	}
-}

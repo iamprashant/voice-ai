@@ -61,12 +61,6 @@ func (communication *GenericRequestor) OnGreet(ctx context.Context) error {
 	}
 
 	message := communication.messaging.Create(type_enums.UserActor, "")
-	utils.Go(ctx, func() {
-		if err := communication.OnCreateMessage(ctx, message.GetId(), message); err != nil {
-			communication.logger.Errorf("Error in OnCreateMessage: %v", err)
-		}
-	})
-
 	if err := communication.OnPacket(ctx, internal_type.StaticPacket{ContextID: message.GetId(), Text: greetingCnt}); err != nil {
 		communication.logger.Errorf("error while sending on error message: %v", err)
 		return nil
@@ -119,12 +113,7 @@ func (communication *GenericRequestor) OnIdealTimeout(ctx context.Context) error
 		return nil
 	}
 	message := communication.messaging.Create(type_enums.UserActor, "")
-	utils.Go(ctx, func() {
-		if err := communication.OnCreateMessage(ctx, message.GetId(), message); err != nil {
-			communication.logger.Errorf("Error in OnCreateMessage: %v", err)
-		}
-	})
-	if err := communication.OnPacket(ctx, internal_type.StaticPacket{ContextID: "", Text: timeoutContent}); err != nil {
+	if err := communication.OnPacket(ctx, internal_type.StaticPacket{ContextID: message.Id, Text: timeoutContent}); err != nil {
 		communication.logger.Errorf("error while sending ideal timeout message: %v", err)
 		return nil
 	}

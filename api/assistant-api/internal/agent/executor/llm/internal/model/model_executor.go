@@ -101,7 +101,7 @@ func (executor *modelAssistantExecutor) chat(
 	// for communication
 	communication internal_adapter_requests.Communication,
 
-	//
+	// llm packet
 	packet internal_type.LLMPacket,
 
 	// histories or older conversation
@@ -125,12 +125,7 @@ func (executor *modelAssistantExecutor) chat(
 			"assistant_provider_model_id": fmt.Sprintf("%d", communication.Assistant().AssistantProviderModel.Id),
 		},
 		append(append(
-			executor.inputBuilder.Message(
-				communication.Assistant().AssistantProviderModel.Template.GetTextChatCompleteTemplate().Prompt,
-				utils.MergeMaps(executor.inputBuilder.PromptArguments(communication.Assistant().AssistantProviderModel.Template.GetTextChatCompleteTemplate().Variables),
-					communication.GetArgs()),
-			),
-			histories...), packet.Message.ToProto())...,
+			executor.inputBuilder.Message(communication.Assistant().AssistantProviderModel.Template.GetTextChatCompleteTemplate().Prompt, utils.MergeMaps(executor.inputBuilder.PromptArguments(communication.Assistant().AssistantProviderModel.Template.GetTextChatCompleteTemplate().Variables), communication.GetArgs())), histories...), packet.Message.ToProto())...,
 	)
 
 	res, err := communication.IntegrationCaller().StreamChat(ctx, communication.Auth(), communication.Assistant().AssistantProviderModel.ModelProviderName, request)
@@ -147,7 +142,6 @@ func (executor *modelAssistantExecutor) chat(
 					internal_type.LLMPacket{ContextID: packet.ContextId(), Message: types.ToMessage(output)},
 					internal_type.MetricPacket{ContextID: packet.ContextID, Metrics: types.ToMetrics(metrics)},
 				)
-
 				toolCalls := output.GetToolCalls()
 				if len(toolCalls) > 0 {
 					// append history of tool call
@@ -161,10 +155,12 @@ func (executor *modelAssistantExecutor) chat(
 		}
 
 		metrics = msg.GetMetrics()
-		if metrics != nil {
-			communication.OnPacket(ctx, internal_type.MetricPacket{ContextID: packet.ContextID, Metrics: types.ToMetrics(metrics)})
-		}
 		output = msg.GetData()
+		if metrics != nil {
+			// metrics available means end of generation
+			communication.OnPacket(ctx, internal_type.MetricPacket{ContextID: packet.ContextID, Metrics: types.ToMetrics(metrics)})
+			continue
+		}
 		if output != nil && len(output.GetContents()) > 0 {
 			communication.OnPacket(ctx, internal_type.LLMStreamPacket{ContextID: packet.ContextId(), Message: types.ToMessage(msg.GetData())})
 		}

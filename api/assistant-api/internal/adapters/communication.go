@@ -36,10 +36,7 @@ type InternalCaller interface {
 
 type Notifier interface {
 	// Notifier defines methods for sending notifications related to conversation actions, messages, and events.
-	Notify(
-		ctx context.Context,
-		actionData interface{},
-	) error
+	Notify(ctx context.Context, actionData ...interface{}) error
 }
 
 type Logger interface {
@@ -106,7 +103,7 @@ type Communication interface {
 	// later will create an interface to move all the conversation
 	// idea is have custom history maintainer eg: database, inmemory
 	// local managing the histories for given conversation
-	GetHistories() []*types.Message
+	GetHistories() []internal_type.MessagePacket
 
 	// metadata management
 	GetMetadata() map[string]interface{}

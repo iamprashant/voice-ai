@@ -14,19 +14,12 @@ import (
 	internal_services "github.com/rapidaai/api/assistant-api/internal/services"
 	gorm_models "github.com/rapidaai/pkg/models/gorm"
 	"github.com/rapidaai/pkg/types"
-	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
 	"github.com/rapidaai/protos"
 	"gorm.io/gorm/clause"
 )
 
-func (conversationService *assistantConversationService) GetAllConversationMessage(
-	ctx context.Context,
-	auth types.SimplePrinciple,
-	assistantConversationId uint64,
-	criterias []*protos.Criteria,
-	paginate *protos.Paginate,
-	ordering *protos.Ordering, opts *internal_services.GetMessageOption) (int64, []*internal_message_gorm.AssistantConversationMessage, error) {
+func (conversationService *assistantConversationService) GetAllConversationMessage(ctx context.Context, auth types.SimplePrinciple, assistantConversationId uint64, criterias []*protos.Criteria, paginate *protos.Paginate, ordering *protos.Ordering, opts *internal_services.GetMessageOption) (int64, []*internal_message_gorm.AssistantConversationMessage, error) {
 	start := time.Now()
 	db := conversationService.postgres.DB(ctx)
 	var (
@@ -60,7 +53,7 @@ func (conversationService *assistantConversationService) GetAllConversationMessa
 	for _, ct := range criterias {
 		qry.Where(fmt.Sprintf("%s %s ?", ct.GetKey(), ct.GetLogic()), ct.GetValue())
 	}
-	tx := qry.Debug().
+	tx := qry.
 		Scopes(gorm_models.
 			Paginate(gorm_models.
 				NewPaginated(
@@ -119,6 +112,8 @@ func (conversationService *assistantConversationService) GetAllAssistantMessage(
 		"assistant_conversation_messages.updated_date",
 		"assistant_conversation_messages.status",
 		"assistant_conversation_messages.source",
+		"assistant_conversation_messages.body",
+		"assistant_conversation_messages.role",
 		//
 		"assistant_conversations.identifier",
 		"assistant_conversations.assistant_id",
@@ -135,13 +130,6 @@ func (conversationService *assistantConversationService) GetAllAssistantMessage(
 	qry = qry.
 		Joins("JOIN assistant_conversations ON assistant_conversations.id = assistant_conversation_messages.assistant_conversation_id").
 		Where("assistant_conversations.assistant_id = ? AND assistant_conversations.organization_id = ? AND assistant_conversations.project_id = ?", assistantId, *auth.GetCurrentOrganizationId(), *auth.GetCurrentProjectId())
-
-	if opts != nil && opts.InjectRequest {
-		cols = append(cols, "assistant_conversation_messages.request")
-	}
-	if opts != nil && opts.InjectResponse {
-		cols = append(cols, "assistant_conversation_messages.response")
-	}
 
 	if opts != nil && opts.InjectMetadata {
 		qry = qry.Preload("Metadatas")
@@ -211,6 +199,8 @@ func (conversationService *assistantConversationService) GetAllMessage(
 		"assistant_conversation_messages.updated_date",
 		"assistant_conversation_messages.status",
 		"assistant_conversation_messages.source",
+		"assistant_conversation_messages.body",
+		"assistant_conversation_messages.role",
 		//
 		"assistant_conversations.identifier",
 		"assistant_conversations.assistant_id",
@@ -227,13 +217,6 @@ func (conversationService *assistantConversationService) GetAllMessage(
 	qry = qry.
 		Joins("JOIN assistant_conversations ON assistant_conversations.id = assistant_conversation_messages.assistant_conversation_id").
 		Where("assistant_conversations.organization_id = ? AND assistant_conversations.project_id = ?", *auth.GetCurrentOrganizationId(), *auth.GetCurrentProjectId())
-
-	if opts != nil && opts.InjectRequest {
-		cols = append(cols, "assistant_conversation_messages.request")
-	}
-	if opts != nil && opts.InjectResponse {
-		cols = append(cols, "assistant_conversation_messages.response")
-	}
 
 	if opts != nil && opts.InjectMetadata {
 		qry = qry.Preload("Metadatas")
@@ -267,51 +250,52 @@ func (conversationService *assistantConversationService) GetAllMessage(
 	return cnt, conversationMessage, nil
 }
 
-func (conversationService *assistantConversationService) UpdateConversationMessage(
-	ctx context.Context,
-	auth types.SimplePrinciple,
-	assistantConversationId uint64,
-	assistantConversationMessageId string,
-	message *types.Message,
-	status type_enums.RecordState,
-) (*internal_message_gorm.AssistantConversationMessage, error) {
-	start := time.Now()
-	db := conversationService.postgres.DB(ctx)
-	conversation := &internal_message_gorm.AssistantConversationMessage{
-		AssistantConversationId: assistantConversationId,
-		MessageId:               assistantConversationMessageId,
-		Mutable: gorm_models.Mutable{
-			Status: status,
-		},
-	}
-	if auth.GetUserId() != nil {
-		conversation.UpdatedBy = *auth.GetUserId()
-	}
-	conversation.SetResponse(message)
-	tx := db.Clauses(clause.OnConflict{
-		Columns: []clause.Column{{Name: "message_id"}, {Name: "assistant_conversation_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{
-			"response",
-			"updated_by", "updated_date"}),
-	}).Create(&conversation)
-	// Where("message_id = ? AND assistant_conversation_id = ? ", assistantConversationMessageId, assistantConversationId).Updates(conversation)
-	if tx.Error != nil {
-		conversationService.logger.Benchmark("conversationService.UpdateConversationMessage", time.Since(start))
-		conversationService.logger.Errorf("error while updating conversation message %v", tx.Error)
-		return nil, tx.Error
-	}
-	conversationService.logger.Benchmark("conversationService.UpdateConversationMessage", time.Since(start))
-	return conversation, nil
-}
+// func (conversationService *assistantConversationService) UpdateConversationMessage(
+// ctx context.Context,
+// auth types.SimplePrinciple,
+// assistantConversationId uint64,
+// assistantConversationMessageId string,
+// message *types.Message,
+// status type_enums.RecordState,
+// ) (*internal_message_gorm.AssistantConversationMessage, error) {
+// 	start := time.Now()
+// 	db := conversationService.postgres.DB(ctx)
+// 	conversation := &internal_message_gorm.AssistantConversationMessage{
+// 		AssistantConversationId: assistantConversationId,
+// 		MessageId:               assistantConversationMessageId,
+// 		Mutable: gorm_models.Mutable{
+// 			Status: status,
+// 		},
+// 	}
+// 	if auth.GetUserId() != nil {
+// 		conversation.UpdatedBy = *auth.GetUserId()
+// 	}
+// 	conversation.SetResponse(message)
+// 	tx := db.Clauses(clause.OnConflict{
+// 		Columns: []clause.Column{{Name: "message_id"}, {Name: "assistant_conversation_id"}},
+// 		DoUpdates: clause.AssignmentColumns([]string{
+// 			"response",
+// 			"updated_by", "updated_date"}),
+// 	}).Create(&conversation)
+// 	// Where("message_id = ? AND assistant_conversation_id = ? ", assistantConversationMessageId, assistantConversationId).Updates(conversation)
+// 	if tx.Error != nil {
+// 		conversationService.logger.Benchmark("conversationService.UpdateConversationMessage", time.Since(start))
+// 		conversationService.logger.Errorf("error while updating conversation message %v", tx.Error)
+// 		return nil, tx.Error
+// 	}
+// 	conversationService.logger.Benchmark("conversationService.UpdateConversationMessage", time.Since(start))
+// 	return conversation, nil
+// }
 
 func (conversationService *assistantConversationService) CreateConversationMessage(
 	ctx context.Context,
 	auth types.SimplePrinciple,
 	source utils.RapidaSource,
-	messageId string,
 	assistantId, assistantProviderModelId,
 	assistantConversationId uint64,
-	message *types.Message,
+	messageId string,
+	role string,
+	message string,
 ) (*internal_message_gorm.AssistantConversationMessage, error) {
 	start := time.Now()
 	db := conversationService.postgres.DB(ctx)
@@ -321,6 +305,8 @@ func (conversationService *assistantConversationService) CreateConversationMessa
 		AssistantProviderModelId: assistantProviderModelId,
 		MessageId:                messageId,
 		Source:                   source.Get(),
+		Role:                     role,
+		Body:                     message,
 		Mutable: gorm_models.Mutable{
 			CreatedBy: 99,
 		},
@@ -329,13 +315,7 @@ func (conversationService *assistantConversationService) CreateConversationMessa
 		conversationMessage.CreatedBy = *auth.GetUserId()
 		conversationMessage.UpdatedBy = *auth.GetUserId()
 	}
-	conversationMessage.SetRequest(message)
-	tx := db.Clauses(clause.OnConflict{
-		Columns: []clause.Column{{Name: "message_id"}, {Name: "assistant_conversation_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{
-			"request",
-			"updated_by", "updated_date"}),
-	}).Create(&conversationMessage)
+	tx := db.Create(&conversationMessage)
 	if tx.Error != nil {
 		conversationService.logger.Benchmark("conversationService.CreateConversationMessage", time.Since(start))
 		conversationService.logger.Errorf("error while creating conversation %v", tx.Error)
@@ -439,52 +419,3 @@ func (conversationService *assistantConversationService) ApplyMessageMetrics(
 	conversationService.logger.Benchmark("conversationService.ApplyMessageMetrics", time.Since(start))
 	return mtrs, nil
 }
-
-// func (conversationService *assistantConversationService) ApplyMessageStages(
-// 	ctx context.Context,
-// 	auth types.SimplePrinciple,
-// 	assistantConversationId uint64,
-// 	assistantConversationMessageId string,
-// 	stages []*protos.AssistantMessageStage,
-// ) ([]*internal_message_gorm.AssistantConversationMessageStage, error) {
-// 	start := time.Now()
-// 	db := conversationService.postgres.DB(ctx)
-// 	mtrs := make([]*internal_message_gorm.AssistantConversationMessageStage, 0)
-// 	for _, stg := range stages {
-// 		_mtr := &internal_message_gorm.AssistantConversationMessageStage{
-// 			Stage:                          stg.GetStage(),
-// 			StageName:                      stg.GetStage(),
-// 			AdditionalData:                 stg.GetAdditionalData(),
-// 			TimeTaken:                      stg.GetTimetaken(),
-// 			LifecycleId:                    stg.GetLifecycleId(),
-// 			StartTimestamp:                 gorm_models.TimeWrapper(stg.GetStartTimestamp().AsTime()),
-// 			EndTimestamp:                   gorm_models.TimeWrapper(stg.GetEndTimestamp().AsTime()),
-// 			AssistantConversationId:        assistantConversationId,
-// 			AssistantConversationMessageId: assistantConversationMessageId,
-// 		}
-
-// 		if auth.GetUserId() != nil {
-// 			_mtr.UpdatedBy = *auth.GetUserId()
-// 			_mtr.CreatedBy = *auth.GetUserId()
-// 		}
-// 		mtrs = append(mtrs, _mtr)
-// 	}
-
-// 	if len(mtrs) == 0 {
-// 		return nil, fmt.Errorf("illegal state for stages, trying to insert empty slice of stage")
-// 	}
-
-// 	tx := db.Clauses(clause.OnConflict{
-// 		Columns: []clause.Column{{Name: "stage"}, {Name: "assistant_conversation_message_id"}},
-// 		DoUpdates: clause.AssignmentColumns([]string{
-// 			"start_timestamp", "end_timestamp", "time_taken", "additional_data",
-// 			"updated_by", "updated_date"}),
-// 	}).Create(&mtrs)
-// 	if tx.Error != nil {
-// 		conversationService.logger.Benchmark("conversationService.ApplyMessageStages", time.Since(start))
-// 		conversationService.logger.Errorf("error while updating conversation %v", tx.Error)
-// 		return nil, tx.Error
-// 	}
-// 	conversationService.logger.Benchmark("conversationService.ApplyMessageStages", time.Since(start))
-// 	return mtrs, nil
-// }

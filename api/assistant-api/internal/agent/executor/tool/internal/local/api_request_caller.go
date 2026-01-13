@@ -15,6 +15,7 @@ import (
 	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters"
 	internal_tool "github.com/rapidaai/api/assistant-api/internal/agent/executor/tool/internal"
 	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
+	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/clients/rest"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
@@ -138,7 +139,7 @@ func (md *apiRequestToolCaller) Parse(
 			case "id":
 				arguments[value] = fmt.Sprintf("%d", communication.Conversation().Id)
 			case "messages":
-				arguments[value] = types.ToSimpleMessage(communication.GetHistories())
+				arguments[value] = md.SimplifyHistoy(communication.GetHistories())
 			}
 		}
 		if k, ok := strings.CutPrefix(key, "argument."); ok {
@@ -162,4 +163,15 @@ func (md *apiRequestToolCaller) Parse(
 		}
 	}
 	return arguments
+}
+
+func (md *apiRequestToolCaller) SimplifyHistoy(msgs []internal_type.MessagePacket) []map[string]string {
+	out := make([]map[string]string, 0)
+	for _, msg := range msgs {
+		out = append(out, map[string]string{
+			"role":    msg.Role(),
+			"message": msg.Content(),
+		})
+	}
+	return out
 }

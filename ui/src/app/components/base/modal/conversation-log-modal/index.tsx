@@ -39,53 +39,26 @@ export function ConversationLogDialog(props: ConversationLogDialogProps) {
       </div>
       <div className="relative overflow-auto h-[calc(100vh-50px)] flex flex-col flex-1">
         <Tab
-          active="Request"
+          active="Message"
           className={cn(
             'text-sm',
             'bg-gray-50 border-b dark:bg-gray-900 dark:border-gray-800 sticky top-0 z-1',
           )}
           tabs={[
             {
-              label: 'Request',
+              label: 'Message',
               element: (
                 <div className="flex-1 p-4 space-y-8">
-                  {props.currentAssistantMessage.getRequest() ? (
+                  {props.currentAssistantMessage.getBody() ? (
                     <div className="border rounded-[2px]">
                       <MarkdownViewer
-                        text={toContentText(
-                          props.currentAssistantMessage
-                            .getRequest()
-                            ?.getContentsList(),
-                        )}
+                        text={props.currentAssistantMessage.getBody()}
                       />
                     </div>
                   ) : (
                     <YellowNoticeBlock>
                       Request will be available here after the completion of
                       execution
-                    </YellowNoticeBlock>
-                  )}
-                </div>
-              ),
-            },
-            {
-              label: 'Response',
-              element: (
-                <div className="flex-1 p-4 space-y-8">
-                  {props.currentAssistantMessage.getResponse() ? (
-                    <div className="border rounded-[2px]">
-                      <MarkdownViewer
-                        text={toContentText(
-                          props.currentAssistantMessage
-                            .getResponse()
-                            ?.getContentsList(),
-                        )}
-                      />
-                    </div>
-                  ) : (
-                    <YellowNoticeBlock>
-                      Response will be available here after the completion of
-                      execution.
                     </YellowNoticeBlock>
                   )}
                 </div>
@@ -126,7 +99,11 @@ export function ConversationLogDialog(props: ConversationLogDialogProps) {
 const MessageMetadatas: FC<{ metadata: Array<Metadata> }> = ({ metadata }) => {
   if (metadata.length <= 0)
     return (
-      <BlueNoticeBlock>There are no metdata for given message.</BlueNoticeBlock>
+      <div className="w-full">
+        <BlueNoticeBlock className="w-full">
+          There are no metdata for given message.
+        </BlueNoticeBlock>
+      </div>
     );
   return (
     <div className="flex flex-col w-full">

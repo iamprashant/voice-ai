@@ -17,6 +17,13 @@ type Packet interface {
 	ContextId() string
 }
 
+// Wrapper for message packet
+type MessagePacket interface {
+	Packet
+	Role() string
+	Content() string
+}
+
 // FlushPacket represents a request to flush or reset state associated
 // with a specific context.
 type FlushPacket struct {
@@ -94,6 +101,14 @@ func (f StaticPacket) ContextId() string {
 	return f.ContextID
 }
 
+func (f StaticPacket) Content() string {
+	return f.Text
+}
+
+func (f StaticPacket) Role() string {
+	return "rapida"
+}
+
 type LLMPacket struct {
 
 	// contextID identifies the context to be flushed.
@@ -101,6 +116,14 @@ type LLMPacket struct {
 
 	// message
 	Message *types.Message
+}
+
+func (f LLMPacket) Content() string {
+	return f.Message.String()
+}
+
+func (f LLMPacket) Role() string {
+	return "assistant"
 }
 
 func (f LLMPacket) ContextId() string {
@@ -139,6 +162,14 @@ type UserTextPacket struct {
 
 func (f UserTextPacket) ContextId() string {
 	return f.ContextID
+}
+
+func (f UserTextPacket) Content() string {
+	return f.Text
+}
+
+func (f UserTextPacket) Role() string {
+	return "user"
 }
 
 type EndOfSpeechPacket struct {
