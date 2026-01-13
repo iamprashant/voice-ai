@@ -86,6 +86,10 @@ func (talking *GenericRequestor) Disconnect() {
 	if err := talking.assistantExecutor.Close(ctx, talking); err != nil {
 		talking.logger.Errorf("error while closing assistant executor %v", err)
 	}
+
+	if talking.idealTimeoutTimer != nil {
+		talking.idealTimeoutTimer.Stop()
+	}
 	talking.logger.Benchmark("talking.OnEndSession", time.Since(start))
 }
 
@@ -185,7 +189,7 @@ func (talking *GenericRequestor) OnCreateSession(ctx context.Context, inCfg, str
 				talking.logger.Tracef(ctx, "unable to connect speaker %+v", err)
 			}
 		}
-		if err := talking.OnGreet(ctx); err != nil {
+		if err := talking.InitializeBehavior(ctx); err != nil {
 			talking.logger.Errorf("unable to greet user with error %+v", err)
 		}
 		return nil
@@ -289,7 +293,7 @@ func (talking *GenericRequestor) OnResumeSession(ctx context.Context, inCfg, str
 			// changing to audio mode
 			talking.messaging.SwitchOutputMode(type_enums.AudioMode)
 		}
-		if err := talking.OnGreet(ctx); err != nil {
+		if err := talking.InitializeBehavior(ctx); err != nil {
 			talking.logger.Errorf("unable to greet user with error %+v", err)
 		}
 		return nil

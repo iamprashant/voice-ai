@@ -107,8 +107,6 @@ func (executor *modelAssistantExecutor) chat(
 	// histories or older conversation
 	histories ...*protos.Message,
 ) error {
-
-	start := time.Now()
 	var (
 		output  *protos.Message
 		metrics []*protos.Metric
@@ -137,18 +135,16 @@ func (executor *modelAssistantExecutor) chat(
 		msg, err := res.Recv()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				executor.logger.Benchmark("executor.chat", time.Since(start))
-				executor.llm(communication, packet,
-					internal_type.LLMPacket{ContextID: packet.ContextId(), Message: types.ToMessage(output)},
-					internal_type.MetricPacket{ContextID: packet.ContextID, Metrics: types.ToMetrics(metrics)},
-				)
-				toolCalls := output.GetToolCalls()
-				if len(toolCalls) > 0 {
-					// append history of tool call
-					toolExecution := executor.toolExecutor.ExecuteAll(ctx, packet.ContextId(), toolCalls, communication)
-					return executor.chat(ctx, communication, internal_type.LLMPacket{ContextID: packet.ContextId(), Message: &types.Message{Contents: toolExecution, Role: "tool"}}, append(histories, packet.Message.ToProto(), output)...)
-				}
+				executor.llm(communication, packet, internal_type.LLMPacket{ContextID: packet.ContextId(), Message: types.ToMessage(output)}, internal_type.MetricPacket{ContextID: packet.ContextID, Metrics: types.ToMetrics(metrics)})
 				communication.OnPacket(ctx, internal_type.LLMPacket{ContextID: packet.ContextId(), Message: types.ToMessage(output)})
+				if len(output.GetToolCalls()) > 0 {
+					// append history of tool call
+					toolExecution, toolContents := executor.toolExecutor.ExecuteAll(ctx, packet, output.GetToolCalls(), communication)
+					communication.OnPacket(ctx, toolExecution...)
+					return executor.chat(ctx, communication,
+						internal_type.LLMPacket{ContextID: packet.ContextId(), Message: &types.Message{Contents: toolContents, Role: "tool"}},
+						append(histories, packet.Message.ToProto(), output)...)
+				}
 				return nil
 			}
 			return err

@@ -108,9 +108,10 @@ type GenericRequestor struct {
 	metadata  map[string]interface{}
 	options   map[string]interface{}
 	StartedAt time.Time
-	// timeout tracking
-	lastAssistantMessageTime time.Time
-	idealTimeoutTimer        *time.Timer
+
+	// experience
+	idealTimeoutTimer *time.Timer
+	idealTimeoutCount uint64
 }
 
 func NewGenericRequestor(
@@ -224,10 +225,7 @@ func (dm *GenericRequestor) Tracer() internal_telemetry.VoiceAgentTracer {
 }
 
 func (gr *GenericRequestor) GetAssistantConversation(auth types.SimplePrinciple, assistantId uint64, assistantConversationId uint64, identifier string) (*internal_conversation_gorm.AssistantConversation, error) {
-	start := time.Now()
-	defer gr.logger.Benchmark("GenericRequestor.GetAssistantConversation", time.Since(start))
-	return gr.conversationService.GetConversation(gr.Context(), auth, identifier, assistantId, assistantConversationId, &internal_services.
-		GetConversationOption{
+	return gr.conversationService.GetConversation(gr.Context(), auth, identifier, assistantId, assistantConversationId, &internal_services.GetConversationOption{
 		InjectContext:  true,
 		InjectArgument: true,
 		InjectMetadata: true,
@@ -257,9 +255,7 @@ func (gr *GenericRequestor) CreateAssistantConversation(auth types.SimplePrincip
 
 }
 
-func (gr *GenericRequestor) CreateConversationArgument(auth types.SimplePrinciple,
-	assistantId,
-	assistantConversationId uint64, args map[string]interface{}) ([]*internal_conversation_gorm.AssistantConversationArgument, error) {
+func (gr *GenericRequestor) CreateConversationArgument(auth types.SimplePrinciple, assistantId, assistantConversationId uint64, args map[string]interface{}) ([]*internal_conversation_gorm.AssistantConversationArgument, error) {
 	return gr.conversationService.ApplyConversationArgument(gr.Context(), auth, assistantId, assistantConversationId, args)
 }
 
@@ -271,13 +267,7 @@ func (gr *GenericRequestor) CreateConversationOption(auth types.SimplePrinciple,
 	return gr.conversationService.ApplyConversationOption(gr.Context(), auth, assistantId, assistantConversationId, opts)
 }
 
-func (talking *GenericRequestor) BeginConversation(
-	auth types.SimplePrinciple,
-	assistant *internal_assistant_entity.Assistant,
-	direction type_enums.ConversationDirection,
-	identifier string,
-	argument, metadata, options map[string]interface{}) (*internal_conversation_gorm.AssistantConversation, error) {
-	start := time.Now()
+func (talking *GenericRequestor) BeginConversation(auth types.SimplePrinciple, assistant *internal_assistant_entity.Assistant, direction type_enums.ConversationDirection, identifier string, argument, metadata, options map[string]interface{}) (*internal_conversation_gorm.AssistantConversation, error) {
 	talking.assistant = assistant
 	talking.args = argument
 	talking.options = options
@@ -288,35 +278,19 @@ func (talking *GenericRequestor) BeginConversation(
 		return nil, err
 	}
 	talking.assistantConversation = conversation
-	talking.logger.Benchmark("talking.BeginConversation", time.Since(start))
 	return conversation, err
 }
 
-func (talking *GenericRequestor) ResumeConversation(
-	auth types.SimplePrinciple,
-	assistant *internal_assistant_entity.Assistant,
-	conversationId uint64,
-	identifier string) (*internal_conversation_gorm.AssistantConversation, error) {
-	start := time.Now()
+func (talking *GenericRequestor) ResumeConversation(auth types.SimplePrinciple, assistant *internal_assistant_entity.Assistant, conversationId uint64, identifier string) (*internal_conversation_gorm.AssistantConversation, error) {
 	talking.assistant = assistant
-
-	var conversation *internal_conversation_gorm.AssistantConversation
-	conversation, err := talking.GetAssistantConversation(
-		auth,
-		assistant.Id,
-		conversationId,
-		identifier,
-	)
+	conversation, err := talking.GetAssistantConversation(auth, assistant.Id, conversationId, identifier)
 	if err != nil {
 		talking.logger.Errorf("failed to get assistant conversation: %+v", err)
 	}
-
 	talking.assistantConversation = conversation
 	talking.args = conversation.GetArugments()
 	talking.options = conversation.GetOptions()
 	talking.metadata = conversation.GetMetadatas()
-	talking.logger.Benchmark("talking.ResumeConversation", time.Since(start))
-
 	return conversation, nil
 }
 

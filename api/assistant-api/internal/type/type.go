@@ -109,8 +109,9 @@ func (f StaticPacket) Role() string {
 	return "rapida"
 }
 
-type LLMPacket struct {
+// llm packate
 
+type LLMPacket struct {
 	// contextID identifies the context to be flushed.
 	ContextID string
 
@@ -127,6 +128,22 @@ func (f LLMPacket) Role() string {
 }
 
 func (f LLMPacket) ContextId() string {
+	return f.ContextID
+}
+
+type LLMToolPacket struct {
+
+	// contextID identifies the context to be flushed.
+	ContextID string
+
+	// action
+	Action protos.AssistantConversationAction_ActionType
+
+	// result
+	Result map[string]interface{}
+}
+
+func (f LLMToolPacket) ContextId() string {
 	return f.ContextID
 }
 

@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters"
 	internal_tool "github.com/rapidaai/api/assistant-api/internal/agent/executor/tool/internal"
@@ -18,8 +17,6 @@ import (
 	internal_knowledge_gorm "github.com/rapidaai/api/assistant-api/internal/entity/knowledges"
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/types"
-	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
 	protos "github.com/rapidaai/protos"
 )
@@ -50,38 +47,22 @@ func (tc *knowledgeRetrievalToolCaller) argument(args string) (*string, map[stri
 	}
 	return utils.Ptr(queryOrContext), input, nil
 }
-func (afkTool *knowledgeRetrievalToolCaller) Call(
-	ctx context.Context,
-	messageId string,
-	args string,
-	communication internal_adapter_requests.Communication,
-) (map[string]interface{}, []*types.Metric) {
-	start := time.Now()
-	metrics := make([]*types.Metric, 0)
+func (afkTool *knowledgeRetrievalToolCaller) Call(ctx context.Context, pkt internal_type.LLMPacket, toolId string, args string, communication internal_adapter_requests.Communication) internal_type.LLMToolPacket {
 	in, v, err := afkTool.argument(args)
-
-	var result map[string]interface{}
 	var contextString string
 
 	if err != nil || in == nil {
-		result = afkTool.Result("Required argument is missing or query, context is missing from argument list", false)
-		metrics = append(metrics, types.NewMetric("retrieval_status", type_enums.RECORD_FAILED.String(), utils.Ptr("status of tool.retrieval_status")))
+		return internal_type.LLMToolPacket{ContextID: pkt.ContextID, Action: protos.AssistantConversationAction_KNOWLEDGE_RETRIEVAL, Result: afkTool.Result("Required argument is missing or query, context is missing from argument list", false)}
 	} else {
-		knowledges, err := communication.RetriveToolKnowledge(
-			afkTool.knowledge,
-			messageId,
-			*in,
-			v,
-			&internal_type.KnowledgeRetriveOption{
-				EmbeddingProviderCredential: afkTool.providerCredential,
-				RetrievalMethod:             afkTool.searchType,
-				TopK:                        afkTool.topK,
-				ScoreThreshold:              float32(afkTool.scoreThreshold),
-			})
+		knowledges, err := communication.RetriveToolKnowledge(afkTool.knowledge, pkt.ContextID, *in, v, &internal_type.KnowledgeRetriveOption{
+			EmbeddingProviderCredential: afkTool.providerCredential,
+			RetrievalMethod:             afkTool.searchType,
+			TopK:                        afkTool.topK,
+			ScoreThreshold:              float32(afkTool.scoreThreshold),
+		})
 
 		if len(knowledges) == 0 || err != nil {
-			result = afkTool.Result("Not able to find anything in knowledge from given documents.", true)
-			metrics = append(metrics, types.NewMetric("retrieval_status", type_enums.RECORD_COMPLETE.String(), utils.Ptr("status of tool.retrieval_status")))
+			return internal_type.LLMToolPacket{ContextID: pkt.ContextID, Action: protos.AssistantConversationAction_KNOWLEDGE_RETRIEVAL, Result: afkTool.Result("Not able to find anything in knowledge from given documents.", true)}
 		} else {
 			var contextTemplateBuilder strings.Builder
 			for _, knowledge := range knowledges {
@@ -89,13 +70,10 @@ func (afkTool *knowledgeRetrievalToolCaller) Call(
 				contextTemplateBuilder.WriteString("\n")
 			}
 			contextString = contextTemplateBuilder.String()
-			result = afkTool.Result(contextString, true)
-			metrics = append(metrics, types.NewMetric("retrieval_status", type_enums.RECORD_COMPLETE.String(), utils.Ptr("status of tool.retrieval_status")))
+			return internal_type.LLMToolPacket{ContextID: pkt.ContextID, Action: protos.AssistantConversationAction_KNOWLEDGE_RETRIEVAL, Result: afkTool.Result(contextString, true)}
 		}
 	}
 
-	metrics = append(metrics, types.NewTimeTakenMetric(time.Since(start)))
-	return result, metrics
 }
 
 func NewKnowledgeRetrievalToolCaller(

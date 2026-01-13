@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/google/uuid"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
@@ -18,6 +19,7 @@ type Messaging interface {
 	Create(ma type_enums.MessageActor, msg string) *types.Message
 	GetActor() type_enums.MessageActor
 	GetMessage(actor type_enums.MessageActor) (*types.Message, error)
+	GetId() string
 
 	Transition(state InteractionState) error
 
@@ -169,10 +171,20 @@ func (ms *messaging) GetMessage(actor type_enums.MessageActor) (*types.Message, 
 		return ms.out, nil
 	}
 	if ms.in != nil {
-		fmt.Errorf("user message is nil %v", ms)
 		return ms.in, nil
 	}
 	return nil, fmt.Errorf("invalid message for acting user")
+}
+
+// ============================================================================
+// state handling
+// ============================================================================
+func (ms *messaging) GetId() string {
+	in, err := ms.GetMessage(type_enums.UserActor)
+	if err != nil {
+		return uuid.NewString()
+	}
+	return in.GetId()
 }
 
 func (ms *messaging) Transition(newState InteractionState) error {
