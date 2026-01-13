@@ -103,11 +103,11 @@ type GenericRequestor struct {
 	assistant             *internal_assistant_entity.Assistant
 	assistantConversation *internal_conversation_gorm.AssistantConversation
 	histories             []internal_type.MessagePacket
-	metrics               []*types.Metric
-	args                  map[string]interface{}
-	metadata              map[string]interface{}
-	options               map[string]interface{}
-	StartedAt             time.Time
+
+	args      map[string]interface{}
+	metadata  map[string]interface{}
+	options   map[string]interface{}
+	StartedAt time.Time
 	// timeout tracking
 	lastAssistantMessageTime time.Time
 	idealTimeoutTimer        *time.Timer
@@ -164,7 +164,6 @@ func NewGenericRequestor(
 		// will change
 
 		histories: make([]internal_type.MessagePacket, 0),
-		metrics:   make([]*types.Metric, 0),
 		metadata:  make(map[string]interface{}),
 		args:      make(map[string]interface{}),
 		options:   make(map[string]interface{}),

@@ -21,7 +21,6 @@ import {
 import TooltipPlus from '@/app/components/base/tooltip-plus';
 import { AssistantTraceFilterDialog } from '@/app/components/base/modal/assistant-trace-filter-modal';
 import { useBoolean } from 'ahooks';
-import { toContentText } from '@rapidaai/react';
 import {
   formatNanoToReadableMilli,
   toDate,

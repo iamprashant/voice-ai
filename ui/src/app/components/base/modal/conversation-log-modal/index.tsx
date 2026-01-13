@@ -1,4 +1,4 @@
-import { AssistantConversationMessage, toContentText } from '@rapidaai/react';
+import { AssistantConversationMessage } from '@rapidaai/react';
 import { Metadata } from '@rapidaai/react';
 import { Tab } from '@/app/components/tab';
 import { cn } from '@/utils';
