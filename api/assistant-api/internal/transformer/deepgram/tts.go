@@ -109,7 +109,10 @@ func (t *deepgramTTS) textToSpeechCallback(conn *websocket.Conn, ctx context.Con
 			}
 
 			if msgType == websocket.BinaryMessage {
-				t.options.OnSpeech(t.contextId, data)
+				t.options.OnSpeech(internal_type.TextToSpeechPacket{
+					ContextID:  t.contextId,
+					AudioChunk: data,
+				})
 				continue
 			}
 
@@ -124,7 +127,9 @@ func (t *deepgramTTS) textToSpeechCallback(conn *websocket.Conn, ctx context.Con
 				continue
 
 			case "Flushed":
-				// ignoreing metadata for now
+				t.options.OnSpeech(internal_type.TextToSpeechFlushPacket{
+					ContextID: t.contextId,
+				})
 				continue
 
 			case "Cleared":

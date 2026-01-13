@@ -16,6 +16,7 @@ import (
 	speech "cloud.google.com/go/speech/apiv2"
 	"cloud.google.com/go/speech/apiv2/speechpb"
 	internal_transformer "github.com/rapidaai/api/assistant-api/internal/transformer"
+	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/protos"
 )
@@ -122,14 +123,30 @@ func (g *googleSpeechToText) speechToTextCallback(stram speechpb.Speech_Streamin
 					continue
 				}
 				alt := result.Alternatives[0]
-				if g.options.OnTranscript != nil && len(alt.GetTranscript()) > 0 {
+				if g.options.OnPacket != nil && len(alt.GetTranscript()) > 0 {
 					if v, err := g.mdlOpts.GetFloat64("listen.threshold"); err == nil {
 						if alt.GetConfidence() < float32(v) {
-							g.logger.Warnf("google-stt: skipping low confidence transcript: %s (confidence: %f)", alt.GetTranscript(), alt.GetConfidence())
+							g.options.OnPacket(
+								internal_type.InterruptionPacket{Source: "word"},
+								internal_type.SpeechToTextPacket{
+									Script:     alt.GetTranscript(),
+									Confidence: float64(alt.GetConfidence()),
+									Language:   result.GetLanguageCode(),
+									Interim:    true,
+								},
+							)
 							continue
 						}
 					}
-					g.options.OnTranscript(alt.GetTranscript(), float64(alt.GetConfidence()), result.GetLanguageCode(), result.GetIsFinal())
+					g.options.OnPacket(
+						internal_type.InterruptionPacket{Source: "word"},
+						internal_type.SpeechToTextPacket{
+							Script:     alt.GetTranscript(),
+							Confidence: float64(alt.GetConfidence()),
+							Language:   result.GetLanguageCode(),
+							Interim:    !result.GetIsFinal(),
+						},
+					)
 				}
 			}
 		}

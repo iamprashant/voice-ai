@@ -31,27 +31,16 @@ func (spk *GenericRequestor) Speak(packets ...internal_type.Packet) error {
 	for _, packate := range packets {
 		switch pkt := packate.(type) {
 		case internal_type.TextPacket:
-
 			span.AddAttributes(ctx,
-				internal_adapter_telemetry.KV{
-					K: "messageId", V: internal_adapter_telemetry.StringValue(pkt.ContextID),
-				},
-				internal_adapter_telemetry.KV{
-					K: "chunk", V: internal_adapter_telemetry.StringValue(pkt.Text),
-				},
-				internal_adapter_telemetry.KV{
-					K: "activity", V: internal_adapter_telemetry.StringValue("speaking"),
-				},
+				internal_adapter_telemetry.MessageKV(pkt.ContextID),
+				internal_adapter_telemetry.KV{K: "chunk", V: internal_adapter_telemetry.StringValue(pkt.Text)},
+				internal_adapter_telemetry.KV{K: "activity", V: internal_adapter_telemetry.StringValue("speaking")},
 			)
 			return spk.tokenizer.Tokenize(ctx, pkt)
 		case internal_type.FlushPacket:
 			span.AddAttributes(ctx,
-				internal_adapter_telemetry.KV{
-					K: "messageId", V: internal_adapter_telemetry.StringValue(pkt.ContextID),
-				},
-				internal_adapter_telemetry.KV{
-					K: "activity", V: internal_adapter_telemetry.StringValue("finish_speaking"),
-				},
+				internal_adapter_telemetry.MessageKV(pkt.ContextID),
+				internal_adapter_telemetry.KV{K: "activity", V: internal_adapter_telemetry.StringValue("finish_speaking")},
 			)
 			if err := spk.tokenizer.Tokenize(ctx, pkt); err != nil {
 				spk.logger.Warnf("unable to send finish speaking sentence to tokenizer %v", err)
@@ -112,13 +101,8 @@ func (spk *GenericRequestor) ConnectSpeaker(ctx context.Context, audioOutConfig 
 	utils.Go(context, func() {
 		defer wg.Done()
 		opts := &internal_transformer.TextToSpeechInitializeOptions{
-			AudioConfig: audioOutConfig,
-			OnSpeech: func(contextId string, v []byte) error {
-				return spk.OutputAudio(contextId, v, false)
-			},
-			OnComplete: func(contextId string) error {
-				return spk.OutputAudio(contextId, nil, true)
-			},
+			AudioConfig:  audioOutConfig,
+			OnSpeech:     func(pkt ...internal_type.Packet) error { return spk.OnPacket(context, pkt...) },
 			ModelOptions: speakerOpts,
 		}
 
@@ -176,9 +160,7 @@ func (spk *GenericRequestor) OnCompleteSentence(ctx context.Context) {
 			case internal_type.TextPacket:
 				ctxSpan, span, _ := spk.Tracer().StartSpan(ctx, utils.AssistantSpeakingStage)
 				span.AddAttributes(ctxSpan,
-					internal_adapter_telemetry.KV{
-						K: "messageId", V: internal_adapter_telemetry.StringValue(res.ContextID),
-					},
+					internal_adapter_telemetry.MessageKV(res.ContextID),
 					internal_adapter_telemetry.KV{
 						K: "activity", V: internal_adapter_telemetry.StringValue("speak"),
 					},

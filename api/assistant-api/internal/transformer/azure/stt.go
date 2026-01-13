@@ -14,6 +14,7 @@ import (
 	"github.com/Microsoft/cognitive-services-speech-sdk-go/audio"
 	"github.com/Microsoft/cognitive-services-speech-sdk-go/speech"
 	internal_transformer "github.com/rapidaai/api/assistant-api/internal/transformer"
+	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/protos"
 )
@@ -123,17 +124,25 @@ func (azCallback *azureSpeechToText) OnSessionStopped(event speech.SessionEventA
 
 func (az *azureSpeechToText) OnRecognizing(event speech.SpeechRecognitionEventArgs) {
 	defer event.Close()
-	cb := az.transformerOption
-	if cb != nil {
-		cb.OnTranscript(event.Result.Text, 0.9, "en", false)
+	if az.transformerOption != nil {
+		az.transformerOption.OnPacket(internal_type.SpeechToTextPacket{
+			Script:     event.Result.Text,
+			Confidence: 0.9,
+			Language:   "en",
+			Interim:    true,
+		})
 	}
 }
 
 func (az *azureSpeechToText) OnRecognized(event speech.SpeechRecognitionEventArgs) {
 	defer event.Close()
-	cb := az.transformerOption
-	if cb != nil {
-		cb.OnTranscript(event.Result.Text, 0.9, "en", true)
+	if az.transformerOption != nil {
+		az.transformerOption.OnPacket(internal_type.SpeechToTextPacket{
+			Script:     event.Result.Text,
+			Confidence: 0.9,
+			Language:   "en",
+			Interim:    false,
+		})
 	}
 }
 

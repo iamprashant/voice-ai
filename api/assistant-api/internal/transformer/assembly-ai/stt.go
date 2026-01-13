@@ -17,6 +17,7 @@ import (
 	"github.com/gorilla/websocket"
 	internal_transformer "github.com/rapidaai/api/assistant-api/internal/transformer"
 	assemblyai_internal "github.com/rapidaai/api/assistant-api/internal/transformer/assembly-ai/internal"
+	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/protos"
 )
@@ -116,11 +117,14 @@ func (aai *assemblyaiSTT) speechToTextCallback(conn *websocket.Conn, ctx context
 					confidence += v.Confidence
 				}
 				averageConfidence := confidence / float64(len(transcript.Words))
-				if transcript.EndOfTurn {
-					aai.options.OnTranscript(transcript.Transcript, averageConfidence, "en", true)
-				} else {
-					aai.options.OnTranscript(transcript.Transcript, averageConfidence, "en", false)
-				}
+				aai.options.OnPacket(
+					internal_type.InterruptionPacket{Source: "word"},
+					internal_type.SpeechToTextPacket{
+						Script:     transcript.Transcript,
+						Language:   "en",
+						Confidence: averageConfidence,
+						Interim:    !transcript.EndOfTurn,
+					})
 
 			case "Begin":
 				aai.logger.Debugf("assembly-ai-stt: received Begin message")

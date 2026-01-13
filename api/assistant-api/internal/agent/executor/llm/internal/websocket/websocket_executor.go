@@ -108,8 +108,6 @@ func (a *websocketExecutor) Close(
 func NewWebsocketAssistantExecutor(
 	logger commons.Logger,
 ) internal_agent_executor.AssistantExecutor {
-	return &websocketExecutor{
-		logger: logger,
-	}
+	return nil
 
 }

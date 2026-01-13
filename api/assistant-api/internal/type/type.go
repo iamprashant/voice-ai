@@ -5,7 +5,10 @@
 // See LICENSE.md or contact sales@rapida.ai for commercial usage.
 package internal_type
 
-import "github.com/rapidaai/protos"
+import (
+	"github.com/rapidaai/pkg/types"
+	"github.com/rapidaai/protos"
+)
 
 // Packet represents a generic request packet handled by the adapter layer.
 // Concrete packet types (e.g., FlushPacket, InterruptionPacket) are used to
@@ -31,6 +34,9 @@ func (f FlushPacket) ContextId() string {
 type InterruptionPacket struct {
 	// ContextID identifies the context to be interrupted.
 	ContextID string
+
+	//
+	Source string
 }
 
 // ContextId returns the identifier of the context associated with this interruption request.
@@ -47,6 +53,120 @@ type TextPacket struct {
 
 // ContextId returns the identifier of the context associated with this interruption request.
 func (f TextPacket) ContextId() string {
+	return f.ContextID
+}
+
+// MetricPacket represents a request to send metrics within a specific context.
+type MetricPacket struct {
+	// ContextID identifies the context to be flushed.
+	ContextID string
+
+	// Metrics holds the list of metrics to be sent within the specified context.
+	Metrics []*types.Metric
+}
+
+func (f MetricPacket) ContextId() string {
+	return f.ContextID
+}
+
+type LLMStreamPacket struct {
+
+	// contextID identifies the context to be flushed.
+	ContextID string
+
+	// message
+	Message *types.Message
+}
+
+func (f LLMStreamPacket) ContextId() string {
+	return f.ContextID
+}
+
+type StaticPacket struct {
+	// contextID identifies the context to be flushed.
+	ContextID string
+
+	// message
+	Text string
+}
+
+func (f StaticPacket) ContextId() string {
+	return f.ContextID
+}
+
+type LLMPacket struct {
+
+	// contextID identifies the context to be flushed.
+	ContextID string
+
+	// message
+	Message *types.Message
+}
+
+func (f LLMPacket) ContextId() string {
+	return f.ContextID
+}
+
+type TextToSpeechPacket struct {
+
+	// contextID identifies the context to be flushed.
+	ContextID string
+
+	// audio chunk
+	AudioChunk []byte
+}
+
+func (f TextToSpeechPacket) ContextId() string {
+	return f.ContextID
+}
+
+type TextToSpeechFlushPacket struct {
+	// contextID identifies the context to be flushed.
+	ContextID string
+}
+
+func (f TextToSpeechFlushPacket) ContextId() string {
+	return f.ContextID
+}
+
+type UserTextPacket struct {
+	// contextID identifies the context to be flushed.
+	ContextID string
+
+	// text
+	Text string
+}
+
+func (f UserTextPacket) ContextId() string {
+	return f.ContextID
+}
+
+type EndOfSpeechPacket struct {
+	// contextID identifies the context to be flushed.
+	ContextID string
+}
+
+func (f EndOfSpeechPacket) ContextId() string {
+	return f.ContextID
+}
+
+type SpeechToTextPacket struct {
+	ContextID string
+
+	// script
+	Script string
+
+	// confidence
+	Confidence float64
+
+	// language
+	Language string
+
+	// interim
+	Interim bool
+}
+
+func (f SpeechToTextPacket) ContextId() string {
 	return f.ContextID
 }
 

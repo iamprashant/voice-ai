@@ -13,7 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
 type Message struct {
@@ -121,8 +121,8 @@ func (msg *Message) GetTime() string {
 	return msg.Time.UTC().Format(time.RFC3339)
 }
 
-func (msg *Message) ToProto() *lexatic_backend.Message {
-	protoMsg := &lexatic_backend.Message{}
+func (msg *Message) ToProto() *protos.Message {
+	protoMsg := &protos.Message{}
 	err := utils.Cast(msg, protoMsg)
 	if err != nil {
 		fmt.Printf("error while casting %v", err)

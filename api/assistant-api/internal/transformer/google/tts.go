@@ -165,7 +165,10 @@ func (g *googleTextToSpeech) textToSpeechCallback(streamClient texttospeechpb.Te
 				g.mu.Lock()
 				ctxId := g.contextId
 				g.mu.Unlock()
-				g.transformerOptions.OnSpeech(ctxId, resp.GetAudioContent())
+				g.transformerOptions.OnSpeech(internal_type.TextToSpeechPacket{
+					ContextID:  ctxId,
+					AudioChunk: resp.GetAudioContent(),
+				})
 			}
 		}
 	}

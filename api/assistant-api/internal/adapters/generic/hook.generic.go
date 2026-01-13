@@ -23,14 +23,6 @@ import (
 	"github.com/rapidaai/protos"
 )
 
-func (md *GenericRequestor) OnRecieveMessage(msg *types.Message) *types.Message {
-	return msg
-}
-
-func (md *GenericRequestor) OnSendMessage(msg *types.Message) *types.Message {
-	return msg
-}
-
 func (md *GenericRequestor) OnBeginConversation() error {
 	utils.Go(md.Context(), func() {
 		for _, webhook := range md.assistant.AssistantWebhooks {

@@ -102,13 +102,18 @@ func (elt *elevenlabsTTS) textToSpeechCallback(conn *websocket.Conn, ctx context
 
 			if rawAudioData, err := base64.StdEncoding.DecodeString(audioData.Audio); err == nil {
 				if audioData.ContextId != nil {
-					elt.options.OnSpeech(*audioData.ContextId, rawAudioData)
+					elt.options.OnSpeech(internal_type.TextToSpeechPacket{
+						ContextID:  *audioData.ContextId,
+						AudioChunk: rawAudioData,
+					})
 				}
 			}
 
 			if audioData.IsFinal != nil && *audioData.IsFinal {
 				if audioData.ContextId != nil {
-					elt.options.OnComplete(*audioData.ContextId)
+					elt.options.OnSpeech(internal_type.TextToSpeechFlushPacket{
+						ContextID: *audioData.ContextId,
+					})
 				}
 			}
 		}

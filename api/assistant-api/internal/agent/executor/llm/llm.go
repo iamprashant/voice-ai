@@ -11,11 +11,9 @@ import (
 
 	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters"
 	internal_agent_executor "github.com/rapidaai/api/assistant-api/internal/agent/executor"
-	internal_agentkit "github.com/rapidaai/api/assistant-api/internal/agent/executor/llm/internal/agentkit"
 	internal_model "github.com/rapidaai/api/assistant-api/internal/agent/executor/llm/internal/model"
-	internal_websocket "github.com/rapidaai/api/assistant-api/internal/agent/executor/llm/internal/websocket"
+	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 )
 
@@ -33,10 +31,10 @@ func NewAssistantExecutor(logger commons.Logger) internal_agent_executor.Assista
 // Init implements internal_executors.AssistantExecutor.
 func (a *assistantExecutor) Initialize(ctx context.Context, communication internal_adapter_requests.Communication) error {
 	switch communication.Assistant().AssistantProvider {
-	case type_enums.AGENTKIT:
-		a.executor = internal_agentkit.NewAgentKitAssistantExecutor(a.logger)
-	case type_enums.WEBSOCKET:
-		a.executor = internal_websocket.NewWebsocketAssistantExecutor(a.logger)
+	// case type_enums.AGENTKIT:
+	// 	a.executor = internal_agentkit.NewAgentKitAssistantExecutor(a.logger)
+	// case type_enums.WEBSOCKET:
+	// 	a.executor = internal_websocket.NewWebsocketAssistantExecutor(a.logger)
 	case type_enums.MODEL:
 		a.executor = internal_model.NewModelAssistantExecutor(a.logger)
 	default:
@@ -51,18 +49,18 @@ func (a *assistantExecutor) Name() string {
 }
 
 // Talk implements internal_executors.AssistantExecutor.
-func (a *assistantExecutor) User(ctx context.Context, messageid string, msg *types.Message, communication internal_adapter_requests.Communication) error {
+func (a *assistantExecutor) User(ctx context.Context, communication internal_adapter_requests.Communication, pctk internal_type.Packet) error {
 	if a.executor == nil {
 		return errors.New("assistant executor not initialized")
 	}
-	return a.executor.User(ctx, messageid, msg, communication)
+	return a.executor.User(ctx, communication, pctk)
 }
 
-func (a *assistantExecutor) Assistant(ctx context.Context, messageid string, msg *types.Message, communication internal_adapter_requests.Communication) error {
+func (a *assistantExecutor) Assistant(ctx context.Context, communication internal_adapter_requests.Communication, pctk ...internal_type.Packet) error {
 	if a.executor == nil {
 		return errors.New("assistant executor not initialized")
 	}
-	return a.executor.Assistant(ctx, messageid, msg, communication)
+	return a.executor.Assistant(ctx, communication, pctk...)
 }
 
 func (a *assistantExecutor) Close(ctx context.Context, communication internal_adapter_requests.Communication) error {

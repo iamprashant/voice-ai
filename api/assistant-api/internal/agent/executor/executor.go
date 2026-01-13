@@ -9,6 +9,7 @@ import (
 	"context"
 
 	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters"
+	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/protos"
 )
@@ -47,10 +48,10 @@ type AssistantExecutor interface {
 	Name() string
 
 	// when assistant trigger a message
-	Assistant(ctx context.Context, messageid string, msg *types.Message, communication internal_adapter_requests.Communication) error
+	Assistant(ctx context.Context, communication internal_adapter_requests.Communication, pctk ...internal_type.Packet) error
 
 	// when a user trigger a message
-	User(ctx context.Context, messageid string, msg *types.Message, communication internal_adapter_requests.Communication) error
+	User(ctx context.Context, communication internal_adapter_requests.Communication, pctk internal_type.Packet) error
 
 	// disconnect
 	Close(ctx context.Context, communication internal_adapter_requests.Communication) error

@@ -74,7 +74,7 @@ type Communication interface {
 	Notifier
 
 	// llm callback
-	LLMCallback
+	Callback
 
 	//caller
 	InternalCaller

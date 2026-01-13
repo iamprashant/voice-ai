@@ -15,6 +15,7 @@ import (
 	"github.com/gorilla/websocket"
 	internal_transformer "github.com/rapidaai/api/assistant-api/internal/transformer"
 	cartesia_internal "github.com/rapidaai/api/assistant-api/internal/transformer/cartesia/internal"
+	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/commons"
 	protos "github.com/rapidaai/protos"
 )
@@ -84,8 +85,14 @@ func (cst *cartesiaSpeechToText) speechToTextCallback(conn *websocket.Conn, ctx 
 			}
 			var resp cartesia_internal.SpeechToTextOutput
 			if err := json.Unmarshal(msg, &resp); err == nil && resp.Text != "" {
-				if cst.transformerOptions.OnTranscript != nil {
-					cst.transformerOptions.OnTranscript(resp.Text, 0.9, resp.Language, resp.IsFinal)
+				if cst.transformerOptions.OnPacket != nil {
+					cst.transformerOptions.OnPacket(
+						internal_type.InterruptionPacket{Source: "word"},
+						internal_type.SpeechToTextPacket{
+							Script:   resp.Text,
+							Language: resp.Language,
+							Interim:  !resp.IsFinal,
+						})
 				}
 			}
 		}

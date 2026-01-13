@@ -8,27 +8,19 @@ package deepgram_internal
 
 import (
 	msginterfaces "github.com/deepgram/deepgram-go-sdk/v3/pkg/api/listen/v1/websocket/interfaces"
+	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/commons"
 )
 
 // Implement the LiveMessageCallback interface
 type deepgramSttCallback struct {
 	logger       commons.Logger
-	onTranscript func(
-		transcript string,
-		confidence float64,
-		language string,
-		isFinal bool,
-	) error
+	onTranscript func(pkt ...internal_type.Packet) error
 }
 
 func NewDeepgramSttCallback(
 	logger commons.Logger,
-	onTranscript func(
-		transcript string,
-		confidence float64,
-		language string,
-		isFinal bool) error,
+	onTranscript func(pkt ...internal_type.Packet) error,
 ) msginterfaces.LiveMessageCallback {
 	return &deepgramSttCallback{
 		logger:       logger,
@@ -47,10 +39,13 @@ func (d *deepgramSttCallback) Message(mr *msginterfaces.MessageResponse) error {
 	for _, alternative := range mr.Channel.Alternatives {
 		if alternative.Transcript != "" {
 			d.onTranscript(
-				alternative.Transcript,
-				alternative.Confidence,
-				d.GetMostUsedLanguage(alternative.Languages),
-				mr.IsFinal,
+				internal_type.InterruptionPacket{Source: "word"},
+				internal_type.SpeechToTextPacket{
+					Script:     alternative.Transcript,
+					Confidence: alternative.Confidence,
+					Language:   d.GetMostUsedLanguage(alternative.Languages),
+					Interim:    !mr.IsFinal,
+				},
 			)
 			return nil
 		}

@@ -85,7 +85,6 @@ func (a *silenceBasedEndOfSpeech) Analyze(
 	case *internal_end_of_speech.SystemEndOfSpeechInput:
 		a.enqueue(workerEvent{
 			ctx:     ctx,
-			speech:  input.GetMessage(),
 			timeout: a.thresholdDuration,
 		})
 

@@ -63,7 +63,7 @@ func NewDeepgramSpeechToText(ctx context.Context, logger commons.Logger, vaultCr
 func (dg *deepgramSTT) Initialize() error {
 
 	dgClient, err := client.NewWSUsingCallback(dg.ctx, dg.GetKey(), &interfaces.ClientOptions{APIKey: dg.GetKey(), EnableKeepAlive: true}, dg.SpeechToTextOptions(), deepgram_internal.
-		NewDeepgramSttCallback(dg.logger, dg.options.OnTranscript))
+		NewDeepgramSttCallback(dg.logger, dg.options.OnPacket))
 
 	if err != nil {
 		dg.logger.Errorf("deepgram-stt: unable create dg client with error %+v", err.Error())

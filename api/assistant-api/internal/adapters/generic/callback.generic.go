@@ -7,93 +7,319 @@ package internal_adapter_request_generic
 
 import (
 	"context"
+	"time"
 
-	"github.com/rapidaai/pkg/types"
+	internal_adapter_request_customizers "github.com/rapidaai/api/assistant-api/internal/adapters/customizers"
+	internal_end_of_speech "github.com/rapidaai/api/assistant-api/internal/end_of_speech"
+	internal_telemetry "github.com/rapidaai/api/assistant-api/internal/telemetry"
+	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
+	"github.com/rapidaai/pkg/commons"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
+	"github.com/rapidaai/protos"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-/*
-*  Generation of text from the executors
-*  default executor or remote executor
- */
-func (talking *GenericRequestor) OnGenerationComplete(ctx context.Context, messageid string, ouput *types.Message, metrics []*types.Metric) error {
-	utils.Go(talking.Context(), func() {
-		if err := talking.OnUpdateMessage(talking.Context(), messageid, ouput, type_enums.RECORD_COMPLETE); err != nil {
-			talking.logger.Errorf("Error in OnUpdateMessage: %v", err)
-		}
-		if ouput.Meta != nil {
-			talking.OnMessageMetadata(talking.Context(), messageid, ouput.Meta)
-		}
-
-	})
-	utils.Go(talking.Context(), func() {
-		if len(metrics) > 0 {
-			if err := talking.OnMessageMetric(talking.Context(), messageid, metrics); err != nil {
-				talking.logger.Errorf("Error in OnUpdateMessage: %v", err)
-			}
-		}
-	})
-	if err := talking.Output(ctx, messageid, ouput, true, metrics); err != nil {
-		talking.logger.Errorf("unable to output text for the message %s", messageid)
-	}
-
-	return nil
-}
-
 /**/
-func (talking *GenericRequestor) OnGeneration(ctx context.Context, messageid string, out *types.Message) error {
-	return talking.Output(ctx, messageid, out, false, nil)
-}
+func (talking *GenericRequestor) OnPacket(ctx context.Context, pkt ...internal_type.Packet) error {
+	for _, p := range pkt {
+		switch vl := p.(type) {
 
-// after finish assistant message the assistant callback will be triggered
-func (talking *GenericRequestor) AssistantCallback(ctx context.Context, messageid string, msg *types.Message, metrics []*types.Metric) error {
-	utils.Go(talking.Context(), func() {
-		if err := talking.OnUpdateMessage(talking.Context(), messageid, msg, type_enums.RECORD_COMPLETE); err != nil {
-			talking.logger.Errorf("Error in OnUpdateMessage: %v", err)
-		}
-		if msg.Meta != nil {
-			talking.OnMessageMetadata(talking.Context(), messageid, msg.Meta)
-		}
-
-	})
-	utils.Go(talking.Context(), func() {
-		if len(metrics) > 0 {
-			if err := talking.OnMessageMetric(talking.Context(), messageid, metrics); err != nil {
-				talking.logger.Errorf("Error in OnUpdateMessage: %v", err)
+		case internal_type.StaticPacket:
+			if err := talking.Notify(ctx, &protos.AssistantConversationAssistantMessage{
+				Time:      timestamppb.Now(),
+				Id:        vl.ContextId(),
+				Completed: true,
+				Message: &protos.AssistantConversationAssistantMessage_Text{
+					Text: &protos.AssistantConversationMessageTextContent{
+						Content: vl.Text,
+					},
+				},
+			}); err != nil {
+				talking.logger.Tracef(ctx, "error while outputting chunk to the user: %w", err)
 			}
+
+			if talking.messaging.GetInputMode().Audio() {
+				if err := talking.Speak(
+					internal_type.TextPacket{ContextID: vl.ContextId(), Text: vl.Text},
+					internal_type.FlushPacket{ContextID: vl.ContextId()}); err == nil {
+					talking.logger.Debugf("finished speaking greeting message")
+				}
+			}
+			// Notify the response if there is no user message
+			if err := talking.Notify(ctx, &protos.AssistantConversationMessage{
+				MessageId:               vl.ContextID,
+				AssistantId:             talking.Assistant().Id,
+				AssistantConversationId: talking.Conversation().Id,
+				Response: &protos.Message{
+					Role: "assistant",
+					Contents: []*protos.Content{{
+						ContentType:   commons.TEXT_CONTENT.String(),
+						ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
+						Content:       []byte(vl.Text),
+					}}},
+			}); err != nil {
+				talking.logger.Tracef(ctx, "error while outputting chunk to the user: %w", err)
+			}
+			talking.messaging.Transition(internal_adapter_request_customizers.AgentCompleted)
+			continue
+		case internal_type.InterruptionPacket:
+			switch vl.Source {
+			case "word":
+				talking.ResetIdealTimeoutTimer(talking.Context())
+				if err := talking.messaging.Transition(internal_adapter_request_customizers.Interrupted); err != nil {
+					continue
+				}
+				if talking.messaging.GetInputMode().Audio() {
+					talking.recorder.Interrupt()
+				}
+				talking.Notify(ctx, &protos.AssistantConversationInterruption{Type: protos.AssistantConversationInterruption_INTERRUPTION_TYPE_WORD, Time: timestamppb.Now()})
+			default:
+				if err := talking.messaging.Transition(internal_adapter_request_customizers.Interrupt); err != nil {
+					continue
+				}
+				if talking.messaging.GetInputMode().Audio() {
+					talking.recorder.Interrupt()
+				}
+				talking.Notify(ctx, &protos.AssistantConversationInterruption{Type: protos.AssistantConversationInterruption_INTERRUPTION_TYPE_VAD, Time: timestamppb.Now()})
+			}
+			continue
+		case internal_type.SpeechToTextPacket:
+			ctx, span, _ := talking.Tracer().StartSpan(talking.Context(), utils.AssistantListeningStage,
+				internal_telemetry.KV{
+					K: "transcript",
+					V: internal_telemetry.StringValue(vl.Script),
+				}, internal_telemetry.KV{
+					K: "confidence",
+					V: internal_telemetry.FloatValue(vl.Confidence),
+				}, internal_telemetry.KV{
+					K: "isCompleted",
+					V: internal_telemetry.BoolValue(!vl.Interim),
+				})
+			defer span.EndSpan(ctx, utils.AssistantListeningStage)
+			//
+			talking.logger.Debugf("received speech to text packet: %+v", vl)
+			msi := talking.messaging.Create(type_enums.UserActor, "")
+			if !vl.Interim {
+				msi = talking.messaging.Create(type_enums.UserActor, vl.Script)
+				talking.Notify(ctx, &protos.AssistantConversationUserMessage{
+					Id: msi.GetId(),
+					Message: &protos.AssistantConversationUserMessage_Text{
+						Text: &protos.AssistantConversationMessageTextContent{
+							Content: msi.String(),
+						},
+					},
+					Completed: false,
+					Time:      timestamppb.New(time.Now()),
+				})
+			}
+
+			if err := talking.ListenText(ctx, &internal_end_of_speech.STTEndOfSpeechInput{
+				Message:    vl.Script,
+				IsComplete: !vl.Interim,
+				Time:       time.Now(),
+			}); err != nil {
+				talking.logger.Info("ListenText error %s", err)
+			}
+		case internal_type.EndOfSpeechPacket:
+			msg, err := talking.messaging.GetMessage(type_enums.UserActor)
+			if err != nil {
+				talking.logger.Tracef(ctx, "illegal message state with error %v", err)
+				continue
+			}
+			talking.messaging.Transition(internal_adapter_request_customizers.UserCompleted)
+			if err := talking.Notify(ctx,
+				&protos.AssistantConversationUserMessage{
+					Id: msg.GetId(),
+					Message: &protos.AssistantConversationUserMessage_Text{
+						Text: &protos.AssistantConversationMessageTextContent{
+							Content: msg.String(),
+						},
+					},
+					Completed: true,
+					Time:      timestamppb.New(time.Now()),
+				}); err != nil {
+				talking.logger.Tracef(ctx, "might be returing processing the duplicate message so cut it out.")
+				continue
+			}
+			talking.messaging.Transition(internal_adapter_request_customizers.LLMGenerating)
+			utils.Go(ctx, func() {
+				// if err := talking.OnCreateMessage(ctx, messageid, in); err != nil {
+				// 	talking.logger.Errorf("Error in OnCreateMessage: %v", err)
+				// }
+			})
+			// utils.Go(ctx, func() {
+			// 	if err := talking.OnMessageMetadata(ctx, messageid, in.Meta); err != nil {
+			// 		talking.logger.Errorf("Error in OnMessageMetadata: %v", err)
+			// 	}
+			// })
+			if err := talking.assistantExecutor.User(ctx, talking, internal_type.UserTextPacket{ContextID: msg.GetId(), Text: msg.String()}); err != nil {
+				talking.OnError(ctx, msg.GetId())
+				continue
+			}
+		case internal_type.LLMStreamPacket:
+			aMsg := vl.Message.String()
+			if len(vl.Message.ToolCalls) > 0 {
+				aMsg = " "
+			}
+			if err := talking.messaging.Transition(internal_adapter_request_customizers.AgentSpeaking); err != nil {
+				continue
+			}
+
+			if err := talking.Notify(ctx, &protos.AssistantConversationAssistantMessage{
+				Time:      timestamppb.Now(),
+				Id:        vl.ContextID,
+				Completed: false,
+				Message: &protos.AssistantConversationAssistantMessage_Text{
+					Text: &protos.AssistantConversationMessageTextContent{
+						Content: aMsg,
+					},
+				},
+			}); err != nil {
+				talking.logger.Tracef(ctx, "error while outputting chunk to the user: %w", err)
+			}
+			if talking.messaging.GetInputMode().Audio() {
+				if err := talking.Speak(internal_type.TextPacket{ContextID: vl.ContextId(), Text: aMsg}); err != nil {
+					talking.logger.Errorf("unable to speak for the user, please check the config error = %+v", err)
+				}
+			}
+		case internal_type.LLMPacket:
+			utils.Go(talking.Context(), func() {
+				if err := talking.OnUpdateMessage(talking.Context(), p.ContextId(), vl.Message, type_enums.RECORD_COMPLETE); err != nil {
+					talking.logger.Errorf("Error in OnUpdateMessage: %v", err)
+				}
+				if vl.Message.Meta != nil {
+					talking.OnMessageMetadata(talking.Context(), p.ContextId(), vl.Message.Meta)
+				}
+
+			})
+
+			// if audio is enabled flush the audio
+			if talking.messaging.GetInputMode().Audio() {
+				talking.Speak(internal_type.FlushPacket{ContextID: p.ContextId()})
+			}
+
+			// try to get the user message
+			if in, err := talking.messaging.GetMessage(type_enums.UserActor); err == nil {
+				if err := talking.Notify(ctx, &protos.AssistantConversationMessage{
+					MessageId:               p.ContextId(),
+					AssistantId:             talking.assistant.Id,
+					AssistantConversationId: talking.assistantConversation.Id,
+					Request:                 in.ToProto(),
+					Response:                vl.Message.ToProto(),
+				}); err != nil {
+					talking.logger.Tracef(ctx, "error while outputting chunk to the user: %w", err)
+				}
+				talking.messaging.Transition(internal_adapter_request_customizers.AgentCompleted)
+				continue
+			}
+
+			// Notify the response if there is no user message
+			// if err := talking.Notify(ctx, &protos.AssistantConversationMessage{
+			// 	MessageId:               p.ContextId(),
+			// 	AssistantId:             talking.assistant.Id,
+			// 	AssistantConversationId: talking.assistantConversation.Id,
+			// 	Response:                vl.Message.ToProto(),
+			// }); err != nil {
+			// 	talking.logger.Tracef(ctx, "error while outputting chunk to the user: %w", err)
+			// }
+			talking.messaging.Transition(internal_adapter_request_customizers.AgentCompleted)
+			continue
+		case internal_type.MetricPacket:
+			if len(vl.Metrics) > 0 {
+				if err := talking.OnMessageMetric(talking.Context(), vl.ContextID, vl.Metrics); err != nil {
+					talking.logger.Errorf("Error in OnUpdateMessage: %v", err)
+				}
+			}
+		case internal_type.TextToSpeechFlushPacket:
+			if err := talking.Notify(
+				talking.Context(),
+				&protos.AssistantConversationAssistantMessage{
+					Time:      timestamppb.Now(),
+					Id:        vl.ContextID,
+					Completed: true,
+				},
+			); err != nil {
+				talking.logger.Tracef(talking.ctx, "error while outputing chunk to the user: %w", err)
+			}
+			continue
+		case internal_type.TextToSpeechPacket:
+			inputMessage, err := talking.messaging.GetMessage(type_enums.UserActor)
+			if err != nil {
+				continue
+			}
+			// //
+			if vl.ContextID != inputMessage.GetId() {
+				// talking.logger.Warnf("testing: context id mismatched %+v current %v", contextId, inputMessage.GetId())
+				continue
+			}
+
+			if err := talking.messaging.Transition(internal_adapter_request_customizers.AgentSpeaking); err != nil {
+				// talking.logger.Warnf("testing: illegal transition to speaking")
+				continue
+			}
+
+			if err := talking.Notify(
+				talking.Context(),
+				&protos.AssistantConversationAssistantMessage{
+					Time: timestamppb.Now(),
+					Id:   vl.ContextID,
+					Message: &protos.AssistantConversationAssistantMessage_Audio{
+						Audio: &protos.AssistantConversationMessageAudioContent{
+							Content: vl.AudioChunk,
+						},
+					},
+				},
+			); err != nil {
+				talking.logger.Tracef(talking.ctx, "error while outputing chunk to the user: %w", err)
+			}
+
+			// monitor ideal timeout
+			talking.StartIdealTimeoutTimer(talking.Context())
+
+			//
+			utils.Go(context.Background(), func() {
+				talking.recorder.System(vl.AudioChunk)
+			})
+			continue
+		default:
+			talking.logger.Warnf("unknown packet type received in OnGeneration %T", vl)
 		}
-	})
-	if err := talking.assistantExecutor.Assistant(ctx, messageid, msg, talking); err != nil {
-		talking.OnError(ctx, messageid)
-		return nil
 	}
-
-	// Start the ideal timeout timer after the assistant has finished speaking
-	talking.StartIdealTimeoutTimer(ctx)
-
 	return nil
 }
 
-// after finish user message the user callback will be triggered
-func (talking *GenericRequestor) UserCallback(ctx context.Context, messageid string, in *types.Message, metrics []*types.Metric) error {
-	// Reset the ideal timeout timer since user has spoken
-	talking.ResetIdealTimeoutTimer(ctx)
+// // after finish assistant message the assistant callback will be triggered
+// func (talking *GenericRequestor) AssistantCallback(ctx context.Context, messageid string, msg *types.Message, metrics []*types.Metric) error {
+// 	// utils.Go(talking.Context(), func() {
+// 	// 	if err := talking.OnUpdateMessage(talking.Context(), messageid, msg, type_enums.RECORD_COMPLETE); err != nil {
+// 	// 		talking.logger.Errorf("Error in OnUpdateMessage: %v", err)
+// 	// 	}
+// 	// 	if msg.Meta != nil {
+// 	// 		talking.OnMessageMetadata(talking.Context(), messageid, msg.Meta)
+// 	// 	}
 
-	in = talking.OnRecieveMessage(in)
-	utils.Go(ctx, func() {
-		if err := talking.OnCreateMessage(ctx, messageid, in); err != nil {
-			talking.logger.Errorf("Error in OnCreateMessage: %v", err)
-		}
-	})
-	utils.Go(ctx, func() {
-		if err := talking.OnMessageMetadata(ctx, messageid, in.Meta); err != nil {
-			talking.logger.Errorf("Error in OnMessageMetadata: %v", err)
-		}
-	})
-	if err := talking.assistantExecutor.User(ctx, messageid, in, talking); err != nil {
-		talking.OnError(ctx, messageid)
-		return nil
-	}
-	return nil
-}
+// 	// })
+// 	// utils.Go(talking.Context(), func() {
+// 	// 	if len(metrics) > 0 {
+// 	// 		if err := talking.OnMessageMetric(talking.Context(), messageid, metrics); err != nil {
+// 	// 			talking.logger.Errorf("Error in OnUpdateMessage: %v", err)
+// 	// 		}
+// 	// 	}
+// 	// })
+// 	// if err := talking.assistantExecutor.Assistant(ctx, messageid, msg, talking); err != nil {
+// 	// 	talking.OnError(ctx, messageid)
+// 	// 	return nil
+// 	// }
+
+// 	// // Start the ideal timeout timer after the assistant has finished speaking
+// 	// talking.StartIdealTimeoutTimer(ctx)
+
+// 	return nil
+// }
+
+// // after finish user message the user callback will be triggered
+// func (talking *GenericRequestor) UserCallback(ctx context.Context, pkt internal_type.Packet) error {
+
+// 	return nil
+// }

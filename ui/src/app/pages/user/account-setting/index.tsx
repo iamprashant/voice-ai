@@ -28,7 +28,7 @@ export const AccountSettingPage = () => {
         <SideTab
           strict={false}
           active="Account"
-          className={cn('w-64')}
+          className={cn('w-64 bg-white dark:bg-gray-900')}
           tabs={[
             {
               label: 'Account',

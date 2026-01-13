@@ -84,7 +84,9 @@ func (cst *cartesiaTTS) textToSpeechCallback(conn *websocket.Conn, ctx context.C
 				continue
 			}
 			if payload.Done {
-				_ = cst.options.OnComplete(payload.ContextID)
+				_ = cst.options.OnSpeech(internal_type.TextToSpeechFlushPacket{
+					ContextID: payload.ContextID,
+				})
 				continue
 			}
 			if payload.Data == "" {
@@ -95,7 +97,10 @@ func (cst *cartesiaTTS) textToSpeechCallback(conn *websocket.Conn, ctx context.C
 				cst.logger.Error("cartesia-tts: failed to decode audio payload error: %v", err)
 				continue
 			}
-			_ = cst.options.OnSpeech(payload.ContextID, decoded)
+			_ = cst.options.OnSpeech(internal_type.TextToSpeechPacket{
+				ContextID:  payload.ContextID,
+				AudioChunk: decoded,
+			})
 		}
 	}
 }

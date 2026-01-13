@@ -20,41 +20,12 @@ import (
 	internal_vad_factory "github.com/rapidaai/api/assistant-api/internal/factory/vad"
 	internal_telemetry "github.com/rapidaai/api/assistant-api/internal/telemetry"
 	internal_transformer "github.com/rapidaai/api/assistant-api/internal/transformer"
+	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	internal_vad "github.com/rapidaai/api/assistant-api/internal/vad"
 	"github.com/rapidaai/pkg/utils"
 	"github.com/rapidaai/protos"
 	"golang.org/x/sync/errgroup"
 )
-
-func (listening *GenericRequestor) listenTranscript(transcript string, confidence float64, language string, isCompleted bool) error {
-	ctx, span, _ := listening.Tracer().StartSpan(listening.Context(), utils.AssistantListeningStage,
-		internal_telemetry.KV{
-			K: "transcript",
-			V: internal_telemetry.StringValue(transcript),
-		}, internal_telemetry.KV{
-			K: "confidence",
-			V: internal_telemetry.FloatValue(confidence),
-		}, internal_telemetry.KV{
-			K: "isCompleted",
-			V: internal_telemetry.BoolValue(isCompleted),
-		})
-	defer span.EndSpan(ctx, utils.AssistantListeningStage)
-
-	//
-	if transcript != "" {
-		if _, err := listening.OnRecieveTranscript(ctx, transcript, confidence, language, isCompleted); err != nil {
-			listening.logger.Info("OnRecieveTranscript error %s", err)
-		}
-		if err := listening.ListenText(ctx, &internal_end_of_speech.STTEndOfSpeechInput{
-			Message:    transcript,
-			IsComplete: isCompleted,
-			Time:       time.Now(),
-		}); err != nil {
-			listening.logger.Info("ListenText error %s", err)
-		}
-	}
-	return nil
-}
 
 func (listening *GenericRequestor) initializeSpeechToText(ctx context.Context, transformerConfig *internal_assistant_entity.AssistantDeploymentAudio, audioConfig *protos.AudioConfig, options utils.Option) error {
 	credentialId, err := options.GetUint64("rapida.credential_id")
@@ -70,16 +41,17 @@ func (listening *GenericRequestor) initializeSpeechToText(ctx context.Context, t
 		return err
 	}
 
-	atransformer, err := internal_adapter_transformer_factory.
-		GetSpeechToTextTransformer(
-			internal_adapter_transformer_factory.AudioTransformer(transformerConfig.AudioProvider),
-			listening.Context(), listening.logger, credential,
-			&internal_transformer.SpeechToTextInitializeOptions{
-				AudioConfig:  audioConfig,
-				OnTranscript: listening.listenTranscript,
-				ModelOptions: options,
+	atransformer, err := internal_adapter_transformer_factory.GetSpeechToTextTransformer(
+		internal_adapter_transformer_factory.AudioTransformer(transformerConfig.AudioProvider),
+		listening.Context(), listening.logger, credential,
+		&internal_transformer.SpeechToTextInitializeOptions{
+			AudioConfig: audioConfig,
+			OnPacket: func(pkt ...internal_type.Packet) error {
+				return listening.OnPacket(ctx, pkt...)
 			},
-		)
+			ModelOptions: options,
+		},
+	)
 
 	if err != nil {
 		listening.logger.Errorf("unable to create input audio transformer with error %v", err)
@@ -245,9 +217,7 @@ func (listening *GenericRequestor) initializeVAD(ctx context.Context, audioConfi
 	return nil
 }
 
-func (listening *GenericRequestor) afterAnalyze(
-	ctx context.Context,
-	a interface{},
+func (listening *GenericRequestor) afterAnalyze(ctx context.Context, a interface{},
 ) error {
 	ctx, span, _ := listening.Tracer().StartSpan(listening.Context(), utils.AssistantUtteranceStage)
 	switch v := a.(type) {
@@ -277,7 +247,7 @@ func (listening *GenericRequestor) afterAnalyze(
 				V: internal_telemetry.StringValue(v.GetSpeech()),
 			},
 		)
-		return listening.OnSilenceBreak(ctx)
+		return listening.OnPacket(ctx, internal_type.EndOfSpeechPacket{})
 	case *internal_vad.VadResult:
 		span.EndSpan(ctx,
 			utils.AssistantUtteranceStage,
@@ -291,14 +261,8 @@ func (listening *GenericRequestor) afterAnalyze(
 			listening.logger.Warn("interrupt: very early interruption")
 			return nil
 		}
-		listening.OnInterrupt(ctx, "vad")
-		listening.ListenText(
-			ctx,
-			&internal_end_of_speech.
-				SystemEndOfSpeechInput{
-				Time: time.Now(),
-			},
-		)
+		listening.OnPacket(ctx, internal_type.InterruptionPacket{Source: "vad"})
+		listening.ListenText(ctx, &internal_end_of_speech.SystemEndOfSpeechInput{Time: time.Now()})
 		return nil
 	default:
 		return fmt.Errorf("unsupported activity type")
@@ -322,7 +286,7 @@ func (listening *GenericRequestor) ListenText(
 		})
 		return err
 	}
-	return listening.OnSilenceBreak(ctx)
+	return listening.OnPacket(ctx, internal_type.EndOfSpeechPacket{})
 }
 
 func (listening *GenericRequestor) ListenAudio(ctx context.Context, in []byte) ([]byte, error) {

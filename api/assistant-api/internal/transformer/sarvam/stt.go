@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/websocket"
 	internal_transformer "github.com/rapidaai/api/assistant-api/internal/transformer"
 	sarvam_internal "github.com/rapidaai/api/assistant-api/internal/transformer/sarvam/internal"
+	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/protos"
 )
@@ -86,13 +87,15 @@ func (cst *sarvamSpeechToText) speechToTextCallback(conn *websocket.Conn, ctx co
 		case "data":
 			if transcriptionData, err := response.AsTranscription(); err == nil {
 				cst.logger.Debugf("sarvam-stt: transcription received: %+v", transcriptionData)
-
-				if cst.transformerOptions.OnTranscript != nil {
-					cst.transformerOptions.OnTranscript(
-						transcriptionData.Transcript,
-						0.9,
-						*transcriptionData.LanguageCode,
-						true,
+				if cst.transformerOptions.OnPacket != nil {
+					cst.transformerOptions.OnPacket(
+						internal_type.InterruptionPacket{Source: "word"},
+						internal_type.SpeechToTextPacket{
+							Script:     transcriptionData.Transcript,
+							Confidence: 0.9,
+							Language:   *transcriptionData.LanguageCode,
+							Interim:    true,
+						},
 					)
 				}
 			}

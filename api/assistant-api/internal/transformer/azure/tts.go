@@ -144,12 +144,17 @@ func (azCallback *azureTextToSpeech) OnStart(event speech.SpeechSynthesisEventAr
 
 func (azCallback *azureTextToSpeech) OnSpeech(event speech.SpeechSynthesisEventArgs) {
 	defer event.Close()
-	azCallback.options.OnSpeech(azCallback.contextId, event.Result.AudioData)
+	azCallback.options.OnSpeech(internal_type.TextToSpeechPacket{
+		ContextID:  azCallback.contextId,
+		AudioChunk: event.Result.AudioData,
+	})
 }
 
 func (azCallback *azureTextToSpeech) OnComplete(event speech.SpeechSynthesisEventArgs) {
 	defer event.Close()
-	azCallback.options.OnComplete(azCallback.contextId)
+	azCallback.options.OnSpeech(internal_type.TextToSpeechFlushPacket{
+		ContextID: azCallback.contextId,
+	})
 }
 
 func (azCallback *azureTextToSpeech) OnCancel(event speech.SpeechSynthesisEventArgs) {

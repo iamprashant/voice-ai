@@ -114,6 +114,10 @@ func (rt *resembleTTS) textToSpeechCallback(conn *websocket.Conn, ctx context.Co
 		switch messageType {
 		case "audio_end":
 			rt.logger.Infof("resemble-tts: received audio_end event")
+			rt.mu.Lock()
+			contextId := rt.contextId
+			rt.mu.Unlock()
+			rt.options.OnSpeech(internal_type.TextToSpeechFlushPacket{ContextID: contextId})
 			return
 
 		case "audio":
@@ -133,8 +137,7 @@ func (rt *resembleTTS) textToSpeechCallback(conn *websocket.Conn, ctx context.Co
 			rt.mu.Lock()
 			contextId := rt.contextId
 			rt.mu.Unlock()
-
-			rt.options.OnSpeech(contextId, rawAudioData)
+			rt.options.OnSpeech(internal_type.TextToSpeechPacket{ContextID: contextId, AudioChunk: rawAudioData})
 
 		default:
 			rt.logger.Debugf("resemble-tts: received unknown message type: %s", messageType)

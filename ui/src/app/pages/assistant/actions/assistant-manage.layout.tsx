@@ -12,7 +12,7 @@ export const AssistantManageLayout: FC<HTMLAttributes<HTMLDivElement>> = () => {
   const { goToAssistant } = useGlobalNavigation();
   return (
     <>
-      <PageHeaderBlock className="border-b bg-light-background dark:bg-gray-900">
+      <PageHeaderBlock className="border-b dark:bg-gray-900">
         <div
           onClick={() => {
             goToAssistant(assistantId!);
@@ -25,7 +25,7 @@ export const AssistantManageLayout: FC<HTMLAttributes<HTMLDivElement>> = () => {
           </PageTitleBlock>
         </div>
       </PageHeaderBlock>
-      <div className="flex-1 flex relative grow h-full overflow-hidden">
+      <div className="flex-1 flex relative grow h-full overflow-hidden bg-white dark:bg-gray-900">
         <aside
           className="w-80 border-r z-1 overflow-auto shrink-0 dark:text-gray-400"
           aria-label="Sidebar"

@@ -11,15 +11,10 @@ import (
 	"strings"
 	"time"
 
-	internal_adapter_request_customizers "github.com/rapidaai/api/assistant-api/internal/adapters/customizers"
 	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
-	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
-	"github.com/rapidaai/protos"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func (gr *GenericRequestor) GetBehavior() (*internal_assistant_entity.AssistantDeploymentBehavior, error) {
@@ -49,7 +44,6 @@ func (gr *GenericRequestor) GetBehavior() (*internal_assistant_entity.AssistantD
 }
 
 func (communication *GenericRequestor) OnGreet(ctx context.Context) error {
-
 	behavior, err := communication.GetBehavior()
 	if err != nil {
 		communication.logger.Errorf("error while fetching deployment behavior: %v", err)
@@ -73,45 +67,10 @@ func (communication *GenericRequestor) OnGreet(ctx context.Context) error {
 		}
 	})
 
-	greetings := &types.Message{
-		Id:   message.GetId(),
-		Role: "assistant",
-		Contents: []*types.Content{{
-			ContentType:   commons.TEXT_CONTENT.String(),
-			ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
-			Content:       []byte(greetingCnt),
-		}}}
-
-	if err := communication.Notify(ctx, &protos.AssistantConversationAssistantMessage{
-		Time:      timestamppb.Now(),
-		Id:        greetings.GetId(),
-		Completed: true,
-		Message: &protos.AssistantConversationAssistantMessage_Text{
-			Text: &protos.AssistantConversationMessageTextContent{
-				Content: greetingCnt,
-			},
-		},
-	}); err != nil {
-		communication.logger.Tracef(ctx, "error while outputting chunk to the user: %w", err)
+	if err := communication.OnPacket(ctx, internal_type.StaticPacket{ContextID: message.GetId(), Text: greetingCnt}); err != nil {
+		communication.logger.Errorf("error while sending on error message: %v", err)
+		return nil
 	}
-
-	communication.AssistantCallback(ctx, greetings.GetId(), greetings, nil)
-	// audio processing
-	if communication.messaging.GetInputMode().Audio() {
-		if err := communication.Speak(internal_type.TextPacket{ContextID: greetings.GetId(), Text: greetingCnt}, internal_type.FlushPacket{ContextID: greetings.GetId()}); err == nil {
-			communication.logger.Debugf("finished speaking greeting message")
-		}
-	}
-	// Notify the response if there is no user message
-	if err := communication.Notify(ctx, &protos.AssistantConversationMessage{
-		MessageId:               greetings.GetId(),
-		AssistantId:             communication.assistant.Id,
-		AssistantConversationId: communication.assistantConversation.Id,
-		Response:                greetings.ToProto(),
-	}); err != nil {
-		communication.logger.Tracef(ctx, "error while outputting chunk to the user: %w", err)
-	}
-	communication.messaging.Transition(internal_adapter_request_customizers.AgentCompleted)
 	return nil
 }
 
@@ -126,19 +85,9 @@ func (communication *GenericRequestor) OnError(ctx context.Context, messageId st
 	if behavior.Mistake != nil {
 		mistakeContent = communication.templateParser.Parse(*behavior.Mistake, communication.GetArgs())
 	}
-
-	msg := types.NewMessage(
-		"assistant", &types.Content{
-			ContentType:   commons.TEXT_CONTENT.String(),
-			ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
-			Content:       []byte(mistakeContent),
-		})
-	if err := communication.OnGeneration(ctx, messageId, msg); err != nil {
+	if err := communication.OnPacket(ctx, internal_type.StaticPacket{ContextID: messageId, Text: mistakeContent}); err != nil {
 		communication.logger.Errorf("error while sending on error message: %v", err)
 		return nil
-	}
-	if err := communication.OnGenerationComplete(ctx, messageId, msg, nil); err != nil {
-		communication.logger.Errorf("error while completing on error message: %v", err)
 	}
 	return nil
 }
@@ -169,52 +118,16 @@ func (communication *GenericRequestor) OnIdealTimeout(ctx context.Context) error
 		communication.logger.Warnf("empty ideal timeout message")
 		return nil
 	}
-
 	message := communication.messaging.Create(type_enums.UserActor, "")
-
-	timeoutMsg := &types.Message{
-		Id:   message.GetId(),
-		Role: "assistant",
-		Contents: []*types.Content{{
-			ContentType:   commons.TEXT_CONTENT.String(),
-			ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
-			Content:       []byte(timeoutContent),
-		}}}
-
-	if err := communication.Notify(ctx, &protos.AssistantConversationAssistantMessage{
-		Time:      timestamppb.Now(),
-		Id:        timeoutMsg.GetId(),
-		Completed: true,
-		Message: &protos.AssistantConversationAssistantMessage_Text{
-			Text: &protos.AssistantConversationMessageTextContent{
-				Content: timeoutContent,
-			},
-		},
-	}); err != nil {
-		communication.logger.Tracef(ctx, "error while outputting ideal timeout message to the user: %w", err)
+	utils.Go(ctx, func() {
+		if err := communication.OnCreateMessage(ctx, message.GetId(), message); err != nil {
+			communication.logger.Errorf("Error in OnCreateMessage: %v", err)
+		}
+	})
+	if err := communication.OnPacket(ctx, internal_type.StaticPacket{ContextID: "", Text: timeoutContent}); err != nil {
+		communication.logger.Errorf("error while sending ideal timeout message: %v", err)
+		return nil
 	}
-
-	communication.AssistantCallback(ctx, timeoutMsg.GetId(), timeoutMsg, nil)
-
-	// audio processing
-	if communication.messaging.GetInputMode().Audio() {
-		communication.Speak(
-			internal_type.TextPacket{ContextID: timeoutMsg.GetId(), Text: timeoutContent},
-			internal_type.FlushPacket{ContextID: timeoutMsg.GetId()},
-		)
-
-	}
-
-	// Notify the response
-	if err := communication.Notify(ctx, &protos.AssistantConversationMessage{
-		MessageId:               timeoutMsg.GetId(),
-		AssistantId:             communication.assistant.Id,
-		AssistantConversationId: communication.assistantConversation.Id,
-		Response:                timeoutMsg.ToProto(),
-	}); err != nil {
-		communication.logger.Tracef(ctx, "error while outputting ideal timeout message: %w", err)
-	}
-
 	return nil
 }
 

@@ -27,14 +27,9 @@ type TextToSpeechInitializeOptions struct {
 
 	// audio config
 	AudioConfig *protos.AudioConfig
-	// OnSpeech is called when speech is detected in the audio stream
-	// It receives a byte slice containing the speech audio data
-	// Returns an error if there's an issue processing the speech
-	OnSpeech func(string, []byte) error
 
-	// OnComplete is called when the audio transformation is complete
-	// Returns an error if there's an issue finalizing the transformation
-	OnComplete func(string) error
+	//
+	OnSpeech func(pkt ...internal_type.Packet) error
 
 	// options of model
 	ModelOptions utils.Option

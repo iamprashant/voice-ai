@@ -117,7 +117,10 @@ func (rt *sarvamTextToSpeech) textToSpeechCallback(conn *websocket.Conn, ctx con
 				rt.logger.Errorf("sarvam-tts: error decoding audio data: %v", err)
 				continue
 			}
-			rt.options.OnSpeech(rt.contextId, rawAudioData)
+			rt.options.OnSpeech(internal_type.TextToSpeechPacket{
+				ContextID:  rt.contextId,
+				AudioChunk: rawAudioData,
+			})
 		case "event":
 			eventData, err := response.AsEvent()
 			if err != nil {

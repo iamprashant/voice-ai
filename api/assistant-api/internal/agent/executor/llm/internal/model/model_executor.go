@@ -17,6 +17,7 @@ import (
 	internal_executors "github.com/rapidaai/api/assistant-api/internal/agent/executor"
 	internal_agent_tool "github.com/rapidaai/api/assistant-api/internal/agent/executor/tool"
 	internal_adapter_telemetry "github.com/rapidaai/api/assistant-api/internal/telemetry"
+	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	integration_client_builders "github.com/rapidaai/pkg/clients/integration/builders"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
@@ -33,9 +34,7 @@ type modelAssistantExecutor struct {
 	history            []*protos.Message
 }
 
-func NewModelAssistantExecutor(
-	logger commons.Logger,
-) internal_agent_executor.AssistantExecutor {
+func NewModelAssistantExecutor(logger commons.Logger) internal_agent_executor.AssistantExecutor {
 	return &modelAssistantExecutor{
 		logger:       logger,
 		inputBuilder: integration_client_builders.NewChatInputBuilder(logger),
@@ -49,12 +48,12 @@ func (executor *modelAssistantExecutor) Name() string {
 	return "model"
 }
 
-func (executor *modelAssistantExecutor) Initialize(ctx context.Context, communication internal_adapter_requests.Communication,
-) error {
+func (executor *modelAssistantExecutor) Initialize(ctx context.Context, communication internal_adapter_requests.Communication) error {
 	start := time.Now()
 	ctx, span, _ := communication.Tracer().StartSpan(ctx, utils.AssistantAgentConnectStage, internal_adapter_telemetry.KV{K: "executor", V: internal_adapter_telemetry.StringValue(executor.Name())})
 	defer span.EndSpan(ctx, utils.AssistantAgentConnectStage)
 	g, ctx := errgroup.WithContext(ctx)
+
 	var providerCredential *protos.VaultCredential
 	g.Go(func() error {
 		credentialId, err := communication.Assistant().AssistantProviderModel.GetOptions().GetUint64("rapida.credential_id")
@@ -98,12 +97,13 @@ func (executor *modelAssistantExecutor) Initialize(ctx context.Context, communic
 
 func (executor *modelAssistantExecutor) chat(
 	ctx context.Context,
-	//
-	messageid string,
+
 	// for communication
 	communication internal_adapter_requests.Communication,
-	// current messages
-	in *types.Message,
+
+	//
+	packet internal_type.LLMPacket,
+
 	// histories or older conversation
 	histories ...*protos.Message,
 ) error {
@@ -153,7 +153,7 @@ func (executor *modelAssistantExecutor) chat(
 							communication.
 								GetArgs()),
 					),
-				histories...), in.ToProto())...,
+				histories...), packet.Message.ToProto())...,
 		)
 
 	res, err := communication.IntegrationCaller().StreamChat(ctx, communication.Auth(), communication.Assistant().AssistantProviderModel.ModelProviderName, request)
@@ -166,14 +166,15 @@ func (executor *modelAssistantExecutor) chat(
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				executor.logger.Benchmark("executor.chat", time.Since(start))
-				executor.llm(messageid, communication, in, types.ToMessage(output), types.ToMetrics(metrics))
+				executor.llm(communication, packet, internal_type.LLMPacket{ContextID: packet.ContextId(), Message: types.ToMessage(output)})
+				// executor.llm(messageid, communication, in, types.ToMessage(output), types.ToMetrics(metrics))
 				toolCalls := output.GetToolCalls()
 				if len(toolCalls) > 0 {
 					// append history of tool call
-					toolExecution := executor.toolExecutor.ExecuteAll(ctx, messageid, toolCalls, communication)
-					return executor.chat(ctx, messageid, communication, &types.Message{Contents: toolExecution, Role: "tool"}, append(histories, in.ToProto(), output)...)
+					toolExecution := executor.toolExecutor.ExecuteAll(ctx, packet.ContextId(), toolCalls, communication)
+					return executor.chat(ctx, communication, internal_type.LLMPacket{ContextID: packet.ContextId(), Message: &types.Message{Contents: toolExecution, Role: "tool"}}, append(histories, packet.Message.ToProto(), output)...)
 				}
-				communication.OnGenerationComplete(ctx, messageid, types.ToMessage(output).WithMetadata(in.Meta), types.ToMetrics(metrics))
+				communication.OnPacket(ctx, internal_type.LLMPacket{ContextID: packet.ContextId(), Message: types.ToMessage(output)})
 				return nil
 			}
 			return err
@@ -181,37 +182,46 @@ func (executor *modelAssistantExecutor) chat(
 		metrics = msg.GetMetrics()
 		output = msg.GetData()
 		if output != nil && metrics == nil && len(output.GetContents()) > 0 {
-			communication.OnGeneration(ctx, messageid, types.ToMessage(msg.GetData()).WithMetadata(in.Meta))
+			communication.OnPacket(ctx, internal_type.LLMStreamPacket{ContextID: packet.ContextId(), Message: types.ToMessage(msg.GetData())})
 		}
 
 	}
 }
 
-func (executor *modelAssistantExecutor) llm(messageid string, communication internal_adapter_requests.Communication, in, out *types.Message, metrics []*types.Metric) error {
-	if in != nil {
-		executor.history = append(executor.history, in.ToProto())
-	}
-	if out != nil {
-		executor.history = append(executor.history, out.ToProto())
-	}
-	// persist it to storage
-	utils.Go(context.Background(), func() {
-		communication.CreateConversationMessageLog(messageid, in, out, metrics)
-	})
+func (executor *modelAssistantExecutor) llm(communication internal_adapter_requests.Communication, pctk ...internal_type.Packet) error {
+	// if in != nil {
+	// 	executor.history = append(executor.history, in.ToProto())
+	// }
+	// if out != nil {
+	// 	executor.history = append(executor.history, out.ToProto())
+	// }
+	// // persist it to storage
+	// utils.Go(context.Background(), func() {
+	// 	communication.CreateConversationMessageLog(messageid, in, out, metrics)
+	// })
 	return nil
 }
 
 // when assistant trigger a message
-func (executor *modelAssistantExecutor) Assistant(ctx context.Context, messageid string, msg *types.Message, communication internal_adapter_requests.Communication) error {
-	executor.llm(messageid, communication, nil, msg, nil)
+func (executor *modelAssistantExecutor) Assistant(ctx context.Context, communication internal_adapter_requests.Communication, pctk ...internal_type.Packet) error {
+	executor.llm(communication, pctk...)
 	return nil
 }
 
 // when user tigger a message
-func (executor *modelAssistantExecutor) User(ctx context.Context, messageid string, msg *types.Message, communication internal_adapter_requests.Communication) error {
-	ctx, span, _ := communication.Tracer().StartSpan(ctx, utils.AssistantAgentTextGenerationStage, internal_adapter_telemetry.MessageKV(messageid))
+func (executor *modelAssistantExecutor) User(ctx context.Context, communication internal_adapter_requests.Communication, pctk internal_type.Packet) error {
+	ctx, span, _ := communication.Tracer().StartSpan(ctx, utils.AssistantAgentTextGenerationStage, internal_adapter_telemetry.MessageKV(pctk.ContextId()))
 	defer span.EndSpan(ctx, utils.AssistantAgentTextGenerationStage)
-	return executor.chat(ctx, messageid, communication, msg, executor.history...)
+	switch plt := pctk.(type) {
+	case internal_type.TextPacket:
+		return executor.chat(ctx, communication, internal_type.LLMPacket{ContextID: pctk.ContextId(), Message: types.NewMessage("user", &types.Content{
+			ContentType:   commons.TEXT_CONTENT.String(),
+			ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
+			Content:       []byte(plt.Text),
+		})}, executor.history...)
+	default:
+		return fmt.Errorf("unsupported packet type: %T", pctk)
+	}
 
 }
 
