@@ -113,48 +113,25 @@ func (executor *modelAssistantExecutor) chat(
 		output  *protos.Message
 		metrics []*protos.Metric
 	)
-	request := executor.inputBuilder.
-		Chat(
-			&protos.Credential{
-				Id:    executor.providerCredential.GetId(),
-				Value: executor.providerCredential.GetValue(),
-			},
-			executor.
-				inputBuilder.
-				Options(
-					utils.MergeMaps(communication.
-						Assistant().AssistantProviderModel.
-						GetOptions(),
-						communication.
-							GetOptions()), nil,
-				),
-			executor.toolExecutor.GetFunctionDefinitions(),
-			map[string]string{
-				"assistant_id":                fmt.Sprintf("%d", communication.Assistant().Id),
-				"assistant_provider_model_id": fmt.Sprintf("%d", communication.Assistant().AssistantProviderModel.Id),
-			},
-			append(append(
-				executor.
-					inputBuilder.
-					Message(
-						communication.
-							Assistant().AssistantProviderModel.
-							Template.
-							GetTextChatCompleteTemplate().
-							Prompt,
-						utils.MergeMaps(
-							executor.inputBuilder.PromptArguments(
-								communication.
-									Assistant().AssistantProviderModel.
-									Template.
-									GetTextChatCompleteTemplate().
-									Variables,
-							),
-							communication.
-								GetArgs()),
-					),
-				histories...), packet.Message.ToProto())...,
-		)
+	request := executor.inputBuilder.Chat(
+		&protos.Credential{
+			Id:    executor.providerCredential.GetId(),
+			Value: executor.providerCredential.GetValue(),
+		},
+		executor.inputBuilder.Options(utils.MergeMaps(communication.Assistant().AssistantProviderModel.GetOptions(), communication.GetOptions()), nil),
+		executor.toolExecutor.GetFunctionDefinitions(),
+		map[string]string{
+			"assistant_id":                fmt.Sprintf("%d", communication.Assistant().Id),
+			"assistant_provider_model_id": fmt.Sprintf("%d", communication.Assistant().AssistantProviderModel.Id),
+		},
+		append(append(
+			executor.inputBuilder.Message(
+				communication.Assistant().AssistantProviderModel.Template.GetTextChatCompleteTemplate().Prompt,
+				utils.MergeMaps(executor.inputBuilder.PromptArguments(communication.Assistant().AssistantProviderModel.Template.GetTextChatCompleteTemplate().Variables),
+					communication.GetArgs()),
+			),
+			histories...), packet.Message.ToProto())...,
+	)
 
 	res, err := communication.IntegrationCaller().StreamChat(ctx, communication.Auth(), communication.Assistant().AssistantProviderModel.ModelProviderName, request)
 	if err != nil {
@@ -166,8 +143,11 @@ func (executor *modelAssistantExecutor) chat(
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				executor.logger.Benchmark("executor.chat", time.Since(start))
-				executor.llm(communication, packet, internal_type.LLMPacket{ContextID: packet.ContextId(), Message: types.ToMessage(output)})
-				// executor.llm(messageid, communication, in, types.ToMessage(output), types.ToMetrics(metrics))
+				executor.llm(communication, packet,
+					internal_type.LLMPacket{ContextID: packet.ContextId(), Message: types.ToMessage(output)},
+					internal_type.MetricPacket{ContextID: packet.ContextID, Metrics: types.ToMetrics(metrics)},
+				)
+
 				toolCalls := output.GetToolCalls()
 				if len(toolCalls) > 0 {
 					// append history of tool call
@@ -179,46 +159,56 @@ func (executor *modelAssistantExecutor) chat(
 			}
 			return err
 		}
+
 		metrics = msg.GetMetrics()
+		if metrics != nil {
+			communication.OnPacket(ctx, internal_type.MetricPacket{ContextID: packet.ContextID, Metrics: types.ToMetrics(metrics)})
+		}
 		output = msg.GetData()
-		if output != nil && metrics == nil && len(output.GetContents()) > 0 {
+		if output != nil && len(output.GetContents()) > 0 {
 			communication.OnPacket(ctx, internal_type.LLMStreamPacket{ContextID: packet.ContextId(), Message: types.ToMessage(msg.GetData())})
 		}
 
 	}
 }
 
-func (executor *modelAssistantExecutor) llm(communication internal_adapter_requests.Communication, pctk ...internal_type.Packet) error {
-	// if in != nil {
-	// 	executor.history = append(executor.history, in.ToProto())
-	// }
-	// if out != nil {
-	// 	executor.history = append(executor.history, out.ToProto())
-	// }
-	// // persist it to storage
-	// utils.Go(context.Background(), func() {
-	// 	communication.CreateConversationMessageLog(messageid, in, out, metrics)
-	// })
-	return nil
-}
-
-// when assistant trigger a message
-func (executor *modelAssistantExecutor) Assistant(ctx context.Context, communication internal_adapter_requests.Communication, pctk ...internal_type.Packet) error {
-	executor.llm(communication, pctk...)
+func (executor *modelAssistantExecutor) llm(communication internal_adapter_requests.Communication, in, out internal_type.LLMPacket, metrics internal_type.MetricPacket) error {
+	if in.Message != nil {
+		executor.history = append(executor.history, in.Message.ToProto())
+	}
+	if out.Message != nil {
+		executor.history = append(executor.history, out.Message.ToProto())
+	}
+	// persist it to storage
+	utils.Go(context.Background(), func() {
+		communication.CreateConversationMessageLog(in.ContextID, in.Message, out.Message, metrics.Metrics)
+	})
 	return nil
 }
 
 // when user tigger a message
-func (executor *modelAssistantExecutor) User(ctx context.Context, communication internal_adapter_requests.Communication, pctk internal_type.Packet) error {
+func (executor *modelAssistantExecutor) Execute(ctx context.Context, communication internal_adapter_requests.Communication, pctk internal_type.Packet) error {
 	ctx, span, _ := communication.Tracer().StartSpan(ctx, utils.AssistantAgentTextGenerationStage, internal_adapter_telemetry.MessageKV(pctk.ContextId()))
 	defer span.EndSpan(ctx, utils.AssistantAgentTextGenerationStage)
 	switch plt := pctk.(type) {
-	case internal_type.TextPacket:
+	case internal_type.UserTextPacket:
 		return executor.chat(ctx, communication, internal_type.LLMPacket{ContextID: pctk.ContextId(), Message: types.NewMessage("user", &types.Content{
 			ContentType:   commons.TEXT_CONTENT.String(),
 			ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
 			Content:       []byte(plt.Text),
 		})}, executor.history...)
+	case internal_type.StaticPacket:
+		executor.history = append(executor.history, &protos.Message{
+			Role: "assistant",
+			Contents: []*protos.Content{
+				{
+					ContentType:   commons.TEXT_CONTENT.String(),
+					ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
+					Content:       []byte(plt.Text),
+				},
+			},
+		})
+		return nil
 	default:
 		return fmt.Errorf("unsupported packet type: %T", pctk)
 	}

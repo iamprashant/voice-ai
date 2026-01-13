@@ -101,16 +101,6 @@ func (g *googleSpeechToText) speechToTextCallback(stram speechpb.Speech_Streamin
 			}
 			if err != nil {
 				g.logger.Errorf("google-stt: recv error: %v", err)
-				// if resp.Error != nil {
-				// 	switch resp.Error.Code {
-				// 	case 3, 11:
-				// 		go g.Initialize()
-				// 		g.logger.Warnf("google-stt: stream duration limit reached (code=%d): %s", resp.Error.Code, resp.Error.Message)
-				// 	default:
-				// 		g.logger.Errorf("google-stt: recognition error: code=%d message=%s", resp.Error.Code, resp.Error.Message)
-				// 	}
-				// 	return
-				// }
 				return
 			}
 			if resp == nil {

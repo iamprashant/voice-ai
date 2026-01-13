@@ -49,18 +49,11 @@ func (a *assistantExecutor) Name() string {
 }
 
 // Talk implements internal_executors.AssistantExecutor.
-func (a *assistantExecutor) User(ctx context.Context, communication internal_adapter_requests.Communication, pctk internal_type.Packet) error {
+func (a *assistantExecutor) Execute(ctx context.Context, communication internal_adapter_requests.Communication, pctk internal_type.Packet) error {
 	if a.executor == nil {
 		return errors.New("assistant executor not initialized")
 	}
-	return a.executor.User(ctx, communication, pctk)
-}
-
-func (a *assistantExecutor) Assistant(ctx context.Context, communication internal_adapter_requests.Communication, pctk ...internal_type.Packet) error {
-	if a.executor == nil {
-		return errors.New("assistant executor not initialized")
-	}
-	return a.executor.Assistant(ctx, communication, pctk...)
+	return a.executor.Execute(ctx, communication, pctk)
 }
 
 func (a *assistantExecutor) Close(ctx context.Context, communication internal_adapter_requests.Communication) error {

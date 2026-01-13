@@ -47,11 +47,8 @@ type AssistantExecutor interface {
 	// name
 	Name() string
 
-	// when assistant trigger a message
-	Assistant(ctx context.Context, communication internal_adapter_requests.Communication, pctk ...internal_type.Packet) error
-
-	// when a user trigger a message
-	User(ctx context.Context, communication internal_adapter_requests.Communication, pctk internal_type.Packet) error
+	// when tigger a message
+	Execute(ctx context.Context, communication internal_adapter_requests.Communication, pctk internal_type.Packet) error
 
 	// disconnect
 	Close(ctx context.Context, communication internal_adapter_requests.Communication) error

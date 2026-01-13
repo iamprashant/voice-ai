@@ -61,6 +61,10 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkt ...internal_t
 			}); err != nil {
 				talking.logger.Tracef(ctx, "error while outputting chunk to the user: %w", err)
 			}
+			// sending static packat to executor for any post processing
+			talking.assistantExecutor.Execute(ctx, talking, vl)
+
+			//transition to completed
 			talking.messaging.Transition(internal_adapter_request_customizers.AgentCompleted)
 			continue
 		case internal_type.InterruptionPacket:
@@ -153,7 +157,8 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkt ...internal_t
 			// 		talking.logger.Errorf("Error in OnMessageMetadata: %v", err)
 			// 	}
 			// })
-			if err := talking.assistantExecutor.User(ctx, talking, internal_type.UserTextPacket{ContextID: msg.GetId(), Text: msg.String()}); err != nil {
+			if err := talking.assistantExecutor.Execute(ctx, talking, internal_type.UserTextPacket{ContextID: msg.GetId(), Text: msg.String()}); err != nil {
+				talking.logger.Errorf("assistant executor error: %v", err)
 				talking.OnError(ctx, msg.GetId())
 				continue
 			}
