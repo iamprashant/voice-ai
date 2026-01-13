@@ -33,26 +33,13 @@ func (listening *GenericRequestor) initializeSpeechToText(ctx context.Context, t
 		listening.logger.Errorf("unable to find credential from options %+v", err)
 		return err
 	}
-	credential, err := listening.
-		VaultCaller().
-		GetCredential(ctx, listening.Auth(), credentialId)
+	credential, err := listening.VaultCaller().GetCredential(ctx, listening.Auth(), credentialId)
 	if err != nil {
 		listening.logger.Errorf("Api call to find credential failed %+v", err)
 		return err
 	}
 
-	atransformer, err := internal_adapter_transformer_factory.GetSpeechToTextTransformer(
-		internal_adapter_transformer_factory.AudioTransformer(transformerConfig.AudioProvider),
-		listening.Context(), listening.logger, credential,
-		&internal_transformer.SpeechToTextInitializeOptions{
-			AudioConfig: audioConfig,
-			OnPacket: func(pkt ...internal_type.Packet) error {
-				return listening.OnPacket(ctx, pkt...)
-			},
-			ModelOptions: options,
-		},
-	)
-
+	atransformer, err := internal_adapter_transformer_factory.GetSpeechToTextTransformer(internal_adapter_transformer_factory.AudioTransformer(transformerConfig.AudioProvider), listening.Context(), listening.logger, credential, &internal_transformer.SpeechToTextInitializeOptions{AudioConfig: audioConfig, OnPacket: func(pkt ...internal_type.Packet) error { return listening.OnPacket(ctx, pkt...) }, ModelOptions: options})
 	if err != nil {
 		listening.logger.Errorf("unable to create input audio transformer with error %v", err)
 		return err
@@ -269,9 +256,7 @@ func (listening *GenericRequestor) afterAnalyze(ctx context.Context, a interface
 	}
 }
 
-func (listening *GenericRequestor) ListenText(
-	ctx context.Context,
-	msg internal_end_of_speech.EndOfSpeechInput) error {
+func (listening *GenericRequestor) ListenText(ctx context.Context, msg internal_end_of_speech.EndOfSpeechInput) error {
 	if listening.endOfSpeech != nil {
 		var err error
 		utils.Go(ctx, func() {

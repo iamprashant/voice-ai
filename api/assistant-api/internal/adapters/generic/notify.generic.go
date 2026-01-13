@@ -106,23 +106,7 @@ func (n *GenericRequestor) Notify(ctx context.Context, actionDatas ...interface{
 					})
 			}
 			continue
-		// case *protos.AssistantConversationMessage:
-		// 	n.sendMessage(ctx, &protos.AssistantMessagingResponse{
-		// 		Code:    200,
-		// 		Success: true,
-		// 		Data: &protos.AssistantMessagingResponse_Message{
-		// 			Message: actionData,
-		// 		},
-		// 	})
-		// 	span.AddAttributes(ctx,
-		// 		internal_adapter_telemetry.KV{
-		// 			K: "actor", V: internal_adapter_telemetry.StringValue("system"),
-		// 		}, internal_adapter_telemetry.KV{
-		// 			K: "activity", V: internal_adapter_telemetry.StringValue("messaging"),
-		// 		}, internal_adapter_telemetry.KV{
-		// 			K: "messageId", V: internal_adapter_telemetry.StringValue(actionData.MessageId),
-		// 		})
-		// 	continue
+
 		case *protos.AssistantConversationInterruption:
 			n.sendMessage(ctx, &protos.AssistantMessagingResponse{
 				Code:    200,

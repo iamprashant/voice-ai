@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters"
 	internal_tool "github.com/rapidaai/api/assistant-api/internal/agent/executor/tool/internal"
@@ -18,7 +17,6 @@ import (
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	endpoint_client_builders "github.com/rapidaai/pkg/clients/endpoint/builders"
 	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/types"
 	protos "github.com/rapidaai/protos"
 )
 
@@ -55,19 +53,8 @@ func NewEndpointToolCaller(
 	}, nil
 }
 
-func (afkTool *endpointToolCaller) Call(
-	ctx context.Context,
-	messageId string,
-	args string,
-	communication internal_adapter_requests.Communication,
-) (map[string]interface{}, []*types.Metric) {
-	start := time.Now()
-	metrics := make([]*types.Metric, 0)
-	body := afkTool.Parse(
-		afkTool.endpointParameters,
-		args,
-		communication,
-	)
+func (afkTool *endpointToolCaller) Call(ctx context.Context, pkt internal_type.LLMPacket, toolId string, args string, communication internal_adapter_requests.Communication) internal_type.LLMToolPacket {
+	body := afkTool.Parse(afkTool.endpointParameters, args, communication)
 	ivk, err := communication.DeploymentCaller().Invoke(
 		ctx,
 		communication.Auth(),
@@ -83,22 +70,19 @@ func (afkTool *endpointToolCaller) Call(
 	)
 	if err != nil {
 		afkTool.logger.Errorf("error while calling endpoint %+v", err)
-		metrics = append(metrics, types.NewTimeTakenMetric(time.Since(start)))
-		return afkTool.Result("Unable to complete the request", true), metrics
+		return internal_type.LLMToolPacket{ContextID: pkt.ContextID, Action: protos.AssistantConversationAction_ENDPOINT_CALL, Result: afkTool.Result("Failed to resolve", false)}
 	}
 	if ivk.GetSuccess() {
 		if data := ivk.GetData(); len(data) > 0 {
 			var contentData map[string]interface{}
 			if err := json.Unmarshal(data[0].Content, &contentData); err != nil {
-				return map[string]interface{}{
-					"result": string(data[0].Content),
-				}, nil
+				return internal_type.LLMToolPacket{ContextID: pkt.ContextID, Action: protos.AssistantConversationAction_ENDPOINT_CALL, Result: map[string]interface{}{"result": string(data[0].Content)}}
 			}
-			return contentData, nil
+			return internal_type.LLMToolPacket{ContextID: pkt.ContextID, Action: protos.AssistantConversationAction_ENDPOINT_CALL, Result: contentData}
 		}
 
 	}
-	return afkTool.Result("Unable to complete the request", true), metrics
+	return internal_type.LLMToolPacket{ContextID: pkt.ContextID, Action: protos.AssistantConversationAction_ENDPOINT_CALL, Result: afkTool.Result("Failed to resolve", false)}
 }
 
 func (md *endpointToolCaller) Parse(

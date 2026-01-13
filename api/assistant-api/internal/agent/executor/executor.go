@@ -79,18 +79,6 @@ type ToolExecutor interface {
 	GetFunctionDefinitions() []*protos.FunctionDefinition
 
 	/**
-	 * Execute performs the execution of a tool call using the provided communication.
-	 *
-	 * This method is responsible for executing the specified tool call and returning
-	 * the result as a Content object. If an error occurs during execution, it should be returned.
-	 *
-	 * @param call The ToolCall object containing information about the tool to be executed.
-	 * @param com The communication object containing context for the execution.
-	 * @return A pointer to a Content object representing the execution result, and an error if any occurred.
-	 */
-	Execute(ctx context.Context, messageid string, call *protos.ToolCall, communication internal_adapter_requests.Communication) *types.Content
-
-	/**
 	* ExecuteAll executes multiple tool calls and returns the results
 	*
 	* Parameters:
@@ -101,5 +89,5 @@ type ToolExecutor interface {
 	*   - A slice of Content pointers containing the results of the tool calls
 	*   - An error if any occurred during execution
 	 */
-	ExecuteAll(ctx context.Context, messageid string, calls []*protos.ToolCall, communication internal_adapter_requests.Communication) []*types.Content
+	ExecuteAll(ctx context.Context, message internal_type.LLMPacket, calls []*protos.ToolCall, communication internal_adapter_requests.Communication) ([]internal_type.Packet, []*types.Content)
 }

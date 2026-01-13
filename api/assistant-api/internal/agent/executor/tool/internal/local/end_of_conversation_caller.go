@@ -7,49 +7,24 @@ package internal_tool_local
 
 import (
 	"context"
-	"time"
 
 	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters"
 	internal_tool "github.com/rapidaai/api/assistant-api/internal/agent/executor/tool/internal"
 	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
+	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/types"
-	protos "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
 type endOfConversationCaller struct {
 	toolCaller
 }
 
-func (afkTool *endOfConversationCaller) Call(
-	ctx context.Context,
-	messageId string,
-	args string,
-	communication internal_adapter_requests.Communication,
-) (map[string]interface{}, []*types.Metric) {
-	start := time.Now()
-	metrics := make([]*types.Metric, 0)
-	err := communication.
-		Notify(
-			ctx,
-			&protos.AssistantMessagingResponse_Action{
-				Action: &protos.AssistantConversationAction{
-					Name:   afkTool.Name(),
-					Action: protos.AssistantConversationAction_END_CONVERSATION,
-				},
-			},
-		)
-	metrics = append(metrics, types.NewTimeTakenMetric(time.Since(start)))
-	if err != nil {
-		return afkTool.Result("Unable to disconnect. Please try again later.", false), metrics
-	}
-	return afkTool.Result("Disconnected successfully.", true), metrics
+func (afkTool *endOfConversationCaller) Call(ctx context.Context, pkt internal_type.LLMPacket, toolId string, args string, communication internal_adapter_requests.Communication) internal_type.LLMToolPacket {
+	return internal_type.LLMToolPacket{ContextID: pkt.ContextID, Action: protos.AssistantConversationAction_END_CONVERSATION, Result: afkTool.Result("Disconnected successfully.", true)}
 }
 
-func NewEndOfConversationCaller(
-	logger commons.Logger,
-	toolOptions *internal_assistant_entity.AssistantTool,
-	communcation internal_adapter_requests.Communication,
+func NewEndOfConversationCaller(logger commons.Logger, toolOptions *internal_assistant_entity.AssistantTool, communcation internal_adapter_requests.Communication,
 ) (internal_tool.ToolCaller, error) {
 	return &endOfConversationCaller{
 		toolCaller: toolCaller{

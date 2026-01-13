@@ -34,41 +34,16 @@ type InternalCaller interface {
 	DeploymentCaller() endpoint_client.DeploymentServiceClient
 }
 
-type Notifier interface {
-	// Notifier defines methods for sending notifications related to conversation actions, messages, and events.
-	Notify(ctx context.Context, actionData ...interface{}) error
-}
-
 type Logger interface {
 	GetConversationLogs() []*protos.Message
 	CreateConversationMessageLog(messageid string, in, out *types.Message, metrics []*types.Metric) error
 	CreateConversationToolLog(messageid string, in, out map[string]interface{}, metrics []*types.Metric) error
-	CreateWebhookLog(
-		webhookID uint64, httpUrl, httpMethod, event string,
-		responseStatus int64,
-		timeTaken int64,
-		retryCount uint32,
-		status type_enums.RecordState,
-		request, response []byte) error
-	CreateToolLog(
-		toolId uint64,
-		messageId string,
-		toolName string,
-		executionMethod string,
-		status type_enums.RecordState,
-		timeTaken int64,
-		request, response []byte,
-	) error
-
-	CreateConversationRecording(
-		body []byte,
-	) error
+	CreateWebhookLog(webhookID uint64, httpUrl, httpMethod, event string, responseStatus int64, timeTaken int64, retryCount uint32, status type_enums.RecordState, request, response []byte) error
+	CreateToolLog(toolId uint64, messageId string, toolName string, executionMethod string, status type_enums.RecordState, timeTaken int64, request, response []byte) error
+	CreateConversationRecording(body []byte) error
 }
 
 type Communication interface {
-
-	// stream notification
-	Notifier
 
 	// llm callback
 	Callback

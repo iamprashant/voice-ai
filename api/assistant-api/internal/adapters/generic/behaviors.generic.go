@@ -15,6 +15,7 @@ import (
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
+	"github.com/rapidaai/protos"
 )
 
 func (gr *GenericRequestor) GetBehavior() (*internal_assistant_entity.AssistantDeploymentBehavior, error) {
@@ -43,28 +44,37 @@ func (gr *GenericRequestor) GetBehavior() (*internal_assistant_entity.AssistantD
 	return nil, errors.New("deployment is not enabled for source")
 }
 
-func (communication *GenericRequestor) OnGreet(ctx context.Context) error {
+func (communication *GenericRequestor) InitializeBehavior(ctx context.Context) error {
+
 	behavior, err := communication.GetBehavior()
 	if err != nil {
 		communication.logger.Errorf("error while fetching deployment behavior: %v", err)
 		return nil
 	}
 
-	if behavior.Greeting == nil {
-		communication.logger.Errorf("error while fetching deployment behavior: %v", err)
-		return nil
-	}
-	greetingCnt := communication.templateParser.Parse(*behavior.Greeting, communication.GetArgs())
-	if strings.TrimSpace(greetingCnt) == "" {
-		communication.logger.Warnf("empty greeting message, could be space in the table or argument contains space")
-		return nil
+	if behavior.Greeting != nil {
+		greetingCnt := communication.templateParser.Parse(*behavior.Greeting, communication.GetArgs())
+		if strings.TrimSpace(greetingCnt) != "" {
+			message := communication.messaging.Create(type_enums.UserActor, "")
+			if err := communication.OnPacket(ctx, internal_type.StaticPacket{ContextID: message.GetId(), Text: greetingCnt}); err != nil {
+				communication.logger.Errorf("error while sending on error message: %v", err)
+			}
+		}
 	}
 
-	message := communication.messaging.Create(type_enums.UserActor, "")
-	if err := communication.OnPacket(ctx, internal_type.StaticPacket{ContextID: message.GetId(), Text: greetingCnt}); err != nil {
-		communication.logger.Errorf("error while sending on error message: %v", err)
-		return nil
+	if behavior.IdealTimeout != nil && *behavior.IdealTimeout > 0 {
+		// start the ideal timeout timer
+		communication.StartIdealTimeoutTimer(ctx)
 	}
+
+	if behavior.MaxSessionDuration != nil && *behavior.MaxSessionDuration > 0 {
+		timeoutDuration := time.Duration(*behavior.MaxSessionDuration) * time.Minute
+		time.AfterFunc(timeoutDuration, func() {
+			communication.logger.Infof("conversation timeout reached for assistant: %s", communication.assistant.Id)
+			communication.OnPacket(ctx, internal_type.LLMToolPacket{ContextID: communication.messaging.GetId(), Action: protos.AssistantConversationAction_END_CONVERSATION})
+		})
+	}
+
 	return nil
 }
 
@@ -89,8 +99,6 @@ func (communication *GenericRequestor) OnError(ctx context.Context, messageId st
 // OnIdealTimeout handles the behavior when the bot has spoken but the user has not responded for the ideal timeout duration.
 // If configured, it will ask the user if they are still there.
 func (communication *GenericRequestor) OnIdealTimeout(ctx context.Context) error {
-
-	communication.logger.Errorf("will speak something on ideal timeout")
 	behavior, err := communication.GetBehavior()
 	if err != nil {
 		communication.logger.Debugf("no ideal timeout behavior setup for assistant.")
@@ -102,7 +110,13 @@ func (communication *GenericRequestor) OnIdealTimeout(ctx context.Context) error
 		return nil
 	}
 
+	if behavior.IdealTimeoutBackoff != nil && *behavior.IdealTimeoutBackoff > 0 && communication.idealTimeoutCount >= *behavior.IdealTimeoutBackoff {
+		communication.OnPacket(ctx, internal_type.LLMToolPacket{ContextID: communication.messaging.GetId(), Action: protos.AssistantConversationAction_END_CONVERSATION})
+		return nil
+	}
+
 	// Use default or configured timeout message
+	communication.idealTimeoutCount++
 	timeoutContent := "Are you still there?"
 	if behavior.IdealTimeoutMessage != nil && strings.TrimSpace(*behavior.IdealTimeoutMessage) != "" {
 		timeoutContent = communication.templateParser.Parse(*behavior.IdealTimeoutMessage, communication.GetArgs())
@@ -112,8 +126,7 @@ func (communication *GenericRequestor) OnIdealTimeout(ctx context.Context) error
 		communication.logger.Warnf("empty ideal timeout message")
 		return nil
 	}
-	message := communication.messaging.Create(type_enums.UserActor, "")
-	if err := communication.OnPacket(ctx, internal_type.StaticPacket{ContextID: message.Id, Text: timeoutContent}); err != nil {
+	if err := communication.OnPacket(ctx, internal_type.StaticPacket{ContextID: communication.messaging.GetId(), Text: timeoutContent}); err != nil {
 		communication.logger.Errorf("error while sending ideal timeout message: %v", err)
 		return nil
 	}
@@ -132,26 +145,17 @@ func (communication *GenericRequestor) StartIdealTimeoutTimer(ctx context.Contex
 	if behavior.IdealTimeout == nil || *behavior.IdealTimeout == 0 {
 		return
 	}
-	communication.lastAssistantMessageTime = time.Now()
 	timeoutDuration := time.Duration(*behavior.IdealTimeout) * time.Minute
 	communication.idealTimeoutTimer = time.AfterFunc(timeoutDuration, func() {
 		if err := communication.OnIdealTimeout(ctx); err != nil {
 			communication.logger.Errorf("error while handling ideal timeout: %v", err)
 		}
-		communication.StartIdealTimeoutTimer(ctx)
 	})
 }
 
 // ResetIdealTimeoutTimer resets the ideal timeout timer when the user speaks (indicating they are still there).
 func (communication *GenericRequestor) ResetIdealTimeoutTimer(ctx context.Context) {
-	if communication.idealTimeoutTimer != nil {
-		communication.idealTimeoutTimer.Stop()
-	}
-	behavior, err := communication.GetBehavior()
-	if err != nil {
-		return
-	}
-	if behavior.IdealTimeout == nil || *behavior.IdealTimeout == 0 {
+	if communication.idealTimeoutTimer == nil {
 		return
 	}
 	communication.StartIdealTimeoutTimer(ctx)

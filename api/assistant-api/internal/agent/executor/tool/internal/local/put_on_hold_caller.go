@@ -10,15 +10,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"time"
 
 	internal_adapter_requests "github.com/rapidaai/api/assistant-api/internal/adapters"
 	internal_tool "github.com/rapidaai/api/assistant-api/internal/agent/executor/tool/internal"
 	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
+	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
-	protos "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
 type putOnHoldToolCaller struct {
@@ -52,29 +51,8 @@ func (tc *putOnHoldToolCaller) argument(args string) uint64 {
 
 }
 
-func (afkTool *putOnHoldToolCaller) Call(
-	ctx context.Context,
-	messageId string,
-	args string,
-	communication internal_adapter_requests.Communication,
-) (map[string]interface{}, []*types.Metric) {
-	start := time.Now()
-	metrics := make([]*types.Metric, 0)
-	// duration := afkTool.argument(args)
-	err := communication.Notify(
-		ctx,
-		&protos.AssistantMessagingResponse_Action{
-			Action: &protos.AssistantConversationAction{
-				Name:   afkTool.Name(),
-				Action: protos.AssistantConversationAction_PUT_ON_HOLD,
-			},
-		},
-	)
-	metrics = append(metrics, types.NewTimeTakenMetric(time.Since(start)))
-	if err != nil {
-		return afkTool.Result("Unable to disconnect. Please try again later.", false), metrics
-	}
-	return afkTool.Result("Disconnected successfully.", true), metrics
+func (afkTool *putOnHoldToolCaller) Call(ctx context.Context, pkt internal_type.LLMPacket, toolId string, args string, communication internal_adapter_requests.Communication) internal_type.LLMToolPacket {
+	return internal_type.LLMToolPacket{ContextID: pkt.ContextID, Action: protos.AssistantConversationAction_PUT_ON_HOLD, Result: afkTool.Result("Putting on hold.", true)}
 }
 
 func NewPutOnHoldToolCaller(

@@ -24,14 +24,12 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkt ...internal_t
 	for _, p := range pkt {
 		switch vl := p.(type) {
 		case internal_type.StaticPacket:
-			//
 			utils.Go(ctx, func() {
 				// create a message for the static packet
 				if err := talking.OnCreateMessage(ctx, vl); err != nil {
 					talking.logger.Errorf("Error in OnCreateMessage: %v", err)
 				}
 			})
-
 			// notify the user about static packet
 			if err := talking.Notify(ctx,
 				&protos.AssistantConversationAssistantMessage{Time: timestamppb.Now(), Id: vl.ContextId(), Completed: true, Message: &protos.AssistantConversationAssistantMessage_Text{Text: &protos.AssistantConversationMessageTextContent{Content: vl.Text}}},
@@ -54,7 +52,9 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkt ...internal_t
 		case internal_type.InterruptionPacket:
 			switch vl.Source {
 			case "word":
+				// user had spoken reset the timer
 				talking.ResetIdealTimeoutTimer(talking.Context())
+				//
 				if err := talking.messaging.Transition(internal_adapter_request_customizers.Interrupted); err != nil {
 					continue
 				}
@@ -86,29 +86,16 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkt ...internal_t
 				})
 			defer span.EndSpan(ctx, utils.AssistantListeningStage)
 			//
-			talking.logger.Debugf("received speech to text packet: %+v", vl)
 			msi := talking.messaging.Create(type_enums.UserActor, "")
 			if !vl.Interim {
 				msi = talking.messaging.Create(type_enums.UserActor, vl.Script)
-				talking.Notify(ctx, &protos.AssistantConversationUserMessage{
-					Id: msi.GetId(),
-					Message: &protos.AssistantConversationUserMessage_Text{
-						Text: &protos.AssistantConversationMessageTextContent{
-							Content: msi.String(),
-						},
-					},
-					Completed: false,
-					Time:      timestamppb.New(time.Now()),
-				})
+				talking.Notify(ctx, &protos.AssistantConversationUserMessage{Id: msi.GetId(), Message: &protos.AssistantConversationUserMessage_Text{Text: &protos.AssistantConversationMessageTextContent{Content: msi.String()}}, Completed: false, Time: timestamppb.New(time.Now())})
 			}
 
-			if err := talking.ListenText(ctx, &internal_end_of_speech.STTEndOfSpeechInput{
-				Message:    vl.Script,
-				IsComplete: !vl.Interim,
-				Time:       time.Now(),
-			}); err != nil {
+			if err := talking.ListenText(ctx, &internal_end_of_speech.STTEndOfSpeechInput{Message: vl.Script, IsComplete: !vl.Interim, Time: time.Now()}); err != nil {
 				talking.logger.Info("ListenText error %s", err)
 			}
+			continue
 		case internal_type.EndOfSpeechPacket:
 			msg, err := talking.messaging.GetMessage(type_enums.UserActor)
 			if err != nil {
@@ -148,24 +135,15 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkt ...internal_t
 				continue
 			}
 		case internal_type.LLMStreamPacket:
+			// bot had spoken reset the timer
+			talking.ResetIdealTimeoutTimer(talking.Context())
+
 			aMsg := vl.Message.String()
-			if len(vl.Message.ToolCalls) > 0 {
-				aMsg = " "
-			}
 			if err := talking.messaging.Transition(internal_adapter_request_customizers.AgentSpeaking); err != nil {
 				continue
 			}
 
-			if err := talking.Notify(ctx, &protos.AssistantConversationAssistantMessage{
-				Time:      timestamppb.Now(),
-				Id:        vl.ContextID,
-				Completed: false,
-				Message: &protos.AssistantConversationAssistantMessage_Text{
-					Text: &protos.AssistantConversationMessageTextContent{
-						Content: aMsg,
-					},
-				},
-			}); err != nil {
+			if err := talking.Notify(ctx, &protos.AssistantConversationAssistantMessage{Time: timestamppb.Now(), Id: vl.ContextID, Completed: false, Message: &protos.AssistantConversationAssistantMessage_Text{Text: &protos.AssistantConversationMessageTextContent{Content: aMsg}}}); err != nil {
 				talking.logger.Tracef(ctx, "error while outputting chunk to the user: %w", err)
 			}
 			if talking.messaging.GetInputMode().Audio() {
@@ -174,48 +152,49 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkt ...internal_t
 				}
 			}
 		case internal_type.LLMPacket:
+
+			talking.ResetIdealTimeoutTimer(talking.Context())
+			//
 			utils.Go(ctx, func() {
 				if err := talking.OnCreateMessage(ctx, vl); err != nil {
 					talking.logger.Errorf("Error in OnCreateMessage: %v", err)
 				}
 			})
 
-			// if audio is enabled flush the audio
 			if talking.messaging.GetInputMode().Audio() {
 				talking.Speak(internal_type.FlushPacket{ContextID: p.ContextId()})
 			}
 
 			// try to get the user message
-			if err := talking.Notify(ctx,
-				&protos.AssistantConversationAssistantMessage{
-					Time:      timestamppb.Now(),
-					Id:        vl.ContextID,
-					Completed: true,
-					Message: &protos.AssistantConversationAssistantMessage_Text{
-						Text: &protos.AssistantConversationMessageTextContent{
-							Content: vl.Message.String(),
-						},
-					},
-				}); err != nil {
+			if err := talking.Notify(ctx, &protos.AssistantConversationAssistantMessage{Time: timestamppb.Now(), Id: vl.ContextID, Completed: true, Message: &protos.AssistantConversationAssistantMessage_Text{Text: &protos.AssistantConversationMessageTextContent{Content: vl.Message.String()}}}); err != nil {
 				talking.logger.Tracef(ctx, "error while outputting chunk to the user: %w", err)
 			}
 			talking.messaging.Transition(internal_adapter_request_customizers.AgentCompleted)
 			continue
+		case internal_type.LLMToolPacket:
+			talking.
+				Notify(
+					ctx,
+					&protos.AssistantMessagingResponse_Action{
+						Action: &protos.AssistantConversationAction{
+							Name:   vl.ContextID,
+							Action: vl.Action,
+						},
+					},
+				)
+			continue
+
 		case internal_type.MetricPacket:
+			// metrics update for the message
+			// later this can be used at each stage to calculate various metrics
 			if len(vl.Metrics) > 0 {
 				if err := talking.OnMessageMetric(talking.Context(), vl.ContextID, vl.Metrics); err != nil {
 					talking.logger.Errorf("Error in OnUpdateMessage: %v", err)
 				}
 			}
 		case internal_type.TextToSpeechFlushPacket:
-			if err := talking.Notify(
-				talking.Context(),
-				&protos.AssistantConversationAssistantMessage{
-					Time:      timestamppb.Now(),
-					Id:        vl.ContextID,
-					Completed: true,
-				},
-			); err != nil {
+			// notify the user about completion of tts
+			if err := talking.Notify(talking.Context(), &protos.AssistantConversationAssistantMessage{Time: timestamppb.Now(), Id: vl.ContextID, Completed: true}); err != nil {
 				talking.logger.Tracef(talking.ctx, "error while outputing chunk to the user: %w", err)
 			}
 			continue
@@ -226,33 +205,16 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkt ...internal_t
 			}
 			// //
 			if vl.ContextID != inputMessage.GetId() {
-				// talking.logger.Warnf("testing: context id mismatched %+v current %v", contextId, inputMessage.GetId())
 				continue
 			}
 
 			if err := talking.messaging.Transition(internal_adapter_request_customizers.AgentSpeaking); err != nil {
-				// talking.logger.Warnf("testing: illegal transition to speaking")
 				continue
 			}
 
-			if err := talking.Notify(
-				talking.Context(),
-				&protos.AssistantConversationAssistantMessage{
-					Time: timestamppb.Now(),
-					Id:   vl.ContextID,
-					Message: &protos.AssistantConversationAssistantMessage_Audio{
-						Audio: &protos.AssistantConversationMessageAudioContent{
-							Content: vl.AudioChunk,
-						},
-					},
-				},
-			); err != nil {
+			if err := talking.Notify(talking.Context(), &protos.AssistantConversationAssistantMessage{Time: timestamppb.Now(), Id: vl.ContextID, Message: &protos.AssistantConversationAssistantMessage_Audio{Audio: &protos.AssistantConversationMessageAudioContent{Content: vl.AudioChunk}}}); err != nil {
 				talking.logger.Tracef(talking.ctx, "error while outputing chunk to the user: %w", err)
 			}
-
-			// monitor ideal timeout
-			talking.StartIdealTimeoutTimer(talking.Context())
-
 			//
 			utils.Go(context.Background(), func() {
 				talking.recorder.System(vl.AudioChunk)
