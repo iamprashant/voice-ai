@@ -36,12 +36,7 @@ import (
 //
 // -----------------------------------------------------------------------------
 
-func (tc *GenericRequestor) GetMetrics() []*types.Metric {
-	return tc.metrics
-}
-
 func (tc *GenericRequestor) AddMetrics(auth types.SimplePrinciple, metrics ...*types.Metric) {
-	tc.metrics = append(tc.metrics, metrics...)
 	utils.Go(tc.ctx, func() {
 		start := time.Now()
 		_, err := tc.conversationService.ApplyConversationMetrics(
@@ -56,24 +51,4 @@ func (tc *GenericRequestor) AddMetrics(auth types.SimplePrinciple, metrics ...*t
 			tc.logger.Errorf("unable to flush metrics for conversation %+v", err)
 		}
 	})
-}
-
-func (tc *GenericRequestor) AddMetric(auth types.SimplePrinciple, metric *types.Metric) {
-	tc.metrics = append(tc.metrics, metric)
-	utils.Go(tc.ctx, func() {
-		start := time.Now()
-		_, err := tc.conversationService.ApplyConversationMetrics(
-			tc.ctx,
-			auth,
-			tc.assistant.Id,
-			tc.assistantConversation.Id,
-			[]*types.Metric{metric},
-		)
-		tc.logger.Benchmark("GenericRequestor.AddMetric", time.Since(start))
-		if err != nil {
-			tc.logger.Errorf("unable to flush metrics for conversation %+v", err)
-		}
-
-	})
-
 }

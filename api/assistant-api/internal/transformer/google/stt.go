@@ -139,6 +139,7 @@ func (g *googleSpeechToText) speechToTextCallback(stram speechpb.Speech_Streamin
 					)
 				}
 			}
+
 		}
 	}
 }
