@@ -17,42 +17,8 @@ import (
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/utils"
 	"github.com/rapidaai/protos"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
-
-func (spk *GenericRequestor) Speak(packets ...internal_type.Packet) error {
-	if _, err := spk.GetTextToSpeechTransformer(); err != nil {
-		spk.logger.Warnf("no output transformer, skipping speak")
-		return err
-	}
-	ctx, span, _ := spk.Tracer().StartSpan(spk.Context(), utils.AssistantSpeakingStage)
-	defer span.EndSpan(ctx, utils.AssistantSpeakingStage)
-
-	for _, packate := range packets {
-		switch pkt := packate.(type) {
-		case internal_type.TextPacket:
-			span.AddAttributes(ctx,
-				internal_adapter_telemetry.MessageKV(pkt.ContextID),
-				internal_adapter_telemetry.KV{K: "chunk", V: internal_adapter_telemetry.StringValue(pkt.Text)},
-				internal_adapter_telemetry.KV{K: "activity", V: internal_adapter_telemetry.StringValue("speaking")},
-			)
-			return spk.tokenizer.Tokenize(ctx, pkt)
-		case internal_type.FlushPacket:
-			span.AddAttributes(ctx,
-				internal_adapter_telemetry.MessageKV(pkt.ContextID),
-				internal_adapter_telemetry.KV{K: "activity", V: internal_adapter_telemetry.StringValue("finish_speaking")},
-			)
-			if err := spk.tokenizer.Tokenize(ctx, pkt); err != nil {
-				spk.logger.Warnf("unable to send finish speaking sentence to tokenizer %v", err)
-			}
-			return nil
-		default:
-			spk.logger.Warnf("unsupported packet type for speak: %T", packate)
-			return nil
-		}
-	}
-	return nil
-
-}
 
 // Init initializes the audio talking system for a given assistant persona.
 // It sets up both audio input and output transformer.
@@ -150,12 +116,20 @@ func (spk *GenericRequestor) OnCompleteSentence(ctx context.Context) {
 			//
 			switch res := result.(type) {
 			case internal_type.FlushPacket:
-				spk.logger.Debugf("OnCompleteSentence received flush for context %s", res.ContextID)
+				ctx, span, _ := spk.Tracer().StartSpan(spk.Context(), utils.AssistantSpeakingStage)
+				defer span.EndSpan(ctx, utils.AssistantSpeakingStage)
+				span.AddAttributes(ctx,
+					internal_adapter_telemetry.MessageKV(res.ContextID),
+					internal_adapter_telemetry.KV{K: "activity", V: internal_adapter_telemetry.StringValue("finish_speaking")},
+				)
 				if spk.textToSpeechTransformer != nil {
 					if err := spk.textToSpeechTransformer.Transform(spk.Context(), res); err != nil {
 						spk.logger.Errorf("speak: failed to send flush to text to speech transformer error: %v", err)
 					}
 				}
+				// if err := talking.Notify(ctx, &protos.AssistantConversationAssistantMessage{Time: timestamppb.Now(), Id: vl.ContextID, Completed: true, Message: &protos.AssistantConversationAssistantMessage_Text{Text: &protos.AssistantConversationMessageTextContent{Content: vl.Message.String()}}}); err != nil {
+				// 	talking.logger.Tracef(ctx, "error while outputting chunk to the user: %w", err)
+				// }
 			case internal_type.TextPacket:
 				ctxSpan, span, _ := spk.Tracer().StartSpan(ctx, utils.AssistantSpeakingStage)
 				span.AddAttributes(ctxSpan,
@@ -183,6 +157,9 @@ func (spk *GenericRequestor) OnCompleteSentence(ctx context.Context) {
 					if err := spk.textToSpeechTransformer.Transform(spk.Context(), res); err != nil {
 						spk.logger.Errorf("speak: failed to send sentence to text to speech transformer error: %v", err)
 					}
+				}
+				if err := spk.Notify(ctx, &protos.AssistantConversationAssistantMessage{Time: timestamppb.Now(), Id: res.ContextId(), Completed: true, Message: &protos.AssistantConversationAssistantMessage_Text{Text: &protos.AssistantConversationMessageTextContent{Content: res.Text}}}); err != nil {
+					spk.logger.Tracef(ctx, "error while outputting chunk to the user: %w", err)
 				}
 				span.EndSpan(ctxSpan, utils.AssistantSpeakingStage)
 			default:

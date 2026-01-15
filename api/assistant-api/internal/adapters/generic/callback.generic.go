@@ -24,21 +24,16 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkt ...internal_t
 		switch vl := p.(type) {
 		case internal_type.UserTextPacket:
 			if talking.endOfSpeech != nil {
-				var err error
 				utils.Go(ctx, func() {
-					err = talking.endOfSpeech.Analyze(ctx, vl)
-					if err != nil {
-						if err == context.Canceled {
-							talking.logger.Info("Analysis canceled due to new content")
-						} else {
-							talking.logger.Tracef(ctx, "list of analyze text and got an error %+v", err)
-						}
+					if err := talking.endOfSpeech.Analyze(ctx, vl); err != nil {
+						talking.logger.Errorf("end of speech analyze error: %v", err)
 					}
+
 				})
-				return err
+				continue
 			}
 			// end of speech not configured so directly send end of speech packet
-			talking.OnPacket(ctx, internal_type.EndOfSpeechPacket{})
+			talking.OnPacket(ctx, internal_type.EndOfSpeechPacket{ContextID: vl.ContextID, Speech: vl.Text})
 			continue
 		case internal_type.StaticPacket:
 			utils.Go(ctx, func() {
@@ -48,21 +43,15 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkt ...internal_t
 				}
 			})
 			// notify the user about static packet
-			if err := talking.Notify(ctx,
-				&protos.AssistantConversationAssistantMessage{Time: timestamppb.Now(), Id: vl.ContextId(), Completed: true, Message: &protos.AssistantConversationAssistantMessage_Text{Text: &protos.AssistantConversationMessageTextContent{Content: vl.Text}}},
-			); err != nil {
-				talking.logger.Tracef(ctx, "error while outputting chunk to the user: %w", err)
-			}
-
-			if talking.messaging.GetInputMode().Audio() {
-				if err := talking.Speak(internal_type.TextPacket{ContextID: vl.ContextId(), Text: vl.Text}, internal_type.FlushPacket{ContextID: vl.ContextId()}); err == nil {
-					talking.logger.Debugf("finished speaking greeting message")
-				}
+			if err := talking.tokenizer.Tokenize(
+				ctx,
+				internal_type.TextPacket{ContextID: vl.ContextId(), Text: vl.Text},
+				internal_type.FlushPacket{ContextID: vl.ContextId()}); err != nil {
+				talking.logger.Debugf("unable to send static packet to tokenizer %v", err)
 			}
 
 			// sending static packat to executor for any post processing
 			talking.assistantExecutor.Execute(ctx, talking, vl)
-
 			//transition to completed
 			talking.messaging.Transition(internal_adapter_request_customizers.AgentCompleted)
 			continue
@@ -81,13 +70,8 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkt ...internal_t
 				talking.Notify(ctx, &protos.AssistantConversationInterruption{Type: protos.AssistantConversationInterruption_INTERRUPTION_TYPE_WORD, Time: timestamppb.Now()})
 			default:
 				ctx, span, _ := talking.Tracer().StartSpan(talking.Context(), utils.AssistantUtteranceStage)
-				span.EndSpan(ctx,
-					utils.AssistantUtteranceStage,
-					internal_telemetry.KV{
-						K: "activity_type",
-						V: internal_telemetry.StringValue("vad"),
-					},
-				)
+				span.EndSpan(ctx, utils.AssistantUtteranceStage, internal_telemetry.KV{K: "activity_type", V: internal_telemetry.StringValue("vad")})
+
 				// might be noise at first
 				if vl.StartAt < 3 {
 					talking.logger.Warn("interrupt: very early interruption")
@@ -104,7 +88,6 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkt ...internal_t
 			}
 			continue
 		case internal_type.SpeechToTextPacket:
-			talking.logger.Debugf("testing -> test to speech %v", vl)
 			ctx, span, _ := talking.Tracer().StartSpan(talking.Context(), utils.AssistantListeningStage,
 				internal_telemetry.KV{
 					K: "transcript",
@@ -125,12 +108,22 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkt ...internal_t
 				talking.Notify(ctx, &protos.AssistantConversationUserMessage{Id: msi.GetId(), Message: &protos.AssistantConversationUserMessage_Text{Text: &protos.AssistantConversationMessageTextContent{Content: msi.String()}}, Completed: false, Time: timestamppb.New(time.Now())})
 			}
 
-			if err := talking.OnPacket(ctx, internal_type.UserTextPacket{Text: msi.String()}); err != nil {
-				talking.logger.Info("ListenText error %s", err)
+			if talking.endOfSpeech != nil {
+				utils.Go(ctx, func() {
+					if err := talking.endOfSpeech.Analyze(ctx, vl); err != nil {
+						talking.logger.Errorf("end of speech analyze error: %v", err)
+					}
+
+				})
+				continue
+			}
+
+			// trigger end of speech directly when stt is completed
+			if !vl.Interim {
+				talking.OnPacket(ctx, internal_type.EndOfSpeechPacket{ContextID: vl.ContextID, Speech: msi.String()})
 			}
 			continue
 		case internal_type.EndOfSpeechPacket:
-			//
 			ctx, span, _ := talking.Tracer().StartSpan(talking.Context(), utils.AssistantUtteranceStage)
 			span.EndSpan(ctx,
 				utils.AssistantUtteranceStage,
@@ -143,8 +136,7 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkt ...internal_t
 					V: internal_telemetry.StringValue(vl.Speech),
 				},
 			)
-			talking.logger.Debugf("testing -> end of speech %v", vl)
-			//
+
 			msg, err := talking.messaging.GetMessage(type_enums.UserActor)
 			if err != nil {
 				talking.logger.Tracef(ctx, "illegal message state with error %v", err)
@@ -165,7 +157,6 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkt ...internal_t
 				}
 			})
 
-			talking.logger.Debugf("testing -> llm executon %v", vl)
 			//
 			talking.messaging.Transition(internal_adapter_request_customizers.LLMGenerating)
 			if err := talking.assistantExecutor.Execute(ctx, talking, internal_type.UserTextPacket{ContextID: msg.GetId(), Text: msg.String()}); err != nil {
@@ -176,38 +167,20 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkt ...internal_t
 		case internal_type.LLMStreamPacket:
 			// bot had spoken reset the timer
 			talking.ResetIdealTimeoutTimer(talking.Context())
+			talking.tokenizer.Tokenize(ctx, internal_type.TextPacket{ContextID: vl.ContextID, Text: vl.Text})
 
-			aMsg := vl.Message.String()
-			if err := talking.messaging.Transition(internal_adapter_request_customizers.AgentSpeaking); err != nil {
-				continue
-			}
-
-			if err := talking.Notify(ctx, &protos.AssistantConversationAssistantMessage{Time: timestamppb.Now(), Id: vl.ContextID, Completed: false, Message: &protos.AssistantConversationAssistantMessage_Text{Text: &protos.AssistantConversationMessageTextContent{Content: aMsg}}}); err != nil {
-				talking.logger.Tracef(ctx, "error while outputting chunk to the user: %w", err)
-			}
-			if talking.messaging.GetInputMode().Audio() {
-				if err := talking.Speak(internal_type.TextPacket{ContextID: vl.ContextId(), Text: aMsg}); err != nil {
-					talking.logger.Errorf("unable to speak for the user, please check the config error = %+v", err)
-				}
-			}
 		case internal_type.LLMPacket:
-
 			talking.ResetIdealTimeoutTimer(talking.Context())
-			//
 			utils.Go(ctx, func() {
 				if err := talking.OnCreateMessage(ctx, vl); err != nil {
 					talking.logger.Errorf("Error in OnCreateMessage: %v", err)
 				}
 			})
 
-			if talking.messaging.GetInputMode().Audio() {
-				talking.Speak(internal_type.FlushPacket{ContextID: p.ContextId()})
+			if err := talking.tokenizer.Tokenize(ctx, internal_type.FlushPacket{ContextID: vl.ContextID}); err != nil {
+				talking.logger.Warnf("unable to send finish speaking sentence to tokenizer %v", err)
 			}
 
-			// try to get the user message
-			if err := talking.Notify(ctx, &protos.AssistantConversationAssistantMessage{Time: timestamppb.Now(), Id: vl.ContextID, Completed: true, Message: &protos.AssistantConversationAssistantMessage_Text{Text: &protos.AssistantConversationMessageTextContent{Content: vl.Message.String()}}}); err != nil {
-				talking.logger.Tracef(ctx, "error while outputting chunk to the user: %w", err)
-			}
 			talking.messaging.Transition(internal_adapter_request_customizers.AgentCompleted)
 			continue
 		case internal_type.LLMToolPacket:

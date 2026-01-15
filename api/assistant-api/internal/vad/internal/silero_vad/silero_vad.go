@@ -33,10 +33,7 @@ type SileroVAD struct {
 }
 
 // NewSileroVAD creates a new SileroVAD
-func NewSileroVAD(logger commons.Logger,
-	inputAudio *protos.AudioConfig,
-	callback internal_type.VADCallback, options utils.Option) (internal_type.Vad, error) {
-
+func NewSileroVAD(logger commons.Logger, inputAudio *protos.AudioConfig, callback internal_type.VADCallback, options utils.Option) (internal_type.Vad, error) {
 	envModelPath := os.Getenv("SILERO_MODEL_PATH")
 	if envModelPath == "" {
 		_, path, _, _ := runtime.Caller(0)
@@ -92,10 +89,9 @@ func (svad *SileroVAD) Process(input []byte) error {
 		return fmt.Errorf("error during detection: %w", err) // Return error with context
 	}
 
-	if len(segments) == 0 { // No speech detected
+	if len(segments) == 0 {
 		return nil
 	}
-	// Initialize minStart to a large value and maxEnd to a small value
 	minStart := math.MaxFloat64
 	maxEnd := -math.MaxFloat64
 
@@ -109,8 +105,7 @@ func (svad *SileroVAD) Process(input []byte) error {
 			maxEnd = end
 		}
 	}
-	// svad.onActivity(&internal_inter.VadResult{StartSec: minStart, EndSec: maxEnd})
-	svad.onActivity(internal_type.InterruptionPacket{Source: "vad"})
+	svad.onActivity(internal_type.InterruptionPacket{Source: "vad", StartAt: minStart, EndAt: maxEnd})
 	return nil
 }
 func (s *SileroVAD) Close() error {

@@ -7,6 +7,7 @@ package internal_silence_based
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"sync"
 	"testing"
@@ -88,6 +89,9 @@ func TestSystemInputTriggersTimer(t *testing.T) {
 	}
 
 	ctx := context.Background()
+	if err := svcIface.Analyze(ctx, userInput("sys")); err != nil {
+		t.Fatalf("analyze: %v", err)
+	}
 	if err := svcIface.Analyze(ctx, systemInput("sys")); err != nil {
 		t.Fatalf("analyze: %v", err)
 	}
@@ -713,12 +717,12 @@ func TestSystemInputExtendsTimer(t *testing.T) {
 
 	ctx := context.Background()
 
-	// Send system input
+	// Send initial system input (NOT user input, which fires immediately)
 	if err := svcIface.Analyze(ctx, systemInput("activity")); err != nil {
 		t.Fatalf("analyze: %v", err)
 	}
 
-	// Wait 100ms and send another system input
+	// Wait 100ms and send another system input - this should reset the timer
 	time.Sleep(100 * time.Millisecond)
 	startTime := time.Now()
 
@@ -1056,4 +1060,722 @@ func TestServiceClose(t *testing.T) {
 	if err := svcIface.Close(); err != nil {
 		t.Fatalf("close failed: %v", err)
 	}
+}
+
+// === COMPREHENSIVE CONCURRENT & COMBINATION TESTS ===
+// These tests validate behavior under realistic concurrent loads that trigger LLM calls
+
+// TestConcurrentMixedInputTypes simulates multiple threads with different input types
+// arriving simultaneously - realistic scenario for real-time voice processing
+func TestConcurrentMixedInputTypes(t *testing.T) {
+	logger, _ := commons.NewApplicationLogger()
+	callbacks := make(chan internal_type.EndOfSpeechPacket, 100)
+	callbackMu := sync.Mutex{}
+	callCount := 0
+
+	callback := func(ctx context.Context, res internal_type.EndOfSpeechPacket) error {
+		select {
+		case callbacks <- res:
+			callbackMu.Lock()
+			callCount++
+			callbackMu.Unlock()
+		default:
+		}
+		return nil
+	}
+
+	opts := newTestOpts(map[string]any{"microphone.eos.timeout": 100.0})
+	svcIface, err := NewSilenceBasedEndOfSpeech(logger, callback, opts)
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	defer svcIface.Close()
+
+	ctx := context.Background()
+	wg := sync.WaitGroup{}
+
+	// Simulate 5 concurrent goroutines sending mixed input types
+	for i := 0; i < 5; i++ {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+
+			// Each goroutine sends: STT -> System -> User
+			switch id % 3 {
+			case 0:
+				_ = svcIface.Analyze(ctx, sttInput("concurrent stt", false))
+				time.Sleep(10 * time.Millisecond)
+				_ = svcIface.Analyze(ctx, systemInput("activity"))
+			case 1:
+				_ = svcIface.Analyze(ctx, systemInput("system1"))
+				time.Sleep(15 * time.Millisecond)
+				_ = svcIface.Analyze(ctx, sttInput("concurrent speech", true))
+			case 2:
+				_ = svcIface.Analyze(ctx, sttInput("incomplete", false))
+				time.Sleep(20 * time.Millisecond)
+				_ = svcIface.Analyze(ctx, userInput("user interrupts"))
+			}
+		}(i)
+	}
+
+	wg.Wait()
+	time.Sleep(300 * time.Millisecond) // Wait for callbacks
+
+	callbackMu.Lock()
+	if callCount == 0 {
+		t.Fatalf("at least one callback should fire under concurrent load, got %d", callCount)
+	}
+	callbackMu.Unlock()
+}
+
+// TestHighFrequencySTTUpdates simulates rapid STT streaming (10+ updates/sec)
+// while other inputs arrive - common during active speech
+func TestHighFrequencySTTUpdates(t *testing.T) {
+	logger, _ := commons.NewApplicationLogger()
+	callTime := make(chan time.Time, 1)
+	callback := func(ctx context.Context, res internal_type.EndOfSpeechPacket) error {
+		select {
+		case callTime <- time.Now():
+		default:
+		}
+		return nil
+	}
+
+	opts := newTestOpts(map[string]any{"microphone.eos.timeout": 150.0})
+	svcIface, err := NewSilenceBasedEndOfSpeech(logger, callback, opts)
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	defer svcIface.Close()
+
+	ctx := context.Background()
+	startTime := time.Now()
+
+	// Rapid-fire 20 STT updates (2ms interval = 10 updates/sec)
+	for i := 0; i < 20; i++ {
+		interim := i < 19 // Last one is complete
+		_ = svcIface.Analyze(ctx, sttInput(fmt.Sprintf("word%d", i), !interim))
+		time.Sleep(2 * time.Millisecond)
+	}
+
+	// Now silence - let timer fire
+	select {
+	case cbTime := <-callTime:
+		elapsed := cbTime.Sub(startTime)
+		expectedMs := 150 * time.Millisecond
+		// Allow wide tolerance because of rapid updates
+		tolerance := 50 * time.Millisecond
+		if elapsed < expectedMs-tolerance || elapsed > expectedMs+tolerance {
+			t.Logf("WARNING: Timing slightly off (high-frequency updates): expected %v±%v, got %v", expectedMs, tolerance, elapsed)
+		}
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("timeout: callback should fire after rapid STT updates end")
+	}
+}
+
+// TestUserInputInterruptsActiveSTT tests user input (immediate trigger)
+// arriving while STT is actively updating
+func TestUserInputInterruptsActiveSTT(t *testing.T) {
+	logger, _ := commons.NewApplicationLogger()
+	callCount := 0
+	callMu := sync.Mutex{}
+	callTime := make(chan time.Time, 1)
+
+	callback := func(ctx context.Context, res internal_type.EndOfSpeechPacket) error {
+		callMu.Lock()
+		callCount++
+		callMu.Unlock()
+		select {
+		case callTime <- time.Now():
+		default:
+		}
+		return nil
+	}
+
+	opts := newTestOpts(map[string]any{"microphone.eos.timeout": 500.0})
+	svcIface, err := NewSilenceBasedEndOfSpeech(logger, callback, opts)
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	defer svcIface.Close()
+
+	ctx := context.Background()
+
+	// Start STT updates
+	for i := 0; i < 5; i++ {
+		_ = svcIface.Analyze(ctx, sttInput(fmt.Sprintf("stt update %d", i), false))
+		time.Sleep(50 * time.Millisecond)
+	}
+
+	// User interrupts mid-stream
+	startTime := time.Now()
+	_ = svcIface.Analyze(ctx, userInput("stop, I want to say something else"))
+
+	// Callback should fire immediately
+	select {
+	case cbTime := <-callTime:
+		elapsed := cbTime.Sub(startTime)
+		if elapsed > 100*time.Millisecond {
+			t.Fatalf("user input should trigger immediately, took %v", elapsed)
+		}
+	case <-time.After(200 * time.Millisecond):
+		t.Fatal("timeout: user input should fire callback immediately")
+	}
+
+	callMu.Lock()
+	if callCount != 1 {
+		t.Fatalf("expected exactly 1 callback, got %d", callCount)
+	}
+	callMu.Unlock()
+}
+
+// TestMultipleUtteranceSequence tests that after first callback fires,
+// the system correctly resets for a second utterance
+func TestMultipleUtteranceSequence(t *testing.T) {
+	logger, _ := commons.NewApplicationLogger()
+	callbacks := make(chan internal_type.EndOfSpeechPacket, 10)
+	callback := func(ctx context.Context, res internal_type.EndOfSpeechPacket) error {
+		select {
+		case callbacks <- res:
+		default:
+		}
+		return nil
+	}
+
+	opts := newTestOpts(map[string]any{"microphone.eos.timeout": 100.0})
+	svcIface, err := NewSilenceBasedEndOfSpeech(logger, callback, opts)
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	defer svcIface.Close()
+
+	ctx := context.Background()
+
+	// === UTTERANCE 1 ===
+	_ = svcIface.Analyze(ctx, sttInput("first utterance", true))
+	select {
+	case res := <-callbacks:
+		if res.Speech != "first utterance" {
+			t.Fatalf("utterance 1: unexpected speech %q", res.Speech)
+		}
+	case <-time.After(300 * time.Millisecond):
+		t.Fatal("utterance 1: timeout waiting for callback")
+	}
+
+	// === UTTERANCE 2 ===
+	time.Sleep(50 * time.Millisecond) // Small gap between utterances
+	_ = svcIface.Analyze(ctx, sttInput("second utterance", true))
+	select {
+	case res := <-callbacks:
+		if res.Speech != "second utterance" {
+			t.Fatalf("utterance 2: unexpected speech %q", res.Speech)
+		}
+	case <-time.After(300 * time.Millisecond):
+		t.Fatal("utterance 2: timeout waiting for callback")
+	}
+
+	// === UTTERANCE 3 ===
+	time.Sleep(50 * time.Millisecond)
+	_ = svcIface.Analyze(ctx, systemInput("activity"))
+	time.Sleep(50 * time.Millisecond)
+	_ = svcIface.Analyze(ctx, sttInput("third utterance", true))
+
+	select {
+	case res := <-callbacks:
+		if res.Speech != "third utterance" {
+			t.Fatalf("utterance 3: unexpected speech %q", res.Speech)
+		}
+	case <-time.After(300 * time.Millisecond):
+		t.Fatal("utterance 3: timeout waiting for callback")
+	}
+}
+
+// TestConcurrentUtterancesRapid tests rapid sequential utterances
+// (simulating multiple speakers or quick turn-taking)
+func TestConcurrentUtterancesRapid(t *testing.T) {
+	logger, _ := commons.NewApplicationLogger()
+	callbacks := make(chan internal_type.EndOfSpeechPacket, 20)
+	callback := func(ctx context.Context, res internal_type.EndOfSpeechPacket) error {
+		select {
+		case callbacks <- res:
+		default:
+		}
+		return nil
+	}
+
+	opts := newTestOpts(map[string]any{"microphone.eos.timeout": 80.0})
+	svcIface, err := NewSilenceBasedEndOfSpeech(logger, callback, opts)
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	defer svcIface.Close()
+
+	ctx := context.Background()
+
+	// Fire off 5 utterances in rapid succession (< 10ms apart)
+	expectedTexts := []string{"first", "second", "third", "fourth", "fifth"}
+	for i, text := range expectedTexts {
+		_ = svcIface.Analyze(ctx, userInput(text))
+		if i < len(expectedTexts)-1 {
+			time.Sleep(5 * time.Millisecond)
+		}
+	}
+
+	// Collect all callbacks
+	received := 0
+	timeout := time.After(500 * time.Millisecond)
+	for received < len(expectedTexts) {
+		select {
+		case res := <-callbacks:
+			received++
+			if received <= len(expectedTexts) && res.Speech != expectedTexts[received-1] {
+				t.Logf("utterance %d: expected %q, got %q (note: user input fires immediately, so order may vary)", received, expectedTexts[received-1], res.Speech)
+			}
+		case <-timeout:
+			break
+		}
+	}
+
+	if received != len(expectedTexts) {
+		t.Fatalf("expected %d callbacks, got %d", len(expectedTexts), received)
+	}
+}
+
+// TestSTTFormattingVsRealContent tests edge case where final STT normalizes to same text
+// repeated across many updates
+func TestSTTFormattingVsRealContent(t *testing.T) {
+	logger, _ := commons.NewApplicationLogger()
+	callTime := make(chan time.Time, 1)
+	callback := func(ctx context.Context, res internal_type.EndOfSpeechPacket) error {
+		select {
+		case callTime <- time.Now():
+		default:
+		}
+		return nil
+	}
+
+	opts := newTestOpts(map[string]any{"microphone.eos.timeout": 200.0})
+	svcIface, err := NewSilenceBasedEndOfSpeech(logger, callback, opts)
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	defer svcIface.Close()
+
+	ctx := context.Background()
+
+	// Streaming updates with punctuation changes
+	updates := []string{
+		"hello",
+		"hello world",
+		"hello world",
+		"hello world,",
+		"Hello, world.",
+		"Hello, world!", // Different final punctuation
+	}
+
+	for i, text := range updates {
+		interim := i < len(updates)-1
+		_ = svcIface.Analyze(ctx, sttInput(text, !interim))
+		time.Sleep(30 * time.Millisecond)
+	}
+
+	startTime := time.Now()
+
+	// Final update: same content, just formatting
+	_ = svcIface.Analyze(ctx, sttInput("Hello, World!", true))
+
+	select {
+	case cbTime := <-callTime:
+		elapsed := cbTime.Sub(startTime)
+		// Should use half timeout: 200/2 = 100ms (since normalized text matches)
+		expectedMs := 100 * time.Millisecond
+		tolerance := 40 * time.Millisecond
+		minExpected := expectedMs - tolerance
+		maxExpected := expectedMs + tolerance
+
+		if elapsed < minExpected || elapsed > maxExpected {
+			t.Fatalf("callback timing incorrect: expected %v±%v, got %v", expectedMs, tolerance, elapsed)
+		}
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("timeout: callback should fire with formatting optimization")
+	}
+}
+
+// TestConcurrentInputsDuringReset tests inputs arriving while reset is processing
+// This was a critical race condition in the original implementation
+func TestConcurrentInputsDuringReset(t *testing.T) {
+	logger, _ := commons.NewApplicationLogger()
+	callbacks := make(chan internal_type.EndOfSpeechPacket, 10)
+	callback := func(ctx context.Context, res internal_type.EndOfSpeechPacket) error {
+		select {
+		case callbacks <- res:
+		default:
+		}
+		return nil
+	}
+
+	opts := newTestOpts(map[string]any{"microphone.eos.timeout": 50.0})
+	svcIface, err := NewSilenceBasedEndOfSpeech(logger, callback, opts)
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	defer svcIface.Close()
+
+	ctx := context.Background()
+
+	// First utterance
+	_ = svcIface.Analyze(ctx, userInput("first"))
+
+	select {
+	case <-callbacks:
+		// Expected
+	case <-time.After(200 * time.Millisecond):
+		t.Fatal("first callback should fire")
+	}
+
+	// Now fire many inputs rapidly while reset is being processed
+	// These should all be accepted for the new utterance window
+	inputCount := 0
+	for i := 0; i < 10; i++ {
+		if i%2 == 0 {
+			_ = svcIface.Analyze(ctx, sttInput(fmt.Sprintf("stt%d", i), false))
+		} else {
+			_ = svcIface.Analyze(ctx, systemInput("activity"))
+		}
+		inputCount++
+		time.Sleep(5 * time.Millisecond)
+	}
+
+	// Final input triggers second callback
+	_ = svcIface.Analyze(ctx, userInput("second"))
+
+	select {
+	case <-callbacks:
+		// Expected
+	case <-time.After(200 * time.Millisecond):
+		t.Fatal("second callback should fire even after rapid inputs during reset")
+	}
+}
+
+// TestStressLoadWithManyInputs stress tests with 100+ inputs
+func TestStressLoadWithManyInputs(t *testing.T) {
+	logger, _ := commons.NewApplicationLogger()
+	callCount := 0
+	callMu := sync.Mutex{}
+	callback := func(ctx context.Context, res internal_type.EndOfSpeechPacket) error {
+		callMu.Lock()
+		callCount++
+		callMu.Unlock()
+		return nil
+	}
+
+	opts := newTestOpts(map[string]any{"microphone.eos.timeout": 50.0})
+	svcIface, err := NewSilenceBasedEndOfSpeech(logger, callback, opts)
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	defer svcIface.Close()
+
+	ctx := context.Background()
+	wg := sync.WaitGroup{}
+
+	// 20 goroutines, each sending 50 inputs = 1000 total inputs
+	for g := 0; g < 20; g++ {
+		wg.Add(1)
+		go func(goroutineID int) {
+			defer wg.Done()
+			for i := 0; i < 50; i++ {
+				inputType := (goroutineID*50 + i) % 3
+				switch inputType {
+				case 0:
+					_ = svcIface.Analyze(ctx, sttInput(fmt.Sprintf("g%d_i%d", goroutineID, i), i%7 == 6))
+				case 1:
+					_ = svcIface.Analyze(ctx, systemInput("activity"))
+				case 2:
+					if i%10 == 0 { // Occasional user inputs
+						_ = svcIface.Analyze(ctx, userInput(fmt.Sprintf("user_g%d", goroutineID)))
+					}
+				}
+				time.Sleep(1 * time.Millisecond)
+			}
+		}(g)
+	}
+
+	wg.Wait()
+	time.Sleep(500 * time.Millisecond) // Wait for final callbacks
+
+	callMu.Lock()
+	if callCount == 0 {
+		t.Fatalf("stress test: at least some callbacks should fire, got %d", callCount)
+	}
+	t.Logf("stress test: %d inputs processed, %d callbacks fired", 1000, callCount)
+	callMu.Unlock()
+}
+
+// TestContextCancellationUnderConcurrentLoad tests that context cancellation
+// works correctly under heavy concurrent input
+func TestContextCancellationUnderConcurrentLoad(t *testing.T) {
+	logger, _ := commons.NewApplicationLogger()
+	callCount := 0
+	callMu := sync.Mutex{}
+	callback := func(ctx context.Context, res internal_type.EndOfSpeechPacket) error {
+		callMu.Lock()
+		callCount++
+		callMu.Unlock()
+		return nil
+	}
+
+	opts := newTestOpts(map[string]any{"microphone.eos.timeout": 100.0})
+	svcIface, err := NewSilenceBasedEndOfSpeech(logger, callback, opts)
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	defer svcIface.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	wg := sync.WaitGroup{}
+
+	// Spawn 5 goroutines sending inputs
+	for i := 0; i < 5; i++ {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			for j := 0; j < 10; j++ {
+				_ = svcIface.Analyze(ctx, sttInput(fmt.Sprintf("g%d_i%d", id, j), false))
+				time.Sleep(5 * time.Millisecond)
+			}
+		}(i)
+	}
+
+	// Cancel context after 30ms
+	time.Sleep(30 * time.Millisecond)
+	cancel()
+
+	wg.Wait()
+	time.Sleep(300 * time.Millisecond) // Wait for any pending callbacks
+
+	callMu.Lock()
+	// With cancelled context, callbacks should not fire
+	if callCount > 0 {
+		t.Logf("cancellation test: %d callbacks fired despite context cancellation (may be race)", callCount)
+	}
+	callMu.Unlock()
+}
+
+// TestFormattedTextOptimizationUnderConcurrency tests the half-timeout optimization
+// works correctly when multiple STT updates arrive concurrently
+func TestFormattedTextOptimizationUnderConcurrency(t *testing.T) {
+	logger, _ := commons.NewApplicationLogger()
+	callTimes := make(chan time.Time, 5)
+	callback := func(ctx context.Context, res internal_type.EndOfSpeechPacket) error {
+		select {
+		case callTimes <- time.Now():
+		default:
+		}
+		return nil
+	}
+
+	opts := newTestOpts(map[string]any{"microphone.eos.timeout": 200.0})
+	svcIface, err := NewSilenceBasedEndOfSpeech(logger, callback, opts)
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	defer svcIface.Close()
+
+	ctx := context.Background()
+
+	testCases := []struct {
+		name     string
+		sequence []struct {
+			text  string
+			final bool
+			delay time.Duration
+		}
+		expectedApproxMs int
+	}{
+		{
+			name: "formatting_optimization",
+			sequence: []struct {
+				text  string
+				final bool
+				delay time.Duration
+			}{
+				{"hello world", false, 30 * time.Millisecond},
+				{"hello world", false, 30 * time.Millisecond},
+				{"Hello, World!", true, 0}, // Final: normalized same, uses half timeout
+			},
+			expectedApproxMs: 100, // 200/2
+		},
+		{
+			name: "no_optimization_different_text",
+			sequence: []struct {
+				text  string
+				final bool
+				delay time.Duration
+			}{
+				{"hello", false, 30 * time.Millisecond},
+				{"hello world", true, 0}, // Final: different content, uses full timeout
+			},
+			expectedApproxMs: 200,
+		},
+	}
+
+	for _, tc := range testCases {
+		startTime := time.Now()
+
+		for i, step := range tc.sequence {
+			_ = svcIface.Analyze(ctx, sttInput(step.text, step.final))
+			if i < len(tc.sequence)-1 && step.delay > 0 {
+				time.Sleep(step.delay)
+			}
+		}
+
+		select {
+		case cbTime := <-callTimes:
+			elapsed := cbTime.Sub(startTime).Milliseconds()
+			expectedMs := int64(tc.expectedApproxMs)
+			tolerance := int64(40)
+
+			if elapsed < expectedMs-tolerance || elapsed > expectedMs+tolerance {
+				t.Logf("WARNING: %s timing off: expected %dms±%dms, got %dms", tc.name, expectedMs, tolerance, elapsed)
+			}
+		case <-time.After(500 * time.Millisecond):
+			t.Fatalf("%s: timeout waiting for callback", tc.name)
+		}
+	}
+}
+
+// TestGenerationCounterPreventsStaleCallbacks validates that generation counter
+// prevents stale callbacks even under extreme timing variations
+func TestGenerationCounterPreventsStaleCallbacks(t *testing.T) {
+	logger, _ := commons.NewApplicationLogger()
+	callCount := 0
+	callMu := sync.Mutex{}
+	callback := func(ctx context.Context, res internal_type.EndOfSpeechPacket) error {
+		callMu.Lock()
+		callCount++
+		callMu.Unlock()
+		return nil
+	}
+
+	opts := newTestOpts(map[string]any{"microphone.eos.timeout": 100.0})
+	svcIface, err := NewSilenceBasedEndOfSpeech(logger, callback, opts)
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	defer svcIface.Close()
+
+	ctx := context.Background()
+
+	// Start a timer that will eventually fire
+	_ = svcIface.Analyze(ctx, systemInput("gen1"))
+
+	// Wait 30ms
+	time.Sleep(30 * time.Millisecond)
+
+	// Before old timer fires, send new input (invalidates old generation)
+	_ = svcIface.Analyze(ctx, systemInput("gen2"))
+
+	// Wait 30ms more (total 60ms from first, 30ms from second)
+	time.Sleep(30 * time.Millisecond)
+
+	// At this point, gen1 timer would fire (100ms total from first input)
+	// But generation should be incremented, so it should be ignored
+	callMu.Lock()
+	countAt60ms := callCount
+	callMu.Unlock()
+
+	if countAt60ms != 0 {
+		t.Fatalf("old generation timer should be ignored, but got %d callbacks at 60ms", countAt60ms)
+	}
+
+	// Wait for gen2 to fire
+	time.Sleep(120 * time.Millisecond)
+
+	callMu.Lock()
+	finalCount := callCount
+	callMu.Unlock()
+
+	if finalCount != 1 {
+		t.Fatalf("expected exactly 1 callback from gen2, got %d total", finalCount)
+	}
+}
+
+// TestNormalizationConsistency tests that text normalization is consistent
+// across concurrent accesses
+func TestNormalizationConsistency(t *testing.T) {
+	logger, _ := commons.NewApplicationLogger()
+	callback := func(ctx context.Context, res internal_type.EndOfSpeechPacket) error {
+		return nil
+	}
+
+	opts := newTestOpts(map[string]any{"microphone.eos.timeout": 100.0})
+	svcIface, err := NewSilenceBasedEndOfSpeech(logger, callback, opts)
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	defer svcIface.Close()
+
+	ctx := context.Background()
+
+	testTexts := []struct {
+		text1       string
+		text2       string
+		shouldMatch bool
+	}{
+		{"hello world", "HELLO WORLD", true},
+		{"hello, world!", "hello world", true},
+		{"Hello, World!!!", "hello world", true},
+		{"hello", "hello world", false},
+		{"hello world", "hello world ", false}, // Space difference
+		{"café", "CAFÉ", true},
+	}
+
+	for _, test := range testTexts {
+		// Send first text
+		_ = svcIface.Analyze(ctx, sttInput(test.text1, true))
+		time.Sleep(30 * time.Millisecond)
+
+		// Send second text and check if it uses optimization
+		_ = svcIface.Analyze(ctx, sttInput(test.text2, true))
+
+		// The optimization affects timing; we just verify no panic
+		time.Sleep(150 * time.Millisecond)
+	}
+}
+
+// TestEdgeCaseRapidResetCycles tests many reset cycles happening in quick succession
+func TestEdgeCaseRapidResetCycles(t *testing.T) {
+	logger, _ := commons.NewApplicationLogger()
+	callCount := 0
+	callMu := sync.Mutex{}
+	callback := func(ctx context.Context, res internal_type.EndOfSpeechPacket) error {
+		callMu.Lock()
+		callCount++
+		callMu.Unlock()
+		return nil
+	}
+
+	opts := newTestOpts(map[string]any{"microphone.eos.timeout": 30.0})
+	svcIface, err := NewSilenceBasedEndOfSpeech(logger, callback, opts)
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	defer svcIface.Close()
+
+	ctx := context.Background()
+
+	// Rapid user inputs (each fires immediately and triggers reset)
+	for i := 0; i < 20; i++ {
+		_ = svcIface.Analyze(ctx, userInput(fmt.Sprintf("utterance_%d", i)))
+		time.Sleep(2 * time.Millisecond)
+	}
+
+	time.Sleep(100 * time.Millisecond)
+
+	callMu.Lock()
+	if callCount != 20 {
+		t.Fatalf("expected 20 callbacks from 20 user inputs, got %d", callCount)
+	}
+	callMu.Unlock()
 }

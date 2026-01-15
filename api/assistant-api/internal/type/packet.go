@@ -88,7 +88,7 @@ type LLMStreamPacket struct {
 	ContextID string
 
 	// message
-	Message *types.Message
+	Text string
 }
 
 func (f LLMStreamPacket) ContextId() string {

@@ -286,13 +286,11 @@ func (talking *GenericRequestor) OnResumeSession(ctx context.Context, inCfg, str
 
 	// if voice then we need to support reconnecting the speaker
 	wg.Go(func() error {
-		if audioOutConfig != nil {
-			if err := talking.ConnectSpeaker(ctx, audioOutConfig); err != nil {
-				talking.logger.Tracef(ctx, "unable to connect speaker %+v", err)
-			}
-			// changing to audio mode
-			talking.messaging.SwitchOutputMode(type_enums.AudioMode)
+		// if audioOutConfig != nil {
+		if err := talking.ConnectSpeaker(ctx, audioOutConfig); err != nil {
+			talking.logger.Tracef(ctx, "unable to connect speaker %+v", err)
 		}
+
 		if err := talking.InitializeBehavior(ctx); err != nil {
 			talking.logger.Errorf("unable to greet user with error %+v", err)
 		}

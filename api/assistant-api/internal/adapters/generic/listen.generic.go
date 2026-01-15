@@ -183,15 +183,7 @@ func (listening *GenericRequestor) initializeVAD(ctx context.Context, audioConfi
 		return err
 	}
 
-	vad, err := internal_vad.GetVAD(
-		internal_vad.VADIdentifier(provider),
-		listening.logger,
-		audioConfig,
-		func(vr internal_type.InterruptionPacket) error {
-			return listening.OnPacket(listening.Context(), vr)
-		},
-		options,
-	)
+	vad, err := internal_vad.GetVAD(internal_vad.VADIdentifier(provider), listening.logger, audioConfig, func(vr internal_type.InterruptionPacket) error { return listening.OnPacket(listening.Context(), vr) }, options)
 	if err != nil {
 		listening.logger.Errorf("error wile intializing vad %+v", err)
 		return err
@@ -213,7 +205,7 @@ func (listening *GenericRequestor) ListenAudio(ctx context.Context, in []byte) (
 	if listening.vad != nil {
 		utils.Go(ctx, func() {
 			if err := listening.vad.Process(in); err != nil {
-				listening.logger.Warnf("error while processing with vad error %+v", err)
+				listening.logger.Warnf("error while processing with vad %s", err.Error())
 			}
 		})
 	}
@@ -221,7 +213,7 @@ func (listening *GenericRequestor) ListenAudio(ctx context.Context, in []byte) (
 		utils.Go(ctx, func() {
 			if err := listening.speechToTextTransformer.Transform(ctx, in); err != nil {
 				if !errors.Is(err, io.EOF) {
-					listening.logger.Tracef(ctx, "error while transforming input %s and error %v", listening.speechToTextTransformer.Name(), err)
+					listening.logger.Tracef(ctx, "error while transforming input %s and error %s", listening.speechToTextTransformer.Name(), err.Error())
 				}
 			}
 		})

@@ -42,203 +42,73 @@ export const ConversationMessages: FC<{ vag: VoiceAgent }> = ({ vag }) => {
     scrollTo(ctrRef);
   }, [JSON.stringify(messages)]);
 
+  const groupedMessages = messages.messages.reduce<
+    { role: MessageRole; items: typeof messages.messages }[]
+  >((acc, msg) => {
+    const last = acc[acc.length - 1];
+
+    if (last && last.role === msg.role) {
+      last.items.push(msg);
+    } else {
+      acc.push({ role: msg.role, items: [msg] });
+    }
+
+    return acc;
+  }, []);
+
   return (
-    <div className="parent group [&_.feedback-btn]:hidden [&_.message-cntnt:last-of-type_.feedback-btn]:flex  !font-mono ">
-      {messages.messages.map((msg, idx) => {
-        return msg.role === MessageRole.User ? (
+    <div className="parent group [&_.feedback-btn]:hidden [&_.message-cntnt:last-of-type_.feedback-btn]:flex !font-mono">
+      {groupedMessages.map((group, groupIdx) => {
+        const isUser = group.role === MessageRole.User;
+        const isLastGroup = groupIdx === groupedMessages.length - 1;
+
+        return (
           <div
-            key={`user-${idx}`}
-            data-id={`user-${idx}`}
-            className="message-cntnt p-2.5 pb-4 group relative grid grid-cols-[auto_minmax(0,1fr)] auto-rows-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 hover:bg-gray-100 rounded-xl dark:hover:bg-gray-950"
+            key={groupIdx}
+            className="message-cntnt p-2.5 pb-4 group relative grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 hover:bg-gray-100 rounded-xl dark:hover:bg-gray-950"
           >
             <div className="row-span-2 min-w-(--space-9)">
-              <TextImage name={user?.name || queryName || 'user'} size={10} />
-            </div>
-            <div className="flex items-baseline gap-2">
-              <div className="text-md font-semibold capitalize">
-                {user?.name || queryName || 'user'}
-              </div>
-              <div className="text-sm text-muted">
-                <div className="flex flex-row gap-2 items-center justify-center text-palette-gray-800">
-                  <span className="opacity-70">
-                    {toHumanReadableRelativeTimeFromDate(msg.time)}
-                  </span>
+              {isUser ? (
+                <TextImage name={user?.name || queryName || 'user'} size={10} />
+              ) : (
+                <div className="bg-blue-600 w-10 h-10 flex items-center justify-center rounded-[2px]">
+                  <RapidaIcon className="text-white h-full w-full p-1.5" />
                 </div>
-              </div>
+              )}
             </div>
-            <div className="text-md">
-              {msg.messages.map((x, idx) => {
-                return (
-                  <motion.div
-                    variants={{
-                      hidden: {
-                        opacity: 0,
-                        y: 20,
-                      },
-                      visible: {
-                        opacity: 1,
-                        y: 0,
-                        transition: {
-                          duration: 0.1,
-                        },
-                      },
-                    }}
-                    key={idx}
-                    className={cn(
-                      'w-fit text-md',
-                      '[&_:is([data-link],a:link,a:visited,a:hover,a:active)]:text-primary',
-                      '[&_:is([data-link],a:link,a:visited,a:hover,a:active):hover]:underline',
-                      '[&_:is(code,div[data-lang])]:font-mono',
-                      '[&_:is(code,div[data-lang])]:bg-overlay',
-                      '[&_:is(code,div[data-lang])]:rounded-[2px]',
-                      '[&_:is(code)]:p-0.5',
-                      '[&_div[data-lang]]:p-2',
-                      '[&_div[data-lang]]:overflow-auto',
-                      '[&_:is(p,ul,ol,dl,table,blockquote,div[data-lang],h4,h5,h6,hr):not(:first-child)]:mt-2',
-                      '[&_:is(p,ul,ol,dl,table,blockquote,div[data-lang],h3,h4,h5,h6,hr):not(:last-child)]:mb-2',
-                      '[&_:is(ul,ol)]:pl-5',
-                      '[&_ul]:list-disc',
-                      '[&_ol]:list-decimal',
-                      '[&_ol>li>ol]:list-[lower-alpha]',
-                      '[&_ol>li>ol>li>ol]:list-[lower-roman]',
-                      '[&_ol>li>ol>li>ol>li>ol]:list-[list-decimal]',
-                      '[&_:is(strong,h1,h2,h3,h4,h5,h6)]:font-semibold',
-                      '[&_:is(h1)]:text-2xl',
-                      '[&_:is(h2)]:text-lg',
-                      '[&_:is(li)]:py-2',
-                      '[&_:is(h3)]:text-md',
-                      '[&_h1:not(:first-child)]:mt-8',
-                      '[&_h1:not(:last-child)]:mb-6',
-                      '[&_h2:not(:first-child)]:mt-6',
-                      '[&_h2:not(:last-child)]:mb-4',
-                      '[&_h3:not(:first-child)]:mt-4',
-                      '[&_li::marker]:inline-block',
-                      '[&_li::marker]:align-top',
-                      'break-words',
-                      'leading-7',
-                    )}
-                  >
-                    {x}
-                    {msg.messages.length - 1 === idx &&
-                      msg.status === MessageStatus.Pending && (
-                        <motion.span
-                          transition={{
-                            staggerChildren: 0.25,
-                          }}
-                          initial="initial"
-                          animate="animate"
-                          className="pl-2 relative"
-                        >
-                          <motion.span
-                            variants={{
-                              initial: {
-                                scaleY: 0.2,
-                                opacity: 0.2,
-                              },
-                              animate: {
-                                scaleY: 1,
-                                opacity: 1,
-                                transition: {
-                                  repeat: Infinity,
-                                  repeatType: 'mirror',
-                                  duration: 0.5,
-                                  ease: 'circIn',
-                                },
-                              },
-                            }}
-                            className="absolute bottom-0 h-5 w-2 bg-primary inline-block"
-                          ></motion.span>
-                        </motion.span>
-                      )}
-                  </motion.div>
-                );
-              })}
-            </div>
-            {messages.messages.length - 1 === idx && <div ref={ctrRef} />}
-          </div>
-        ) : (
-          <div
-            key={`assistant-${idx}`}
-            data-id={`user-${idx}`}
-            className="message-cntnt p-2.5 pb-4 group relative grid grid-cols-[auto_minmax(0,1fr)] auto-rows-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 hover:bg-gray-100 rounded-xl dark:hover:bg-gray-950"
-          >
-            <div className="row-span-2 min-w-(--space-9)">
-              <div className="bg-blue-600 w-10 h-10 flex items-center justify-center rounded-[2px]">
-                <RapidaIcon className="text-white h-full w-full p-1.5" />
-              </div>
-            </div>
+
+            {/* HEADER */}
             <div className="flex items-baseline gap-2">
-              <div className="text-md font-semibold">Rapida</div>
-              <div className="text-sm text-muted">
-                <div className="flex flex-row gap-2 items-center justify-center text-palette-gray-800">
-                  <span className="opacity-70">
-                    {toHumanReadableRelativeTimeFromDate(msg.time)}
-                  </span>
-                </div>
+              <div className="text-md font-semibold">
+                {isUser ? user?.name || queryName || 'User' : 'Rapida'}
               </div>
+              <span className="text-sm opacity-70">
+                {toHumanReadableRelativeTimeFromDate(group.items[0].time)}
+              </span>
             </div>
-            <div className="text-md">
-              {msg.messages.map((x, idx) => {
-                return (
-                  <motion.div
-                    variants={{
-                      hidden: { opacity: 0 },
-                      visible: {
-                        opacity: 1,
-                        transition: {
-                          staggerChildren: 0.05,
-                          delayChildren: 0.3,
-                        },
-                      },
-                    }}
-                    initial="hidden"
-                    animate="visible"
-                    key={idx}
-                    className="flex-1 min-w-0"
-                  >
+
+            {/* MESSAGES */}
+            <div className="text-md space-y-2">
+              {group.items.map((msg, idx) =>
+                msg.messages.map((x, midx) => (
+                  <div key={`${idx}-${midx}`}>
                     <MarkdownPreview
                       source={x}
-                      className="text-gray-700! dark:text-gray-400! prose !prose-sm break-words max-w-none! prose-img:rounded-xl prose-headings:underline prose-a:text-blue-600 prose-strong:font-bold prose-headings:font-bold dark:prose-strong:text-white dark:prose-headings:text-white !font-mono"
-                      style={{ background: 'transparent' }}
+                      className="!prose !prose-sm max-w-none !font-mono"
+                      style={{
+                        background: 'transparent',
+                        fontSize: '14px',
+                      }}
                     />
-
-                    {msg.messages.length - 1 === idx &&
-                      msg.status === MessageStatus.Pending && (
-                        <motion.span
-                          transition={{
-                            staggerChildren: 0.25,
-                          }}
-                          initial="initial"
-                          animate="animate"
-                          className="pl-2 relative"
-                        >
-                          <motion.span
-                            variants={{
-                              initial: {
-                                scaleY: 0.2,
-                                opacity: 0.2,
-                              },
-                              animate: {
-                                scaleY: 1,
-                                opacity: 1,
-                                transition: {
-                                  repeat: Infinity,
-                                  repeatType: 'mirror',
-                                  duration: 0.5,
-                                  ease: 'circIn',
-                                },
-                              },
-                            }}
-                            className="absolute bottom-0 h-5 w-2 bg-primary inline-block"
-                          ></motion.span>
-                        </motion.span>
-                      )}
-                  </motion.div>
-                );
-              })}
-              <MessageAction message={msg} vag={vag} />
+                  </div>
+                )),
+              )}
+              {!isUser && (
+                <MessageAction message={group.items.at(-1)!} vag={vag} />
+              )}
             </div>
-            {messages.messages.length - 1 === idx && <div ref={ctrRef} />}
+
+            {isLastGroup && <div ref={ctrRef} />}
           </div>
         );
       })}

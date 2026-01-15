@@ -120,9 +120,9 @@ func TestSileroVAD_Process_Silence_NoCallback(t *testing.T) {
 
 func TestSileroVAD_Process_Speech_AllowsCallback(t *testing.T) {
 	inputConfig := internal_audio.NewLinear16khzMonoAudioConfig()
-	// var result internal_type.InterruptionPacket
+	var result internal_type.InterruptionPacket
 	callback := func(r internal_type.InterruptionPacket) error {
-		// result = r
+		result = r
 		return nil
 	}
 
@@ -130,10 +130,7 @@ func TestSileroVAD_Process_Speech_AllowsCallback(t *testing.T) {
 
 	err := vad.Process(generateSineWave(16000, 440, 0.9))
 	require.NoError(t, err)
-
-	// if result != nil {
-	// 	assert.GreaterOrEqual(t, result.EndSec, result.StartSec)
-	// }
+	assert.GreaterOrEqual(t, result.EndAt, result.StartAt)
 }
 
 func TestSileroVAD_Process_DifferentSampleRates(t *testing.T) {

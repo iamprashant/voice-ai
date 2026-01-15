@@ -42,12 +42,7 @@ type deepgramTTS struct {
 	options    *internal_type.TextToSpeechInitializeOptions
 }
 
-func NewDeepgramTextToSpeech(
-	ctx context.Context,
-	logger commons.Logger,
-	credential *protos.VaultCredential,
-	opts *internal_type.TextToSpeechInitializeOptions,
-) (internal_type.TextToSpeechTransformer, error) {
+func NewDeepgramTextToSpeech(ctx context.Context, logger commons.Logger, credential *protos.VaultCredential, opts *internal_type.TextToSpeechInitializeOptions) (internal_type.TextToSpeechTransformer, error) {
 
 	dGoptions, err := NewDeepgramOption(logger, credential, opts.AudioConfig, opts.ModelOptions)
 	if err != nil {
@@ -164,8 +159,6 @@ func (t *deepgramTTS) Transform(ctx context.Context, in internal_type.Packet) er
 
 	switch input := in.(type) {
 	case internal_type.TextPacket:
-		t.logger.Debugf("speaking %s and ctx %s", input.Text, input.ContextID)
-
 		// if the request is for complete then we just flush the stream
 		if err := conn.WriteJSON(map[string]interface{}{
 			"type": "Speak",

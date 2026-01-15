@@ -41,17 +41,11 @@ type workerEvent struct {
 	reset   bool
 }
 
-func NewSilenceBasedEndOfSpeech(
-	logger commons.Logger,
-	onCallback internal_type.EndOfSpeechCallback,
-	opts utils.Option,
-) (internal_type.EndOfSpeech, error) {
-
+func NewSilenceBasedEndOfSpeech(logger commons.Logger, onCallback internal_type.EndOfSpeechCallback, opts utils.Option) (internal_type.EndOfSpeech, error) {
 	duration := 1000 * time.Millisecond
 	if v, err := opts.GetFloat64("microphone.eos.timeout"); err == nil {
 		duration = time.Duration(v) * time.Millisecond
 	}
-
 	a := &silenceBasedEndOfSpeech{
 		logger:            logger,
 		onCallback:        onCallback,
@@ -68,13 +62,13 @@ func (a *silenceBasedEndOfSpeech) Name() string {
 	return "silenceBasedEndOfSpeech"
 }
 
-func (a *silenceBasedEndOfSpeech) Analyze(
-	ctx context.Context,
-	msg internal_type.Packet,
+func (a *silenceBasedEndOfSpeech) Analyze(ctx context.Context, msg internal_type.Packet,
 ) error {
-
 	switch input := msg.(type) {
 	case internal_type.UserTextPacket:
+		if input.Text == "" {
+			return nil
+		}
 		a.enqueue(workerEvent{
 			ctx:     ctx,
 			speech:  input.Text,
@@ -82,8 +76,13 @@ func (a *silenceBasedEndOfSpeech) Analyze(
 		})
 
 	case internal_type.InterruptionPacket:
+		a.mutex.Lock()
+		currentSpeech := a.inputSpeech
+		a.mutex.Unlock()
+
 		a.enqueue(workerEvent{
 			ctx:     ctx,
+			speech:  currentSpeech,
 			timeout: a.thresholdDuration,
 		})
 
@@ -94,10 +93,7 @@ func (a *silenceBasedEndOfSpeech) Analyze(
 	return nil
 }
 
-func (a *silenceBasedEndOfSpeech) handleSTT(
-	ctx context.Context,
-	input internal_type.SpeechToTextPacket,
-) {
+func (a *silenceBasedEndOfSpeech) handleSTT(ctx context.Context, input internal_type.SpeechToTextPacket) {
 	a.mutex.Lock()
 
 	timeout := a.thresholdDuration
@@ -164,23 +160,30 @@ func (a *silenceBasedEndOfSpeech) worker() {
 			}
 
 			a.mutex.Lock()
+			// After a callback fires and reset is processed, new inputs are accepted
+			// because callbackFired will be false and generation will be incremented
 			if a.callbackFired {
 				a.mutex.Unlock()
 				continue
 			}
 
+			// Increment generation for this new input
 			a.generation++
 			generation = a.generation
 
 			if evt.fireNow {
+				// User input triggers callback immediately
 				a.callbackFired = true
 				stopTimer()
+				text := evt.speech
+				cbCtx := evt.ctx
 				a.mutex.Unlock()
-				a.invokeCallback(evt.ctx, evt.speech)
+				a.invokeCallback(cbCtx, text)
 				// Reset is enqueued by invokeCallback
 				continue
 			}
 
+			// System or STT input extends the silence timer
 			ctx = evt.ctx
 			speech = evt.speech
 
@@ -213,19 +216,10 @@ func (a *silenceBasedEndOfSpeech) invokeCallback(
 	ctx context.Context,
 	speech string,
 ) {
-	if speech == "" || ctx.Err() != nil {
+	if ctx.Err() != nil {
 		return
 	}
-
-	// now := time.Now()
-	seg := internal_type.EndOfSpeechPacket{
-		// StartAt: float64(now.UnixNano()) / 1e9,
-		// EndAt:   float64(now.UnixNano()) / 1e9,
-		Speech: speech,
-	}
-
-	a.logger.Debugf("End of speech detected: '%s'", speech)
-	_ = a.onCallback(ctx, seg)
+	_ = a.onCallback(ctx, internal_type.EndOfSpeechPacket{Speech: speech})
 	a.enqueue(workerEvent{reset: true})
 }
 

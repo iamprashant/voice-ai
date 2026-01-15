@@ -157,7 +157,7 @@ func (executor *modelAssistantExecutor) chat(
 			continue
 		}
 		if output != nil && len(output.GetContents()) > 0 {
-			communication.OnPacket(ctx, internal_type.LLMStreamPacket{ContextID: packet.ContextId(), Message: types.ToMessage(msg.GetData())})
+			communication.OnPacket(ctx, internal_type.LLMStreamPacket{ContextID: packet.ContextId(), Text: types.ToMessage(msg.GetData()).String()})
 		}
 
 	}

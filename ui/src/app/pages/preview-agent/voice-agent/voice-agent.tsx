@@ -74,9 +74,9 @@ export const VoiceAgent: FC<{
             </a>
           </PageHeaderBlock>
           {!assistant?.getDebuggerdeployment()?.hasInputaudio() && (
-            <YellowNoticeBlock className="flex items-center justify-between">
+            <YellowNoticeBlock className="flex items-center justify-between space-x-3">
               <Info className="shrink-0 w-4 h-4" />
-              <div className="ms-3 text-sm font-medium">
+              <div className="text-sm font-medium">
                 Voice functionality is currently disabled. Please enable it to
                 enjoy a voice experience with your assistant.
               </div>
@@ -237,12 +237,6 @@ export const VoiceAgentDebugger: FC<{
           setEvents(prevEvents => [
             ...prevEvents,
             { type: 'interrupt', payload: args },
-          ]);
-        },
-        onMessage: args => {
-          setEvents(prevEvents => [
-            ...prevEvents,
-            { type: 'message', payload: args },
           ]);
         },
       });

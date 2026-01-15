@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { cn } from '@/utils';
 
-export function RapidaIcon(props: React.SVGProps<SVGSVGElement>) {
+export const RapidaIcon = memo((props: React.SVGProps<SVGSVGElement>) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -25,4 +25,4 @@ export function RapidaIcon(props: React.SVGProps<SVGSVGElement>) {
       <path d="M 360.155 198.681 L 271.688 101.388 L 245.494 129.858 L 327.904 220.475 C 335.363 228.651 339.062 239.679 339.03 250.679 C 339.062 261.679 335.363 272.709 327.904 280.885 L 245.494 371.502 L 271.688 399.971 L 360.155 302.679 C 373.207 288.326 379.687 269.503 379.657 250.65 C 379.687 231.886 373.207 213.033 360.155 198.681 Z" />
     </svg>
   );
-}
+});
