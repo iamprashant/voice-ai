@@ -20,6 +20,7 @@ Rapida is written in **Go**, using the highly optimized [gRPC](https://github.co
 [![GitHub stars](https://img.shields.io/github/stars/rapidaai/voice-ai?style=social&label=Star&maxAge=2592000)](https://github.com/rapidaai/voice-ai/stargazers/)
 [![Twitter Follow](https://img.shields.io/twitter/follow/rapidaai)](https://twitter.com/rapidaai)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/rapidaai/voice-ai)
+[![CodeQL](https://github.com/rapidaai/voice-ai/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/rapidaai/voice-ai/actions/workflows/github-code-scanning/codeql)
 [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/rapidaai/voice-ai)](https://github.com/rapidaai/voice-ai/releases/latest)
 
 ---
