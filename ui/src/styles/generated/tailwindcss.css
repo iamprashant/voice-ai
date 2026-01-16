@@ -566,9 +566,6 @@
   .col-span-3 {
     grid-column: span 3 / span 3;
   }
-  .col-start-2 {
-    grid-column-start: 2;
-  }
   .row-span-2 {
     grid-row: span 2 / span 2;
   }
@@ -614,9 +611,6 @@
   .m-auto {
     margin: auto;
   }
-  .-mx-0 {
-    margin-inline: calc(var(--spacing) * -0);
-  }
   .-mx-2 {
     margin-inline: calc(var(--spacing) * -2);
   }
@@ -625,9 +619,6 @@
   }
   .-mx-6 {
     margin-inline: calc(var(--spacing) * -6);
-  }
-  .-mx-\[1px\] {
-    margin-inline: calc(1px * -1);
   }
   .mx-0 {
     margin-inline: calc(var(--spacing) * 0);
@@ -2296,205 +2287,6 @@
       margin-bottom: 0;
     }
   }
-  .prose-sm {
-    font-size: 0.875rem;
-    line-height: 1.7142857;
-    :where(p):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      margin-top: 1.1428571em;
-      margin-bottom: 1.1428571em;
-    }
-    :where([class~="lead"]):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      font-size: 1.2857143em;
-      line-height: 1.5555556;
-      margin-top: 0.8888889em;
-      margin-bottom: 0.8888889em;
-    }
-    :where(blockquote):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      margin-top: 1.3333333em;
-      margin-bottom: 1.3333333em;
-      padding-left: 1.1111111em;
-    }
-    :where(h1):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      font-size: 2.1428571em;
-      margin-top: 0;
-      margin-bottom: 0.8em;
-      line-height: 1.2;
-    }
-    :where(h2):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      font-size: 1.4285714em;
-      margin-top: 1.6em;
-      margin-bottom: 0.8em;
-      line-height: 1.4;
-    }
-    :where(h3):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      font-size: 1.2857143em;
-      margin-top: 1.5555556em;
-      margin-bottom: 0.4444444em;
-      line-height: 1.5555556;
-    }
-    :where(h4):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      margin-top: 1.4285714em;
-      margin-bottom: 0.5714286em;
-      line-height: 1.4285714;
-    }
-    :where(img):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      margin-top: 1.7142857em;
-      margin-bottom: 1.7142857em;
-    }
-    :where(picture):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      margin-top: 1.7142857em;
-      margin-bottom: 1.7142857em;
-    }
-    :where(picture > img):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      margin-top: 0;
-      margin-bottom: 0;
-    }
-    :where(video):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      margin-top: 1.7142857em;
-      margin-bottom: 1.7142857em;
-    }
-    :where(kbd):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      font-size: 0.8571429em;
-      border-radius: 0.3125rem;
-      padding-top: 0.1428571em;
-      padding-right: 0.3571429em;
-      padding-bottom: 0.1428571em;
-      padding-left: 0.3571429em;
-    }
-    :where(code):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      font-size: 0.8571429em;
-    }
-    :where(h2 code):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      font-size: 0.9em;
-    }
-    :where(h3 code):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      font-size: 0.8888889em;
-    }
-    :where(pre):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      font-size: 0.8571429em;
-      line-height: 1.6666667;
-      margin-top: 1.6666667em;
-      margin-bottom: 1.6666667em;
-      border-radius: 0.25rem;
-      padding-top: 0.6666667em;
-      padding-right: 1em;
-      padding-bottom: 0.6666667em;
-      padding-left: 1em;
-    }
-    :where(ol):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      margin-top: 1.1428571em;
-      margin-bottom: 1.1428571em;
-      padding-left: 1.5714286em;
-    }
-    :where(ul):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      margin-top: 1.1428571em;
-      margin-bottom: 1.1428571em;
-      padding-left: 1.5714286em;
-    }
-    :where(li):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      margin-top: 0.2857143em;
-      margin-bottom: 0.2857143em;
-    }
-    :where(ol > li):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      padding-left: 0.4285714em;
-    }
-    :where(ul > li):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      padding-left: 0.4285714em;
-    }
-    :where(.prose-sm > ul > li p):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      margin-top: 0.5714286em;
-      margin-bottom: 0.5714286em;
-    }
-    :where(.prose-sm > ul > li > *:first-child):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      margin-top: 1.1428571em;
-    }
-    :where(.prose-sm > ul > li > *:last-child):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      margin-bottom: 1.1428571em;
-    }
-    :where(.prose-sm > ol > li > *:first-child):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      margin-top: 1.1428571em;
-    }
-    :where(.prose-sm > ol > li > *:last-child):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      margin-bottom: 1.1428571em;
-    }
-    :where(ul ul, ul ol, ol ul, ol ol):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      margin-top: 0.5714286em;
-      margin-bottom: 0.5714286em;
-    }
-    :where(dl):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      margin-top: 1.1428571em;
-      margin-bottom: 1.1428571em;
-    }
-    :where(dt):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      margin-top: 1.1428571em;
-    }
-    :where(dd):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      margin-top: 0.2857143em;
-      padding-left: 1.5714286em;
-    }
-    :where(hr):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      margin-top: 2.8571429em;
-      margin-bottom: 2.8571429em;
-    }
-    :where(hr + *):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      margin-top: 0;
-    }
-    :where(h2 + *):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      margin-top: 0;
-    }
-    :where(h3 + *):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      margin-top: 0;
-    }
-    :where(h4 + *):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      margin-top: 0;
-    }
-    :where(table):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      font-size: 0.8571429em;
-      line-height: 1.5;
-    }
-    :where(thead th):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      padding-right: 1em;
-      padding-bottom: 0.6666667em;
-      padding-left: 1em;
-    }
-    :where(thead th:first-child):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      padding-left: 0;
-    }
-    :where(thead th:last-child):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      padding-right: 0;
-    }
-    :where(tbody td, tfoot td):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      padding-top: 0.6666667em;
-      padding-right: 1em;
-      padding-bottom: 0.6666667em;
-      padding-left: 1em;
-    }
-    :where(tbody td:first-child, tfoot td:first-child):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      padding-left: 0;
-    }
-    :where(tbody td:last-child, tfoot td:last-child):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      padding-right: 0;
-    }
-    :where(figure):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      margin-top: 1.7142857em;
-      margin-bottom: 1.7142857em;
-    }
-    :where(figure > *):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      margin-top: 0;
-      margin-bottom: 0;
-    }
-    :where(figcaption):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      font-size: 0.8571429em;
-      line-height: 1.3333333;
-      margin-top: 0.6666667em;
-    }
-    :where(.prose-sm > :first-child):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      margin-top: 0;
-    }
-    :where(.prose-sm > :last-child):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
-      margin-bottom: 0;
-    }
-  }
   .-mt-1 {
     margin-top: calc(var(--spacing) * -1);
   }
@@ -3134,9 +2926,6 @@
   .\!max-w-6xl {
     max-width: var(--container-6xl) !important;
   }
-  .\!max-w-none {
-    max-width: none !important;
-  }
   .max-w-0 {
     max-width: calc(var(--spacing) * 0);
   }
@@ -3390,9 +3179,6 @@
   }
   .grid-flow-col {
     grid-auto-flow: column;
-  }
-  .auto-rows-\[auto_minmax\(0\,1fr\)\] {
-    grid-auto-rows: auto minmax(0,1fr);
   }
   .grid-cols-1 {
     grid-template-columns: repeat(1, minmax(0, 1fr));
@@ -3741,9 +3527,6 @@
   }
   .overflow-y-scroll {
     overflow-y: scroll;
-  }
-  .rounded {
-    border-radius: 0.25rem;
   }
   .rounded-2xl {
     border-radius: var(--radius-2xl);
@@ -4882,9 +4665,6 @@
   .pt-0 {
     padding-top: calc(var(--spacing) * 0);
   }
-  .pt-1 {
-    padding-top: calc(var(--spacing) * 1);
-  }
   .pt-2 {
     padding-top: calc(var(--spacing) * 2);
   }
@@ -5249,9 +5029,6 @@
   }
   .whitespace-pre-wrap {
     white-space: pre-wrap;
-  }
-  .\!text-gray-700 {
-    color: var(--color-gray-700) !important;
   }
   .text-amber-100 {
     color: var(--color-amber-100);
@@ -9441,26 +9218,6 @@
       line-height: var(--tw-leading, var(--text-base--line-height));
     }
   }
-  .dark\:\!text-gray-300 {
-    @media (prefers-color-scheme: dark) {
-      &:not(.light *) {
-        color: var(--color-gray-300) !important;
-      }
-    }
-    &:is(.dark *) {
-      color: var(--color-gray-300) !important;
-    }
-  }
-  .dark\:\!text-gray-400 {
-    @media (prefers-color-scheme: dark) {
-      &:not(.light *) {
-        color: var(--color-gray-400) !important;
-      }
-    }
-    &:is(.dark *) {
-      color: var(--color-gray-400) !important;
-    }
-  }
   .dark\:text-amber-300 {
     @media (prefers-color-scheme: dark) {
       &:not(.light *) {
@@ -9707,16 +9464,6 @@
     }
     &:is(.dark *) {
       color: var(--color-gray-400);
-    }
-  }
-  .dark\:text-gray-400\! {
-    @media (prefers-color-scheme: dark) {
-      &:not(.light *) {
-        color: var(--color-gray-400) !important;
-      }
-    }
-    &:is(.dark *) {
-      color: var(--color-gray-400) !important;
     }
   }
   .dark\:text-gray-500 {
@@ -11323,29 +11070,9 @@
       }
     }
   }
-  .prose-headings\:font-bold {
-    & :is(:where(h1, h2, h3, h4, h5, h6, th):not(:where([class~="not-prose"],[class~="not-prose"] *))) {
-      --tw-font-weight: var(--font-weight-bold);
-      font-weight: var(--font-weight-bold);
-    }
-  }
   .prose-headings\:underline {
     & :is(:where(h1, h2, h3, h4, h5, h6, th):not(:where([class~="not-prose"],[class~="not-prose"] *))) {
       text-decoration-line: underline;
-    }
-  }
-  .dark\:prose-headings\:text-white {
-    @media (prefers-color-scheme: dark) {
-      &:not(.light *) {
-        & :is(:where(h1, h2, h3, h4, h5, h6, th):not(:where([class~="not-prose"],[class~="not-prose"] *))) {
-          color: var(--color-white);
-        }
-      }
-    }
-    &:is(.dark *) {
-      & :is(:where(h1, h2, h3, h4, h5, h6, th):not(:where([class~="not-prose"],[class~="not-prose"] *))) {
-        color: var(--color-white);
-      }
     }
   }
   .prose-h1\:text-2xl {
@@ -11383,26 +11110,6 @@
         @media (hover: hover) {
           text-decoration-line: underline;
         }
-      }
-    }
-  }
-  .prose-strong\:font-bold {
-    & :is(:where(strong):not(:where([class~="not-prose"],[class~="not-prose"] *))) {
-      --tw-font-weight: var(--font-weight-bold);
-      font-weight: var(--font-weight-bold);
-    }
-  }
-  .dark\:prose-strong\:text-white {
-    @media (prefers-color-scheme: dark) {
-      &:not(.light *) {
-        & :is(:where(strong):not(:where([class~="not-prose"],[class~="not-prose"] *))) {
-          color: var(--color-white);
-        }
-      }
-    }
-    &:is(.dark *) {
-      & :is(:where(strong):not(:where([class~="not-prose"],[class~="not-prose"] *))) {
-        color: var(--color-white);
       }
     }
   }
@@ -11453,11 +11160,6 @@
       text-decoration-line: underline;
     }
   }
-  .\[\&_\:is\(code\)\]\:p-0\.5 {
-    & :is(code) {
-      padding: calc(var(--spacing) * 0.5);
-    }
-  }
   .\[\&_\:is\(code\,div\[data-lang\]\)\]\:rounded-\[2px\] {
     & :is(code,div[data-lang]) {
       border-radius: 2px;
@@ -11478,11 +11180,6 @@
     & :is(h2) {
       font-size: var(--text-lg);
       line-height: var(--tw-leading, var(--text-lg--line-height));
-    }
-  }
-  .\[\&_\:is\(li\)\]\:py-2 {
-    & :is(li) {
-      padding-block: calc(var(--spacing) * 2);
     }
   }
   .\[\&_\:is\(p\,ul\,ol\,dl\,table\,blockquote\,div\[data-lang\]\,h3\,h4\,h5\,h6\,hr\)\:not\(\:last-child\)\]\:mb-2 {
@@ -11549,16 +11246,6 @@
   .\[\&_is\:\(code\)\]\:p-0\.5 {
     & is:(code) {
       padding: calc(var(--spacing) * 0.5);
-    }
-  }
-  .\[\&_li\:\:marker\]\:inline-block {
-    & li::marker {
-      display: inline-block;
-    }
-  }
-  .\[\&_li\:\:marker\]\:align-top {
-    & li::marker {
-      vertical-align: top;
     }
   }
   .\[\&_ol\]\:list-decimal {
