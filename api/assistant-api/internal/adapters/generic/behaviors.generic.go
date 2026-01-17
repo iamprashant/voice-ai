@@ -13,7 +13,6 @@ import (
 
 	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
-	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
 	"github.com/rapidaai/protos"
 )
@@ -79,7 +78,7 @@ func (r *GenericRequestor) initializeGreeting(ctx context.Context, behavior *int
 		return
 	}
 
-	message := r.messaging.Create(type_enums.UserActor, "")
+	message := r.messaging.Create("")
 	if err := r.OnPacket(ctx, internal_type.StaticPacket{ContextID: message.GetId(), Text: greetingContent}); err != nil {
 		r.logger.Errorf("error while sending greeting message: %v", err)
 	}

@@ -51,11 +51,12 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 			// calling end of speech analyzer
 
 			// io.messaging.Transition(internal_adapter_request_customizers.Interrupted)
-			interim := talking.messaging.Create(type_enums.UserActor, vl.Text)
+			interim := talking.messaging.Create(vl.Text)
 			if err := talking.Notify(talking.Context(), &protos.AssistantConversationUserMessage{Id: interim.GetId(), Completed: false, Message: &protos.AssistantConversationUserMessage_Text{Text: &protos.AssistantConversationMessageTextContent{Content: interim.String()}}, Time: timestamppb.Now()}); err != nil {
 				talking.logger.Tracef(talking.Context(), "error while notifying the text input from user: %w", err)
 			}
 			// send to end of speech analyzer
+			vl.ContextID = interim.GetId()
 			if err := talking.callEndOfSpeech(ctx, vl); err != nil {
 				talking.OnPacket(ctx, internal_type.EndOfSpeechPacket{ContextID: vl.ContextID, Speech: vl.Text})
 			}
@@ -130,14 +131,9 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 
 			switch vl.Source {
 			case internal_type.InterruptionSourceWord:
-				// user had spoken reset the timer
 				span.AddAttributes(ctx, internal_telemetry.KV{K: "activity_type", V: internal_telemetry.StringValue("word_interrupt")})
-				//
 				talking.resetIdleTimeoutTimer(talking.Context())
-				// if err := talking.messaging.Transition(internal_adapter_request_customizers.Interrupted); err != nil {
-				// 	continue
-				// }
-				//
+
 				if err := talking.sentenceAssembler.Assemble(ctx, vl); err != nil {
 					talking.logger.Debugf("unable to send interruption packet to assembler %v", err)
 				}
@@ -149,9 +145,6 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 					continue
 				}
 				span.AddAttributes(ctx, internal_telemetry.KV{K: "activity_type", V: internal_telemetry.StringValue("vad_interrupt")})
-				// if err := talking.messaging.Transition(internal_adapter_request_customizers.Interrupt); err != nil {
-				// 	continue
-				// }
 				talking.Notify(ctx, &protos.AssistantConversationInterruption{Type: protos.AssistantConversationInterruption_INTERRUPTION_TYPE_VAD, Time: timestamppb.Now()})
 			}
 
@@ -170,7 +163,7 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				})
 			defer span.EndSpan(ctx, utils.AssistantListeningStage)
 			//
-			msi := talking.messaging.Create(type_enums.UserActor, "")
+			msi := talking.messaging.Create("")
 			// send to end of speech analyzer
 			if err := talking.callEndOfSpeech(ctx, vl); err != nil {
 				if !vl.Interim {
@@ -179,7 +172,7 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 			}
 
 			if !vl.Interim {
-				msi = talking.messaging.Create(type_enums.UserActor, vl.Script)
+				msi = talking.messaging.Create(vl.Script)
 				talking.Notify(ctx, &protos.AssistantConversationUserMessage{Id: msi.GetId(), Message: &protos.AssistantConversationUserMessage_Text{Text: &protos.AssistantConversationMessageTextContent{Content: msi.String()}}, Completed: false, Time: timestamppb.New(time.Now())})
 			}
 			continue
@@ -199,7 +192,7 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 			}
 			//
 			if err := talking.Notify(ctx,
-				&protos.AssistantConversationUserMessage{Id: msg.GetId(), Message: &protos.AssistantConversationUserMessage_Text{Text: &protos.AssistantConversationMessageTextContent{Content: msg.String()}}, Completed: true, Time: timestamppb.New(time.Now())}); err != nil {
+				&protos.AssistantConversationUserMessage{Id: msg.GetId(), Message: &protos.AssistantConversationUserMessage_Text{Text: &protos.AssistantConversationMessageTextContent{Content: vl.Speech}}, Completed: true, Time: timestamppb.New(time.Now())}); err != nil {
 				talking.logger.Tracef(ctx, "might be returing processing the duplicate message so cut it out.")
 				continue
 			}
@@ -226,7 +219,6 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 
 			// send to end of speech analyzer
 			talking.callEndOfSpeech(ctx, vl)
-
 		case internal_type.LLMMessagePacket:
 			talking.resetIdleTimeoutTimer(talking.Context())
 			utils.Go(ctx, func() {
