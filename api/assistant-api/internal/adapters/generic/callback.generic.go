@@ -112,19 +112,19 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkt ...internal_t
 				})
 			defer span.EndSpan(ctx, utils.AssistantListeningStage)
 			//
-
 			msi := talking.messaging.Create(type_enums.UserActor, "")
+			// send to end of speech analyzer
+			if err := talking.callEndOfSpeech(ctx, vl); err != nil {
+				if !vl.Interim {
+					talking.OnPacket(ctx, internal_type.EndOfSpeechPacket{ContextID: msi.Id, Speech: msi.String()})
+				}
+			}
+
 			if !vl.Interim {
 				msi = talking.messaging.Create(type_enums.UserActor, vl.Script)
 				talking.Notify(ctx, &protos.AssistantConversationUserMessage{Id: msi.GetId(), Message: &protos.AssistantConversationUserMessage_Text{Text: &protos.AssistantConversationMessageTextContent{Content: msi.String()}}, Completed: false, Time: timestamppb.New(time.Now())})
 			}
 
-			// send to end of speech analyzer
-			if err := talking.callEndOfSpeech(ctx, vl); err != nil {
-				if !vl.Interim {
-					talking.OnPacket(ctx, internal_type.EndOfSpeechPacket{ContextID: vl.ContextID, Speech: msi.String()})
-				}
-			}
 			continue
 
 		case internal_type.EndOfSpeechPacket:

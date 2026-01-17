@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	"github.com/Microsoft/cognitive-services-speech-sdk-go/audio"
+	"github.com/Microsoft/cognitive-services-speech-sdk-go/common"
 	"github.com/Microsoft/cognitive-services-speech-sdk-go/speech"
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/commons"
@@ -27,6 +28,7 @@ type azureTextToSpeech struct {
 
 	contextId   string
 	logger      commons.Logger
+	stream      *audio.PullAudioOutputStream
 	audioConfig *audio.AudioConfig
 	client      *speech.SpeechSynthesizer
 	options     *internal_type.TextToSpeechInitializeOptions
@@ -59,10 +61,18 @@ func (azure *azureTextToSpeech) Close(ctx context.Context) error {
 	defer azure.mu.Unlock()
 
 	if azure.client != nil {
+		// Stop any ongoing synthesis before closing
+		<-azure.client.StopSpeakingAsync()
 		azure.client.Close()
+		azure.client = nil
 	}
 	if azure.audioConfig != nil {
 		azure.audioConfig.Close()
+		azure.audioConfig = nil
+	}
+	if azure.stream != nil {
+		azure.stream.Close()
+		azure.stream = nil
 	}
 	return nil
 }
@@ -75,23 +85,31 @@ func (azure *azureTextToSpeech) Initialize() (err error) {
 	}
 	audioConfig, err := audio.NewAudioConfigFromStreamOutput(stream)
 	if err != nil {
+		stream.Close()
 		azure.logger.Errorf("azure-tts: failed to create audio config:", err)
 		return fmt.Errorf("azure-tts: failed to create audio config: %w", err)
 	}
 
 	speechConfig, err := azure.TextToSpeechOption()
 	if err != nil {
+		stream.Close()
+		audioConfig.Close()
 		azure.logger.Errorf("azure-tts: failed to get speech configuration:", err)
 		return fmt.Errorf("azure-tts: failed to get speech configuration: %w", err)
 	}
+	// Close speechConfig after creating synthesizer as it's no longer needed
+	defer speechConfig.Close()
 
 	client, err := speech.NewSpeechSynthesizerFromConfig(speechConfig, audioConfig)
 	if err != nil {
+		stream.Close()
+		audioConfig.Close()
 		azure.logger.Errorf("azure-tts: failed to initialize speech synthesizer:", err)
 		return fmt.Errorf("azure-tts: failed to initialize speech synthesizer: %w", err)
 	}
 
 	azure.mu.Lock()
+	azure.stream = stream
 	azure.client = client
 	azure.audioConfig = audioConfig
 	azure.mu.Unlock()
@@ -143,19 +161,32 @@ func (azCallback *azureTextToSpeech) OnStart(event speech.SpeechSynthesisEventAr
 
 func (azCallback *azureTextToSpeech) OnSpeech(event speech.SpeechSynthesisEventArgs) {
 	defer event.Close()
+	azCallback.mu.Lock()
+	ctxId := azCallback.contextId
+	azCallback.mu.Unlock()
+
 	azCallback.options.OnSpeech(internal_type.TextToSpeechPacket{
-		ContextID:  azCallback.contextId,
+		ContextID:  ctxId,
 		AudioChunk: event.Result.AudioData,
 	})
 }
 
 func (azCallback *azureTextToSpeech) OnComplete(event speech.SpeechSynthesisEventArgs) {
 	defer event.Close()
+	azCallback.mu.Lock()
+	ctxId := azCallback.contextId
+	azCallback.mu.Unlock()
+
 	azCallback.options.OnSpeech(internal_type.TextToSpeechFlushPacket{
-		ContextID: azCallback.contextId,
+		ContextID: ctxId,
 	})
 }
 
 func (azCallback *azureTextToSpeech) OnCancel(event speech.SpeechSynthesisEventArgs) {
 	defer event.Close()
+	if event.Result.Reason == common.Canceled {
+		cancellation, _ := speech.NewCancellationDetailsFromSpeechSynthesisResult(&event.Result)
+		azCallback.logger.Warnf("azure-tts: synthesis canceled: reason=%v, errorCode=%v, errorDetails=%v",
+			cancellation.Reason, cancellation.ErrorCode, cancellation.ErrorDetails)
+	}
 }

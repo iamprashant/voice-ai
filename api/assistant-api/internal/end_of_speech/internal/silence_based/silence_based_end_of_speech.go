@@ -54,16 +54,12 @@ type eosState struct {
 }
 
 // NewSilenceBasedEOS creates a new silence-based end-of-speech detector
-func NewSilenceBasedEndOfSpeech(
-	logger commons.Logger,
-	callback internaltype.EndOfSpeechCallback,
-	opts utils.Option,
+func NewSilenceBasedEndOfSpeech(logger commons.Logger, callback internaltype.EndOfSpeechCallback, opts utils.Option,
 ) (internaltype.EndOfSpeech, error) {
 	threshold := 1000 * time.Millisecond
 	if v, err := opts.GetFloat64("microphone.eos.timeout"); err == nil {
 		threshold = time.Duration(v) * time.Millisecond
 	}
-
 	eos := &SilenceBasedEOS{
 		logger:         logger,
 		callback:       callback,
@@ -110,7 +106,6 @@ func (eos *SilenceBasedEOS) Analyze(ctx context.Context, pkt internaltype.Packet
 		if seg.Text == "" {
 			return nil
 		}
-
 		eos.send(command{
 			ctx:     ctx,
 			segment: seg,
@@ -121,6 +116,7 @@ func (eos *SilenceBasedEOS) Analyze(ctx context.Context, pkt internaltype.Packet
 		eos.mu.Lock()
 
 		// skip interim-only updates with no prior content
+		eos.logger.Debugf("testing -> SpeechToText packet received %+v", p)
 		if p.Interim && eos.state.segment.Text == "" {
 			eos.mu.Unlock()
 			return nil
@@ -134,15 +130,19 @@ func (eos *SilenceBasedEOS) Analyze(ctx context.Context, pkt internaltype.Packet
 
 		// text accumulation: interim extends, final replaces
 		if p.Interim {
-			newSeg.Text = eos.state.segment.Text + p.Script
-		} else {
-			newSeg.Text = p.Script
+			newSeg.Text = eos.state.segment.Text
+			eos.mu.Unlock()
+			eos.send(command{
+				ctx:     ctx,
+				segment: newSeg,
+				timeout: eos.silenceTimeout,
+			})
+			return nil
 		}
-
+		newSeg.Text = eos.state.segment.Text + p.Script
 		eos.state.segment = newSeg
 		segCopy := newSeg
 		eos.mu.Unlock()
-
 		eos.send(command{
 			ctx:     ctx,
 			segment: segCopy,
@@ -253,7 +253,7 @@ func (eos *SilenceBasedEOS) fire(ctx context.Context, seg SpeechSegment) {
 	}
 
 	eos.logger.Debugf(
-		"EOS: contextID=%s, text=%q, duration=%dms",
+		"testing -> : contextID=%s, text=%q, duration=%dms",
 		seg.ContextID, seg.Text, time.Since(seg.Timestamp).Milliseconds(),
 	)
 

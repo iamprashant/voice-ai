@@ -14,17 +14,17 @@ import (
 
 // Implement the LiveMessageCallback interface
 type deepgramSttCallback struct {
-	logger       commons.Logger
-	onTranscript func(pkt ...internal_type.Packet) error
+	logger  commons.Logger
+	options *internal_type.SpeechToTextInitializeOptions
 }
 
 func NewDeepgramSttCallback(
 	logger commons.Logger,
-	onTranscript func(pkt ...internal_type.Packet) error,
+	options *internal_type.SpeechToTextInitializeOptions,
 ) msginterfaces.LiveMessageCallback {
 	return &deepgramSttCallback{
-		logger:       logger,
-		onTranscript: onTranscript,
+		logger:  logger,
+		options: options,
 	}
 
 }
@@ -38,7 +38,22 @@ func (d *deepgramSttCallback) Open(or *msginterfaces.OpenResponse) error {
 func (d *deepgramSttCallback) Message(mr *msginterfaces.MessageResponse) error {
 	for _, alternative := range mr.Channel.Alternatives {
 		if alternative.Transcript != "" {
-			d.onTranscript(
+
+			if v, err := d.options.ModelOptions.GetFloat64("listen.threshold"); err == nil {
+				if float32(alternative.Confidence) < float32(v) {
+					d.options.OnPacket(
+						internal_type.InterruptionPacket{Source: "word"},
+						internal_type.SpeechToTextPacket{
+							Script:     alternative.Transcript,
+							Confidence: alternative.Confidence,
+							Language:   d.GetMostUsedLanguage(alternative.Languages),
+							Interim:    true,
+						},
+					)
+					return nil
+				}
+			}
+			d.options.OnPacket(
 				internal_type.InterruptionPacket{Source: "word"},
 				internal_type.SpeechToTextPacket{
 					Script:     alternative.Transcript,

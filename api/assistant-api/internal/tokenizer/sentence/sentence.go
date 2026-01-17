@@ -16,18 +16,13 @@ type TokenizerType string
 
 const (
 	TokenizerDefault TokenizerType = "default"
-	TokenizerSimple  TokenizerType = "simple"
 )
 
 func NewSentenceTokenizer(
 	logger commons.Logger,
 	options utils.Option,
 ) (internal_tokenizer.SentenceTokenizer, error) {
-
 	typ, _ := options.GetString("speaker.sentence.tokenizer")
-	if typ == "" {
-		typ = string(TokenizerDefault)
-	}
 
 	switch TokenizerType(typ) {
 	default:

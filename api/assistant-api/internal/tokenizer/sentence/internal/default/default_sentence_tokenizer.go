@@ -71,15 +71,10 @@ type sentenceTokenizer struct {
 //		return err
 //	}
 func NewSentenceTokenizer(logger commons.Logger, options utils.Option) (internal_tokenizer.SentenceTokenizer, error) {
-	st := &sentenceTokenizer{
-		logger: logger,
-		result: make(chan internal_type.Packet, 16),
-	}
-
+	st := &sentenceTokenizer{logger: logger, result: make(chan internal_type.Packet, 16)}
 	if err := st.initializeBoundaries(options, logger); err != nil {
 		return nil, err
 	}
-
 	if !st.hasBoundaries {
 		logger.Debug("No sentence boundaries defined — will emit only on completion")
 	}
@@ -101,9 +96,7 @@ func (st *sentenceTokenizer) initializeBoundaries(options utils.Option, logger c
 	if len(validBoundaries) == 0 {
 		return nil
 	}
-
 	st.hasBoundaries = true
-
 	parts := make([]string, 0, len(validBoundaries))
 	for _, b := range validBoundaries {
 		parts = append(parts, regexp.QuoteMeta(b))

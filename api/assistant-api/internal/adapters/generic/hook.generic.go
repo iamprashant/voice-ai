@@ -84,6 +84,7 @@ func (md *GenericRequestor) OnEndConversation() error {
 	})
 	return nil
 }
+
 func (hk *GenericRequestor) Analysis(
 	endpointId uint64, endpointVersion string,
 	arguments map[string]interface{},
