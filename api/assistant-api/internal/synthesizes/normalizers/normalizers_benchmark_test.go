@@ -21,22 +21,22 @@ import (
 
 type benchmarkLogger struct{}
 
-func (m *benchmarkLogger) Level() zapcore.Level                                      { return zapcore.DebugLevel }
-func (m *benchmarkLogger) Debug(args ...interface{})                                 {}
-func (m *benchmarkLogger) Debugf(template string, args ...interface{})               {}
-func (m *benchmarkLogger) Info(args ...interface{})                                  {}
-func (m *benchmarkLogger) Infof(template string, args ...interface{})                {}
-func (m *benchmarkLogger) Warn(args ...interface{})                                  {}
-func (m *benchmarkLogger) Warnf(template string, args ...interface{})                {}
-func (m *benchmarkLogger) Error(args ...interface{})                                 {}
-func (m *benchmarkLogger) Errorf(template string, args ...interface{})               {}
-func (m *benchmarkLogger) DPanic(args ...interface{})                                {}
-func (m *benchmarkLogger) DPanicf(template string, args ...interface{})              {}
-func (m *benchmarkLogger) Panic(args ...interface{})                                 {}
-func (m *benchmarkLogger) Panicf(template string, args ...interface{})               {}
-func (m *benchmarkLogger) Fatal(args ...interface{})                                 {}
-func (m *benchmarkLogger) Fatalf(template string, args ...interface{})               {}
-func (m *benchmarkLogger) Benchmark(functionName string, duration time.Duration)     {}
+func (m *benchmarkLogger) Level() zapcore.Level                                  { return zapcore.DebugLevel }
+func (m *benchmarkLogger) Debug(args ...interface{})                             {}
+func (m *benchmarkLogger) Debugf(template string, args ...interface{})           {}
+func (m *benchmarkLogger) Info(args ...interface{})                              {}
+func (m *benchmarkLogger) Infof(template string, args ...interface{})            {}
+func (m *benchmarkLogger) Warn(args ...interface{})                              {}
+func (m *benchmarkLogger) Warnf(template string, args ...interface{})            {}
+func (m *benchmarkLogger) Error(args ...interface{})                             {}
+func (m *benchmarkLogger) Errorf(template string, args ...interface{})           {}
+func (m *benchmarkLogger) DPanic(args ...interface{})                            {}
+func (m *benchmarkLogger) DPanicf(template string, args ...interface{})          {}
+func (m *benchmarkLogger) Panic(args ...interface{})                             {}
+func (m *benchmarkLogger) Panicf(template string, args ...interface{})           {}
+func (m *benchmarkLogger) Fatal(args ...interface{})                             {}
+func (m *benchmarkLogger) Fatalf(template string, args ...interface{})           {}
+func (m *benchmarkLogger) Benchmark(functionName string, duration time.Duration) {}
 func (m *benchmarkLogger) Tracef(ctx context.Context, format string, args ...interface{}) {
 }
 func (m *benchmarkLogger) Sync() error { return nil }
@@ -48,22 +48,22 @@ var benchLogger = &benchmarkLogger{}
 // =============================================================================
 
 var (
-	shortSentence      = "Hello world"
-	mediumSentence     = "The CEO meeting at 14:30 on 2024-01-15 at 123 Main St costs $500.50 with 25% discount"
-	longSentence       = strings.Repeat("The CEO meeting at 14:30 on 2024-01-15 at 123 Main St costs $500.50 with API and ML. ", 10)
-	currencyInput      = "Total: $1,234.56 plus $99.99 equals $1,334.55"
-	dateInput          = "Events on 2024-01-15, 2024-06-30, and 2024-12-25"
-	timeInput          = "Meetings at 09:00, 14:30, and 17:45"
-	numberInput        = "We have 5 apples, 12 oranges, and 42 bananas"
-	addressInput       = "Visit 123 Main St, 456 Park Ave, and 789 Oak Rd"
-	urlInput           = "Check https://example.com, www.google.com, and api.test.org"
-	symbolInput        = "Growth is 25% with ±5% variance, temperature 25℃"
-	techInput          = "Using AI, ML, API, DevOps, and CI/CD for automation"
-	roleInput          = "CEO, CFO, CTO, and VP discussed R&D plans"
-	generalInput       = "Dr. Smith aka Johnny Jr. said etc. i.e. examples"
-	mixedComplexInput  = "The CEO Dr. Smith announced at 14:30 on 2024-01-15 that our API costs $500.50 with 25% growth at https://rapida.ai using AI & ML"
-	unicodeHeavyInput  = "℃ ℉ £ € ¥ ₩ ₿ ™ © ® ° ± × ÷ ≈ ≠ ≤ ≥ ∞ π √ ∑ ∫"
-	noMatchInput       = "This is a plain sentence without any special patterns to match"
+	shortSentence     = "Hello world"
+	mediumSentence    = "The CEO meeting at 14:30 on 2024-01-15 at 123 Main St costs $500.50 with 25% discount"
+	longSentence      = strings.Repeat("The CEO meeting at 14:30 on 2024-01-15 at 123 Main St costs $500.50 with API and ML. ", 10)
+	currencyInput     = "Total: $1,234.56 plus $99.99 equals $1,334.55"
+	dateInput         = "Events on 2024-01-15, 2024-06-30, and 2024-12-25"
+	timeInput         = "Meetings at 09:00, 14:30, and 17:45"
+	numberInput       = "We have 5 apples, 12 oranges, and 42 bananas"
+	addressInput      = "Visit 123 Main St, 456 Park Ave, and 789 Oak Rd"
+	urlInput          = "Check https://example.com, www.google.com, and api.test.org"
+	symbolInput       = "Growth is 25% with ±5% variance, temperature 25℃"
+	techInput         = "Using AI, ML, API, DevOps, and CI/CD for automation"
+	roleInput         = "CEO, CFO, CTO, and VP discussed R&D plans"
+	generalInput      = "Dr. Smith aka Johnny Jr. said etc. i.e. examples"
+	mixedComplexInput = "The CEO Dr. Smith announced at 14:30 on 2024-01-15 that our API costs $500.50 with 25% growth at https://rapida.ai using AI & ML"
+	unicodeHeavyInput = "℃ ℉ £ € ¥ ₩ ₿ ™ © ® ° ± × ÷ ≈ ≠ ≤ ≥ ∞ π √ ∑ ∫"
+	noMatchInput      = "This is a plain sentence without any special patterns to match"
 )
 
 // =============================================================================
@@ -672,12 +672,12 @@ func BenchmarkRealWorldTTSInputs(b *testing.B) {
 	}
 
 	realWorldInputs := map[string]string{
-		"customer_service": "Hello! Your order #12345 for $99.99 will arrive on 2024-01-20 between 14:00 and 17:00. Visit https://track.example.com for updates.",
-		"appointment":      "Dr. Smith will see you at 10:30 a.m. on 2024-03-15. The consultation costs $150.00. Our address is 123 Main St.",
+		"customer_service":  "Hello! Your order #12345 for $99.99 will arrive on 2024-01-20 between 14:00 and 17:00. Visit https://track.example.com for updates.",
+		"appointment":       "Dr. Smith will see you at 10:30 a.m. on 2024-03-15. The consultation costs $150.00. Our address is 123 Main St.",
 		"tech_announcement": "The new AI & ML features in our API are launching on 2024-06-01. CEO John Smith said this represents 25% improvement.",
-		"financial_report": "Q4 revenue: $1,234,567.89 with 15% YoY growth. CFO meeting at 09:00 on 2024-01-30.",
-		"simple_greeting":  "Hello, how can I help you today?",
-		"numbers_heavy":    "You have 5 items, 12 messages, and 42 notifications. Total: 59 updates.",
+		"financial_report":  "Q4 revenue: $1,234,567.89 with 15% YoY growth. CFO meeting at 09:00 on 2024-01-30.",
+		"simple_greeting":   "Hello, how can I help you today?",
+		"numbers_heavy":     "You have 5 items, 12 messages, and 42 notifications. Total: 59 updates.",
 	}
 
 	for name, input := range realWorldInputs {
