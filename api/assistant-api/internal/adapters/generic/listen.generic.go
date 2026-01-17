@@ -63,40 +63,42 @@ func (listening *GenericRequestor) ConnectListener(ctx context.Context, audioCon
 		"microphone.eos.enabled": true,
 	}
 
-	transformerConfig, err := listening.GetSpeechToTextTransformer()
-	if err != nil {
-		listening.logger.Warnf("error during getting transformer for assistant.")
-	} else {
-		options = utils.MergeMaps(options, transformerConfig.GetOptions())
-		span.AddAttributes(ctx,
-			internal_telemetry.KV{K: "options", V: internal_telemetry.JSONValue(options)},
-			internal_telemetry.KV{K: "provider", V: internal_telemetry.StringValue(transformerConfig.AudioProvider)},
-		)
-		//
-		eGroup.Go(func() error {
-			err := listening.initializeSpeechToText(ctx, transformerConfig, audioConfig, options)
-			if err != nil {
-				listening.logger.Errorf("unable to initialize transformer %+v", err)
-			}
-			return nil
-		})
+	if audioConfig != nil {
+		transformerConfig, err := listening.GetSpeechToTextTransformer()
+		if err != nil {
+			listening.logger.Warnf("error during getting transformer for assistant.")
+		} else {
+			options = utils.MergeMaps(options, transformerConfig.GetOptions())
+			span.AddAttributes(ctx,
+				internal_telemetry.KV{K: "options", V: internal_telemetry.JSONValue(options)},
+				internal_telemetry.KV{K: "provider", V: internal_telemetry.StringValue(transformerConfig.AudioProvider)},
+			)
+			//
+			eGroup.Go(func() error {
+				err := listening.initializeSpeechToText(ctx, transformerConfig, audioConfig, options)
+				if err != nil {
+					listening.logger.Errorf("unable to initialize transformer %+v", err)
+				}
+				return nil
+			})
 
-		eGroup.Go(func() error {
-			err := listening.initializeVAD(ctx, audioConfig, options)
-			if err != nil {
-				listening.logger.Errorf("illegal input audio transformer, check the config and re-init")
-			}
-			return nil
-		})
+			eGroup.Go(func() error {
+				err := listening.initializeVAD(ctx, audioConfig, options)
+				if err != nil {
+					listening.logger.Errorf("illegal input audio transformer, check the config and re-init")
+				}
+				return nil
+			})
 
-		eGroup.Go(func() error {
-			err := listening.initializeDenoiser(ctx, audioConfig, options)
-			if err != nil {
-				listening.logger.Errorf("illegal input audio transformer, check the config and re-init")
-			}
-			return nil
-		})
+			eGroup.Go(func() error {
+				err := listening.initializeDenoiser(ctx, audioConfig, options)
+				if err != nil {
+					listening.logger.Errorf("illegal input audio transformer, check the config and re-init")
+				}
+				return nil
+			})
 
+		}
 	}
 
 	eGroup.Go(func() error {

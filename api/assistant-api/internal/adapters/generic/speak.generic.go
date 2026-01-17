@@ -32,52 +32,54 @@ func (spk *GenericRequestor) ConnectSpeaker(ctx context.Context, audioOutConfig 
 	start := time.Now()
 	var wg sync.WaitGroup
 
-	// setup output audio transformer
-	if outputTransformer, err := spk.GetTextToSpeechTransformer(); err == nil {
-		speakerOpts = utils.MergeMaps(outputTransformer.GetOptions())
+	// initialize audio output transformer
+	if audioOutConfig != nil {
+		if outputTransformer, err := spk.GetTextToSpeechTransformer(); err == nil {
+			speakerOpts = utils.MergeMaps(outputTransformer.GetOptions())
 
-		span.AddAttributes(context,
-			internal_adapter_telemetry.KV{
-				K: "options", V: internal_adapter_telemetry.JSONValue(speakerOpts),
-			},
-			internal_adapter_telemetry.KV{
-				K: "provider", V: internal_adapter_telemetry.StringValue(outputTransformer.AudioProvider),
-			},
-		)
-		//
-		wg.Add(1)
-		utils.Go(context, func() {
-			defer wg.Done()
-			opts := &internal_type.TextToSpeechInitializeOptions{
-				AudioConfig:  audioOutConfig,
-				OnSpeech:     func(pkt ...internal_type.Packet) error { return spk.OnPacket(context, pkt...) },
-				ModelOptions: speakerOpts,
-			}
+			span.AddAttributes(context,
+				internal_adapter_telemetry.KV{
+					K: "options", V: internal_adapter_telemetry.JSONValue(speakerOpts),
+				},
+				internal_adapter_telemetry.KV{
+					K: "provider", V: internal_adapter_telemetry.StringValue(outputTransformer.AudioProvider),
+				},
+			)
+			//
+			wg.Add(1)
+			utils.Go(context, func() {
+				defer wg.Done()
+				opts := &internal_type.TextToSpeechInitializeOptions{
+					AudioConfig:  audioOutConfig,
+					OnSpeech:     func(pkt ...internal_type.Packet) error { return spk.OnPacket(context, pkt...) },
+					ModelOptions: speakerOpts,
+				}
 
-			credentialId, err := opts.ModelOptions.GetUint64("rapida.credential_id")
-			if err != nil {
-				spk.logger.Errorf("unable to find credential from options %+v", err)
-				return
-			}
-			credential, err := spk.VaultCaller().GetCredential(context, spk.Auth(), credentialId)
-			if err != nil {
-				spk.logger.Errorf("Api call to find credential failed %+v", err)
-				return
-			}
+				credentialId, err := opts.ModelOptions.GetUint64("rapida.credential_id")
+				if err != nil {
+					spk.logger.Errorf("unable to find credential from options %+v", err)
+					return
+				}
+				credential, err := spk.VaultCaller().GetCredential(context, spk.Auth(), credentialId)
+				if err != nil {
+					spk.logger.Errorf("Api call to find credential failed %+v", err)
+					return
+				}
 
-			atransformer, err := internal_transformer.GetTextToSpeechTransformer(internal_transformer.AudioTransformer(outputTransformer.GetName()), context, spk.logger, credential, opts)
-			if err != nil {
-				spk.logger.Errorf("unable to create input audio transformer with error %v", err)
-				return
-			}
-			spk.logger.Benchmark("speak.transformer.GetOutputAudioTransformer", time.Since(start))
-			if err := atransformer.Initialize(); err != nil {
-				spk.logger.Errorf("unable to initilize transformer %v", err)
-				return
-			}
-			spk.textToSpeechTransformer = atransformer
-			spk.logger.Benchmark("speak.transformer.Initialize", time.Since(start))
-		})
+				atransformer, err := internal_transformer.GetTextToSpeechTransformer(internal_transformer.AudioTransformer(outputTransformer.GetName()), context, spk.logger, credential, opts)
+				if err != nil {
+					spk.logger.Errorf("unable to create input audio transformer with error %v", err)
+					return
+				}
+				spk.logger.Benchmark("speak.transformer.GetOutputAudioTransformer", time.Since(start))
+				if err := atransformer.Initialize(); err != nil {
+					spk.logger.Errorf("unable to initilize transformer %v", err)
+					return
+				}
+				spk.textToSpeechTransformer = atransformer
+				spk.logger.Benchmark("speak.transformer.Initialize", time.Since(start))
+			})
+		}
 	}
 	//
 

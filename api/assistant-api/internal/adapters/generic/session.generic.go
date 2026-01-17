@@ -195,10 +195,8 @@ func (talking *GenericRequestor) OnCreateSession(ctx context.Context, inCfg, str
 
 	// establish listener
 	utils.Go(ctx, func() {
-		if audioInConfig != nil {
-			if err := talking.ConnectListener(ctx, audioInConfig); err != nil {
-				talking.logger.Tracef(ctx, "unable to init analyzer %+v", err)
-			}
+		if err := talking.ConnectListener(ctx, audioInConfig); err != nil {
+			talking.logger.Tracef(ctx, "unable to init analyzer %+v", err)
 		}
 	})
 
@@ -297,10 +295,8 @@ func (talking *GenericRequestor) OnResumeSession(ctx context.Context, inCfg, str
 
 	// establish listener
 	utils.Go(ctx, func() {
-		if audioInConfig != nil {
-			if err := talking.ConnectListener(ctx, audioInConfig); err != nil {
-				talking.logger.Tracef(ctx, "unable to init analyzer %+v", err)
-			}
+		if err := talking.ConnectListener(ctx, audioInConfig); err != nil {
+			talking.logger.Tracef(ctx, "unable to init analyzer %+v", err)
 		}
 	})
 
