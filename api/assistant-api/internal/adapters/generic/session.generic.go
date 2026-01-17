@@ -362,17 +362,19 @@ func (r *GenericRequestor) flushFinalMetrics() {
 // disconnect flow. Any errors are logged but do not affect the
 // disconnection process.
 func (r *GenericRequestor) persistRecording(ctx context.Context) {
-	utils.Go(r.Context(), func() {
-		audioData, err := r.recorder.Persist()
-		if err != nil {
-			r.logger.Tracef(ctx, "failed to persist audio recording: %+v", err)
-			return
-		}
+	if r.recorder != nil {
+		utils.Go(r.Context(), func() {
+			audioData, err := r.recorder.Persist()
+			if err != nil {
+				r.logger.Tracef(ctx, "failed to persist audio recording: %+v", err)
+				return
+			}
+			if err = r.CreateConversationRecording(audioData); err != nil {
+				r.logger.Tracef(ctx, "failed to create conversation recording record: %+v", err)
+			}
+		})
+	}
 
-		if err = r.CreateConversationRecording(audioData); err != nil {
-			r.logger.Tracef(ctx, "failed to create conversation recording record: %+v", err)
-		}
-	})
 }
 
 // exportTelemetry exports conversation telemetry data for analytics and monitoring.

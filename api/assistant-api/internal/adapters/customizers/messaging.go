@@ -16,7 +16,7 @@ import (
 )
 
 type Messaging interface {
-	Create(ma type_enums.MessageActor, msg string) *types.Message
+	Create(msg string) *types.Message
 	GetActor() type_enums.MessageActor
 	GetMessage(actor type_enums.MessageActor) (*types.Message, error)
 	GetId() string
@@ -124,43 +124,25 @@ func (ms *messaging) GetActor() type_enums.MessageActor {
 	return ms.actor
 }
 
-func (ms *messaging) Create(actor type_enums.MessageActor, msg string) *types.Message {
+func (ms *messaging) Create(msg string) *types.Message {
 	ms.mutex.Lock()
 	defer ms.mutex.Unlock()
-	if actor.ActingUser() {
-		if ms.in != nil {
-			ms.in.MergeContent(&types.Content{
-				ContentType:   commons.TEXT_CONTENT.String(),
-				ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
-				Content:       []byte(msg),
-			})
-		} else {
-			ms.in = types.NewMessage("user", &types.Content{
-				ContentType:   commons.TEXT_CONTENT.String(),
-				ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
-				Content:       []byte(msg),
-			})
-			ms.in.AddMetadata("mode", ms.inputMode.String())
-
-		}
-		return ms.in
+	if ms.in != nil {
+		ms.in.MergeContent(&types.Content{
+			ContentType:   commons.TEXT_CONTENT.String(),
+			ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
+			Content:       []byte(msg),
+		})
 	} else {
-		if ms.out != nil {
-			ms.out.MergeContent(&types.Content{
-				ContentType:   commons.TEXT_CONTENT.String(),
-				ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
-				Content:       []byte(msg),
-			})
-		} else {
-			ms.out = types.NewMessage("assistant", &types.Content{
-				ContentType:   commons.TEXT_CONTENT.String(),
-				ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
-				Content:       []byte(msg),
-			})
-			ms.out.AddMetadata("mode", ms.outputMode.String())
-		}
-		return ms.out
+		ms.in = types.NewMessage("user", &types.Content{
+			ContentType:   commons.TEXT_CONTENT.String(),
+			ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
+			Content:       []byte(msg),
+		})
+		ms.in.AddMetadata("mode", ms.inputMode.String())
+
 	}
+	return ms.in
 }
 
 func (ms *messaging) GetMessage(actor type_enums.MessageActor) (*types.Message, error) {
