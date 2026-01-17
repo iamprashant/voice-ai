@@ -121,7 +121,7 @@ func (azure *azureTextToSpeech) Initialize() (err error) {
 	return nil
 }
 
-func (azure *azureTextToSpeech) Transform(ctx context.Context, in internal_type.Packet) error {
+func (azure *azureTextToSpeech) Transform(ctx context.Context, in internal_type.LLMPacket) error {
 	azure.mu.Lock()
 	cl := azure.client
 	azure.mu.Unlock()
@@ -140,14 +140,14 @@ func (azure *azureTextToSpeech) Transform(ctx context.Context, in internal_type.
 	}
 
 	switch input := in.(type) {
-	case internal_type.TextPacket:
+	case internal_type.LLMStreamPacket:
 		res := <-cl.StartSpeakingTextAsync(input.Text)
 		if res.Error != nil {
 			return res.Error
 		}
 
 		return nil
-	case internal_type.FlushPacket:
+	case internal_type.LLMMessagePacket:
 		return nil
 	default:
 		return fmt.Errorf("azure-tts: unsupported input type %T", in)
@@ -165,7 +165,7 @@ func (azCallback *azureTextToSpeech) OnSpeech(event speech.SpeechSynthesisEventA
 	ctxId := azCallback.contextId
 	azCallback.mu.Unlock()
 
-	azCallback.options.OnSpeech(internal_type.TextToSpeechPacket{
+	azCallback.options.OnSpeech(internal_type.TextToSpeechAudioPacket{
 		ContextID:  ctxId,
 		AudioChunk: event.Result.AudioData,
 	})
@@ -177,7 +177,7 @@ func (azCallback *azureTextToSpeech) OnComplete(event speech.SpeechSynthesisEven
 	ctxId := azCallback.contextId
 	azCallback.mu.Unlock()
 
-	azCallback.options.OnSpeech(internal_type.TextToSpeechFlushPacket{
+	azCallback.options.OnSpeech(internal_type.TextToSpeechEndPacket{
 		ContextID: ctxId,
 	})
 }

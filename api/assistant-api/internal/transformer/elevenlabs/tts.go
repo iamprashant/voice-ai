@@ -102,7 +102,7 @@ func (elt *elevenlabsTTS) textToSpeechCallback(conn *websocket.Conn, ctx context
 
 			if rawAudioData, err := base64.StdEncoding.DecodeString(audioData.Audio); err == nil {
 				if audioData.ContextId != nil {
-					elt.options.OnSpeech(internal_type.TextToSpeechPacket{
+					elt.options.OnSpeech(internal_type.TextToSpeechAudioPacket{
 						ContextID:  *audioData.ContextId,
 						AudioChunk: rawAudioData,
 					})
@@ -111,7 +111,7 @@ func (elt *elevenlabsTTS) textToSpeechCallback(conn *websocket.Conn, ctx context
 
 			if audioData.IsFinal != nil && *audioData.IsFinal {
 				if audioData.ContextId != nil {
-					elt.options.OnSpeech(internal_type.TextToSpeechFlushPacket{
+					elt.options.OnSpeech(internal_type.TextToSpeechEndPacket{
 						ContextID: *audioData.ContextId,
 					})
 				}
@@ -121,7 +121,7 @@ func (elt *elevenlabsTTS) textToSpeechCallback(conn *websocket.Conn, ctx context
 
 }
 
-func (t *elevenlabsTTS) Transform(ctx context.Context, in internal_type.Packet) error {
+func (t *elevenlabsTTS) Transform(ctx context.Context, in internal_type.LLMPacket) error {
 	t.mu.Lock()
 	cnn := t.connection
 	currentCtx := in.ContextId()
@@ -132,7 +132,7 @@ func (t *elevenlabsTTS) Transform(ctx context.Context, in internal_type.Packet) 
 	}
 
 	switch input := in.(type) {
-	case internal_type.TextPacket:
+	case internal_type.LLMStreamPacket:
 		if err := cnn.WriteJSON(map[string]interface{}{
 			"text":       input.Text,
 			"context_id": currentCtx,
@@ -147,7 +147,7 @@ func (t *elevenlabsTTS) Transform(ctx context.Context, in internal_type.Packet) 
 			t.logger.Errorf("elevenlab-tts: unable to write json for text to speech: %v", err)
 			return err
 		}
-	case internal_type.FlushPacket:
+	case internal_type.LLMMessagePacket:
 		return nil
 	default:
 		return fmt.Errorf("elevenlab-tts: unsupported input type %T", in)

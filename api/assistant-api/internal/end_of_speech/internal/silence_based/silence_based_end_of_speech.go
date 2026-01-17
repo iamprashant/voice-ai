@@ -7,6 +7,7 @@ package internal_silence_based
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -99,6 +100,7 @@ func (eos *SilenceBasedEOS) Analyze(ctx context.Context, pkt internaltype.Packet
 		})
 
 	case internaltype.InterruptionPacket:
+		eos.logger.Debugf("testing -> vad packet received %+v", p)
 		eos.mu.RLock()
 		seg := eos.state.segment
 		eos.mu.RUnlock()
@@ -114,40 +116,40 @@ func (eos *SilenceBasedEOS) Analyze(ctx context.Context, pkt internaltype.Packet
 
 	case internaltype.SpeechToTextPacket:
 		eos.mu.Lock()
-
-		// skip interim-only updates with no prior content
-		eos.logger.Debugf("testing -> SpeechToText packet received %+v", p)
-		if p.Interim && eos.state.segment.Text == "" {
+		if p.Interim {
+			seg := eos.state.segment
 			eos.mu.Unlock()
+			// ignore interim with no text
+			if seg.Text == "" {
+				return nil
+			}
+			eos.send(command{
+				ctx:     ctx,
+				segment: seg,
+				timeout: eos.silenceTimeout,
+			})
+
 			return nil
 		}
 
-		// build new segment
 		newSeg := SpeechSegment{
 			ContextID: p.ContextId(),
 			Timestamp: time.Now(),
+			Text:      eos.state.segment.Text,
 		}
-
-		// text accumulation: interim extends, final replaces
-		if p.Interim {
-			newSeg.Text = eos.state.segment.Text
-			eos.mu.Unlock()
-			eos.send(command{
-				ctx:     ctx,
-				segment: newSeg,
-				timeout: eos.silenceTimeout,
-			})
-			return nil
+		if newSeg.Text != "" {
+			newSeg.Text = fmt.Sprintf("%s %s", eos.state.segment.Text, p.Script)
+		} else {
+			newSeg.Text = p.Script
 		}
-		newSeg.Text = eos.state.segment.Text + p.Script
 		eos.state.segment = newSeg
-		segCopy := newSeg
 		eos.mu.Unlock()
 		eos.send(command{
 			ctx:     ctx,
-			segment: segCopy,
+			segment: newSeg,
 			timeout: eos.silenceTimeout,
 		})
+
 	}
 
 	return nil
@@ -251,7 +253,13 @@ func (eos *SilenceBasedEOS) fire(ctx context.Context, seg SpeechSegment) {
 	if ctx.Err() != nil {
 		return
 	}
-
+	if seg.Text == "" {
+		eos.logger.Debugf(
+			"testing -> : ignore contextID=%s, text=%q, duration=%dms",
+			seg.ContextID, seg.Text, time.Since(seg.Timestamp).Milliseconds(),
+		)
+		return
+	}
 	eos.logger.Debugf(
 		"testing -> : contextID=%s, text=%q, duration=%dms",
 		seg.ContextID, seg.Text, time.Since(seg.Timestamp).Milliseconds(),

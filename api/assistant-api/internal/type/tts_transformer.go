@@ -18,7 +18,7 @@ type TextToSpeechTransformer interface {
 	Name() string
 
 	//
-	Transformers[Packet]
+	Transformers[LLMPacket]
 }
 
 // OutputAudioTransformerOptions defines the interface for handling audio output transformation

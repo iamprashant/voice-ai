@@ -69,19 +69,19 @@ func (afkTool *endpointToolCaller) Call(ctx context.Context, pkt internal_type.L
 	)
 	if err != nil {
 		afkTool.logger.Errorf("error while calling endpoint %+v", err)
-		return internal_type.LLMToolPacket{ContextID: pkt.ContextID, Action: protos.AssistantConversationAction_ENDPOINT_CALL, Result: afkTool.Result("Failed to resolve", false)}
+		return internal_type.LLMToolPacket{ContextID: pkt.ContextId(), Action: protos.AssistantConversationAction_ENDPOINT_CALL, Result: afkTool.Result("Failed to resolve", false)}
 	}
 	if ivk.GetSuccess() {
 		if data := ivk.GetData(); len(data) > 0 {
 			var contentData map[string]interface{}
 			if err := json.Unmarshal(data[0].Content, &contentData); err != nil {
-				return internal_type.LLMToolPacket{ContextID: pkt.ContextID, Action: protos.AssistantConversationAction_ENDPOINT_CALL, Result: map[string]interface{}{"result": string(data[0].Content)}}
+				return internal_type.LLMToolPacket{ContextID: pkt.ContextId(), Action: protos.AssistantConversationAction_ENDPOINT_CALL, Result: map[string]interface{}{"result": string(data[0].Content)}}
 			}
-			return internal_type.LLMToolPacket{ContextID: pkt.ContextID, Action: protos.AssistantConversationAction_ENDPOINT_CALL, Result: contentData}
+			return internal_type.LLMToolPacket{ContextID: pkt.ContextId(), Action: protos.AssistantConversationAction_ENDPOINT_CALL, Result: contentData}
 		}
 
 	}
-	return internal_type.LLMToolPacket{ContextID: pkt.ContextID, Action: protos.AssistantConversationAction_ENDPOINT_CALL, Result: afkTool.Result("Failed to resolve", false)}
+	return internal_type.LLMToolPacket{ContextID: pkt.ContextId(), Action: protos.AssistantConversationAction_ENDPOINT_CALL, Result: afkTool.Result("Failed to resolve", false)}
 }
 
 func (md *endpointToolCaller) Parse(

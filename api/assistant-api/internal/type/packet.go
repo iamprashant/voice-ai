@@ -24,18 +24,6 @@ type MessagePacket interface {
 	Content() string
 }
 
-// FlushPacket represents a request to flush or reset state associated
-// with a specific context.
-type FlushPacket struct {
-	// ContextID identifies the context to be flushed.
-	ContextID string
-}
-
-// ContextId returns the identifier of the context associated with this flush request.
-func (f FlushPacket) ContextId() string {
-	return f.ContextID
-}
-
 // InterruptionPacket represents a request to interrupt ongoing processing
 // within a specific context.
 type InterruptionPacket struct {
@@ -57,18 +45,6 @@ func (f InterruptionPacket) ContextId() string {
 	return f.ContextID
 }
 
-type TextPacket struct {
-	// ContextID identifies the context to be flushed.
-	ContextID string
-
-	Text string
-}
-
-// ContextId returns the identifier of the context associated with this interruption request.
-func (f TextPacket) ContextId() string {
-	return f.ContextID
-}
-
 // MetricPacket represents a request to send metrics within a specific context.
 type MetricPacket struct {
 	// ContextID identifies the context to be flushed.
@@ -80,6 +56,14 @@ type MetricPacket struct {
 
 func (f MetricPacket) ContextId() string {
 	return f.ContextID
+}
+
+// =============================================================================
+// LLM Packets
+// =============================================================================
+
+type LLMPacket interface {
+	ContextId() string
 }
 
 type LLMStreamPacket struct {
@@ -94,6 +78,46 @@ type LLMStreamPacket struct {
 func (f LLMStreamPacket) ContextId() string {
 	return f.ContextID
 }
+
+type LLMMessagePacket struct {
+	// contextID identifies the context to be flushed.
+	ContextID string
+
+	// message
+	Message *types.Message
+}
+
+func (f LLMMessagePacket) Content() string {
+	return f.Message.String()
+}
+
+func (f LLMMessagePacket) Role() string {
+	return "assistant"
+}
+
+func (f LLMMessagePacket) ContextId() string {
+	return f.ContextID
+}
+
+type LLMToolPacket struct {
+
+	// contextID identifies the context to be flushed.
+	ContextID string
+
+	// action
+	Action protos.AssistantConversationAction_ActionType
+
+	// result
+	Result map[string]interface{}
+}
+
+func (f LLMToolPacket) ContextId() string {
+	return f.ContextID
+}
+
+// =============================================================================
+// LLM Packets end
+// =============================================================================
 
 type StaticPacket struct {
 	// contextID identifies the context to be flushed.
@@ -115,45 +139,11 @@ func (f StaticPacket) Role() string {
 	return "rapida"
 }
 
-// llm packate
+// =============================================================================
+// LLM Packets end
+// =============================================================================
 
-type LLMPacket struct {
-	// contextID identifies the context to be flushed.
-	ContextID string
-
-	// message
-	Message *types.Message
-}
-
-func (f LLMPacket) Content() string {
-	return f.Message.String()
-}
-
-func (f LLMPacket) Role() string {
-	return "assistant"
-}
-
-func (f LLMPacket) ContextId() string {
-	return f.ContextID
-}
-
-type LLMToolPacket struct {
-
-	// contextID identifies the context to be flushed.
-	ContextID string
-
-	// action
-	Action protos.AssistantConversationAction_ActionType
-
-	// result
-	Result map[string]interface{}
-}
-
-func (f LLMToolPacket) ContextId() string {
-	return f.ContextID
-}
-
-type TextToSpeechPacket struct {
+type TextToSpeechAudioPacket struct {
 
 	// contextID identifies the context to be flushed.
 	ContextID string
@@ -162,18 +152,22 @@ type TextToSpeechPacket struct {
 	AudioChunk []byte
 }
 
-func (f TextToSpeechPacket) ContextId() string {
+func (f TextToSpeechAudioPacket) ContextId() string {
 	return f.ContextID
 }
 
-type TextToSpeechFlushPacket struct {
+type TextToSpeechEndPacket struct {
 	// contextID identifies the context to be flushed.
 	ContextID string
 }
 
-func (f TextToSpeechFlushPacket) ContextId() string {
+func (f TextToSpeechEndPacket) ContextId() string {
 	return f.ContextID
 }
+
+// =============================================================================
+// User Packet
+// =============================================================================
 
 type UserTextPacket struct {
 	// contextID identifies the context to be flushed.

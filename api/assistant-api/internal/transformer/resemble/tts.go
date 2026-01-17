@@ -116,7 +116,7 @@ func (rt *resembleTTS) textToSpeechCallback(conn *websocket.Conn, ctx context.Co
 			rt.mu.Lock()
 			contextId := rt.contextId
 			rt.mu.Unlock()
-			rt.options.OnSpeech(internal_type.TextToSpeechFlushPacket{ContextID: contextId})
+			rt.options.OnSpeech(internal_type.TextToSpeechEndPacket{ContextID: contextId})
 			return
 
 		case "audio":
@@ -136,7 +136,7 @@ func (rt *resembleTTS) textToSpeechCallback(conn *websocket.Conn, ctx context.Co
 			rt.mu.Lock()
 			contextId := rt.contextId
 			rt.mu.Unlock()
-			rt.options.OnSpeech(internal_type.TextToSpeechPacket{ContextID: contextId, AudioChunk: rawAudioData})
+			rt.options.OnSpeech(internal_type.TextToSpeechAudioPacket{ContextID: contextId, AudioChunk: rawAudioData})
 
 		default:
 			rt.logger.Debugf("resemble-tts: received unknown message type: %s", messageType)
@@ -144,7 +144,7 @@ func (rt *resembleTTS) textToSpeechCallback(conn *websocket.Conn, ctx context.Co
 	}
 }
 
-func (rt *resembleTTS) Transform(ctx context.Context, in internal_type.Packet) error {
+func (rt *resembleTTS) Transform(ctx context.Context, in internal_type.LLMPacket) error {
 	rt.mu.Lock()
 	currentCtx := rt.contextId
 	if in.ContextId() != rt.contextId {
@@ -158,14 +158,14 @@ func (rt *resembleTTS) Transform(ctx context.Context, in internal_type.Packet) e
 	}
 
 	switch input := in.(type) {
-	case internal_type.TextPacket:
+	case internal_type.LLMStreamPacket:
 		if err := connection.WriteJSON(rt.GetTextToSpeechRequest(currentCtx, input.Text)); err != nil {
 			rt.logger.Errorf("resemble-tts: error while writing request to websocket: %v", err)
 			return err
 		}
 
 		return nil
-	case internal_type.FlushPacket:
+	case internal_type.LLMMessagePacket:
 		return nil
 	default:
 		return fmt.Errorf("deepgram-tts: unsupported input type %T", in)

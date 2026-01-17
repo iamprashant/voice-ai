@@ -17,7 +17,7 @@ import (
 // The interface defines two methods: Synthesize and Flush.
 type Synthesizer interface {
 	// Synthesize takes a context, a text string, and optional configuration.
-	Synthesize(ctx context.Context, in internal_type.TextPacket) internal_type.TextPacket
+	Synthesize(ctx context.Context, in internal_type.LLMStreamPacket) internal_type.LLMStreamPacket
 }
 
 type SynthesizerOptions struct {

@@ -107,7 +107,7 @@ func (google *googleTextToSpeech) Initialize() error {
 }
 
 // Transform handles streaming synthesis requests for input text.
-func (google *googleTextToSpeech) Transform(ctx context.Context, in internal_type.Packet) error {
+func (google *googleTextToSpeech) Transform(ctx context.Context, in internal_type.LLMPacket) error {
 	google.mu.Lock()
 	if in.ContextId() != google.contextId {
 		google.contextId = in.ContextId()
@@ -120,7 +120,7 @@ func (google *googleTextToSpeech) Transform(ctx context.Context, in internal_typ
 	}
 
 	switch input := in.(type) {
-	case internal_type.TextPacket:
+	case internal_type.LLMStreamPacket:
 		if err := sCli.Send(&texttospeechpb.StreamingSynthesizeRequest{
 			StreamingRequest: &texttospeechpb.StreamingSynthesizeRequest_Input{
 				Input: &texttospeechpb.StreamingSynthesisInput{
@@ -131,7 +131,7 @@ func (google *googleTextToSpeech) Transform(ctx context.Context, in internal_typ
 			google.logger.Errorf("unable to Synthesize text %v", err)
 		}
 		return nil
-	case internal_type.FlushPacket:
+	case internal_type.LLMMessagePacket:
 		return nil
 	default:
 		return fmt.Errorf("google-tts: unsupported input type %T", in)
@@ -164,7 +164,7 @@ func (g *googleTextToSpeech) textToSpeechCallback(streamClient texttospeechpb.Te
 				g.mu.Lock()
 				ctxId := g.contextId
 				g.mu.Unlock()
-				g.transformerOptions.OnSpeech(internal_type.TextToSpeechPacket{
+				g.transformerOptions.OnSpeech(internal_type.TextToSpeechAudioPacket{
 					ContextID:  ctxId,
 					AudioChunk: resp.GetAudioContent(),
 				})

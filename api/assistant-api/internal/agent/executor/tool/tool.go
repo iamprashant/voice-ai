@@ -99,7 +99,7 @@ func (executor *toolExecutor) tool(messageId string, in, out map[string]interfac
 }
 
 func (executor *toolExecutor) execute(ctx context.Context, message internal_type.LLMPacket, call *protos.ToolCall, communication internal_type.Communication) internal_type.LLMToolPacket {
-	ctx, span, _ := communication.Tracer().StartSpan(ctx, utils.AssistantToolExecuteStage, internal_adapter_telemetry.MessageKV(message.ContextID))
+	ctx, span, _ := communication.Tracer().StartSpan(ctx, utils.AssistantToolExecuteStage, internal_adapter_telemetry.MessageKV(message.ContextId()))
 	defer span.EndSpan(ctx, utils.AssistantToolExecuteStage)
 
 	start := time.Now()
@@ -107,7 +107,7 @@ func (executor *toolExecutor) execute(ctx context.Context, message internal_type
 
 	funC, ok := executor.tools[call.GetFunction().GetName()]
 	if !ok {
-		return internal_type.LLMToolPacket{ContextID: message.ContextID,
+		return internal_type.LLMToolPacket{ContextID: message.ContextId(),
 			Action: protos.AssistantConversationAction_ACTION_UNSPECIFIED, Result: map[string]interface{}{
 				"error":   "unable to find tool.",
 				"success": false,
@@ -122,13 +122,13 @@ func (executor *toolExecutor) execute(ctx context.Context, message internal_type
 	metrics = append(metrics, types.NewTimeTakenMetric(time.Since(start)))
 
 	//
-	executor.tool(message.ContextID, map[string]interface{}{
+	executor.tool(message.ContextId(), map[string]interface{}{
 		"id":        call.Id,
 		"name":      call.GetFunction().GetName(),
 		"arguments": call.GetFunction().GetArguments(),
 	}, output.Result, metrics, communication)
 
-	executor.Log(ctx, funC, communication, message.ContextID, type_enums.RECORD_COMPLETE, int64(time.Since(start)), map[string]interface{}{
+	executor.Log(ctx, funC, communication, message.ContextId(), type_enums.RECORD_COMPLETE, int64(time.Since(start)), map[string]interface{}{
 		"id":        call.Id,
 		"name":      call.GetFunction().GetName(),
 		"arguments": call.GetFunction().GetArguments(),

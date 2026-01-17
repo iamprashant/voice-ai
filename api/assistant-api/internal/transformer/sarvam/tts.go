@@ -116,7 +116,7 @@ func (rt *sarvamTextToSpeech) textToSpeechCallback(conn *websocket.Conn, ctx con
 				rt.logger.Errorf("sarvam-tts: error decoding audio data: %v", err)
 				continue
 			}
-			rt.options.OnSpeech(internal_type.TextToSpeechPacket{
+			rt.options.OnSpeech(internal_type.TextToSpeechAudioPacket{
 				ContextID:  rt.contextId,
 				AudioChunk: rawAudioData,
 			})
@@ -142,7 +142,7 @@ func (rt *sarvamTextToSpeech) textToSpeechCallback(conn *websocket.Conn, ctx con
 	}
 }
 
-func (rt *sarvamTextToSpeech) Transform(ctx context.Context, in internal_type.Packet) error {
+func (rt *sarvamTextToSpeech) Transform(ctx context.Context, in internal_type.LLMPacket) error {
 	rt.mu.Lock()
 	if in.ContextId() != rt.contextId {
 		rt.contextId = in.ContextId()
@@ -155,7 +155,7 @@ func (rt *sarvamTextToSpeech) Transform(ctx context.Context, in internal_type.Pa
 	}
 
 	switch input := in.(type) {
-	case internal_type.TextPacket:
+	case internal_type.LLMStreamPacket:
 		if err := connection.WriteJSON(map[string]interface{}{
 			"type": "text",
 			"data": map[string]interface{}{
@@ -165,7 +165,7 @@ func (rt *sarvamTextToSpeech) Transform(ctx context.Context, in internal_type.Pa
 			rt.logger.Errorf("sarvam-tts: error writing text message to websocket: %v", err)
 			return err
 		}
-	case internal_type.FlushPacket:
+	case internal_type.LLMMessagePacket:
 		if err := connection.WriteJSON(map[string]interface{}{
 			"type": "flush",
 		}); err != nil {

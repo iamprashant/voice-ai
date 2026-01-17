@@ -51,7 +51,7 @@ func NewSentenceNormalizeSynthesizer(logger commons.Logger, opts SynthesizerOpti
 	}, nil
 }
 
-func (ess *sentenceNormalizeSynthesizer) Synthesize(ctx context.Context, in internal_type.TextPacket) internal_type.TextPacket {
+func (ess *sentenceNormalizeSynthesizer) Synthesize(ctx context.Context, in internal_type.LLMStreamPacket) internal_type.LLMStreamPacket {
 	for _, v := range ess.normalizers {
 		in.Text = v.Normalize(in.Text)
 	}

@@ -101,7 +101,7 @@ func (executor *modelAssistantExecutor) chat(
 	communication internal_type.Communication,
 
 	// llm packet
-	packet internal_type.LLMPacket,
+	packet internal_type.LLMMessagePacket,
 
 	// histories or older conversation
 	histories ...*protos.Message,
@@ -134,14 +134,14 @@ func (executor *modelAssistantExecutor) chat(
 		msg, err := res.Recv()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				executor.llm(communication, packet, internal_type.LLMPacket{ContextID: packet.ContextId(), Message: types.ToMessage(output)}, internal_type.MetricPacket{ContextID: packet.ContextID, Metrics: types.ToMetrics(metrics)})
-				communication.OnPacket(ctx, internal_type.LLMPacket{ContextID: packet.ContextId(), Message: types.ToMessage(output)})
+				executor.llm(communication, packet, internal_type.LLMMessagePacket{ContextID: packet.ContextId(), Message: types.ToMessage(output)}, internal_type.MetricPacket{ContextID: packet.ContextID, Metrics: types.ToMetrics(metrics)})
+				communication.OnPacket(ctx, internal_type.LLMMessagePacket{ContextID: packet.ContextId(), Message: types.ToMessage(output)})
 				if len(output.GetToolCalls()) > 0 {
 					// append history of tool call
 					toolExecution, toolContents := executor.toolExecutor.ExecuteAll(ctx, packet, output.GetToolCalls(), communication)
 					communication.OnPacket(ctx, toolExecution...)
 					return executor.chat(ctx, communication,
-						internal_type.LLMPacket{ContextID: packet.ContextId(), Message: &types.Message{Contents: toolContents, Role: "tool"}},
+						internal_type.LLMMessagePacket{ContextID: packet.ContextId(), Message: &types.Message{Contents: toolContents, Role: "tool"}},
 						append(histories, packet.Message.ToProto(), output)...)
 				}
 				return nil
@@ -163,7 +163,7 @@ func (executor *modelAssistantExecutor) chat(
 	}
 }
 
-func (executor *modelAssistantExecutor) llm(communication internal_type.Communication, in, out internal_type.LLMPacket, metrics internal_type.MetricPacket) error {
+func (executor *modelAssistantExecutor) llm(communication internal_type.Communication, in, out internal_type.LLMMessagePacket, metrics internal_type.MetricPacket) error {
 	if in.Message != nil {
 		executor.history = append(executor.history, in.Message.ToProto())
 	}
@@ -183,7 +183,7 @@ func (executor *modelAssistantExecutor) Execute(ctx context.Context, communicati
 	defer span.EndSpan(ctx, utils.AssistantAgentTextGenerationStage)
 	switch plt := pctk.(type) {
 	case internal_type.UserTextPacket:
-		return executor.chat(ctx, communication, internal_type.LLMPacket{ContextID: pctk.ContextId(), Message: types.NewMessage("user", &types.Content{
+		return executor.chat(ctx, communication, internal_type.LLMMessagePacket{ContextID: pctk.ContextId(), Message: types.NewMessage("user", &types.Content{
 			ContentType:   commons.TEXT_CONTENT.String(),
 			ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
 			Content:       []byte(plt.Text),

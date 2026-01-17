@@ -1494,3 +1494,184 @@ func TestEdgeCaseRapidResetCycles(t *testing.T) {
 	}
 	callMu.Unlock()
 }
+
+// TestSingleCallbackForContinuousSpeechWithInterimAndFinal verifies that
+// continuous speech with mixed interim and final packets results in a single
+// callback with the complete accumulated text from FINAL packets only.
+// Interim packets only extend the timer, they don't contribute to the callback text.
+// This test reproduces the bug where callback fired twice:
+// 1. "Okay. Can you tell me what is" (premature)
+// 2. "payment doing right now and later?" (remainder)
+// Instead of once with: "Okay. Can you tell me what is the difference inpayment doing right now and later?"
+func TestSingleCallbackForContinuousSpeechWithInterimAndFinal(t *testing.T) {
+	logger, _ := commons.NewApplicationLogger()
+
+	var callbackResults []internal_type.EndOfSpeechPacket
+	callMu := sync.Mutex{}
+	callback := func(ctx context.Context, res internal_type.EndOfSpeechPacket) error {
+		callMu.Lock()
+		callbackResults = append(callbackResults, res)
+		callMu.Unlock()
+		return nil
+	}
+
+	opts := newTestOpts(map[string]any{"microphone.eos.timeout": 500.0}) // 500ms timeout
+	svcIface, err := NewSilenceBasedEndOfSpeech(logger, callback, opts)
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	defer svcIface.Close()
+
+	ctx := context.Background()
+
+	// Simulate the exact sequence from the bug report:
+	// Packets arrive faster than silence timeout, so timer keeps resetting
+	packets := []internal_type.SpeechToTextPacket{
+		// 1. Interim: "Okay. We" - only extends timer
+		{Script: "Okay. We", Interim: true, Confidence: 0.74560547, Language: "en"},
+		// 2. Interim: "Okay. Can you tell me what is" - only extends timer
+		{Script: "Okay. Can you tell me what is", Interim: true, Confidence: 0.9980469, Language: "en"},
+		// 3. Final: "Okay. Can you tell me what is the difference in" - accumulates text
+		{Script: "Okay. Can you tell me what is the difference in", Interim: false, Confidence: 1.0, Language: "en"},
+		// 4. Interim: "payment doing right now and later?" - only extends timer
+		{Script: "payment doing right now and later?", Interim: true, Confidence: 0.9970703, Language: "en"},
+		// 5. Final: "payment doing right now and later?" - accumulates text
+		{Script: "payment doing right now and later?", Interim: false, Confidence: 0.9970703, Language: "en"},
+	}
+
+	// Send packets with small delays (simulating real-time speech < silence timeout)
+	for _, pkt := range packets {
+		if err := svcIface.Analyze(ctx, pkt); err != nil {
+			t.Fatalf("Analyze failed: %v", err)
+		}
+		time.Sleep(100 * time.Millisecond) // Packets arrive faster than 500ms timeout
+	}
+
+	// Wait for silence timeout to trigger callback
+	time.Sleep(700 * time.Millisecond)
+
+	// Verify: callback should fire exactly once
+	callMu.Lock()
+	count := len(callbackResults)
+	callMu.Unlock()
+
+	if count != 1 {
+		callMu.Lock()
+		for i, res := range callbackResults {
+			t.Logf("Callback %d: %q", i+1, res.Speech)
+		}
+		callMu.Unlock()
+		t.Fatalf("expected 1 callback invocation, got %d", count)
+	}
+
+	// Verify: the callback should contain the accumulated FINAL text only
+	expectedText := "Okay. Can you tell me what is the difference in payment doing right now and later?"
+	callMu.Lock()
+	actualText := callbackResults[0].Speech
+	callMu.Unlock()
+
+	if actualText != expectedText {
+		t.Errorf("expected speech %q, got %q", expectedText, actualText)
+	}
+}
+
+// TestInterimPacketsOnlyExtendTimer verifies that interim packets only extend
+// the timer but don't contribute text to the callback. If only interim packets
+// are received (no finals), the callback fires with empty text.
+
+func TestInterimPacketsOnlyExtendTimer(t *testing.T) {
+	logger, _ := commons.NewApplicationLogger()
+
+	called := make(chan struct{}, 1)
+	callback := func(ctx context.Context, res internal_type.EndOfSpeechPacket) error {
+		select {
+		case called <- struct{}{}:
+		default:
+		}
+		return nil
+	}
+
+	opts := newTestOpts(map[string]any{"microphone.eos.timeout": 200.0})
+	svcIface, err := NewSilenceBasedEndOfSpeech(logger, callback, opts)
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	defer svcIface.Close()
+
+	ctx := context.Background()
+
+	// Send only an interim packet (no final)
+	pkt := internal_type.SpeechToTextPacket{
+		Script:  "This is interim only text",
+		Interim: true,
+	}
+	if err := svcIface.Analyze(ctx, pkt); err != nil {
+		t.Fatalf("Analyze failed: %v", err)
+	}
+
+	// Callback must NOT be called for interim-only packets
+	select {
+	case <-called:
+		t.Fatal("callback should not be called for interim-only packet")
+	case <-time.After(400 * time.Millisecond):
+		// success: no callback received
+	}
+}
+
+// TestInterimPacketsResetTimerContinuously verifies that continuous interim packets
+// prevent the callback from firing prematurely.
+func TestInterimPacketsResetTimerContinuously(t *testing.T) {
+	logger, _ := commons.NewApplicationLogger()
+
+	callCount := 0
+	callMu := sync.Mutex{}
+	callback := func(ctx context.Context, res internal_type.EndOfSpeechPacket) error {
+		callMu.Lock()
+		callCount++
+		callMu.Unlock()
+		return nil
+	}
+
+	opts := newTestOpts(map[string]any{"microphone.eos.timeout": 300.0}) // 300ms timeout
+	svcIface, err := NewSilenceBasedEndOfSpeech(logger, callback, opts)
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	defer svcIface.Close()
+
+	ctx := context.Background()
+
+	// Send interim packets every 200ms (faster than 300ms timeout)
+	// This should keep resetting the timer
+	for i := 0; i < 5; i++ {
+		pkt := internal_type.SpeechToTextPacket{
+			Script:  fmt.Sprintf("Interim part %d", i+1),
+			Interim: false,
+		}
+		if err := svcIface.Analyze(ctx, pkt); err != nil {
+			t.Fatalf("Analyze failed: %v", err)
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
+
+	// Callback should not have fired yet (timer keeps resetting)
+	callMu.Lock()
+	countDuringSpeech := callCount
+	callMu.Unlock()
+
+	if countDuringSpeech != 0 {
+		t.Errorf("expected 0 callback invocations during continuous speech, got %d", countDuringSpeech)
+	}
+
+	// Now wait for silence timeout
+	time.Sleep(400 * time.Millisecond)
+
+	// Callback should fire exactly once
+	callMu.Lock()
+	finalCount := callCount
+	callMu.Unlock()
+
+	if finalCount != 1 {
+		t.Errorf("expected 1 callback invocation after silence, got %d", finalCount)
+	}
+}

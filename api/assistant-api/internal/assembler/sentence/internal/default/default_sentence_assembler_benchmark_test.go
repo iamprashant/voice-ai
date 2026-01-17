@@ -16,8 +16,8 @@ import (
 	"github.com/rapidaai/pkg/utils"
 )
 
-// BenchmarkNewSentenceTokenizer measures the creation time of a tokenizer
-func BenchmarkNewSentenceTokenizer(b *testing.B) {
+// BenchmarkNewDefaultLLMSentenceAssembler measures the creation time of a assembler
+func BenchmarkNewDefaultLLMSentenceAssembler(b *testing.B) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := utils.Option{"speaker.sentence.boundaries": ".,?!"}
 
@@ -25,13 +25,13 @@ func BenchmarkNewSentenceTokenizer(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		tokenizer, _ := NewSentenceTokenizer(logger, opts)
-		tokenizer.Close()
+		assembler, _ := NewDefaultLLMSentenceAssembler(logger, opts)
+		assembler.Close()
 	}
 }
 
-// BenchmarkNewSentenceTokenizerNoBoundaries measures creation without boundaries
-func BenchmarkNewSentenceTokenizerNoBoundaries(b *testing.B) {
+// BenchmarkNewDefaultLLMSentenceAssemblerNoBoundaries measures creation without boundaries
+func BenchmarkNewDefaultLLMSentenceAssemblerNoBoundaries(b *testing.B) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := utils.Option{}
 
@@ -39,8 +39,8 @@ func BenchmarkNewSentenceTokenizerNoBoundaries(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		tokenizer, _ := NewSentenceTokenizer(logger, opts)
-		tokenizer.Close()
+		assembler, _ := NewDefaultLLMSentenceAssembler(logger, opts)
+		assembler.Close()
 	}
 }
 
@@ -54,12 +54,12 @@ func BenchmarkSingleSentenceTokenization(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		tokenizer, _ := NewSentenceTokenizer(logger, opts)
-		tokenizer.Tokenize(ctx, internal_type.TextPacket{
+		assembler, _ := NewDefaultLLMSentenceAssembler(logger, opts)
+		assembler.Assemble(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      "Hello world.",
 		})
-		tokenizer.Close()
+		assembler.Close()
 	}
 }
 
@@ -69,7 +69,7 @@ func BenchmarkMultipleSentences(b *testing.B) {
 	opts := utils.Option{"speaker.sentence.boundaries": "."}
 	ctx := context.Background()
 
-	sentences := []*internal_type.TextPacket{
+	sentences := []*internal_type.LLMStreamPacket{
 		{ContextID: "speaker1", Text: "First sentence."},
 		{ContextID: "speaker1", Text: " Second sentence."},
 		{ContextID: "speaker1", Text: " Third sentence."},
@@ -79,11 +79,11 @@ func BenchmarkMultipleSentences(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		tokenizer, _ := NewSentenceTokenizer(logger, opts)
+		assembler, _ := NewDefaultLLMSentenceAssembler(logger, opts)
 		for _, s := range sentences {
-			tokenizer.Tokenize(ctx, s)
+			assembler.Assemble(ctx, s)
 		}
-		tokenizer.Close()
+		assembler.Close()
 	}
 }
 
@@ -104,12 +104,12 @@ func BenchmarkLargeSentences(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		tokenizer, _ := NewSentenceTokenizer(logger, opts)
-		tokenizer.Tokenize(ctx, internal_type.TextPacket{
+		assembler, _ := NewDefaultLLMSentenceAssembler(logger, opts)
+		assembler.Assemble(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      largeSentence,
 		})
-		tokenizer.Close()
+		assembler.Close()
 	}
 }
 
@@ -130,14 +130,14 @@ func BenchmarkMultipleBoundaries(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		tokenizer, _ := NewSentenceTokenizer(logger, opts)
+		assembler, _ := NewDefaultLLMSentenceAssembler(logger, opts)
 		for _, s := range testSentences {
-			tokenizer.Tokenize(ctx, internal_type.TextPacket{
+			assembler.Assemble(ctx, internal_type.LLMStreamPacket{
 				ContextID: "speaker1",
 				Text:      s,
 			})
 		}
-		tokenizer.Close()
+		assembler.Close()
 	}
 }
 
@@ -151,16 +151,16 @@ func BenchmarkContextSwitching(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		tokenizer, _ := NewSentenceTokenizer(logger, opts)
+		assembler, _ := NewDefaultLLMSentenceAssembler(logger, opts)
 		for speaker := 0; speaker < 5; speaker++ {
 			for j := 0; j < 3; j++ {
-				tokenizer.Tokenize(ctx, internal_type.TextPacket{
+				assembler.Assemble(ctx, internal_type.LLMStreamPacket{
 					ContextID: fmt.Sprintf("speaker%d", speaker),
 					Text:      fmt.Sprintf("Sentence %d.", j),
 				})
 			}
 		}
-		tokenizer.Close()
+		assembler.Close()
 	}
 }
 
@@ -174,17 +174,17 @@ func BenchmarkResultChannelConsumption(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		tokenizer, _ := NewSentenceTokenizer(logger, opts)
+		assembler, _ := NewDefaultLLMSentenceAssembler(logger, opts)
 
 		// Send sentences
 		for j := 0; j < 10; j++ {
-			tokenizer.Tokenize(ctx, internal_type.TextPacket{
+			assembler.Assemble(ctx, internal_type.LLMStreamPacket{
 				ContextID: "speaker1",
 				Text:      fmt.Sprintf("Sentence %d.", j),
 			})
 		}
 
-		tokenizer.Close()
+		assembler.Close()
 	}
 }
 
@@ -198,15 +198,15 @@ func BenchmarkCompleteFlag(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		tokenizer, _ := NewSentenceTokenizer(logger, opts)
-		tokenizer.Tokenize(ctx, internal_type.TextPacket{
+		assembler, _ := NewDefaultLLMSentenceAssembler(logger, opts)
+		assembler.Assemble(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      "This is a test",
-		}, internal_type.FlushPacket{
+		}, internal_type.LLMMessagePacket{
 			ContextID: "speaker1",
 		})
 
-		tokenizer.Close()
+		assembler.Close()
 	}
 }
 
@@ -220,14 +220,14 @@ func BenchmarkBufferingWithoutBoundaries(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		tokenizer, _ := NewSentenceTokenizer(logger, opts)
+		assembler, _ := NewDefaultLLMSentenceAssembler(logger, opts)
 		for j := 0; j < 5; j++ {
-			tokenizer.Tokenize(ctx, internal_type.TextPacket{
+			assembler.Assemble(ctx, internal_type.LLMStreamPacket{
 				ContextID: "speaker1",
 				Text:      "Text segment",
 			})
 		}
-		tokenizer.Close()
+		assembler.Close()
 	}
 }
 
@@ -250,18 +250,18 @@ func BenchmarkStreamingLargeText(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		tokenizer, _ := NewSentenceTokenizer(logger, opts)
+		assembler, _ := NewDefaultLLMSentenceAssembler(logger, opts)
 		for _, chunk := range chunks {
-			tokenizer.Tokenize(ctx, internal_type.TextPacket{
+			assembler.Assemble(ctx, internal_type.LLMStreamPacket{
 				ContextID: "speaker1",
 				Text:      chunk,
 			})
 		}
-		tokenizer.Close()
+		assembler.Close()
 	}
 }
 
-// BenchmarkClosing measures the cost of closing a tokenizer
+// BenchmarkClosing measures the cost of closing a assembler
 func BenchmarkClosing(b *testing.B) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := utils.Option{"speaker.sentence.boundaries": "."}
@@ -270,8 +270,8 @@ func BenchmarkClosing(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		tokenizer, _ := NewSentenceTokenizer(logger, opts)
-		tokenizer.Close()
+		assembler, _ := NewDefaultLLMSentenceAssembler(logger, opts)
+		assembler.Close()
 	}
 }
 
@@ -285,15 +285,15 @@ func BenchmarkEmptyAndCompleteFlush(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		tokenizer, _ := NewSentenceTokenizer(logger, opts)
+		assembler, _ := NewDefaultLLMSentenceAssembler(logger, opts)
 		// Send empty with complete flag
-		tokenizer.Tokenize(ctx, internal_type.TextPacket{
+		assembler.Assemble(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      "",
-		}, internal_type.FlushPacket{
+		}, internal_type.LLMMessagePacket{
 			ContextID: "speaker1",
 		})
-		tokenizer.Close()
+		assembler.Close()
 	}
 }
 
@@ -307,7 +307,7 @@ func BenchmarkComplexScenario(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		tokenizer, _ := NewSentenceTokenizer(logger, opts)
+		assembler, _ := NewDefaultLLMSentenceAssembler(logger, opts)
 
 		// Simulate a realistic conversation
 		conversationTurns := []struct {
@@ -323,21 +323,21 @@ func BenchmarkComplexScenario(b *testing.B) {
 		}
 
 		for _, turn := range conversationTurns {
-			tokenizer.Tokenize(ctx, internal_type.TextPacket{
+			assembler.Assemble(ctx, internal_type.LLMStreamPacket{
 				ContextID: turn.speaker,
 				Text:      turn.text,
 			})
 		}
 
 		// Flush remaining
-		tokenizer.Tokenize(ctx, internal_type.TextPacket{
+		assembler.Assemble(ctx, internal_type.LLMStreamPacket{
 			ContextID: "alice",
 			Text:      "",
-		}, internal_type.FlushPacket{
+		}, internal_type.LLMMessagePacket{
 			ContextID: "alice",
 		})
 
-		tokenizer.Close()
+		assembler.Close()
 	}
 }
 
@@ -349,12 +349,12 @@ func BenchmarkParallelProcessing(b *testing.B) {
 
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			tokenizer, _ := NewSentenceTokenizer(logger, opts)
-			tokenizer.Tokenize(ctx, internal_type.TextPacket{
+			assembler, _ := NewDefaultLLMSentenceAssembler(logger, opts)
+			assembler.Assemble(ctx, internal_type.LLMStreamPacket{
 				ContextID: "speaker1",
 				Text:      "Hello world.",
 			})
-			tokenizer.Close()
+			assembler.Close()
 		}
 	})
 }
@@ -371,11 +371,11 @@ func BenchmarkWhitespaceProcessing(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		tokenizer, _ := NewSentenceTokenizer(logger, opts)
-		tokenizer.Tokenize(ctx, internal_type.TextPacket{
+		assembler, _ := NewDefaultLLMSentenceAssembler(logger, opts)
+		assembler.Assemble(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      textWithWhitespace,
 		})
-		tokenizer.Close()
+		assembler.Close()
 	}
 }

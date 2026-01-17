@@ -116,7 +116,6 @@ func (g *googleSpeechToText) speechToTextCallback(stram speechpb.Speech_Streamin
 					if v, err := g.mdlOpts.GetFloat64("listen.threshold"); err == nil {
 						if alt.GetConfidence() < float32(v) {
 							g.options.OnPacket(
-								internal_type.InterruptionPacket{Source: "word"},
 								internal_type.SpeechToTextPacket{
 									Script:     alt.GetTranscript(),
 									Confidence: float64(alt.GetConfidence()),

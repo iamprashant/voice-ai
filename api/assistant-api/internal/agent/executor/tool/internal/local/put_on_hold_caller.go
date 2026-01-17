@@ -51,7 +51,7 @@ func (tc *putOnHoldToolCaller) argument(args string) uint64 {
 }
 
 func (afkTool *putOnHoldToolCaller) Call(ctx context.Context, pkt internal_type.LLMPacket, toolId string, args string, communication internal_type.Communication) internal_type.LLMToolPacket {
-	return internal_type.LLMToolPacket{ContextID: pkt.ContextID, Action: protos.AssistantConversationAction_PUT_ON_HOLD, Result: afkTool.Result("Putting on hold.", true)}
+	return internal_type.LLMToolPacket{ContextID: pkt.ContextId(), Action: protos.AssistantConversationAction_PUT_ON_HOLD, Result: afkTool.Result("Putting on hold.", true)}
 }
 
 func NewPutOnHoldToolCaller(

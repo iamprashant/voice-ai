@@ -37,14 +37,13 @@ import (
 	"strings"
 	"sync"
 
-	internal_tokenizer "github.com/rapidaai/api/assistant-api/internal/tokenizer"
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/utils"
 )
 
 // SentenceTokenizer implements sentence-level tokenization for streaming text.
-type sentenceTokenizer struct {
+type sentenceAssembler struct {
 	logger commons.Logger
 	result chan internal_type.Packet
 
@@ -70,8 +69,8 @@ type sentenceTokenizer struct {
 //	if err != nil {
 //		return err
 //	}
-func NewSentenceTokenizer(logger commons.Logger, options utils.Option) (internal_tokenizer.SentenceTokenizer, error) {
-	st := &sentenceTokenizer{logger: logger, result: make(chan internal_type.Packet, 16)}
+func NewDefaultLLMSentenceAssembler(logger commons.Logger, options utils.Option) (internal_type.LLMSentenceAssembler, error) {
+	st := &sentenceAssembler{logger: logger, result: make(chan internal_type.Packet, 16)}
 	if err := st.initializeBoundaries(options, logger); err != nil {
 		return nil, err
 	}
@@ -84,7 +83,7 @@ func NewSentenceTokenizer(logger commons.Logger, options utils.Option) (internal
 
 // initializeBoundaries sets up the boundary regex from configuration options.
 // It safely handles missing or invalid boundary configurations.
-func (st *sentenceTokenizer) initializeBoundaries(options utils.Option, logger commons.Logger) error {
+func (st *sentenceAssembler) initializeBoundaries(options utils.Option, logger commons.Logger) error {
 	boundariesRaw, err := options.GetString("speaker.sentence.boundaries")
 	if err != nil || boundariesRaw == "" {
 		return nil
@@ -140,7 +139,7 @@ func filterBoundaries(boundaries []string) []string {
 //		Sentence:   "Hello world.",
 //		IsComplete: true,
 //	})
-func (st *sentenceTokenizer) Tokenize(ctx context.Context, sentences ...internal_type.Packet) error {
+func (st *sentenceAssembler) Assemble(ctx context.Context, sentences ...internal_type.Packet) error {
 	for _, sentence := range sentences {
 		toEmit := st.extractAndQueue(sentence)
 		// Send queued results while respecting context cancellation
@@ -158,13 +157,18 @@ func (st *sentenceTokenizer) Tokenize(ctx context.Context, sentences ...internal
 // extractAndQueue extracts complete sentences from the input and returns them
 // in emission order. It safely manages buffer state and context switching.
 
-func (st *sentenceTokenizer) extractAndQueue(sentence internal_type.Packet) []internal_type.Packet {
+func (st *sentenceAssembler) extractAndQueue(sentence internal_type.Packet) []internal_type.Packet {
 	st.mu.Lock()
 	defer st.mu.Unlock()
 	var toEmit []internal_type.Packet
 
 	switch input := sentence.(type) {
-	case internal_type.TextPacket:
+	case internal_type.InterruptionPacket:
+		st.buffer.Reset()
+		st.currentContext = ""
+		return nil
+
+	case internal_type.LLMStreamPacket:
 		// Handle context switch - just clean buffer, do NOT emit
 		if input.ContextID != st.currentContext && st.currentContext != "" {
 			st.buffer.Reset()
@@ -177,17 +181,15 @@ func (st *sentenceTokenizer) extractAndQueue(sentence internal_type.Packet) []in
 		if st.hasBoundaries {
 			toEmit = append(toEmit, st.extractSentencesByBoundary(input.ContextID)...)
 		}
-	case internal_type.FlushPacket:
+	case internal_type.LLMMessagePacket:
 		if remaining := st.getBufferContent(); remaining != "" {
-			toEmit = append(toEmit, internal_type.TextPacket{
+			toEmit = append(toEmit, internal_type.LLMStreamPacket{
 				ContextID: st.currentContext,
 				Text:      remaining,
 			})
 			st.buffer.Reset()
 		}
-		toEmit = append(toEmit, internal_type.FlushPacket{
-			ContextID: st.currentContext,
-		})
+		toEmit = append(toEmit, input)
 	default:
 		st.logger.Warnf("Unsupported tokenizer input type: %T", sentence)
 		return nil
@@ -198,7 +200,7 @@ func (st *sentenceTokenizer) extractAndQueue(sentence internal_type.Packet) []in
 
 // extractSentencesByBoundary extracts all sentences that end at boundaries.
 // Called with lock held.
-func (st *sentenceTokenizer) extractSentencesByBoundary(contextId string) []internal_type.Packet {
+func (st *sentenceAssembler) extractSentencesByBoundary(contextId string) []internal_type.Packet {
 	var sentences []internal_type.Packet
 
 	for {
@@ -206,7 +208,7 @@ func (st *sentenceTokenizer) extractSentencesByBoundary(contextId string) []inte
 		if sentence == "" {
 			break
 		}
-		sentences = append(sentences, internal_type.TextPacket{ContextID: contextId, Text: sentence})
+		sentences = append(sentences, internal_type.LLMStreamPacket{ContextID: contextId, Text: sentence})
 		st.buffer.Reset()
 		st.buffer.WriteString(remaining)
 	}
@@ -216,14 +218,14 @@ func (st *sentenceTokenizer) extractSentencesByBoundary(contextId string) []inte
 
 // getBufferContent returns the trimmed buffer content.
 // Called with lock held.
-func (st *sentenceTokenizer) getBufferContent() string {
+func (st *sentenceAssembler) getBufferContent() string {
 	return strings.TrimSpace(st.buffer.String())
 }
 
 // extractSentence extracts a single sentence from text using the boundary regex.
 // Returns the sentence and remaining text.
 // Called with lock held.
-func (st *sentenceTokenizer) extractSentence(text string) (string, string) {
+func (st *sentenceAssembler) extractSentence(text string) (string, string) {
 	if st.boundaryRegex == nil || text == "" {
 		return "", text
 	}
@@ -246,7 +248,7 @@ func (st *sentenceTokenizer) extractSentence(text string) (string, string) {
 //	for sentence := range tokenizer.Result() {
 //		fmt.Println(sentence.Sentence)
 //	}
-func (st *sentenceTokenizer) Result() <-chan internal_type.Packet {
+func (st *sentenceAssembler) Result() <-chan internal_type.Packet {
 	return st.result
 }
 
@@ -256,7 +258,7 @@ func (st *sentenceTokenizer) Result() <-chan internal_type.Packet {
 // to Tokenize() will panic when trying to send on the closed channel.
 //
 // It is safe to call Close() multiple times; subsequent calls are no-ops.
-func (st *sentenceTokenizer) Close() error {
+func (st *sentenceAssembler) Close() error {
 	st.mu.Lock()
 	defer st.mu.Unlock()
 
@@ -274,9 +276,9 @@ func (st *sentenceTokenizer) Close() error {
 }
 
 // String returns a string representation of the tokenizer for debugging.
-func (st *sentenceTokenizer) String() string {
+func (st *sentenceAssembler) String() string {
 	st.mu.RLock()
 	defer st.mu.RUnlock()
 
-	return fmt.Sprintf("SentenceTokenizer{context=%q, bufferLen=%d, hasBoundaries=%v}", st.currentContext, st.buffer.Len(), st.hasBoundaries)
+	return fmt.Sprintf("SentenceAssembler{context=%q, bufferLen=%d, hasBoundaries=%v}", st.currentContext, st.buffer.Len(), st.hasBoundaries)
 }

@@ -42,7 +42,6 @@ func (d *deepgramSttCallback) Message(mr *msginterfaces.MessageResponse) error {
 			if v, err := d.options.ModelOptions.GetFloat64("listen.threshold"); err == nil {
 				if float32(alternative.Confidence) < float32(v) {
 					d.options.OnPacket(
-						internal_type.InterruptionPacket{Source: "word"},
 						internal_type.SpeechToTextPacket{
 							Script:     alternative.Transcript,
 							Confidence: alternative.Confidence,

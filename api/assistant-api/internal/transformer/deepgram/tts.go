@@ -103,7 +103,7 @@ func (t *deepgramTTS) textToSpeechCallback(conn *websocket.Conn, ctx context.Con
 			}
 
 			if msgType == websocket.BinaryMessage {
-				t.options.OnSpeech(internal_type.TextToSpeechPacket{
+				t.options.OnSpeech(internal_type.TextToSpeechAudioPacket{
 					ContextID:  t.contextId,
 					AudioChunk: data,
 				})
@@ -121,7 +121,7 @@ func (t *deepgramTTS) textToSpeechCallback(conn *websocket.Conn, ctx context.Con
 				continue
 
 			case "Flushed":
-				t.options.OnSpeech(internal_type.TextToSpeechFlushPacket{
+				t.options.OnSpeech(internal_type.TextToSpeechEndPacket{
 					ContextID: t.contextId,
 				})
 				continue
@@ -138,7 +138,7 @@ func (t *deepgramTTS) textToSpeechCallback(conn *websocket.Conn, ctx context.Con
 }
 
 // Transform streams text into Deepgram
-func (t *deepgramTTS) Transform(ctx context.Context, in internal_type.Packet) error {
+func (t *deepgramTTS) Transform(ctx context.Context, in internal_type.LLMPacket) error {
 	t.mu.Lock()
 	conn := t.connection
 	currentCtx := t.contextId
@@ -158,7 +158,7 @@ func (t *deepgramTTS) Transform(ctx context.Context, in internal_type.Packet) er
 	}
 
 	switch input := in.(type) {
-	case internal_type.TextPacket:
+	case internal_type.LLMStreamPacket:
 		// if the request is for complete then we just flush the stream
 		if err := conn.WriteJSON(map[string]interface{}{
 			"type": "Speak",
@@ -168,7 +168,7 @@ func (t *deepgramTTS) Transform(ctx context.Context, in internal_type.Packet) er
 		}
 
 		return nil
-	case internal_type.FlushPacket:
+	case internal_type.LLMMessagePacket:
 		t.logger.Debugf("flushing %s", input.ContextID)
 		if err := conn.WriteJSON(map[string]string{"type": "Flush"}); err != nil {
 			t.logger.Errorf("deepgram-tts: failed to send Flush %v", err)

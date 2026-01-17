@@ -257,9 +257,9 @@ func TestMessageWithConfidenceThreshold(t *testing.T) {
 
 		require.NoError(t, err)
 		packets := collector.GetPackets()
-		require.Len(t, packets, 2)
+		require.Len(t, packets, 1)
 
-		stt := packets[1].(internal_type.SpeechToTextPacket)
+		stt := packets[0].(internal_type.SpeechToTextPacket)
 		assert.True(t, stt.Interim, "should be marked as interim when confidence is below threshold")
 		assert.Equal(t, "low confidence text", stt.Script)
 	})
@@ -345,9 +345,9 @@ func TestMessageWithConfidenceThreshold(t *testing.T) {
 
 		require.NoError(t, err)
 		packets := collector.GetPackets()
-		require.Len(t, packets, 2)
+		require.Len(t, packets, 1)
 
-		stt := packets[1].(internal_type.SpeechToTextPacket)
+		stt := packets[0].(internal_type.SpeechToTextPacket)
 		assert.True(t, stt.Interim)
 	})
 }

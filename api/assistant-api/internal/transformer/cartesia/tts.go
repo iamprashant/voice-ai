@@ -83,7 +83,7 @@ func (cst *cartesiaTTS) textToSpeechCallback(conn *websocket.Conn, ctx context.C
 				continue
 			}
 			if payload.Done {
-				_ = cst.options.OnSpeech(internal_type.TextToSpeechFlushPacket{
+				_ = cst.options.OnSpeech(internal_type.TextToSpeechEndPacket{
 					ContextID: payload.ContextID,
 				})
 				continue
@@ -96,7 +96,7 @@ func (cst *cartesiaTTS) textToSpeechCallback(conn *websocket.Conn, ctx context.C
 				cst.logger.Error("cartesia-tts: failed to decode audio payload error: %v", err)
 				continue
 			}
-			_ = cst.options.OnSpeech(internal_type.TextToSpeechPacket{
+			_ = cst.options.OnSpeech(internal_type.TextToSpeechAudioPacket{
 				ContextID:  payload.ContextID,
 				AudioChunk: decoded,
 			})
@@ -109,7 +109,7 @@ func (*cartesiaTTS) Name() string {
 	return "cartesia-text-to-speech"
 }
 
-func (ct *cartesiaTTS) Transform(ctx context.Context, in internal_type.Packet) error {
+func (ct *cartesiaTTS) Transform(ctx context.Context, in internal_type.LLMPacket) error {
 	ct.mu.Lock()
 	conn := ct.connection
 	currentCtx := ct.contextId
@@ -130,12 +130,12 @@ func (ct *cartesiaTTS) Transform(ctx context.Context, in internal_type.Packet) e
 	}
 
 	switch input := in.(type) {
-	case internal_type.TextPacket:
+	case internal_type.LLMStreamPacket:
 		message := ct.GetTextToSpeechInput(input.Text, map[string]interface{}{"continue": true, "context_id": ct.contextId, "max_buffer_delay_ms": "0ms"})
 		if err := conn.WriteJSON(message); err != nil {
 			return err
 		}
-	case internal_type.FlushPacket:
+	case internal_type.LLMMessagePacket:
 		message := ct.GetTextToSpeechInput("", map[string]interface{}{"continue": false, "flush": true, "context_id": ct.contextId})
 		if err := conn.WriteJSON(message); err != nil {
 			return err

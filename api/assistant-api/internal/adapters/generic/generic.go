@@ -29,7 +29,6 @@ import (
 	internal_knowledge_service "github.com/rapidaai/api/assistant-api/internal/services/knowledge"
 	internal_synthesizers "github.com/rapidaai/api/assistant-api/internal/synthesizes"
 	internal_telemetry "github.com/rapidaai/api/assistant-api/internal/telemetry"
-	internal_tokenizer "github.com/rapidaai/api/assistant-api/internal/tokenizer"
 	endpoint_client "github.com/rapidaai/pkg/clients/endpoint"
 	integration_client "github.com/rapidaai/pkg/clients/integration"
 	web_client "github.com/rapidaai/pkg/clients/web"
@@ -88,8 +87,8 @@ type GenericRequestor struct {
 	textToSpeechTransformer internal_type.TextToSpeechTransformer
 
 	// speak intelligence
-	tokenizer    internal_tokenizer.SentenceTokenizer
-	synthesizers []internal_synthesizers.Synthesizer
+	sentenceAssembler internal_type.LLMSentenceAssembler
+	synthesizers      []internal_synthesizers.Synthesizer
 
 	recorder       internal_recorder.Recorder
 	templateParser parsers.StringTemplateParser
@@ -183,18 +182,15 @@ func (dm *GenericRequestor) Streamer() internal_streamers.Streamer {
 	return dm.streamer
 }
 
-func (deb *GenericRequestor) OnCreateMessage(ctx context.Context, in internal_type.MessagePacket) error {
-	start := time.Now()
-	deb.histories = append(deb.histories, in)
-	_, err := deb.conversationService.CreateConversationMessage(ctx, deb.Auth(), deb.Source(), deb.Assistant().Id, deb.Assistant().AssistantProviderId, deb.Conversation().Id, in.ContextId(), in.Role(), in.Content())
+func (deb *GenericRequestor) OnCreateMessage(ctx context.Context, msg internal_type.MessagePacket) error {
+	deb.histories = append(deb.histories, msg)
+	_, err := deb.conversationService.CreateConversationMessage(ctx, deb.Auth(), deb.Source(), deb.Assistant().Id, deb.Assistant().AssistantProviderId, deb.Conversation().Id, msg.ContextId(), msg.Role(), msg.Content())
 
 	if err != nil {
 		deb.logger.Error("unable to create message for the user")
 		return err
 	}
-	deb.logger.Benchmark("genericRequestor.OnCreateMessage", time.Since(start))
 	return nil
-
 }
 
 func (deb *GenericRequestor) OnMessageMetric(ctx context.Context, messageId string, metrics []*types.Metric) error {

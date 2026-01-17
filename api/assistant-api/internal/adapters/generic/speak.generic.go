@@ -10,9 +10,9 @@ import (
 	"sync"
 	"time"
 
+	internal_sentence_assembler "github.com/rapidaai/api/assistant-api/internal/assembler/sentence"
 	internal_synthesizers "github.com/rapidaai/api/assistant-api/internal/synthesizes"
 	internal_adapter_telemetry "github.com/rapidaai/api/assistant-api/internal/telemetry"
-	internal_sentence_tokenizer "github.com/rapidaai/api/assistant-api/internal/tokenizer/sentence"
 	internal_transformer "github.com/rapidaai/api/assistant-api/internal/transformer"
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/utils"
@@ -86,8 +86,8 @@ func (spk *GenericRequestor) ConnectSpeaker(ctx context.Context, audioOutConfig 
 	wg.Add(1)
 	utils.Go(context, func() {
 		defer wg.Done()
-		if tokenizer, err := internal_sentence_tokenizer.NewSentenceTokenizer(spk.logger, speakerOpts); err == nil {
-			spk.tokenizer = tokenizer
+		if sentenceAssembler, err := internal_sentence_assembler.NewLLMSentenceAssembler(spk.logger, speakerOpts); err == nil {
+			spk.sentenceAssembler = sentenceAssembler
 			go spk.OnCompleteSentence(context)
 		}
 		if normalizer, err := internal_synthesizers.NewSentenceNormalizeSynthesizer(spk.logger, internal_synthesizers.SynthesizerOptions{SpeakerOptions: speakerOpts}); err == nil {
@@ -111,14 +111,14 @@ func (spk *GenericRequestor) OnCompleteSentence(ctx context.Context) {
 			spk.logger.Debugf("OnCompleteSentence stopped due to context cancellation")
 			return
 
-		case result, ok := <-spk.tokenizer.Result():
+		case result, ok := <-spk.sentenceAssembler.Result():
 			if !ok {
 				spk.logger.Debugf("speak: OnCompleteSentence tokenizer channel closed")
 				return
 			}
 			//
 			switch res := result.(type) {
-			case internal_type.FlushPacket:
+			case internal_type.LLMMessagePacket:
 				ctx, span, _ := spk.Tracer().StartSpan(spk.Context(), utils.AssistantSpeakingStage)
 				defer span.EndSpan(ctx, utils.AssistantSpeakingStage)
 				span.AddAttributes(ctx,
@@ -130,10 +130,7 @@ func (spk *GenericRequestor) OnCompleteSentence(ctx context.Context) {
 						spk.logger.Errorf("speak: failed to send flush to text to speech transformer error: %v", err)
 					}
 				}
-				// if err := talking.Notify(ctx, &protos.AssistantConversationAssistantMessage{Time: timestamppb.Now(), Id: vl.ContextID, Completed: true, Message: &protos.AssistantConversationAssistantMessage_Text{Text: &protos.AssistantConversationMessageTextContent{Content: vl.Message.String()}}}); err != nil {
-				// 	talking.logger.Tracef(ctx, "error while outputting chunk to the user: %w", err)
-				// }
-			case internal_type.TextPacket:
+			case internal_type.LLMStreamPacket:
 				ctxSpan, span, _ := spk.Tracer().StartSpan(ctx, utils.AssistantSpeakingStage)
 				span.AddAttributes(ctxSpan,
 					internal_adapter_telemetry.MessageKV(res.ContextID),
@@ -156,6 +153,7 @@ func (spk *GenericRequestor) OnCompleteSentence(ctx context.Context) {
 					},
 				)
 
+				// if err := spk.messaging.Transition(internal_adapter_request_customizers.AgentSpeaking); err == nil {
 				if spk.textToSpeechTransformer != nil {
 					if err := spk.textToSpeechTransformer.Transform(spk.Context(), res); err != nil {
 						spk.logger.Errorf("speak: failed to send sentence to text to speech transformer error: %v", err)
@@ -164,6 +162,8 @@ func (spk *GenericRequestor) OnCompleteSentence(ctx context.Context) {
 				if err := spk.Notify(ctx, &protos.AssistantConversationAssistantMessage{Time: timestamppb.Now(), Id: res.ContextId(), Completed: true, Message: &protos.AssistantConversationAssistantMessage_Text{Text: &protos.AssistantConversationMessageTextContent{Content: res.Text}}}); err != nil {
 					spk.logger.Tracef(ctx, "error while outputting chunk to the user: %w", err)
 				}
+				// }
+
 				span.EndSpan(ctxSpan, utils.AssistantSpeakingStage)
 			default:
 			}
@@ -178,8 +178,8 @@ func (spk *GenericRequestor) CloseSpeaker() error {
 			spk.logger.Errorf("cancel all output transformer with error %v", err)
 		}
 	}
-	if spk.tokenizer != nil {
-		spk.tokenizer.Close()
+	if spk.sentenceAssembler != nil {
+		spk.sentenceAssembler.Close()
 	}
 	return nil
 }

@@ -3,30 +3,28 @@
 //
 // Licensed under GPL-2.0 with Rapida Additional Terms.
 // See LICENSE.md or contact sales@rapida.ai for commercial usage.
-package internal_tokenizer
+package internal_type
 
 import (
 	"context"
-
-	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 )
 
-// SentenceTokenizer defines the contract for components that transform
+// LLMSentenceAssembler defines the contract for components that transform
 // streamed or batched text inputs into tokenized sentence outputs.
 //
 // Implementations are expected to:
 //   - Accept inputs via Tokenize
 //   - Emit results asynchronously on the Result channel
 //   - Release resources and stop processing on Close
-type SentenceTokenizer interface {
+type LLMSentenceAssembler interface {
 	// Tokenize consumes a tokenizer input (such as an LLMStreamChunk
 	// or Finalize signal). Implementations should respect context
 	// cancellation and deadlines.
-	Tokenize(ctx context.Context, in ...internal_type.Packet) error
+	Assemble(ctx context.Context, in ...Packet) error
 
 	// Result returns a read-only channel on which tokenized outputs
 	// are delivered.
-	Result() <-chan internal_type.Packet
+	Result() <-chan Packet
 
 	// Close terminates the tokenizer, releases resources,
 	// and closes the Result channel.

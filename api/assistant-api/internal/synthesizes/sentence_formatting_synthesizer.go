@@ -29,8 +29,8 @@ func NewSentenceFormattingSynthesizer(logger commons.Logger, opts SynthesizerOpt
 
 func (ess *sentenceFormattingSynthesizer) Synthesize(
 	ctx context.Context,
-	in internal_type.TextPacket,
-) internal_type.TextPacket {
+	in internal_type.LLMStreamPacket,
+) internal_type.LLMStreamPacket {
 	in.Text = ess.RemoveMarkdown(in.Text)
 	in.Text = ess.AddConjectionPause(in.Text)
 	return in

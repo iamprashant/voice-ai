@@ -55,7 +55,7 @@ func collectResults(ctx context.Context, resultChan <-chan internal_type.Packet)
 
 // Tests
 
-func TestNewSentenceTokenizer(t *testing.T) {
+func TestNewDefaultLLMSentenceAssembler(t *testing.T) {
 	tests := []struct {
 		name           string
 		boundaries     string
@@ -93,7 +93,7 @@ func TestNewSentenceTokenizer(t *testing.T) {
 			logger, _ := commons.NewApplicationLogger()
 			opts := newMockOptions(tt.boundaries)
 
-			tokenizer, err := NewSentenceTokenizer(logger, opts)
+			tokenizer, err := NewDefaultLLMSentenceAssembler(logger, opts)
 			if tt.shouldError && err != nil {
 				return
 			}
@@ -107,7 +107,7 @@ func TestNewSentenceTokenizer(t *testing.T) {
 
 			defer tokenizer.Close()
 
-			st := tokenizer.(*sentenceTokenizer)
+			st := tokenizer.(*sentenceAssembler)
 			if st.hasBoundaries != tt.expectedBounds {
 				t.Errorf("expected hasBoundaries=%v, got %v", tt.expectedBounds, st.hasBoundaries)
 			}
@@ -118,16 +118,16 @@ func TestNewSentenceTokenizer(t *testing.T) {
 func TestSingleSentence(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	tokenizer, _ := NewSentenceTokenizer(logger, opts)
+	tokenizer, _ := NewDefaultLLMSentenceAssembler(logger, opts)
 	defer tokenizer.Close()
 
 	ctx := context.Background()
-	err := tokenizer.Tokenize(ctx, internal_type.TextPacket{
+	err := tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
 		ContextID: "speaker1",
 		Text:      "Hello world.",
 	})
 	if err != nil {
-		t.Fatalf("Tokenize failed: %v", err)
+		t.Fatalf("Assemble failed: %v", err)
 	}
 
 	results := collectResults(ctx, tokenizer.Result())
@@ -136,8 +136,8 @@ func TestSingleSentence(t *testing.T) {
 		return
 	}
 
-	// Handle both TokenizedSentence and other TokenizerOutput types
-	if ts, ok := results[0].(internal_type.TextPacket); ok {
+	// Handle both AssembledSentence and other AssemblerOutput types
+	if ts, ok := results[0].(internal_type.LLMStreamPacket); ok {
 		if ts.Text != "Hello world." {
 			t.Errorf("expected 'Hello world.', got '%s'", ts.Text)
 		}
@@ -152,7 +152,7 @@ func TestSingleSentence(t *testing.T) {
 func TestMultipleSentences(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	tokenizer, _ := NewSentenceTokenizer(logger, opts)
+	tokenizer, _ := NewDefaultLLMSentenceAssembler(logger, opts)
 	defer tokenizer.Close()
 
 	ctx := context.Background()
@@ -165,7 +165,7 @@ func TestMultipleSentences(t *testing.T) {
 
 	go func() {
 		for _, s := range sentences {
-			tokenizer.Tokenize(ctx, internal_type.TextPacket{
+			tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
 				ContextID: "speaker1",
 				Text:      s,
 			})
@@ -181,7 +181,7 @@ func TestMultipleSentences(t *testing.T) {
 
 	expected := []string{"First sentence.", "Second sentence.", "Third sentence."}
 	for i, result := range results {
-		if ts, ok := result.(internal_type.TextPacket); ok {
+		if ts, ok := result.(internal_type.LLMStreamPacket); ok {
 			if ts.Text != expected[i] {
 				t.Errorf("result %d: expected '%s', got '%s'", i, expected[i], ts.Text)
 			}
@@ -205,12 +205,12 @@ func TestMultipleBoundaries(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tokenizer, _ := NewSentenceTokenizer(logger, opts)
+		tokenizer, _ := NewDefaultLLMSentenceAssembler(logger, opts)
 
 		// Count results through channel
 		resultCount := 0
 		go func() {
-			tokenizer.Tokenize(ctx, internal_type.TextPacket{
+			tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
 				ContextID: "speaker1",
 				Text:      tc.input,
 			})
@@ -242,20 +242,20 @@ func TestMultipleBoundaries(t *testing.T) {
 func TestContextSwitching(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	tokenizer, _ := NewSentenceTokenizer(logger, opts)
+	tokenizer, _ := NewDefaultLLMSentenceAssembler(logger, opts)
 	defer tokenizer.Close()
 
 	ctx := context.Background()
 
 	go func() {
 		// Speaker 1 starts with boundary
-		tokenizer.Tokenize(ctx, internal_type.TextPacket{
+		tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      "Hello there.",
 		})
 
 		// Speaker 2 continues with boundary
-		tokenizer.Tokenize(ctx, internal_type.TextPacket{
+		tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker2",
 			Text:      "Goodbye.",
 		})
@@ -272,7 +272,7 @@ func TestContextSwitching(t *testing.T) {
 	foundSpeaker1 := false
 	foundSpeaker2 := false
 	for _, result := range results {
-		if ts, ok := result.(internal_type.TextPacket); ok {
+		if ts, ok := result.(internal_type.LLMStreamPacket); ok {
 			if ts.ContextID == "speaker1" {
 				foundSpeaker1 = true
 				if ts.Text != "Hello there." {
@@ -298,26 +298,26 @@ func TestContextSwitching(t *testing.T) {
 func TestIsCompleteFlag(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	tokenizer, _ := NewSentenceTokenizer(logger, opts)
+	tokenizer, _ := NewDefaultLLMSentenceAssembler(logger, opts)
 	defer tokenizer.Close()
 
 	ctx := context.Background()
 
 	go func() {
 		// Send incomplete sentence without boundary
-		tokenizer.Tokenize(ctx, internal_type.TextPacket{
+		tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      "This is incomplete",
 		})
 		// Force completion with Flush
-		tokenizer.Tokenize(ctx, internal_type.FlushPacket{
+		tokenizer.Assemble(ctx, internal_type.LLMMessagePacket{
 			ContextID: "speaker1",
 		})
 	}()
 
 	results := collectResults(ctx, tokenizer.Result())
 
-	// Should get: TokenizedSentence + Flush message
+	// Should get: AssembledSentence + Flush message
 	if len(results) != 2 {
 		t.Errorf("expected 2 results (sentence + flush), got %d", len(results))
 		return
@@ -325,12 +325,12 @@ func TestIsCompleteFlag(t *testing.T) {
 
 	// First result should be the flushed sentence (can be value or pointer)
 	var sentence string
-	if ts, ok := results[0].(internal_type.TextPacket); ok {
+	if ts, ok := results[0].(internal_type.LLMStreamPacket); ok {
 		sentence = ts.Text
-	} else if ts, ok := results[0].(internal_type.TextPacket); ok {
+	} else if ts, ok := results[0].(internal_type.LLMStreamPacket); ok {
 		sentence = ts.Text
 	} else {
-		t.Errorf("expected first result to be TokenizedSentence, got %T", results[0])
+		t.Errorf("expected first result to be AssembledSentence, got %T", results[0])
 		return
 	}
 
@@ -339,7 +339,7 @@ func TestIsCompleteFlag(t *testing.T) {
 	}
 
 	// Second result should be the Flush message
-	if _, ok := results[1].(internal_type.FlushPacket); !ok {
+	if _, ok := results[1].(internal_type.LLMMessagePacket); !ok {
 		t.Errorf("expected second result to be Flush message, got %T", results[1])
 	}
 }
@@ -347,18 +347,18 @@ func TestIsCompleteFlag(t *testing.T) {
 func TestEmptyInput(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	tokenizer, _ := NewSentenceTokenizer(logger, opts)
+	tokenizer, _ := NewDefaultLLMSentenceAssembler(logger, opts)
 	defer tokenizer.Close()
 
 	ctx := context.Background()
 
-	err := tokenizer.Tokenize(ctx, internal_type.TextPacket{
+	err := tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
 		ContextID: "speaker1",
 		Text:      "",
 	})
 
 	if err != nil {
-		t.Fatalf("Tokenize should not error on empty input: %v", err)
+		t.Fatalf("Assemble should not error on empty input: %v", err)
 	}
 
 	results := collectResults(ctx, tokenizer.Result())
@@ -370,25 +370,25 @@ func TestEmptyInput(t *testing.T) {
 func TestNoBoundariesDefined(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions("")
-	tokenizer, _ := NewSentenceTokenizer(logger, opts)
+	tokenizer, _ := NewDefaultLLMSentenceAssembler(logger, opts)
 	defer tokenizer.Close()
 
 	ctx := context.Background()
 
 	go func() {
 		// Without boundaries, we can only get output with Flush
-		tokenizer.Tokenize(ctx, internal_type.TextPacket{
+		tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      "Hello world",
 		})
 
-		tokenizer.Tokenize(ctx, internal_type.TextPacket{
+		tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      " this is great",
 		})
 
 		// Flush to trigger output
-		tokenizer.Tokenize(ctx, internal_type.FlushPacket{
+		tokenizer.Assemble(ctx, internal_type.LLMMessagePacket{
 			ContextID: "speaker1",
 		})
 	}()
@@ -401,7 +401,7 @@ func TestNoBoundariesDefined(t *testing.T) {
 		return
 	}
 
-	if ts, ok := results[0].(internal_type.TextPacket); ok {
+	if ts, ok := results[0].(internal_type.LLMStreamPacket); ok {
 		if ts.Text != "Hello world this is great" {
 			t.Errorf("expected 'Hello world this is great', got '%s'", ts.Text)
 		}
@@ -411,7 +411,7 @@ func TestNoBoundariesDefined(t *testing.T) {
 func TestContextCancellation(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	tokenizer, _ := NewSentenceTokenizer(logger, opts)
+	tokenizer, _ := NewDefaultLLMSentenceAssembler(logger, opts)
 	defer tokenizer.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -419,13 +419,13 @@ func TestContextCancellation(t *testing.T) {
 	// Cancel context immediately
 	cancel()
 
-	err := tokenizer.Tokenize(ctx, internal_type.TextPacket{
+	err := tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
 		ContextID: "speaker1",
 		Text:      "Hello.",
 	})
 
 	if err == nil {
-		// When context is already cancelled, Tokenize may not return an error
+		// When context is already cancelled, Assemble may not return an error
 		// if the select case for sending on the channel is not reached
 		// This is acceptable behavior
 		return
@@ -439,7 +439,7 @@ func TestContextCancellation(t *testing.T) {
 func TestConcurrentContexts(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	tokenizer, _ := NewSentenceTokenizer(logger, opts)
+	tokenizer, _ := NewDefaultLLMSentenceAssembler(logger, opts)
 	defer tokenizer.Close()
 
 	ctx := context.Background()
@@ -453,7 +453,7 @@ func TestConcurrentContexts(t *testing.T) {
 			defer wg.Done()
 			contextID := fmt.Sprintf("speaker%d", speakerID)
 			for i := 0; i < 3; i++ {
-				tokenizer.Tokenize(ctx, internal_type.TextPacket{
+				tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
 					ContextID: contextID,
 					Text:      fmt.Sprintf("Sentence %d.", i),
 				})
@@ -480,26 +480,26 @@ func TestConcurrentContexts(t *testing.T) {
 func TestBufferStateMaintenance(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	tokenizer, _ := NewSentenceTokenizer(logger, opts)
+	tokenizer, _ := NewDefaultLLMSentenceAssembler(logger, opts)
 	defer tokenizer.Close()
 
 	ctx := context.Background()
 
 	go func() {
 		// Send partial sentence
-		tokenizer.Tokenize(ctx, internal_type.TextPacket{
+		tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      "Hello",
 		})
 
 		// Continue with no boundary
-		tokenizer.Tokenize(ctx, internal_type.TextPacket{
+		tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      " world",
 		})
 
 		// Now add boundary
-		tokenizer.Tokenize(ctx, internal_type.TextPacket{
+		tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      ".",
 		})
@@ -512,7 +512,7 @@ func TestBufferStateMaintenance(t *testing.T) {
 		return
 	}
 
-	if ts, ok := results[0].(internal_type.TextPacket); ok && ts.Text != "Hello world." {
+	if ts, ok := results[0].(internal_type.LLMStreamPacket); ok && ts.Text != "Hello world." {
 		t.Errorf("expected 'Hello world.', got '%s'", ts.Text)
 	}
 }
@@ -520,17 +520,17 @@ func TestBufferStateMaintenance(t *testing.T) {
 func TestWhitespaceHandling(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	tokenizer, _ := NewSentenceTokenizer(logger, opts)
+	tokenizer, _ := NewDefaultLLMSentenceAssembler(logger, opts)
 	defer tokenizer.Close()
 
 	ctx := context.Background()
 
 	go func() {
-		tokenizer.Tokenize(ctx, internal_type.TextPacket{
+		tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      "Hello.   \n  ",
 		})
-		tokenizer.Tokenize(ctx, internal_type.TextPacket{
+		tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      "World.",
 		})
@@ -545,7 +545,7 @@ func TestWhitespaceHandling(t *testing.T) {
 	}
 
 	// First sentence should be trimmed
-	if ts, ok := results[0].(internal_type.TextPacket); ok && ts.Text != "Hello." {
+	if ts, ok := results[0].(internal_type.LLMStreamPacket); ok && ts.Text != "Hello." {
 		t.Errorf("expected 'Hello.', got '%s'", ts.Text)
 	}
 }
@@ -553,7 +553,7 @@ func TestWhitespaceHandling(t *testing.T) {
 func TestMultipleClose(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	tokenizer, _ := NewSentenceTokenizer(logger, opts)
+	tokenizer, _ := NewDefaultLLMSentenceAssembler(logger, opts)
 
 	// Close multiple times should not panic
 	err1 := tokenizer.Close()
@@ -567,7 +567,7 @@ func TestMultipleClose(t *testing.T) {
 func TestResultChannelClosure(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	tokenizer, _ := NewSentenceTokenizer(logger, opts)
+	tokenizer, _ := NewDefaultLLMSentenceAssembler(logger, opts)
 
 	resultChan := tokenizer.Result()
 	tokenizer.Close()
@@ -584,13 +584,13 @@ func TestSpecialCharacterBoundaries(t *testing.T) {
 
 	// Test with regex special characters
 	opts := newMockOptions(".?!*+")
-	tokenizer, _ := NewSentenceTokenizer(logger, opts)
+	tokenizer, _ := NewDefaultLLMSentenceAssembler(logger, opts)
 	defer tokenizer.Close()
 
 	ctx := context.Background()
 
 	go func() {
-		tokenizer.Tokenize(ctx, internal_type.TextPacket{
+		tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      "Really?",
 		})
@@ -598,7 +598,7 @@ func TestSpecialCharacterBoundaries(t *testing.T) {
 
 	results := collectResults(ctx, tokenizer.Result())
 	if len(results) > 0 {
-		if ts, ok := results[0].(internal_type.TextPacket); ok && ts.Text != "Really?" {
+		if ts, ok := results[0].(internal_type.LLMStreamPacket); ok && ts.Text != "Really?" {
 			t.Errorf("special character boundary failed: got '%s'", ts.Text)
 		}
 	}
@@ -607,7 +607,7 @@ func TestSpecialCharacterBoundaries(t *testing.T) {
 func TestLargeBatch(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	tokenizer, _ := NewSentenceTokenizer(logger, opts)
+	tokenizer, _ := NewDefaultLLMSentenceAssembler(logger, opts)
 	defer tokenizer.Close()
 
 	ctx := context.Background()
@@ -615,7 +615,7 @@ func TestLargeBatch(t *testing.T) {
 
 	go func() {
 		for i := 0; i < batchSize; i++ {
-			tokenizer.Tokenize(ctx, internal_type.TextPacket{
+			tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
 				ContextID: "speaker1",
 				Text:      fmt.Sprintf("Sentence %d.", i),
 			})
@@ -632,7 +632,7 @@ func TestLargeBatch(t *testing.T) {
 func TestLLMStreamingInput(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".!?")
-	tokenizer, _ := NewSentenceTokenizer(logger, opts)
+	tokenizer, _ := NewDefaultLLMSentenceAssembler(logger, opts)
 	defer tokenizer.Close()
 
 	ctx := context.Background()
@@ -669,7 +669,7 @@ func TestLLMStreamingInput(t *testing.T) {
 					return
 				}
 				results = append(results, result)
-				if ts, ok := result.(internal_type.TextPacket); ok {
+				if ts, ok := result.(internal_type.LLMStreamPacket); ok {
 					t.Logf("Received result: %q", ts.Text)
 				}
 
@@ -686,12 +686,12 @@ func TestLLMStreamingInput(t *testing.T) {
 	go func() {
 		for i, chunk := range llmChunks {
 			t.Logf("Sending chunk %d: %q", i, chunk)
-			err := tokenizer.Tokenize(ctx, internal_type.TextPacket{
+			err := tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
 				ContextID: "llm",
 				Text:      chunk,
 			})
 			if err != nil {
-				t.Errorf("Tokenize failed: %v", err)
+				t.Errorf("Assemble failed: %v", err)
 				return
 			}
 			time.Sleep(5 * time.Millisecond)
@@ -720,7 +720,7 @@ func TestLLMStreamingInput(t *testing.T) {
 
 	for i, r := range results {
 		logger.Debugf("result %+v", r)
-		if ts, ok := r.(internal_type.TextPacket); ok {
+		if ts, ok := r.(internal_type.LLMStreamPacket); ok {
 			if ts.ContextID != "llm" {
 				t.Errorf("result %d: expected context 'llm', got '%s'", i, ts.ContextID)
 			}
@@ -734,7 +734,7 @@ func TestLLMStreamingInput(t *testing.T) {
 func TestLLMStreamingWithPauses(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".!?")
-	tokenizer, _ := NewSentenceTokenizer(logger, opts)
+	tokenizer, _ := NewDefaultLLMSentenceAssembler(logger, opts)
 	defer tokenizer.Close()
 
 	ctx := context.Background()
@@ -752,7 +752,7 @@ func TestLLMStreamingWithPauses(t *testing.T) {
 	go func() {
 		for _, chunk := range chunks {
 			time.Sleep(50 * time.Millisecond) // simulate slow LLM token stream
-			_ = tokenizer.Tokenize(ctx, internal_type.TextPacket{
+			_ = tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
 				ContextID: "llm",
 				Text:      chunk,
 			})
@@ -768,7 +768,7 @@ func TestLLMStreamingWithPauses(t *testing.T) {
 		t.Fatalf("expected 1 sentence, got %d", len(results))
 	}
 
-	if ts, ok := results[0].(internal_type.TextPacket); ok && ts.Text != "This sentence arrives slowly." {
+	if ts, ok := results[0].(internal_type.LLMStreamPacket); ok && ts.Text != "This sentence arrives slowly." {
 		t.Errorf("unexpected sentence: %q", ts.Text)
 	}
 }
@@ -776,7 +776,7 @@ func TestLLMStreamingWithPauses(t *testing.T) {
 func TestLLMStreamingWithContextSwitch(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".!?")
-	tokenizer, _ := NewSentenceTokenizer(logger, opts)
+	tokenizer, _ := NewDefaultLLMSentenceAssembler(logger, opts)
 	defer tokenizer.Close()
 
 	ctx := context.Background()
@@ -784,13 +784,13 @@ func TestLLMStreamingWithContextSwitch(t *testing.T) {
 
 	go func() {
 		// LLM A starts streaming (with boundary to get output)
-		_ = tokenizer.Tokenize(ctx, internal_type.TextPacket{
+		_ = tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
 			ContextID: "llm-A",
 			Text:      "LLM A is speaking.",
 		})
 
 		// LLM B interrupts
-		_ = tokenizer.Tokenize(ctx, internal_type.TextPacket{
+		_ = tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
 			ContextID: "llm-B",
 			Text:      "Hello from B.",
 		})
@@ -806,7 +806,7 @@ func TestLLMStreamingWithContextSwitch(t *testing.T) {
 		t.Fatalf("expected at least 2 results, got %d", len(results))
 	}
 
-	if ts, ok := results[0].(internal_type.TextPacket); ok {
+	if ts, ok := results[0].(internal_type.LLMStreamPacket); ok {
 		if ts.ContextID != "llm-A" {
 			t.Errorf("expected first result from llm-A, got %s", ts.ContextID)
 		}
@@ -814,7 +814,7 @@ func TestLLMStreamingWithContextSwitch(t *testing.T) {
 
 	foundB := false
 	for _, r := range results {
-		if ts, ok := r.(internal_type.TextPacket); ok {
+		if ts, ok := r.(internal_type.LLMStreamPacket); ok {
 			if ts.ContextID == "llm-B" {
 				foundB = true
 			}
@@ -829,7 +829,7 @@ func TestLLMStreamingWithContextSwitch(t *testing.T) {
 func TestLLMStreamingForcedCompletion(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".!?")
-	tokenizer, _ := NewSentenceTokenizer(logger, opts)
+	tokenizer, _ := NewDefaultLLMSentenceAssembler(logger, opts)
 	defer tokenizer.Close()
 
 	ctx := context.Background()
@@ -837,13 +837,13 @@ func TestLLMStreamingForcedCompletion(t *testing.T) {
 
 	go func() {
 		// Stream without punctuation
-		_ = tokenizer.Tokenize(ctx, internal_type.TextPacket{
+		_ = tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
 			ContextID: "llm",
 			Text:      "This sentence never ends",
 		})
 
 		// Force flush to emit the buffered sentence
-		_ = tokenizer.Tokenize(ctx, internal_type.FlushPacket{
+		_ = tokenizer.Assemble(ctx, internal_type.LLMMessagePacket{
 			ContextID: "llm",
 		})
 
@@ -854,32 +854,32 @@ func TestLLMStreamingForcedCompletion(t *testing.T) {
 		results = append(results, r)
 	}
 
-	// Should get: TokenizedSentence + Flush
+	// Should get: AssembledSentence + Flush
 	if len(results) != 2 {
 		t.Fatalf("expected 2 results (sentence + flush), got %d", len(results))
 	}
 
 	var sentence string
-	if ts, ok := results[0].(internal_type.TextPacket); ok {
+	if ts, ok := results[0].(internal_type.LLMStreamPacket); ok {
 		sentence = ts.Text
-	} else if ts, ok := results[0].(internal_type.TextPacket); ok {
+	} else if ts, ok := results[0].(internal_type.LLMStreamPacket); ok {
 		sentence = ts.Text
 	} else {
-		t.Fatalf("expected first result to be TokenizedSentence, got %T", results[0])
+		t.Fatalf("expected first result to be AssembledSentence, got %T", results[0])
 	}
 
 	if sentence != "This sentence never ends" {
 		t.Errorf("unexpected sentence: %q", sentence)
 	}
 
-	if _, ok := results[1].(internal_type.FlushPacket); !ok {
+	if _, ok := results[1].(internal_type.LLMMessagePacket); !ok {
 		t.Errorf("expected second result to be Flush message, got %T", results[1])
 	}
 }
 func TestLLMStreamingUnformattedButComplete(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".!?") // boundaries exist but are NOT used
-	tokenizer, _ := NewSentenceTokenizer(logger, opts)
+	tokenizer, _ := NewDefaultLLMSentenceAssembler(logger, opts)
 	defer tokenizer.Close()
 
 	ctx := context.Background()
@@ -897,14 +897,14 @@ func TestLLMStreamingUnformattedButComplete(t *testing.T) {
 		}
 
 		for _, chunk := range chunks {
-			_ = tokenizer.Tokenize(ctx, internal_type.TextPacket{
+			_ = tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
 				ContextID: "llm",
 				Text:      chunk,
 			})
 		}
 
 		// End of stream — force completion with Flush
-		_ = tokenizer.Tokenize(ctx, internal_type.FlushPacket{
+		_ = tokenizer.Assemble(ctx, internal_type.LLMMessagePacket{
 			ContextID: "llm",
 		})
 
@@ -915,21 +915,21 @@ func TestLLMStreamingUnformattedButComplete(t *testing.T) {
 		results = append(results, r)
 	}
 
-	// Should get: TokenizedSentence + Flush
+	// Should get: AssembledSentence + Flush
 	if len(results) != 2 {
 		t.Fatalf("expected 2 results (sentence + flush), got %d", len(results))
 	}
 
 	expected := "this is a raw llm response"
 	var sentence, contextID string
-	if ts, ok := results[0].(internal_type.TextPacket); ok {
+	if ts, ok := results[0].(internal_type.LLMStreamPacket); ok {
 		sentence = ts.Text
 		contextID = ts.ContextID
-	} else if ts, ok := results[0].(internal_type.TextPacket); ok {
+	} else if ts, ok := results[0].(internal_type.LLMStreamPacket); ok {
 		sentence = ts.Text
 		contextID = ts.ContextID
 	} else {
-		t.Fatalf("expected first result to be TokenizedSentence, got %T", results[0])
+		t.Fatalf("expected first result to be AssembledSentence, got %T", results[0])
 	}
 
 	if sentence != expected {
@@ -939,25 +939,25 @@ func TestLLMStreamingUnformattedButComplete(t *testing.T) {
 		t.Errorf("expected context 'llm', got %s", contextID)
 	}
 
-	if _, ok := results[1].(internal_type.FlushPacket); !ok {
+	if _, ok := results[1].(internal_type.LLMMessagePacket); !ok {
 		t.Errorf("expected second result to be Flush message, got %T", results[1])
 	}
 }
 func TestStringRepresentation(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	tokenizer, _ := NewSentenceTokenizer(logger, opts)
+	tokenizer, _ := NewDefaultLLMSentenceAssembler(logger, opts)
 	defer tokenizer.Close()
 
-	st := tokenizer.(*sentenceTokenizer)
+	st := tokenizer.(*sentenceAssembler)
 	str := st.String()
 
 	if str == "" {
 		t.Error("String() should return non-empty string")
 	}
 
-	if !contains(str, "SentenceTokenizer") {
-		t.Errorf("String() should contain 'SentenceTokenizer', got '%s'", str)
+	if !contains(str, "SentenceAssembler") {
+		t.Errorf("String() should contain 'SentenceAssembler', got '%s'", str)
 	}
 }
 
