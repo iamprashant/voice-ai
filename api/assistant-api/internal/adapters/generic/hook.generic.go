@@ -73,7 +73,7 @@ func (md *GenericRequestor) OnEndConversation() error {
 				output[fmt.Sprintf("analysis.%s", a.GetName())] = o
 			}
 
-			md.SetMetadata(md.Auth(), output)
+			md.onSetMetadata(md.Auth(), output)
 		}
 		for _, webhook := range md.assistant.AssistantWebhooks {
 			if slices.Contains(webhook.AssistantEvents, utils.ConversationCompleted.Get()) {
