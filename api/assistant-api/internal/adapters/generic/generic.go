@@ -83,7 +83,7 @@ type GenericRequestor struct {
 
 	// speak
 	textToSpeechTransformer internal_type.TextToSpeechTransformer
-	sentenceAssembler       internal_type.LLMSentenceAssembler
+	textAssembler           internal_type.LLMTextAssembler
 
 	recorder       internal_type.Recorder
 	templateParser parsers.StringTemplateParser

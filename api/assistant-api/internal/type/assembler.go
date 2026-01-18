@@ -16,7 +16,7 @@ import (
 //   - Accept inputs via Tokenize
 //   - Emit results asynchronously on the Result channel
 //   - Release resources and stop processing on Close
-type LLMSentenceAssembler interface {
+type LLMTextAssembler interface {
 	// Tokenize consumes a tokenizer input (such as an LLMStreamChunk
 	// or Finalize signal). Implementations should respect context
 	// cancellation and deadlines.

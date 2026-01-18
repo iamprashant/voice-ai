@@ -3,32 +3,7 @@
 //
 // Licensed under GPL-2.0 with Rapida Additional Terms.
 // See LICENSE.md or contact sales@rapida.ai for commercial usage.
-
-// Package internal_default_sentence_tokenizer provides sentence-level tokenization
-// for streaming text with support for multiple concurrent contexts.
-//
-// It uses boundary detection (configurable delimiters like ".", "?", "!") to
-// identify sentence boundaries and emit complete sentences through a channel.
-//
-// Example usage:
-//
-//	tokenizer, err := NewSentenceTokenizer(logger, options)
-//	if err != nil {
-//		log.Fatal(err)
-//	}
-//	defer tokenizer.Close()
-//
-//	go func() {
-//		tokenizer.Tokenize(ctx, Sentence{
-//			ContextId: "speaker1",
-//			Sentence:  "Hello. ",
-//		})
-//	}()
-//
-//	for result := range tokenizer.Result() {
-//		fmt.Println(result.Sentence)
-//	}
-package internal_default
+package internal_default_assembler
 
 import (
 	"context"
@@ -42,8 +17,8 @@ import (
 	"github.com/rapidaai/pkg/utils"
 )
 
-// SentenceTokenizer implements sentence-level tokenization for streaming text.
-type sentenceAssembler struct {
+// TextTokenizer implements sentence-level tokenization for streaming text.
+type textAssembler struct {
 	logger commons.Logger
 	ctx    context.Context
 
@@ -58,7 +33,7 @@ type sentenceAssembler struct {
 	hasBoundaries  bool
 }
 
-// NewSentenceTokenizer creates a new sentence tokenizer with the given logger and options.
+// NewTextTokenizer creates a new sentence tokenizer with the given logger and options.
 //
 // The options parameter should contain "speaker.sentence.boundaries" which is a
 // comma-separated list of sentence delimiters (e.g., ".,?!").
@@ -67,12 +42,12 @@ type sentenceAssembler struct {
 //
 // Example:
 //
-//	tokenizer, err := NewSentenceTokenizer(logger, options)
+//	tokenizer, err := NewTextTokenizer(logger, options)
 //	if err != nil {
 //		return err
 //	}
-func NewDefaultLLMSentenceAssembler(context context.Context, logger commons.Logger, options utils.Option) (internal_type.LLMSentenceAssembler, error) {
-	st := &sentenceAssembler{
+func NewDefaultLLMTextAssembler(context context.Context, logger commons.Logger, options utils.Option) (internal_type.LLMTextAssembler, error) {
+	st := &textAssembler{
 		ctx:    context,
 		logger: logger,
 		result: make(chan internal_type.Packet, 16),
@@ -85,7 +60,7 @@ func NewDefaultLLMSentenceAssembler(context context.Context, logger commons.Logg
 
 // initializeBoundaries sets up the boundary regex from configuration options.
 // It safely handles missing or invalid boundary configurations.
-func (st *sentenceAssembler) initializeBoundaries(options utils.Option, logger commons.Logger) error {
+func (st *textAssembler) initializeBoundaries(options utils.Option, logger commons.Logger) error {
 	boundariesRaw, err := options.GetString("speaker.sentence.boundaries")
 	if err != nil || boundariesRaw == "" {
 		return nil
@@ -136,12 +111,12 @@ func filterBoundaries(boundaries []string) []string {
 //
 // Example:
 //
-//	err := tokenizer.Tokenize(ctx, Sentence{
+//	err := tokenizer.Tokenize(ctx, Text{
 //		ContextId:  "speaker1",
-//		Sentence:   "Hello world.",
+//		Text:   "Hello world.",
 //		IsComplete: true,
 //	})
-func (st *sentenceAssembler) Assemble(ctx context.Context, sentences ...internal_type.LLMPacket) error {
+func (st *textAssembler) Assemble(ctx context.Context, sentences ...internal_type.LLMPacket) error {
 	for _, sentence := range sentences {
 		toEmit := st.extractAndQueue(sentence)
 		// Send queued results while respecting context cancellation
@@ -159,7 +134,7 @@ func (st *sentenceAssembler) Assemble(ctx context.Context, sentences ...internal
 // extractAndQueue extracts complete sentences from the input and returns them
 // in emission order. It safely manages buffer state and context switching.
 
-func (st *sentenceAssembler) extractAndQueue(sentence internal_type.LLMPacket) []internal_type.Packet {
+func (st *textAssembler) extractAndQueue(sentence internal_type.LLMPacket) []internal_type.Packet {
 	st.mu.Lock()
 	defer st.mu.Unlock()
 	var toEmit []internal_type.Packet
@@ -176,7 +151,7 @@ func (st *sentenceAssembler) extractAndQueue(sentence internal_type.LLMPacket) [
 
 		// Extract sentences at boundaries
 		if st.hasBoundaries {
-			toEmit = append(toEmit, st.extractSentencesByBoundary(input.ContextID)...)
+			toEmit = append(toEmit, st.extractTextsByBoundary(input.ContextID)...)
 		}
 	case internal_type.LLMMessagePacket:
 		if remaining := st.getBufferContent(); remaining != "" {
@@ -195,13 +170,13 @@ func (st *sentenceAssembler) extractAndQueue(sentence internal_type.LLMPacket) [
 	return toEmit
 }
 
-// extractSentencesByBoundary extracts all sentences that end at boundaries.
+// extractTextsByBoundary extracts all sentences that end at boundaries.
 // Called with lock held.
-func (st *sentenceAssembler) extractSentencesByBoundary(contextId string) []internal_type.Packet {
+func (st *textAssembler) extractTextsByBoundary(contextId string) []internal_type.Packet {
 	var sentences []internal_type.Packet
 
 	for {
-		sentence, remaining := st.extractSentence(st.buffer.String())
+		sentence, remaining := st.extractText(st.buffer.String())
 		if sentence == "" {
 			break
 		}
@@ -215,14 +190,14 @@ func (st *sentenceAssembler) extractSentencesByBoundary(contextId string) []inte
 
 // getBufferContent returns the trimmed buffer content.
 // Called with lock held.
-func (st *sentenceAssembler) getBufferContent() string {
+func (st *textAssembler) getBufferContent() string {
 	return strings.TrimSpace(st.buffer.String())
 }
 
-// extractSentence extracts a single sentence from text using the boundary regex.
+// extractText extracts a single sentence from text using the boundary regex.
 // Returns the sentence and remaining text.
 // Called with lock held.
-func (st *sentenceAssembler) extractSentence(text string) (string, string) {
+func (st *textAssembler) extractText(text string) (string, string) {
 	if st.boundaryRegex == nil || text == "" {
 		return "", text
 	}
@@ -243,9 +218,9 @@ func (st *sentenceAssembler) extractSentence(text string) (string, string) {
 // Example:
 //
 //	for sentence := range tokenizer.Result() {
-//		fmt.Println(sentence.Sentence)
+//		fmt.Println(sentence.Text)
 //	}
-func (st *sentenceAssembler) Result() <-chan internal_type.Packet {
+func (st *textAssembler) Result() <-chan internal_type.Packet {
 	return st.result
 }
 
@@ -255,7 +230,7 @@ func (st *sentenceAssembler) Result() <-chan internal_type.Packet {
 // to Tokenize() will panic when trying to send on the closed channel.
 //
 // It is safe to call Close() multiple times; subsequent calls are no-ops.
-func (st *sentenceAssembler) Close() error {
+func (st *textAssembler) Close() error {
 	st.mu.Lock()
 	defer st.mu.Unlock()
 
@@ -273,9 +248,9 @@ func (st *sentenceAssembler) Close() error {
 }
 
 // String returns a string representation of the tokenizer for debugging.
-func (st *sentenceAssembler) String() string {
+func (st *textAssembler) String() string {
 	st.mu.RLock()
 	defer st.mu.RUnlock()
 
-	return fmt.Sprintf("SentenceAssembler{context=%q, bufferLen=%d, hasBoundaries=%v}", st.currentContext, st.buffer.Len(), st.hasBoundaries)
+	return fmt.Sprintf("TextAssembler{context=%q, bufferLen=%d, hasBoundaries=%v}", st.currentContext, st.buffer.Len(), st.hasBoundaries)
 }
