@@ -353,7 +353,7 @@ func (r *GenericRequestor) flushFinalMetrics() {
 		},
 	}
 
-	r.AddMetrics(r.Auth(), metrics...)
+	r.onAddMetrics(r.Auth(), metrics...)
 }
 
 // persistRecording saves the audio recording asynchronously.
@@ -506,16 +506,10 @@ func (r *GenericRequestor) notifyConfiguration(
 
 // connectSpeakerAndInitializeBehavior establishes the speaker connection
 // and initializes assistant behavior (greeting, timeouts, etc.).
-func (r *GenericRequestor) connectSpeakerAndInitializeBehavior(
-	ctx context.Context,
-	audioOutputConfig *protos.AudioConfig,
-) {
-	if audioOutputConfig != nil {
-		if err := r.connectSpeaker(ctx, audioOutputConfig); err != nil {
-			r.logger.Tracef(ctx, "failed to connect speaker: %+v", err)
-		}
+func (r *GenericRequestor) connectSpeakerAndInitializeBehavior(ctx context.Context, audioOutputConfig *protos.AudioConfig) {
+	if err := r.connectSpeaker(ctx, audioOutputConfig); err != nil {
+		r.logger.Tracef(ctx, "failed to connect speaker: %+v", err)
 	}
-
 	if err := r.initializeBehavior(ctx); err != nil {
 		r.logger.Errorf("failed to initialize assistant behavior: %+v", err)
 	}
@@ -554,16 +548,14 @@ func (r *GenericRequestor) startBackgroundTasks(
 
 	// Establish speech-to-text listener connection
 	utils.Go(ctx, func() {
-		if audioInputConfig != nil {
-			if err := r.connectMicrophone(ctx, audioInputConfig); err != nil {
-				r.logger.Tracef(ctx, "failed to connect listener: %+v", err)
-			}
+		if err := r.connectMicrophone(ctx, audioInputConfig); err != nil {
+			r.logger.Tracef(ctx, "failed to connect listener: %+v", err)
 		}
 	})
 
 	// Update conversation status metric
 	utils.Go(ctx, func() {
-		r.AddMetrics(r.Auth(), &types.Metric{
+		r.onAddMetrics(r.Auth(), &types.Metric{
 			Name:        type_enums.STATUS.String(),
 			Value:       type_enums.RECORD_IN_PROGRESS.String(),
 			Description: "Conversation is currently in progress",
@@ -597,7 +589,7 @@ func (r *GenericRequestor) storeClientInformation(ctx context.Context) {
 		r.logger.Tracef(ctx, "failed to serialize client information: %+v", err)
 		return
 	}
-	r.SetMetadata(r.Auth(), map[string]interface{}{
+	r.onSetMetadata(r.Auth(), map[string]interface{}{
 		clientInfoMetadataKey: clientJSON,
 	})
 }

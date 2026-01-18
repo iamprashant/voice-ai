@@ -92,7 +92,10 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 	for _, p := range pkts {
 		switch vl := p.(type) {
 		case internal_type.UserTextPacket:
-			// calling end of speech analyzer
+			// interrupting
+			talking.OnPacket(ctx, internal_type.InterruptionPacket{ContextID: vl.ContextID, Source: internal_type.InterruptionSourceWord})
+
+			// creating interim message
 			interim := talking.messaging.Create(vl.Text)
 			if err := talking.Notify(talking.Context(), &protos.AssistantConversationUserMessage{Id: interim.GetId(), Completed: false, Message: &protos.AssistantConversationUserMessage_Text{Text: &protos.AssistantConversationMessageTextContent{Content: interim.String()}}, Time: timestamppb.Now()}); err != nil {
 				talking.logger.Tracef(talking.Context(), "error while notifying the text input from user: %w", err)
@@ -138,6 +141,7 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 		case internal_type.StaticPacket:
 			// when static packet is received it means that rapida system has something to speak
 			// do not abrupt it just send it to the assembler
+
 			if err := talking.callCreateMessage(ctx, vl); err != nil {
 				talking.logger.Errorf("unable to create message from static packet %v", err)
 			}
@@ -150,10 +154,6 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 			//
 			if err := talking.assistantExecutor.Execute(ctx, talking, vl); err != nil {
 				talking.logger.Errorf("assistant executor error: %v", err)
-			}
-
-			if err := talking.messaging.Transition(internal_adapter_request_customizers.LLMGenerating); err != nil {
-				talking.logger.Errorf("messaging transition error: %v", err)
 			}
 
 			if err := talking.callSentenceAssembler(ctx, internal_type.LLMStreamPacket{ContextID: vl.ContextId(), Text: vl.Text}); err != nil {
@@ -337,7 +337,7 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 			// metrics update for the message
 			// later this can be used at each stage to calculate various metrics
 			if len(vl.Metrics) > 0 {
-				if err := talking.OnMessageMetric(talking.Context(), vl.ContextID, vl.Metrics); err != nil {
+				if err := talking.onMessageMetric(talking.Context(), vl.ContextID, vl.Metrics); err != nil {
 					talking.logger.Errorf("Error in OnUpdateMessage: %v", err)
 				}
 			}

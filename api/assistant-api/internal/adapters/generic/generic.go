@@ -188,27 +188,6 @@ func (deb *GenericRequestor) onCreateMessage(ctx context.Context, msg internal_t
 	return nil
 }
 
-func (deb *GenericRequestor) OnMessageMetric(ctx context.Context, messageId string, metrics []*types.Metric) error {
-	if _, err := deb.
-		conversationService.ApplyMessageMetrics(ctx, deb.Auth(), deb.Conversation().Id, messageId, metrics); err != nil {
-		deb.logger.Errorf("error updating metrics for message: %v", err)
-		return err
-	}
-	return nil
-}
-
-func (deb *GenericRequestor) OnMessageMetadata(ctx context.Context, messageId string, metadata map[string]interface{}) error {
-	start := time.Now()
-	_, err := deb.conversationService.ApplyMessageMetadata(ctx, deb.Auth(), deb.assistantConversation.Id, messageId, metadata)
-
-	if err != nil {
-		deb.logger.Errorf("error updating metadata for message: %v", err)
-		return err
-	}
-	deb.logger.Benchmark("GenericRequestor.OnMessageMetric", time.Since(start))
-	return nil
-}
-
 func (dm *GenericRequestor) Tracer() internal_telemetry.VoiceAgentTracer {
 	return dm.tracer
 }

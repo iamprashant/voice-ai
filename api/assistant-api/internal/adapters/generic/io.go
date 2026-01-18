@@ -42,22 +42,11 @@ func (io *GenericRequestor) Input(message *protos.AssistantConversationUserMessa
 // It sets up both audio input and output transformer.
 // This function is typically called at the beginning of a communication session.
 func (listening *GenericRequestor) connectMicrophone(ctx context.Context, audioConfig *protos.AudioConfig) error {
-	ctx, span, _ := listening.Tracer().StartSpan(ctx, utils.AssistantListenConnectStage)
-	defer span.EndSpan(ctx, utils.AssistantListenConnectStage)
-
 	eGroup, ctx := errgroup.WithContext(ctx)
-	options := map[string]interface{}{"microphone.eos.timeout": 500}
-
-	transformerConfig, err := listening.GetSpeechToTextTransformer()
-	if err != nil {
-		listening.logger.Warnf("error during getting transformer for assistant.")
-	} else {
+	options := utils.Option{"microphone.eos.timeout": 500}
+	transformerConfig, _ := listening.GetSpeechToTextTransformer()
+	if transformerConfig != nil && audioConfig != nil {
 		options = utils.MergeMaps(options, transformerConfig.GetOptions())
-		span.AddAttributes(ctx,
-			internal_telemetry.KV{K: "options", V: internal_telemetry.JSONValue(options)},
-			internal_telemetry.KV{K: "provider", V: internal_telemetry.StringValue(transformerConfig.AudioProvider)},
-		)
-		//
 		eGroup.Go(func() error {
 			err := listening.initializeSpeechToText(ctx, transformerConfig, audioConfig, options)
 			if err != nil {
@@ -120,6 +109,14 @@ func (listening *GenericRequestor) disconnectMicrophone(ctx context.Context) err
 }
 
 func (listening *GenericRequestor) initializeSpeechToText(ctx context.Context, transformerConfig *internal_assistant_entity.AssistantDeploymentAudio, audioConfig *protos.AudioConfig, options utils.Option) error {
+	ctx, span, _ := listening.Tracer().StartSpan(ctx, utils.AssistantListenConnectStage)
+	defer span.EndSpan(ctx, utils.AssistantListenConnectStage)
+
+	span.AddAttributes(ctx,
+		internal_telemetry.KV{K: "options", V: internal_telemetry.JSONValue(options)},
+		internal_telemetry.KV{K: "provider", V: internal_telemetry.StringValue(transformerConfig.AudioProvider)},
+	)
+
 	credentialId, err := options.GetUint64("rapida.credential_id")
 	if err != nil {
 		listening.logger.Errorf("unable to find credential from options %+v", err)
@@ -204,7 +201,8 @@ func (spk *GenericRequestor) connectSpeaker(ctx context.Context, audioOutConfig 
 	speakerOpts := spk.GetOptions()
 	var wg sync.WaitGroup
 	// initialize audio output transformer
-	if outputTransformer, err := spk.GetTextToSpeechTransformer(); err == nil {
+	outputTransformer, _ := spk.GetTextToSpeechTransformer()
+	if outputTransformer != nil && audioOutConfig != nil {
 		speakerOpts = utils.MergeMaps(outputTransformer.GetOptions())
 		wg.Add(1)
 		utils.Go(ctx, func() {
