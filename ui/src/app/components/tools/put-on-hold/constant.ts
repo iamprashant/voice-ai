@@ -1,42 +1,45 @@
 import { Metadata } from '@rapidaai/react';
 import { SetMetadata } from '@/utils/metadata';
 
+// ============================================================================
+// Constants
+// ============================================================================
+
+const REQUIRED_KEYS = ['tool.max_hold_time'];
+const DEFAULT_MAX_HOLD_TIME = '5';
+const MIN_HOLD_TIME = 1;
+const MAX_HOLD_TIME = 10;
+
+// ============================================================================
+// Default Options
+// ============================================================================
+
 export const GetPutOnHoldDefaultOptions = (current: Metadata[]): Metadata[] => {
-  const mtds: Metadata[] = [];
+  const metadata: Metadata[] = [];
 
-  const keysToKeep = ['tool.max_hold_time'];
+  const meta = SetMetadata(current, 'tool.max_hold_time', DEFAULT_MAX_HOLD_TIME);
+  if (meta) metadata.push(meta);
 
-  const addMetadata = (
-    key: string,
-    defaultValue?: string,
-    validationFn?: (value: string) => boolean,
-  ) => {
-    const metadata = SetMetadata(current, key, defaultValue, validationFn);
-    if (metadata) mtds.push(metadata);
-  };
-
-  addMetadata('tool.max_hold_time', '5');
-  return mtds.filter(m => keysToKeep.includes(m.getKey()));
+  return metadata.filter(m => REQUIRED_KEYS.includes(m.getKey()));
 };
 
-/**
- *
- * @param options
- * @returns
- */
+// ============================================================================
+// Validation
+// ============================================================================
+
 export const ValidatePutOnHoldDefaultOptions = (
   options: Metadata[],
 ): string | undefined => {
-  const maxHoldTimeSec = options
+  const maxHoldTime = options
     .find(m => m.getKey() === 'tool.max_hold_time')
     ?.getValue();
 
-  if (maxHoldTimeSec) {
-    const holdTime = parseInt(maxHoldTimeSec, 10);
-    if (isNaN(holdTime) || holdTime < 1 || holdTime > 10) {
-      return 'Please provide a valid tool.max_hold_time value. It must be a number between 1 and 10 seconds.';
+  if (maxHoldTime) {
+    const holdTime = parseInt(maxHoldTime, 10);
+    if (isNaN(holdTime) || holdTime < MIN_HOLD_TIME || holdTime > MAX_HOLD_TIME) {
+      return `Please provide a valid tool.max_hold_time value. It must be a number between ${MIN_HOLD_TIME} and ${MAX_HOLD_TIME} seconds.`;
     }
   }
 
-  return undefined; // No errors
+  return undefined;
 };

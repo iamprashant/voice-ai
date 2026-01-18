@@ -1,4 +1,6 @@
-import { Metadata } from '@rapidaai/react';
+import { FC, useState, useCallback } from 'react';
+import { ArrowRight, Plus, Trash2 } from 'lucide-react';
+import { cn } from '@/utils';
 import { FormLabel } from '@/app/components/form-label';
 import {
   IBlueBorderButton,
@@ -7,54 +9,36 @@ import {
 import { FieldSet } from '@/app/components/form/fieldset';
 import { Input } from '@/app/components/form/input';
 import { Select } from '@/app/components/form/select';
-import { cn } from '@/utils';
-import { ArrowRight, ExternalLink, Info, Plus, Trash2 } from 'lucide-react';
-import { FC, useState } from 'react';
-import { CodeEditor } from '@/app/components/form/editor/code-editor';
 import { InputGroup } from '@/app/components/input-group';
-import { YellowNoticeBlock } from '@/app/components/container/message/notice-block';
-import { Textarea } from '@/app/components/form/textarea';
 import { APiStringHeader } from '@/app/components/external-api/api-header';
+import {
+  ConfigureToolProps,
+  ToolDefinitionForm,
+  TypeKeySelector,
+  useParameterManager,
+  parseJsonParameters,
+  stringifyParameters,
+  PARAMETER_TYPE_OPTIONS,
+  HTTP_METHOD_OPTIONS,
+  ParameterType,
+  KeyValueParameter,
+} from '../common';
 
-export const ConfigureAPIRequest: React.FC<{
-  toolDefinition: {
-    name: string;
-    description: string;
-    parameters: string;
-  };
-  onChangeToolDefinition: (vl: {
-    name: string;
-    description: string;
-    parameters: string;
-  }) => void;
-  onParameterChange: (parameters: Metadata[]) => void;
-  parameters: Metadata[] | null;
-  inputClass?: string;
-}> = ({
+// ============================================================================
+// Main Component
+// ============================================================================
+
+export const ConfigureAPIRequest: FC<ConfigureToolProps> = ({
   toolDefinition,
   onChangeToolDefinition,
   onParameterChange,
   parameters,
   inputClass,
 }) => {
-  const getParamValue = (key: string) => {
-    return parameters?.find(p => p.getKey() === key)?.getValue() ?? '';
-  };
-
-  //
-  const updateParameter = (key: string, value: string) => {
-    const updatedParams = [...(parameters || [])];
-    const existingIndex = updatedParams.findIndex(p => p.getKey() === key);
-    const newParam = new Metadata();
-    newParam.setKey(key);
-    newParam.setValue(value);
-    if (existingIndex >= 0) {
-      updatedParams[existingIndex] = newParam;
-    } else {
-      updatedParams.push(newParam);
-    }
-    onParameterChange(updatedParams);
-  };
+  const { getParamValue, updateParameter } = useParameterManager(
+    parameters,
+    onParameterChange,
+  );
 
   return (
     <>
@@ -67,12 +51,7 @@ export const ConfigureAPIRequest: React.FC<{
                 value={getParamValue('tool.method')}
                 onChange={e => updateParameter('tool.method', e.target.value)}
                 className={cn('bg-light-background', inputClass)}
-                options={[
-                  { name: 'GET', value: 'GET' },
-                  { name: 'POST', value: 'POST' },
-                  { name: 'PUT', value: 'PUT' },
-                  { name: 'PATCH', value: 'PATCH' },
-                ]}
+                options={[...HTTP_METHOD_OPTIONS]}
               />
             </FieldSet>
             <FieldSet className="relative w-full">
@@ -80,292 +59,200 @@ export const ConfigureAPIRequest: React.FC<{
               <Input
                 value={getParamValue('tool.endpoint')}
                 onChange={e => updateParameter('tool.endpoint', e.target.value)}
-                placeholder="https://your-domain.com/webhook"
+                placeholder="https://your-domain.com/api/v1/resource"
                 className={cn('bg-light-background', inputClass)}
               />
             </FieldSet>
           </div>
+
           <FieldSet>
             <FormLabel>Headers</FormLabel>
             <APiStringHeader
               inputClass={inputClass}
               headerValue={getParamValue('tool.headers')}
-              setHeaderValue={e => updateParameter('tool.headers', e)}
-            />
-          </FieldSet>
-          <ApiParameter
-            inputClass={inputClass}
-            apiParameters={getParamValue('tool.parameters')}
-            setApiParameters={e => updateParameter('tool.parameters', e)}
-          />
-        </div>
-      </InputGroup>
-      <InputGroup title="Tool Definition">
-        <YellowNoticeBlock className="flex items-center -mx-6 -mt-6">
-          <Info className="shrink-0 w-4 h-4" />
-          <div className="ms-3 text-sm font-medium">
-            Know more about knowledge tool definiation that can be supported by
-            rapida
-          </div>
-          <a
-            target="_blank"
-            href="https://doc.rapida.ai/assistants/overview"
-            className="h-7 flex items-center font-medium hover:underline ml-auto text-yellow-600"
-            rel="noreferrer"
-          >
-            Read documentation
-            <ExternalLink
-              className="shrink-0 w-4 h-4 ml-1.5"
-              strokeWidth={1.5}
-            />
-          </a>
-        </YellowNoticeBlock>
-        <div className={cn('mt-4 flex flex-col gap-8 max-w-6xl')}>
-          <FieldSet className="relative w-full">
-            <FormLabel>Name</FormLabel>
-            <Input
-              value={toolDefinition.name}
-              onChange={e =>
-                onChangeToolDefinition({
-                  ...toolDefinition,
-                  name: e.target.value,
-                })
-              }
-              placeholder="Enter tool name"
-              className={cn('bg-light-background', inputClass)}
-            />
-          </FieldSet>
-          <FieldSet className="relative w-full">
-            <FormLabel>Description</FormLabel>
-            <Textarea
-              value={toolDefinition.description}
-              onChange={e =>
-                onChangeToolDefinition({
-                  ...toolDefinition,
-                  description: e.target.value,
-                })
-              }
-              className={cn('bg-light-background', inputClass)}
-              placeholder="A tool description or definition of when this tool will get triggered."
-              rows={2}
+              setHeaderValue={value => updateParameter('tool.headers', value)}
             />
           </FieldSet>
 
-          <FieldSet className="relative w-full">
-            <FormLabel>Parameters</FormLabel>
-            <CodeEditor
-              placeholder="Provide a tool parameters that will be passed to llm"
-              value={toolDefinition.parameters}
-              onChange={value => {
-                onChangeToolDefinition({
-                  ...toolDefinition,
-                  parameters: value,
-                });
-              }}
-              className={cn(
-                'min-h-40 max-h-dvh bg-light-background dark:bg-gray-950 ',
-                inputClass,
-              )}
-            />
-          </FieldSet>
+          <ApiParameterEditor
+            inputClass={inputClass}
+            apiParameters={getParamValue('tool.parameters')}
+            setApiParameters={value =>
+              updateParameter('tool.parameters', value)
+            }
+          />
         </div>
       </InputGroup>
+
+      <ToolDefinitionForm
+        toolDefinition={toolDefinition}
+        onChangeToolDefinition={onChangeToolDefinition}
+        inputClass={inputClass}
+      />
     </>
   );
 };
 
-const ApiParameter: FC<{
+// ============================================================================
+// API Parameter Editor
+// ============================================================================
+
+interface ApiParameterEditorProps {
   inputClass?: string;
   apiParameters: string;
-  setApiParameters: (s: string) => void;
-}> = ({ apiParameters, setApiParameters, inputClass }) => {
-  const [requestParameters, setRequestParameters] = useState<
-    Array<{ key: string; value: string }>
-  >(() => {
-    try {
-      return Object.entries(JSON.parse(apiParameters)).map(([key, value]) => ({
-        key,
-        value: value as string,
-      }));
-    } catch {
-      return [];
-    }
-  });
+  setApiParameters: (value: string) => void;
+}
 
-  const updateParameters = (
-    newParams: Array<{ key: string; value: string }>,
-  ) => {
-    setRequestParameters(newParams);
-    setApiParameters(
-      JSON.stringify(
-        Object.fromEntries(newParams.map(({ key, value }) => [key, value])),
-      ),
-    );
-  };
+const ApiParameterEditor: FC<ApiParameterEditorProps> = ({
+  apiParameters,
+  setApiParameters,
+  inputClass,
+}) => {
+  const [params, setParams] = useState<KeyValueParameter[]>(() =>
+    parseJsonParameters(apiParameters),
+  );
+
+  const updateParams = useCallback(
+    (newParams: KeyValueParameter[]) => {
+      setParams(newParams);
+      setApiParameters(stringifyParameters(newParams));
+    },
+    [setApiParameters],
+  );
+
+  const handleTypeChange = useCallback(
+    (index: number, newType: string) => {
+      const newParams = [...params];
+      newParams[index] = { key: `${newType}.`, value: '' };
+      updateParams(newParams);
+    },
+    [params, updateParams],
+  );
+
+  const handleKeyChange = useCallback(
+    (index: number, newKey: string) => {
+      const newParams = [...params];
+      const [type] = params[index].key.split('.');
+      newParams[index] = { ...params[index], key: `${type}.${newKey}` };
+      updateParams(newParams);
+    },
+    [params, updateParams],
+  );
+
+  const handleValueChange = useCallback(
+    (index: number, newValue: string) => {
+      const newParams = [...params];
+      newParams[index] = { ...params[index], value: newValue };
+      updateParams(newParams);
+    },
+    [params, updateParams],
+  );
+
+  const handleRemove = useCallback(
+    (index: number) => {
+      updateParams(params.filter((_, i) => i !== index));
+    },
+    [params, updateParams],
+  );
+
+  const handleAdd = useCallback(() => {
+    updateParams([...params, { key: 'assistant.', value: '' }]);
+  }, [params, updateParams]);
 
   return (
     <FieldSet>
-      <FormLabel>Parameters ({requestParameters.length})</FormLabel>
+      <FormLabel>Parameters ({params.length})</FormLabel>
       <div className="text-sm grid w-full">
-        {requestParameters.map(({ key, value }, index) => {
+        {params.map(({ key, value }, index) => {
           const [type, paramKey] = key.split('.');
           return (
-            <div
+            <ParameterRow
               key={index}
-              className="grid grid-cols-2 border-b border-gray-300 dark:border-gray-700"
-            >
-              <div className="flex col-span-1 items-center">
-                <Select
-                  value={type}
-                  onChange={e => {
-                    const newParams = [...requestParameters];
-                    newParams[index] = {
-                      key: `${e.target.value}.`,
-                      value: '', // Reset value when type changes
-                    };
-                    updateParameters(newParams);
-                  }}
-                  className={cn('bg-light-background border-none', inputClass)}
-                  options={[
-                    { name: 'Tool', value: 'tool' },
-                    { name: 'Assistant', value: 'assistant' },
-                    { name: 'Conversation', value: 'conversation' },
-                    { name: 'Argument', value: 'argument' },
-                    { name: 'Metadata', value: 'metadata' },
-                    { name: 'Option', value: 'option' },
-                    { name: 'Custom', value: 'custom' },
-                  ]}
-                />
-                <TypeKeySelector
-                  type={
-                    type as
-                      | 'tool'
-                      | 'assistant'
-                      | 'conversation'
-                      | 'argument'
-                      | 'metadata'
-                      | 'option'
-                      | 'custom'
-                  }
-                  inputClass={inputClass}
-                  value={paramKey}
-                  onChange={newKey => {
-                    const newParams = [...requestParameters];
-                    newParams[index] = { key: `${type}.${newKey}`, value };
-                    updateParameters(newParams);
-                  }}
-                />
-                <div
-                  className={cn(
-                    'bg-light-background dark:bg-gray-950 h-full flex items-center justify-center',
-                    inputClass,
-                  )}
-                >
-                  <ArrowRight strokeWidth={1.5} className="w-4 h-4" />
-                </div>
-              </div>
-              <div className="col-span-1 flex">
-                <Input
-                  value={value}
-                  onChange={e => {
-                    const newParams = [...requestParameters];
-                    newParams[index] = { key, value: e.target.value };
-                    updateParameters(newParams);
-                  }}
-                  placeholder="Value"
-                  className={cn(
-                    'bg-light-background w-full border-none',
-                    inputClass,
-                  )}
-                />
-                <IRedBorderButton
-                  className="border-none outline-hidden h-10"
-                  onClick={() => {
-                    const newParams = requestParameters.filter(
-                      (_, i) => i !== index,
-                    );
-                    updateParameters(newParams);
-                  }}
-                  type="button"
-                >
-                  <Trash2 className="w-4 h-4" strokeWidth={1.5} />
-                </IRedBorderButton>
-              </div>
-            </div>
+              type={type as ParameterType}
+              paramKey={paramKey}
+              value={value}
+              inputClass={inputClass}
+              onTypeChange={newType => handleTypeChange(index, newType)}
+              onKeyChange={newKey => handleKeyChange(index, newKey)}
+              onValueChange={newValue => handleValueChange(index, newValue)}
+              onRemove={() => handleRemove(index)}
+            />
           );
         })}
       </div>
       <IBlueBorderButton
-        onClick={() => {
-          const newParams = [
-            ...requestParameters,
-            { key: 'assistant.', value: '' },
-          ];
-          updateParameters(newParams);
-        }}
+        onClick={handleAdd}
         className="justify-between space-x-8"
       >
-        <span>Add parameters</span> <Plus className="h-4 w-4 ml-1.5" />
+        <span>Add parameters</span>
+        <Plus className="h-4 w-4 ml-1.5" />
       </IBlueBorderButton>
     </FieldSet>
   );
 };
 
-const TypeKeySelector: FC<{
-  inputClass?: string;
-  type:
-    | 'assistant'
-    | 'conversation'
-    | 'argument'
-    | 'metadata'
-    | 'option'
-    | 'tool'
-    | 'custom';
+// ============================================================================
+// Parameter Row
+// ============================================================================
+
+interface ParameterRowProps {
+  type: ParameterType;
+  paramKey: string;
   value: string;
-  onChange: (newValue: string) => void;
-}> = ({ type, value, onChange, inputClass }) => {
-  switch (type) {
-    case 'assistant':
-      return (
-        <Select
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          className={cn('bg-light-background border-none', inputClass)}
-          options={[
-            { name: 'Name', value: 'name' },
-            { name: 'Prompt', value: 'prompt' },
-          ]}
-        />
-      );
-    case 'conversation':
-      return (
-        <Select
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          className={cn('bg-light-background border-none', inputClass)}
-          options={[{ name: 'Messages', value: 'messages' }]}
-        />
-      );
-    case 'tool':
-      return (
-        <Select
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          className={cn('bg-light-background border-none', inputClass)}
-          options={[
-            { name: 'Argument', value: 'argument' },
-            { name: 'Name', value: 'name' },
-          ]}
-        />
-      );
-    default:
-      return (
-        <Input
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          placeholder="Key"
-          className={cn('bg-light-background w-full border-none', inputClass)}
-        />
-      );
-  }
-};
+  inputClass?: string;
+  onTypeChange: (type: string) => void;
+  onKeyChange: (key: string) => void;
+  onValueChange: (value: string) => void;
+  onRemove: () => void;
+}
+
+const ParameterRow: FC<ParameterRowProps> = ({
+  type,
+  paramKey,
+  value,
+  inputClass,
+  onTypeChange,
+  onKeyChange,
+  onValueChange,
+  onRemove,
+}) => (
+  <div className="grid grid-cols-2 border-b border-gray-300 dark:border-gray-700">
+    <div className="flex col-span-1 items-center">
+      <Select
+        value={type}
+        onChange={e => onTypeChange(e.target.value)}
+        className={cn('bg-light-background border-none', inputClass)}
+        options={[...PARAMETER_TYPE_OPTIONS]}
+      />
+      <TypeKeySelector
+        type={type}
+        inputClass={inputClass}
+        value={paramKey}
+        onChange={onKeyChange}
+      />
+      <div
+        className={cn(
+          'bg-light-background dark:bg-gray-950 h-full flex items-center justify-center',
+          inputClass,
+        )}
+      >
+        <ArrowRight strokeWidth={1.5} className="w-4 h-4" />
+      </div>
+    </div>
+    <div className="col-span-1 flex">
+      <Input
+        value={value}
+        onChange={e => onValueChange(e.target.value)}
+        placeholder="Value"
+        className={cn('bg-light-background w-full border-none', inputClass)}
+      />
+      <IRedBorderButton
+        className="border-none outline-hidden h-10"
+        onClick={onRemove}
+        type="button"
+      >
+        <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+      </IRedBorderButton>
+    </div>
+  </div>
+);

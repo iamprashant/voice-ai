@@ -88,11 +88,11 @@ type Communication interface {
 	//
 	GetKnowledge(knowledgeId uint64) (*internal_knowledge_gorm.Knowledge, error)
 
-	RetriveToolKnowledge(
+	RetrieveToolKnowledge(
 		knowledge *internal_knowledge_gorm.Knowledge,
 		conversationMessageId string,
 		query string,
 		filter map[string]interface{},
-		kc *KnowledgeRetriveOption,
+		kc *KnowledgeRetrieveOption,
 	) ([]KnowledgeContextResult, error)
 }

@@ -6,6 +6,7 @@
 package internal_end_of_speech
 
 import (
+	"context"
 	"errors"
 
 	internal_silence_based "github.com/rapidaai/api/assistant-api/internal/end_of_speech/internal/silence_based"
@@ -17,12 +18,14 @@ import (
 type EndOfSpeechIdentifier string
 
 const (
-	SilenceBasedEndOfSpeech EndOfSpeechIdentifier = "silence_based_eos"
-	LiveKitEndOfSpeech      EndOfSpeechIdentifier = "livekit_eos"
+	SilenceBasedEndOfSpeech       EndOfSpeechIdentifier = "silence_based_eos"
+	LiveKitEndOfSpeech            EndOfSpeechIdentifier = "livekit_eos"
+	EndOfSpeechOptionsKeyProvider                       = "microphone.eos.provider"
 )
 
-func GetEndOfSpeech(aa EndOfSpeechIdentifier, logger commons.Logger, onCallback internal_type.EndOfSpeechCallback, opts utils.Option) (internal_type.EndOfSpeech, error) {
-	switch aa {
+func GetEndOfSpeech(ctx context.Context, logger commons.Logger, onCallback internal_type.EndOfSpeechCallback, opts utils.Option) (internal_type.EndOfSpeech, error) {
+	provider, _ := opts.GetString(EndOfSpeechOptionsKeyProvider)
+	switch EndOfSpeechIdentifier(provider) {
 	case SilenceBasedEndOfSpeech:
 		return internal_silence_based.NewSilenceBasedEndOfSpeech(logger, onCallback, opts)
 	default:

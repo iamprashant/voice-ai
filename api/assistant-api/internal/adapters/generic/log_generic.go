@@ -11,7 +11,7 @@ import (
 	protos "github.com/rapidaai/protos"
 )
 
-const CONVERSACTION_PAGE_HISTORY uint32 = 50
+const ConversationPageHistory uint32 = 50
 
 func (kr *GenericRequestor) CreateKnowledgeLog(knowledgeId uint64, retrievalMethod string,
 	topK uint32,
@@ -63,7 +63,7 @@ func (cr *GenericRequestor) CreateWebhookLog(
 
 func (cr *GenericRequestor) GetConversationLogs() []*protos.Message {
 	messages := make([]*protos.Message, 0)
-	cnt, conversactions, err := cr.
+	cnt, conversations, err := cr.
 		conversationService.
 		GetAllMessageActions(
 			cr.ctx,
@@ -78,7 +78,7 @@ func (cr *GenericRequestor) GetConversationLogs() []*protos.Message {
 			},
 			&protos.Paginate{
 				Page:     1,
-				PageSize: CONVERSACTION_PAGE_HISTORY,
+				PageSize: ConversationPageHistory,
 			},
 			&protos.Ordering{
 				Column: "created_date",
@@ -90,7 +90,7 @@ func (cr *GenericRequestor) GetConversationLogs() []*protos.Message {
 		return messages
 	}
 
-	for _, x := range conversactions {
+	for _, x := range conversations {
 		if x.Status == type_enums.RECORD_SUCCESS || x.Status == type_enums.RECORD_ACTIVE {
 			messages = append(messages, x.RequestMessage())
 			messages = append(messages, x.ResponseMessage())

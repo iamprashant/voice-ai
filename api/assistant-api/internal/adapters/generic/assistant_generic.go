@@ -228,15 +228,3 @@ func (deb *GenericRequestor) onMessageMetric(ctx context.Context, messageId stri
 	}
 	return nil
 }
-
-func (deb *GenericRequestor) onMessageMetadata(ctx context.Context, messageId string, metadata map[string]interface{}) error {
-	start := time.Now()
-	_, err := deb.conversationService.ApplyMessageMetadata(ctx, deb.Auth(), deb.assistantConversation.Id, messageId, metadata)
-
-	if err != nil {
-		deb.logger.Errorf("error updating metadata for message: %v", err)
-		return err
-	}
-	deb.logger.Benchmark("GenericRequestor.OnMessageMetric", time.Since(start))
-	return nil
-}

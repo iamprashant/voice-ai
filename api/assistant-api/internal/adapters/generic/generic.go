@@ -256,7 +256,7 @@ func (talking *GenericRequestor) ResumeConversation(auth types.SimplePrinciple, 
 		talking.logger.Errorf("failed to get assistant conversation: %+v", err)
 	}
 	talking.assistantConversation = conversation
-	talking.args = conversation.GetArugments()
+	talking.args = conversation.GetArguments()
 	talking.options = conversation.GetOptions()
 	talking.metadata = conversation.GetMetadatas()
 	return conversation, nil

@@ -119,7 +119,7 @@ func (md *apiRequestToolCaller) Parse(mapping map[string]string, args string, co
 			case "id":
 				arguments[value] = fmt.Sprintf("%d", communication.Conversation().Id)
 			case "messages":
-				arguments[value] = md.SimplifyHistoy(communication.GetHistories())
+				arguments[value] = md.SimplifyHistory(communication.GetHistories())
 			}
 		}
 		if k, ok := strings.CutPrefix(key, "argument."); ok {
@@ -145,7 +145,7 @@ func (md *apiRequestToolCaller) Parse(mapping map[string]string, args string, co
 	return arguments
 }
 
-func (md *apiRequestToolCaller) SimplifyHistoy(msgs []internal_type.MessagePacket) []map[string]string {
+func (md *apiRequestToolCaller) SimplifyHistory(msgs []internal_type.MessagePacket) []map[string]string {
 	out := make([]map[string]string, 0)
 	for _, msg := range msgs {
 		out = append(out, map[string]string{

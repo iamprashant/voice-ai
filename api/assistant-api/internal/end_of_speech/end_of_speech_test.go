@@ -24,9 +24,8 @@ var mockCallback internal_type.EndOfSpeechCallback = func(ctx context.Context, r
 
 func TestGetEndOfSpeech_SilenceBasedIdentifier(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
-	opts := utils.Option{}
 
-	endOfSpeech, err := GetEndOfSpeech(SilenceBasedEndOfSpeech, logger, mockCallback, opts)
+	endOfSpeech, err := GetEndOfSpeech(context.Background(), logger, mockCallback, utils.Option{EndOfSpeechOptionsKeyProvider: SilenceBasedEndOfSpeech})
 
 	require.NoError(t, err)
 	assert.NotNil(t, endOfSpeech)
@@ -35,10 +34,8 @@ func TestGetEndOfSpeech_SilenceBasedIdentifier(t *testing.T) {
 
 func TestGetEndOfSpeech_UnknownIdentifier(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
-	opts := utils.Option{}
-	unknownIdentifier := EndOfSpeechIdentifier("unknown_eos")
 
-	endOfSpeech, err := GetEndOfSpeech(unknownIdentifier, logger, mockCallback, opts)
+	endOfSpeech, err := GetEndOfSpeech(t.Context(), logger, mockCallback, utils.Option{EndOfSpeechOptionsKeyProvider: EndOfSpeechIdentifier("unknown_eos")})
 
 	assert.Error(t, err)
 	assert.Nil(t, endOfSpeech)
@@ -47,9 +44,8 @@ func TestGetEndOfSpeech_UnknownIdentifier(t *testing.T) {
 
 func TestGetEndOfSpeech_LiveKitIdentifier(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
-	opts := utils.Option{}
 
-	endOfSpeech, err := GetEndOfSpeech(LiveKitEndOfSpeech, logger, mockCallback, opts)
+	endOfSpeech, err := GetEndOfSpeech(t.Context(), logger, mockCallback, utils.Option{EndOfSpeechOptionsKeyProvider: LiveKitEndOfSpeech})
 
 	// Currently not implemented, should fail
 	assert.Error(t, err)
@@ -58,10 +54,10 @@ func TestGetEndOfSpeech_LiveKitIdentifier(t *testing.T) {
 
 func TestGetEndOfSpeech_EmptyIdentifier(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
-	opts := utils.Option{}
+
 	emptyIdentifier := EndOfSpeechIdentifier("")
 
-	endOfSpeech, err := GetEndOfSpeech(emptyIdentifier, logger, mockCallback, opts)
+	endOfSpeech, err := GetEndOfSpeech(t.Context(), logger, mockCallback, utils.Option{EndOfSpeechOptionsKeyProvider: emptyIdentifier})
 
 	assert.Error(t, err)
 	assert.Nil(t, endOfSpeech)
@@ -75,11 +71,10 @@ func TestEndOfSpeechIdentifier_Constants(t *testing.T) {
 }
 
 func TestGetEndOfSpeech_WithNilLogger(t *testing.T) {
-	opts := utils.Option{}
 
 	// This test validates that the function passes nil logger to NewSilenceBasedEndOfSpeech
 	// which should handle it appropriately or fail gracefully
-	endOfSpeech, err := GetEndOfSpeech(SilenceBasedEndOfSpeech, nil, mockCallback, opts)
+	endOfSpeech, err := GetEndOfSpeech(t.Context(), nil, mockCallback, utils.Option{EndOfSpeechOptionsKeyProvider: SilenceBasedEndOfSpeech})
 
 	// The behavior depends on internal_silence_based_end_of_speech implementation
 	// Either it should error or handle nil logger gracefully
@@ -92,10 +87,9 @@ func TestGetEndOfSpeech_WithNilLogger(t *testing.T) {
 
 func TestGetEndOfSpeech_WithNilCallback(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
-	opts := utils.Option{}
 
 	// Test with nil callback
-	endOfSpeech, err := GetEndOfSpeech(SilenceBasedEndOfSpeech, logger, nil, opts)
+	endOfSpeech, err := GetEndOfSpeech(t.Context(), logger, nil, utils.Option{EndOfSpeechOptionsKeyProvider: SilenceBasedEndOfSpeech})
 
 	// The behavior depends on internal_silence_based_end_of_speech implementation
 	if err == nil {
@@ -109,7 +103,7 @@ func TestGetEndOfSpeech_WithNilOptions(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 
 	// Test with nil options
-	endOfSpeech, err := GetEndOfSpeech(SilenceBasedEndOfSpeech, logger, mockCallback, nil)
+	endOfSpeech, err := GetEndOfSpeech(t.Context(), logger, mockCallback, nil)
 
 	// The behavior depends on internal_silence_based_end_of_speech implementation
 	if err == nil {

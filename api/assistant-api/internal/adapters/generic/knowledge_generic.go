@@ -19,18 +19,18 @@ import (
 	"github.com/rapidaai/pkg/utils"
 )
 
-var DEFAULT_TOP_K = 4
-var DEFAULT_SCORE_THRESHOLD = 0.5
+var defaultTopK = 4
+var defaultScoreThreshold = 0.5
 
-func (kr *GenericRequestor) RetriveToolKnowledge(
+func (kr *GenericRequestor) RetrieveToolKnowledge(
 	knowledge *internal_knowledge_gorm.Knowledge,
 	messageId string,
 	query string,
 	filter map[string]interface{},
-	kc *internal_type.KnowledgeRetriveOption,
+	kc *internal_type.KnowledgeRetrieveOption,
 ) ([]internal_type.KnowledgeContextResult, error) {
 	start := time.Now()
-	result, err := kr.retrive(kr.Context(), knowledge, query, filter, kc)
+	result, err := kr.retrieve(kr.Context(), knowledge, query, filter, kc)
 	utils.Go(context.Background(), func() {
 		request, _ := json.Marshal(map[string]interface{}{
 			"query":  query,
@@ -67,18 +67,18 @@ func (kr *GenericRequestor) RetriveToolKnowledge(
 
 }
 
-func (kr *GenericRequestor) retrive(
+func (kr *GenericRequestor) retrieve(
 	ctx context.Context,
 	knowledge *internal_knowledge_gorm.Knowledge,
 	query string,
 	filter map[string]interface{},
-	kc *internal_type.KnowledgeRetriveOption,
+	kc *internal_type.KnowledgeRetrieveOption,
 ) ([]internal_type.KnowledgeContextResult, error) {
-	topK := int(DEFAULT_TOP_K)
+	topK := int(defaultTopK)
 	if kc.TopK != 0 {
 		topK = int(kc.TopK)
 	}
-	minScore := float32(DEFAULT_SCORE_THRESHOLD)
+	minScore := float32(defaultScoreThreshold)
 	if kc.ScoreThreshold != 0 {
 		minScore = float32(kc.ScoreThreshold)
 	}
@@ -199,7 +199,7 @@ func (kr *GenericRequestor) retrive(
 		return Results, nil
 
 	default:
-		kr.logger.Errorf("retrive method is unexpected")
-		return Results, fmt.Errorf("retrive method is unexpected")
+		kr.logger.Errorf("retrieve method is unexpected")
+		return Results, fmt.Errorf("retrieve method is unexpected")
 	}
 }

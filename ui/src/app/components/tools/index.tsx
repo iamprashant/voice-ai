@@ -1,5 +1,9 @@
 import { Metadata } from '@rapidaai/react';
+import { FC, useCallback, useMemo } from 'react';
 import { Dropdown } from '@/app/components/dropdown';
+import { FieldSet } from '@/app/components/form/fieldset';
+import { FormLabel } from '@/app/components/form-label';
+import { cn } from '@/utils';
 import { ConfigureAPIRequest } from '@/app/components/tools/api-request';
 import {
   GetAPIRequestDefaultOptions,
@@ -25,10 +29,6 @@ import {
   GetPutOnHoldDefaultOptions,
   ValidatePutOnHoldDefaultOptions,
 } from '@/app/components/tools/put-on-hold/constant';
-import { cn } from '@/utils';
-import { FC } from 'react';
-import { FieldSet } from '@/app/components/form/fieldset';
-import { FormLabel } from '@/app/components/form-label';
 import {
   APIRequestToolDefintion,
   BUILDIN_TOOLS,
@@ -38,173 +38,195 @@ import {
   KnowledgeRetrievalToolDefintion,
 } from '@/llm-tools';
 
+// ============================================================================
+// Types
+// ============================================================================
+
+export type ToolCode =
+  | 'knowledge_retrieval'
+  | 'api_request'
+  | 'endpoint'
+  | 'put_on_hold'
+  | 'end_of_conversation';
+
+export interface ToolDefinition {
+  name: string;
+  description: string;
+  parameters: string;
+}
+
 export interface BuildinToolConfig {
   code: string;
   parameters: Metadata[];
 }
 
-export const GetDefaultToolDefintion = (
-  code: string,
-  existing: { name: string; description: string; parameters: string },
-): { name: string; description: string; parameters: string } => {
-  const isValidDefinition =
-    existing && existing.name && existing.description && existing.parameters;
+interface ConfigureToolProps {
+  toolDefinition: ToolDefinition;
+  onChangeToolDefinition: (value: ToolDefinition) => void;
+  parameters: Metadata[] | null;
+  inputClass?: string;
+  onParameterChange: (params: Metadata[]) => void;
+}
 
-  switch (code) {
-    case 'knowledge_retrieval':
-      return isValidDefinition ? existing : KnowledgeRetrievalToolDefintion;
-    case 'api_request':
-      return isValidDefinition ? existing : APIRequestToolDefintion;
-    case 'endpoint':
-      return isValidDefinition ? existing : EndpointToolDefintion;
-    case 'put_on_hold':
-      return isValidDefinition ? existing : PutOnHoldToolDefintion;
-    case 'end_of_conversation':
-      return isValidDefinition ? existing : EndOfConverstaionToolDefintion;
-    default:
-      return isValidDefinition ? existing : EndpointToolDefintion; // Fallback for default case
+// ============================================================================
+// Tool Registry - Single source of truth for tool configurations
+// ============================================================================
+
+const TOOL_REGISTRY: Record<
+  ToolCode,
+  {
+    definition: ToolDefinition;
+    getDefaultOptions: (params: Metadata[]) => Metadata[];
+    validateOptions: (params: Metadata[]) => string | undefined;
+    Component: FC<ConfigureToolProps>;
   }
+> = {
+  knowledge_retrieval: {
+    definition: KnowledgeRetrievalToolDefintion,
+    getDefaultOptions: GetKnowledgeRetrievalDefaultOptions,
+    validateOptions: ValidateKnowledgeRetrievalDefaultOptions,
+    Component: ConfigureKnowledgeRetrieval,
+  },
+  api_request: {
+    definition: APIRequestToolDefintion,
+    getDefaultOptions: GetAPIRequestDefaultOptions,
+    validateOptions: ValidateAPIRequestDefaultOptions,
+    Component: ConfigureAPIRequest,
+  },
+  endpoint: {
+    definition: EndpointToolDefintion,
+    getDefaultOptions: GetEndpointDefaultOptions,
+    validateOptions: ValidateEndpointDefaultOptions,
+    Component: ConfigureEndpoint,
+  },
+  put_on_hold: {
+    definition: PutOnHoldToolDefintion,
+    getDefaultOptions: GetPutOnHoldDefaultOptions,
+    validateOptions: ValidatePutOnHoldDefaultOptions,
+    Component: ConfigurePutOnHold,
+  },
+  end_of_conversation: {
+    definition: EndOfConverstaionToolDefintion,
+    getDefaultOptions: GetEndOfConversationDefaultOptions,
+    validateOptions: ValidateEndOfConversationDefaultOptions,
+    Component: ConfigureEndOfConversation,
+  },
 };
 
+const DEFAULT_TOOL_CODE: ToolCode = 'endpoint';
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+const isValidToolCode = (code: string): code is ToolCode => {
+  return code in TOOL_REGISTRY;
+};
+
+const getToolConfig = (code: string) => {
+  return isValidToolCode(code)
+    ? TOOL_REGISTRY[code]
+    : TOOL_REGISTRY[DEFAULT_TOOL_CODE];
+};
+
+/**
+ * Returns the default tool definition for a given tool code.
+ * If an existing definition has all required fields, it returns the existing one.
+ * This should only be called during initialization, not on every render.
+ */
+export const GetDefaultToolDefintion = (
+  code: string,
+  existing?: Partial<ToolDefinition>,
+): ToolDefinition => {
+  const hasValidExisting =
+    existing?.name && existing?.description && existing?.parameters;
+
+  if (hasValidExisting) {
+    return existing as ToolDefinition;
+  }
+
+  return getToolConfig(code).definition;
+};
+
+/**
+ * Returns default tool config parameters, merging with existing if valid.
+ */
 export const GetDefaultToolConfigIfInvalid = (
   code: string,
   parameters: Metadata[],
 ): Metadata[] => {
-  switch (code) {
-    case 'knowledge_retrieval':
-      return GetKnowledgeRetrievalDefaultOptions(parameters);
-    case 'api_request':
-      return GetAPIRequestDefaultOptions(parameters);
-    case 'endpoint':
-      return GetEndpointDefaultOptions(parameters);
-    case 'put_on_hold':
-      return GetPutOnHoldDefaultOptions(parameters);
-    case 'end_of_conversation':
-      return GetEndOfConversationDefaultOptions(parameters);
-    default:
-      return parameters;
-  }
+  const config = getToolConfig(code);
+  return config.getDefaultOptions(parameters);
 };
 
+/**
+ * Validates tool parameters and returns an error message if invalid.
+ */
 export const ValidateToolDefaultOptions = (
   code: string,
   parameters: Metadata[],
 ): string | undefined => {
-  switch (code) {
-    case 'knowledge_retrieval':
-      return ValidateKnowledgeRetrievalDefaultOptions(parameters);
-    case 'api_request':
-      return ValidateAPIRequestDefaultOptions(parameters);
-    case 'endpoint':
-      return ValidateEndpointDefaultOptions(parameters);
-    case 'put_on_hold':
-      return ValidatePutOnHoldDefaultOptions(parameters);
-    case 'end_of_conversation':
-      return ValidateEndOfConversationDefaultOptions(parameters);
-    default:
-      return undefined;
+  if (!isValidToolCode(code)) {
+    return undefined;
   }
+  return TOOL_REGISTRY[code].validateOptions(parameters);
 };
 
+// ============================================================================
+// Components
+// ============================================================================
+
+const ToolOptionRenderer: FC<{ icon: string; name: string }> = ({
+  icon,
+  name,
+}) => (
+  <span className="inline-flex items-center gap-2 sm:gap-2.5 max-w-full text-sm font-medium">
+    <img
+      alt=""
+      loading="lazy"
+      width={16}
+      height={16}
+      className="w-4 h-4 align-middle block shrink-0"
+      src={icon}
+    />
+    <span className="truncate capitalize">{name}</span>
+  </span>
+);
+
 const ConfigureBuildinTool: FC<{
-  toolDefinition: {
-    name: string;
-    description: string;
-    parameters: string;
-  };
-  onChangeToolDefinition: (vl: {
-    name: string;
-    description: string;
-    parameters: string;
-  }) => void;
+  toolDefinition: ToolDefinition;
+  onChangeToolDefinition: (value: ToolDefinition) => void;
   config: BuildinToolConfig;
-  updateConfig: (config: Partial<BuildinToolConfig>) => void;
+  onParameterChange: (params: Metadata[]) => void;
   inputClass?: string;
 }> = ({
   config,
-  updateConfig,
   inputClass,
   toolDefinition,
   onChangeToolDefinition,
+  onParameterChange,
 }) => {
-  switch (config.code) {
-    case 'knowledge_retrieval':
-      return (
-        <ConfigureKnowledgeRetrieval
-          toolDefinition={toolDefinition}
-          onChangeToolDefinition={onChangeToolDefinition}
-          parameters={config.parameters}
-          inputClass={inputClass}
-          onParameterChange={(params: Metadata[]) =>
-            updateConfig({ parameters: params })
-          }
-        />
-      );
-    case 'api_request':
-      return (
-        <ConfigureAPIRequest
-          toolDefinition={toolDefinition}
-          onChangeToolDefinition={onChangeToolDefinition}
-          parameters={config.parameters}
-          inputClass={inputClass}
-          onParameterChange={(params: Metadata[]) =>
-            updateConfig({ parameters: params })
-          }
-        />
-      );
-    case 'endpoint':
-      return (
-        <ConfigureEndpoint
-          toolDefinition={toolDefinition}
-          onChangeToolDefinition={onChangeToolDefinition}
-          parameters={config.parameters}
-          inputClass={inputClass}
-          onParameterChange={(params: Metadata[]) =>
-            updateConfig({ parameters: params })
-          }
-        />
-      );
-    case 'put_on_hold':
-      return (
-        <ConfigurePutOnHold
-          toolDefinition={toolDefinition}
-          onChangeToolDefinition={onChangeToolDefinition}
-          parameters={config.parameters}
-          inputClass={inputClass}
-          onParameterChange={(params: Metadata[]) =>
-            updateConfig({ parameters: params })
-          }
-        />
-      );
-    case 'end_of_conversation':
-      return (
-        <ConfigureEndOfConversation
-          toolDefinition={toolDefinition}
-          onChangeToolDefinition={onChangeToolDefinition}
-          parameters={config.parameters}
-          inputClass={inputClass}
-          onParameterChange={(params: Metadata[]) =>
-            updateConfig({ parameters: params })
-          }
-        />
-      );
-    default:
-      return null;
+  if (!isValidToolCode(config.code)) {
+    return null;
   }
+
+  const { Component } = TOOL_REGISTRY[config.code];
+
+  return (
+    <Component
+      toolDefinition={toolDefinition}
+      onChangeToolDefinition={onChangeToolDefinition}
+      parameters={config.parameters}
+      inputClass={inputClass}
+      onParameterChange={onParameterChange}
+    />
+  );
 };
 
-export const BuildinTool: React.FC<{
-  toolDefinition: {
-    name: string;
-    description: string;
-    parameters: string;
-  };
-  onChangeToolDefinition: (vl: {
-    name: string;
-    description: string;
-    parameters: string;
-  }) => void;
-  onChangeBuildinTool: (i: string) => void;
+export const BuildinTool: FC<{
+  toolDefinition: ToolDefinition;
+  onChangeToolDefinition: (value: ToolDefinition) => void;
+  onChangeBuildinTool: (code: string) => void;
   onChangeConfig: (config: BuildinToolConfig) => void;
   inputClass?: string;
   config: BuildinToolConfig;
@@ -216,9 +238,24 @@ export const BuildinTool: React.FC<{
   config,
   inputClass,
 }) => {
-  const updateConfig = (newConfig: Partial<BuildinToolConfig>) => {
-    onChangeConfig({ ...config, ...newConfig } as BuildinToolConfig);
-  };
+  const handleParameterChange = useCallback(
+    (params: Metadata[]) => {
+      onChangeConfig({ ...config, parameters: params });
+    },
+    [config, onChangeConfig],
+  );
+
+  const currentTool = useMemo(
+    () => BUILDIN_TOOLS.find(tool => tool.code === config.code),
+    [config.code],
+  );
+
+  const renderOption = useCallback(
+    (tool: { icon: string; name: string }) => (
+      <ToolOptionRenderer icon={tool.icon} name={tool.name} />
+    ),
+    [],
+  );
 
   return (
     <>
@@ -227,51 +264,21 @@ export const BuildinTool: React.FC<{
           <FormLabel>Action</FormLabel>
           <Dropdown
             className={cn('bg-light-background dark:bg-gray-950', inputClass)}
-            currentValue={BUILDIN_TOOLS.find(x => x.code === config.code)}
-            setValue={v => {
-              onChangeBuildinTool(v.code);
-            }}
+            currentValue={currentTool}
+            setValue={tool => onChangeBuildinTool(tool.code)}
             allValue={BUILDIN_TOOLS}
             placeholder="Select provider"
-            option={c => {
-              return (
-                <span className="inline-flex items-center gap-2 sm:gap-2.5 max-w-full text-sm font-medium">
-                  <img
-                    alt=""
-                    loading="lazy"
-                    width={16}
-                    height={16}
-                    className="sm:h-4 sm:w-4 w-4 h-4 align-middle block shrink-0"
-                    src={c.icon}
-                  />
-                  <span className="truncate capitalize">{c.name}</span>
-                </span>
-              );
-            }}
-            label={c => {
-              return (
-                <span className="inline-flex items-center gap-2 sm:gap-2.5 max-w-full text-sm font-medium">
-                  <img
-                    alt=""
-                    loading="lazy"
-                    width={16}
-                    height={16}
-                    className="sm:h-4 sm:w-4 w-4 h-4 align-middle block shrink-0"
-                    src={c.icon}
-                  />
-                  <span className="truncate capitalize">{c.name}</span>
-                </span>
-              );
-            }}
+            option={renderOption}
+            label={renderOption}
           />
         </FieldSet>
       </div>
 
       <ConfigureBuildinTool
-        toolDefinition={GetDefaultToolDefintion(config.code, toolDefinition)}
+        toolDefinition={toolDefinition}
         onChangeToolDefinition={onChangeToolDefinition}
         config={config}
-        updateConfig={updateConfig}
+        onParameterChange={handleParameterChange}
         inputClass={inputClass}
       />
     </>

@@ -151,13 +151,8 @@ func (listening *GenericRequestor) initializeSpeechToText(ctx context.Context, t
 
 func (listening *GenericRequestor) initializeEndOfSpeech(ctx context.Context, options utils.Option) error {
 	start := time.Now()
-	provider, err := options.GetString("microphone.eos.provider")
-	if err != nil {
-		listening.logger.Errorf("denoising.provider is not set, please check the configuration")
-		return err
-	}
-	endOfSpeech, err := internal_end_of_speech.GetEndOfSpeech(
-		internal_end_of_speech.EndOfSpeechIdentifier(provider),
+
+	endOfSpeech, err := internal_end_of_speech.GetEndOfSpeech(ctx,
 		listening.logger,
 		func(_ctx context.Context, act internal_type.EndOfSpeechPacket) error {
 			return listening.OnPacket(_ctx, act)

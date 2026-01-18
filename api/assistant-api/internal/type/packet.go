@@ -268,8 +268,8 @@ func (f SpeechToTextPacket) ContextId() string {
 
 //
 
-// h
-type KnowledgeRetriveOption struct {
+// KnowledgeRetrieveOption contains options for knowledge retrieval operations
+type KnowledgeRetrieveOption struct {
 	EmbeddingProviderCredential *protos.VaultCredential
 	RetrievalMethod             string
 	TopK                        uint32

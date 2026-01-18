@@ -53,7 +53,7 @@ func (afkTool *knowledgeRetrievalToolCaller) Call(ctx context.Context, pkt inter
 	if err != nil || in == nil {
 		return internal_type.LLMToolPacket{ContextID: pkt.ContextId(), Action: protos.AssistantConversationAction_KNOWLEDGE_RETRIEVAL, Result: afkTool.Result("Required argument is missing or query, context is missing from argument list", false)}
 	} else {
-		knowledges, err := communication.RetriveToolKnowledge(afkTool.knowledge, pkt.ContextId(), *in, v, &internal_type.KnowledgeRetriveOption{
+		knowledges, err := communication.RetrieveToolKnowledge(afkTool.knowledge, pkt.ContextId(), *in, v, &internal_type.KnowledgeRetrieveOption{
 			EmbeddingProviderCredential: afkTool.providerCredential,
 			RetrievalMethod:             afkTool.searchType,
 			TopK:                        afkTool.topK,

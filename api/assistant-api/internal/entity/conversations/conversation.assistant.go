@@ -31,7 +31,7 @@ type AssistantConversation struct {
 	TelephonyEvents []*AssistantConversationTelephonyEvent `json:"telephonyEvents" gorm:"foreignKey:AssistantConversationId"`
 }
 
-func (ac *AssistantConversation) GetArugments() map[string]interface{} {
+func (ac *AssistantConversation) GetArguments() map[string]interface{} {
 	args := make(map[string]interface{})
 	if len(ac.Arguments) > 0 {
 		for _, ar := range ac.Arguments {
