@@ -39,6 +39,7 @@ type deepgramTTS struct {
 	logger     commons.Logger
 	connection *websocket.Conn
 	onPacket   func(pkt ...internal_type.Packet) error
+	normalizer internal_type.TextNormalizer
 }
 
 func NewDeepgramTextToSpeech(ctx context.Context, logger commons.Logger, credential *protos.VaultCredential, audioConfig *protos.AudioConfig,
@@ -51,13 +52,13 @@ func NewDeepgramTextToSpeech(ctx context.Context, logger commons.Logger, credent
 		return nil, err
 	}
 	ctx2, cancel := context.WithCancel(ctx)
-
 	return &deepgramTTS{
 		deepgramOption: dGoptions,
 		ctx:            ctx2,
 		ctxCancel:      cancel,
 		logger:         logger,
 		onPacket:       onPacket,
+		normalizer:     NewDeepgramNormalizer(logger, opts),
 	}, nil
 }
 
@@ -160,10 +161,10 @@ func (t *deepgramTTS) Transform(ctx context.Context, in internal_type.LLMPacket)
 
 	switch input := in.(type) {
 	case internal_type.LLMStreamPacket:
-		// if the request is for complete then we just flush the stream
+		// Normalize text before sending to TTS
 		if err := conn.WriteJSON(map[string]interface{}{
 			"type": "Speak",
-			"text": input.Text,
+			"text": t.normalizer.Normalize(ctx, input.Text),
 		}); err != nil {
 			t.logger.Errorf("deepgram-tts: failed to send Speak message %v", err)
 		}

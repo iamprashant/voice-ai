@@ -4,7 +4,7 @@
 // Licensed under GPL-2.0 with Rapida Additional Terms.
 // See LICENSE.md or contact sales@rapida.ai for commercial usage.
 
-package internal_default
+package internal_default_assembler
 
 import (
 	"context"
@@ -16,8 +16,8 @@ import (
 	"github.com/rapidaai/pkg/utils"
 )
 
-// BenchmarkNewDefaultLLMSentenceAssembler measures the creation time of a assembler
-func BenchmarkNewDefaultLLMSentenceAssembler(b *testing.B) {
+// BenchmarkNewDefaultLLMTextAssembler measures the creation time of a assembler
+func BenchmarkNewDefaultLLMTextAssembler(b *testing.B) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := utils.Option{"speaker.sentence.boundaries": ".,?!"}
 
@@ -25,13 +25,13 @@ func BenchmarkNewDefaultLLMSentenceAssembler(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMSentenceAssembler(b.Context(), logger, opts)
+		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
 		assembler.Close()
 	}
 }
 
-// BenchmarkNewDefaultLLMSentenceAssemblerNoBoundaries measures creation without boundaries
-func BenchmarkNewDefaultLLMSentenceAssemblerNoBoundaries(b *testing.B) {
+// BenchmarkNewDefaultLLMTextAssemblerNoBoundaries measures creation without boundaries
+func BenchmarkNewDefaultLLMTextAssemblerNoBoundaries(b *testing.B) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := utils.Option{}
 
@@ -39,13 +39,13 @@ func BenchmarkNewDefaultLLMSentenceAssemblerNoBoundaries(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMSentenceAssembler(b.Context(), logger, opts)
+		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
 		assembler.Close()
 	}
 }
 
-// BenchmarkSingleSentenceTokenization measures processing a single sentence
-func BenchmarkSingleSentenceTokenization(b *testing.B) {
+// BenchmarkSingleTextTokenization measures processing a single sentence
+func BenchmarkSingleTextTokenization(b *testing.B) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := utils.Option{"speaker.sentence.boundaries": "."}
 	ctx := context.Background()
@@ -54,7 +54,7 @@ func BenchmarkSingleSentenceTokenization(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMSentenceAssembler(b.Context(), logger, opts)
+		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
 		assembler.Assemble(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      "Hello world.",
@@ -63,8 +63,8 @@ func BenchmarkSingleSentenceTokenization(b *testing.B) {
 	}
 }
 
-// BenchmarkMultipleSentences measures processing multiple sentences
-func BenchmarkMultipleSentences(b *testing.B) {
+// BenchmarkMultipleTexts measures processing multiple sentences
+func BenchmarkMultipleTexts(b *testing.B) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := utils.Option{"speaker.sentence.boundaries": "."}
 	ctx := context.Background()
@@ -79,7 +79,7 @@ func BenchmarkMultipleSentences(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMSentenceAssembler(b.Context(), logger, opts)
+		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
 		for _, s := range sentences {
 			assembler.Assemble(ctx, s)
 		}
@@ -87,27 +87,27 @@ func BenchmarkMultipleSentences(b *testing.B) {
 	}
 }
 
-// BenchmarkLargeSentences measures processing large sentences
-func BenchmarkLargeSentences(b *testing.B) {
+// BenchmarkLargeTexts measures processing large sentences
+func BenchmarkLargeTexts(b *testing.B) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := utils.Option{"speaker.sentence.boundaries": "."}
 	ctx := context.Background()
 
 	// Create a large sentence
-	largeSentence := ""
+	largeText := ""
 	for i := 0; i < 1000; i++ {
-		largeSentence += "word "
+		largeText += "word "
 	}
-	largeSentence += "."
+	largeText += "."
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMSentenceAssembler(b.Context(), logger, opts)
+		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
 		assembler.Assemble(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
-			Text:      largeSentence,
+			Text:      largeText,
 		})
 		assembler.Close()
 	}
@@ -119,7 +119,7 @@ func BenchmarkMultipleBoundaries(b *testing.B) {
 	opts := utils.Option{"speaker.sentence.boundaries": ".,?!;:"}
 	ctx := context.Background()
 
-	testSentences := []string{
+	testTexts := []string{
 		"What is this?",
 		"I don't know!",
 		"Let's try.",
@@ -130,8 +130,8 @@ func BenchmarkMultipleBoundaries(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMSentenceAssembler(b.Context(), logger, opts)
-		for _, s := range testSentences {
+		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
+		for _, s := range testTexts {
 			assembler.Assemble(ctx, internal_type.LLMStreamPacket{
 				ContextID: "speaker1",
 				Text:      s,
@@ -151,12 +151,12 @@ func BenchmarkContextSwitching(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMSentenceAssembler(b.Context(), logger, opts)
+		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
 		for speaker := 0; speaker < 5; speaker++ {
 			for j := 0; j < 3; j++ {
 				assembler.Assemble(ctx, internal_type.LLMStreamPacket{
 					ContextID: fmt.Sprintf("speaker%d", speaker),
-					Text:      fmt.Sprintf("Sentence %d.", j),
+					Text:      fmt.Sprintf("Text %d.", j),
 				})
 			}
 		}
@@ -174,13 +174,13 @@ func BenchmarkResultChannelConsumption(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMSentenceAssembler(b.Context(), logger, opts)
+		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
 
 		// Send sentences
 		for j := 0; j < 10; j++ {
 			assembler.Assemble(ctx, internal_type.LLMStreamPacket{
 				ContextID: "speaker1",
-				Text:      fmt.Sprintf("Sentence %d.", j),
+				Text:      fmt.Sprintf("Text %d.", j),
 			})
 		}
 
@@ -198,7 +198,7 @@ func BenchmarkCompleteFlag(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMSentenceAssembler(b.Context(), logger, opts)
+		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
 		assembler.Assemble(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      "This is a test",
@@ -220,7 +220,7 @@ func BenchmarkBufferingWithoutBoundaries(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMSentenceAssembler(b.Context(), logger, opts)
+		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
 		for j := 0; j < 5; j++ {
 			assembler.Assemble(ctx, internal_type.LLMStreamPacket{
 				ContextID: "speaker1",
@@ -250,7 +250,7 @@ func BenchmarkStreamingLargeText(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMSentenceAssembler(b.Context(), logger, opts)
+		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
 		for _, chunk := range chunks {
 			assembler.Assemble(ctx, internal_type.LLMStreamPacket{
 				ContextID: "speaker1",
@@ -270,7 +270,7 @@ func BenchmarkClosing(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMSentenceAssembler(b.Context(), logger, opts)
+		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
 		assembler.Close()
 	}
 }
@@ -285,7 +285,7 @@ func BenchmarkEmptyAndCompleteFlush(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMSentenceAssembler(b.Context(), logger, opts)
+		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
 		// Send empty with complete flag
 		assembler.Assemble(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
@@ -307,7 +307,7 @@ func BenchmarkComplexScenario(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMSentenceAssembler(b.Context(), logger, opts)
+		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
 
 		// Simulate a realistic conversation
 		conversationTurns := []struct {
@@ -349,7 +349,7 @@ func BenchmarkParallelProcessing(b *testing.B) {
 
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			assembler, _ := NewDefaultLLMSentenceAssembler(b.Context(), logger, opts)
+			assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
 			assembler.Assemble(ctx, internal_type.LLMStreamPacket{
 				ContextID: "speaker1",
 				Text:      "Hello world.",
@@ -371,7 +371,7 @@ func BenchmarkWhitespaceProcessing(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMSentenceAssembler(b.Context(), logger, opts)
+		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
 		assembler.Assemble(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      textWithWhitespace,

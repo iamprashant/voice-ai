@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	internal_sentence_assembler "github.com/rapidaai/api/assistant-api/internal/assembler/sentence"
+	internal_sentence_assembler "github.com/rapidaai/api/assistant-api/internal/assembler/text"
 	internal_denoiser "github.com/rapidaai/api/assistant-api/internal/denoiser"
 	internal_end_of_speech "github.com/rapidaai/api/assistant-api/internal/end_of_speech"
 	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
@@ -218,7 +218,7 @@ func (spk *GenericRequestor) connectSpeaker(ctx context.Context, audioOutConfig 
 	wg.Add(1)
 	utils.Go(ctx, func() {
 		defer wg.Done()
-		if err := spk.initializeSentenceAssembler(ctx, speakerOpts); err != nil {
+		if err := spk.initializeTextAssembler(ctx, speakerOpts); err != nil {
 			spk.logger.Errorf("unable to initialize sentence assembler with error %v", err)
 			return
 		}
@@ -234,8 +234,8 @@ func (spk *GenericRequestor) disconnectSpeaker() error {
 			spk.logger.Errorf("cancel all output transformer with error %v", err)
 		}
 	}
-	if spk.sentenceAssembler != nil {
-		spk.sentenceAssembler.Close()
+	if spk.textAssembler != nil {
+		spk.textAssembler.Close()
 	}
 	return nil
 }
@@ -280,9 +280,9 @@ func (spk *GenericRequestor) initializeTextToSpeech(context context.Context, tra
 	return nil
 }
 
-func (spk *GenericRequestor) initializeSentenceAssembler(ctx context.Context, options utils.Option) error {
-	if sentenceAssembler, err := internal_sentence_assembler.GetLLMSentenceAssembler(spk.Context(), spk.logger, options); err == nil {
-		spk.sentenceAssembler = sentenceAssembler
+func (spk *GenericRequestor) initializeTextAssembler(ctx context.Context, options utils.Option) error {
+	if textAssembler, err := internal_sentence_assembler.GetLLMTextAssembler(spk.Context(), spk.logger, options); err == nil {
+		spk.textAssembler = textAssembler
 		go spk.onAssembleSentence(spk.Context())
 	}
 	return nil
@@ -295,7 +295,7 @@ func (spk *GenericRequestor) onAssembleSentence(ctx context.Context) {
 			spk.logger.Debugf("OnCompleteSentence stopped due to context cancellation")
 			return
 
-		case result, ok := <-spk.sentenceAssembler.Result():
+		case result, ok := <-spk.textAssembler.Result():
 			if !ok {
 				spk.logger.Debugf("speak: OnCompleteSentence tokenizer channel closed")
 				return

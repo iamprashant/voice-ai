@@ -7,55 +7,18 @@
 package internal_normalizers
 
 import (
-	"context"
 	"testing"
-	"time"
 
+	"github.com/rapidaai/pkg/commons"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap/zapcore"
 )
-
-// =============================================================================
-// Mock Logger Implementation
-// =============================================================================
-
-type mockLogger struct {
-	warnMessages []string
-}
-
-func newMockLogger() *mockLogger {
-	return &mockLogger{
-		warnMessages: make([]string, 0),
-	}
-}
-
-func (m *mockLogger) Level() zapcore.Level                         { return zapcore.DebugLevel }
-func (m *mockLogger) Debug(args ...interface{})                    {}
-func (m *mockLogger) Debugf(template string, args ...interface{})  {}
-func (m *mockLogger) Info(args ...interface{})                     {}
-func (m *mockLogger) Infof(template string, args ...interface{})   {}
-func (m *mockLogger) Warn(args ...interface{})                     {}
-func (m *mockLogger) Warnf(template string, args ...interface{})   {}
-func (m *mockLogger) Error(args ...interface{})                    {}
-func (m *mockLogger) Errorf(template string, args ...interface{})  {}
-func (m *mockLogger) DPanic(args ...interface{})                   {}
-func (m *mockLogger) DPanicf(template string, args ...interface{}) {}
-func (m *mockLogger) Panic(args ...interface{})                    {}
-func (m *mockLogger) Panicf(template string, args ...interface{})  {}
-func (m *mockLogger) Fatal(args ...interface{})                    {}
-func (m *mockLogger) Fatalf(template string, args ...interface{})  {}
-func (m *mockLogger) Benchmark(functionName string, duration time.Duration) {
-}
-func (m *mockLogger) Tracef(ctx context.Context, format string, args ...interface{}) {
-}
-func (m *mockLogger) Sync() error { return nil }
 
 // =============================================================================
 // Currency Normalizer Tests
 // =============================================================================
 
 func TestCurrencyNormalizer(t *testing.T) {
-	logger := newMockLogger()
+	logger, _ := commons.NewApplicationLogger()
 	normalizer := NewCurrencyNormalizer(logger)
 
 	tests := []struct {
@@ -123,7 +86,7 @@ func TestCurrencyNormalizer(t *testing.T) {
 // =============================================================================
 
 func TestDateNormalizer(t *testing.T) {
-	logger := newMockLogger()
+	logger, _ := commons.NewApplicationLogger()
 	normalizer := NewDateNormalizer(logger)
 
 	tests := []struct {
@@ -191,7 +154,7 @@ func TestDateNormalizer(t *testing.T) {
 // =============================================================================
 
 func TestTimeNormalizer(t *testing.T) {
-	logger := newMockLogger()
+	logger, _ := commons.NewApplicationLogger()
 	normalizer := NewTimeNormalizer(logger)
 
 	tests := []struct {
@@ -259,7 +222,7 @@ func TestTimeNormalizer(t *testing.T) {
 // =============================================================================
 
 func TestNumberToWordNormalizer(t *testing.T) {
-	logger := newMockLogger()
+	logger, _ := commons.NewApplicationLogger()
 	normalizer := NewNumberToWordNormalizer(logger)
 
 	tests := []struct {
@@ -342,7 +305,7 @@ func TestNumberToWordNormalizer(t *testing.T) {
 // =============================================================================
 
 func TestAddressNormalizer(t *testing.T) {
-	logger := newMockLogger()
+	logger, _ := commons.NewApplicationLogger()
 	normalizer := NewAddressNormalizer(logger)
 
 	tests := []struct {
@@ -410,7 +373,7 @@ func TestAddressNormalizer(t *testing.T) {
 // =============================================================================
 
 func TestUrlNormalizer(t *testing.T) {
-	logger := newMockLogger()
+	logger, _ := commons.NewApplicationLogger()
 	normalizer := NewUrlNormalizer(logger)
 
 	tests := []struct {
@@ -473,7 +436,7 @@ func TestUrlNormalizer(t *testing.T) {
 // =============================================================================
 
 func TestSymbolNormalizer(t *testing.T) {
-	logger := newMockLogger()
+	logger, _ := commons.NewApplicationLogger()
 	normalizer := NewSymbolNormalizer(logger)
 
 	tests := []struct {
@@ -566,7 +529,7 @@ func TestSymbolNormalizer(t *testing.T) {
 // =============================================================================
 
 func TestTechAbbreviationNormalizer(t *testing.T) {
-	logger := newMockLogger()
+	logger, _ := commons.NewApplicationLogger()
 	normalizer := NewTechAbbreviationNormalizer(logger)
 
 	tests := []struct {
@@ -649,7 +612,7 @@ func TestTechAbbreviationNormalizer(t *testing.T) {
 // =============================================================================
 
 func TestRoleAbbreviationNormalizer(t *testing.T) {
-	logger := newMockLogger()
+	logger, _ := commons.NewApplicationLogger()
 	normalizer := NewRoleAbbreviationNormalizer(logger)
 
 	tests := []struct {
@@ -727,7 +690,7 @@ func TestRoleAbbreviationNormalizer(t *testing.T) {
 // =============================================================================
 
 func TestGeneralAbbreviationNormalizer(t *testing.T) {
-	logger := newMockLogger()
+	logger, _ := commons.NewApplicationLogger()
 	normalizer := NewGeneralAbbreviationNormalizer(logger)
 
 	tests := []struct {
@@ -815,7 +778,7 @@ func TestGeneralAbbreviationNormalizer(t *testing.T) {
 // =============================================================================
 
 func TestNormalizerChain(t *testing.T) {
-	logger := newMockLogger()
+	logger, _ := commons.NewApplicationLogger()
 
 	// Create a chain of normalizers
 	normalizers := []Normalizer{
@@ -874,7 +837,7 @@ func TestNormalizerChain(t *testing.T) {
 // =============================================================================
 
 func TestEdgeCases(t *testing.T) {
-	logger := newMockLogger()
+	logger, _ := commons.NewApplicationLogger()
 
 	t.Run("very long input", func(t *testing.T) {
 		normalizer := NewSymbolNormalizer(logger)
@@ -950,7 +913,7 @@ func TestEdgeCases(t *testing.T) {
 // =============================================================================
 
 func TestNilSafeNormalizers(t *testing.T) {
-	logger := newMockLogger()
+	logger, _ := commons.NewApplicationLogger()
 
 	normalizers := map[string]Normalizer{
 		"currency": NewCurrencyNormalizer(logger),
@@ -988,7 +951,7 @@ func TestNilSafeNormalizers(t *testing.T) {
 // =============================================================================
 
 func TestKnownIssues(t *testing.T) {
-	logger := newMockLogger()
+	logger, _ := commons.NewApplicationLogger()
 
 	t.Run("number_to_word_zero_returns_empty", func(t *testing.T) {
 		normalizer := NewNumberToWordNormalizer(logger)

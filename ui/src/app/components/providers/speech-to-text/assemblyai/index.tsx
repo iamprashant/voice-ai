@@ -43,7 +43,7 @@ export const ConfigureAssemblyAISpeechToText: React.FC<{
         <Dropdown
           className="bg-light-background dark:bg-gray-950"
           currentValue={ASSEMBLYAI_SPEECH_TO_TEXT_MODEL().find(
-            x => x.code === getParamValue('listen.model'),
+            x => x.id === getParamValue('listen.model'),
           )}
           setValue={(v: { id: string }) =>
             updateParameter('listen.model', v.id)

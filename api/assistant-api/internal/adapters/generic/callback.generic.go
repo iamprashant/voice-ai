@@ -32,14 +32,14 @@ func (talking *GenericRequestor) callEndOfSpeech(ctx context.Context, vl interna
 	return errors.New("end of speech analyzer not configured")
 }
 
-func (talking *GenericRequestor) callSentenceAssembler(ctx context.Context, vl internal_type.Packet) error {
-	if talking.sentenceAssembler != nil {
-		if err := talking.sentenceAssembler.Assemble(ctx, vl); err != nil {
+func (talking *GenericRequestor) callTextAssembler(ctx context.Context, vl internal_type.Packet) error {
+	if talking.textAssembler != nil {
+		if err := talking.textAssembler.Assemble(ctx, vl); err != nil {
 			talking.logger.Debugf("unable to send packet to assembler %v", err)
 		}
 		return nil
 	}
-	return errors.New("sentenceAssembler not configured")
+	return errors.New("textAssembler not configured")
 }
 
 func (talking *GenericRequestor) callRecording(ctx context.Context, vl internal_type.Packet) error {
@@ -101,9 +101,6 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				talking.logger.Tracef(talking.Context(), "error while notifying the text input from user: %w", err)
 			}
 
-			if err := talking.messaging.Transition(internal_adapter_request_customizers.UserSpeaking); err != nil {
-				talking.logger.Errorf("messaging transition error: %v", err)
-			}
 			// send to end of speech analyzer
 			vl.ContextID = interim.GetId()
 			if err := talking.callEndOfSpeech(ctx, vl); err != nil {
@@ -156,14 +153,14 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				talking.logger.Errorf("assistant executor error: %v", err)
 			}
 
-			if err := talking.callSentenceAssembler(ctx, internal_type.LLMStreamPacket{ContextID: vl.ContextId(), Text: vl.Text}); err != nil {
+			if err := talking.callTextAssembler(ctx, internal_type.LLMStreamPacket{ContextID: vl.ContextId(), Text: vl.Text}); err != nil {
 				talking.logger.Debugf("unable to send static packet to tokenizer %v", err)
 			}
 
 			if err := talking.messaging.Transition(internal_adapter_request_customizers.LLMGenerated); err != nil {
 				talking.logger.Errorf("messaging transition error: %v", err)
 			}
-			if err := talking.callSentenceAssembler(ctx, internal_type.LLMMessagePacket{ContextID: vl.ContextId()}); err != nil {
+			if err := talking.callTextAssembler(ctx, internal_type.LLMMessagePacket{ContextID: vl.ContextId()}); err != nil {
 				talking.logger.Debugf("unable to send static packet to tokenizer %v", err)
 			}
 
@@ -187,7 +184,7 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				span.AddAttributes(ctx, internal_telemetry.KV{K: "activity_type", V: internal_telemetry.StringValue("word_interrupt")})
 				talking.resetIdleTimeoutTimer(talking.Context())
 
-				if err := talking.sentenceAssembler.Assemble(ctx, vl); err != nil {
+				if err := talking.textAssembler.Assemble(ctx, vl); err != nil {
 					talking.logger.Debugf("unable to send interruption packet to assembler %v", err)
 				}
 				//
@@ -225,8 +222,6 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				})
 			defer span.EndSpan(ctx, utils.AssistantListeningStage)
 			//
-			talking.messaging.Transition(internal_adapter_request_customizers.UserSpeaking)
-			// send to end of speech analyzer
 			if err := talking.callEndOfSpeech(ctx, vl); err != nil {
 				if !vl.Interim {
 					msi := talking.messaging.Create(vl.Script)
@@ -265,7 +260,6 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 			})
 
 			//
-			talking.messaging.Transition(internal_adapter_request_customizers.UserCompleted)
 			if err := talking.assistantExecutor.Execute(ctx, talking, internal_type.UserTextPacket{ContextID: msg.GetId(), Text: msg.String()}); err != nil {
 				talking.logger.Errorf("assistant executor error: %v", err)
 				talking.OnError(ctx)
@@ -288,7 +282,7 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				talking.logger.Errorf("messaging transition error: %v", err)
 			}
 			// sending to assembler for assembling sentences
-			if err := talking.callSentenceAssembler(ctx, vl); err != nil {
+			if err := talking.callTextAssembler(ctx, vl); err != nil {
 				talking.logger.Errorf("sentence assembler error: %v, calling speak directly", err)
 				if err := talking.callSpeaking(ctx, vl); err != nil {
 					talking.logger.Errorf("speaking error: %v", err)
@@ -318,7 +312,7 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				talking.logger.Errorf("end of speech error: %v", err)
 			}
 
-			if err := talking.callSentenceAssembler(ctx, vl); err != nil {
+			if err := talking.callTextAssembler(ctx, vl); err != nil {
 				talking.logger.Errorf("sentence assembler error: %v calling speak directly", err)
 				if err := talking.callSpeaking(ctx, vl); err != nil {
 					talking.logger.Errorf("speaking error: %v", err)

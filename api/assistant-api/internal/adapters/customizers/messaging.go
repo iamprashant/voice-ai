@@ -27,9 +27,7 @@ type Messaging interface {
 type InteractionState int
 
 const (
-	Unknown       InteractionState = 1
-	UserSpeaking  InteractionState = 2
-	UserCompleted InteractionState = 3
+	Unknown InteractionState = 1
 
 	//
 	Interrupt   InteractionState = 6
@@ -44,10 +42,7 @@ func (s InteractionState) String() string {
 	switch s {
 	case Unknown:
 		return "Unknown"
-	case UserSpeaking:
-		return "UserSpeaking"
-	case UserCompleted:
-		return "UserCompleted"
+
 	case LLMGenerated:
 		return "LLMGenerated"
 	case Interrupt:
@@ -143,10 +138,6 @@ func (ms *messaging) Transition(newState InteractionState) error {
 	switch newState {
 	case Unknown:
 		return fmt.Errorf("Transition: invalid transition: cannot transition to Unknown state")
-	case UserSpeaking:
-	case UserCompleted:
-	case LLMGenerating:
-	case LLMGenerated:
 	case Interrupt:
 		if ms.state == Interrupted || ms.state == Interrupt {
 			return fmt.Errorf("Transition: invalid transition: agent can't interrupt multiple times")
@@ -162,10 +153,7 @@ func (ms *messaging) Transition(newState InteractionState) error {
 			ms.in = nil
 		}
 
-	default:
-		return fmt.Errorf("Transition: invalid transition: unknown state %v", newState)
 	}
-
 	ms.state = newState
 	return nil
 }
