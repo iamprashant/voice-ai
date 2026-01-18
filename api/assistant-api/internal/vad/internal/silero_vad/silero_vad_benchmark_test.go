@@ -28,7 +28,7 @@ func newBenchmarkVAD(b *testing.B, threshold float64) *SileroVAD {
 	callback := func(internal_type.InterruptionPacket) error { return nil }
 	opts := newTestOptions(b, threshold)
 
-	vad, err := NewSileroVAD(logger, inputConfig, callback, opts)
+	vad, err := NewSileroVAD(b.Context(), logger, inputConfig, callback, opts)
 	if err != nil {
 		if os.IsNotExist(err) || strings.Contains(err.Error(), "no such file") {
 			b.Skipf("silero model missing at %s", getModelPath())
@@ -212,7 +212,7 @@ func BenchmarkSileroVAD_Process_Parallel_2Streams(b *testing.B) {
 	vads := make([]*SileroVAD, 2)
 	for i := 0; i < 2; i++ {
 		callback := func(internal_type.InterruptionPacket) error { return nil }
-		vad, _ := NewSileroVAD(logger, inputConfig, callback, opts)
+		vad, _ := NewSileroVAD(b.Context(), logger, inputConfig, callback, opts)
 		vads[i] = vad.(*SileroVAD)
 		b.Cleanup(func() { vad.Close() })
 	}
@@ -243,7 +243,7 @@ func BenchmarkSileroVAD_Process_Parallel_4Streams(b *testing.B) {
 	vads := make([]*SileroVAD, 4)
 	for i := 0; i < 4; i++ {
 		callback := func(internal_type.InterruptionPacket) error { return nil }
-		vad, _ := NewSileroVAD(logger, inputConfig, callback, opts)
+		vad, _ := NewSileroVAD(b.Context(), logger, inputConfig, callback, opts)
 		vads[i] = vad.(*SileroVAD)
 		b.Cleanup(func() { vad.Close() })
 	}
@@ -274,7 +274,7 @@ func BenchmarkSileroVAD_Process_Parallel_8Streams(b *testing.B) {
 	vads := make([]*SileroVAD, 8)
 	for i := 0; i < 8; i++ {
 		callback := func(internal_type.InterruptionPacket) error { return nil }
-		vad, _ := NewSileroVAD(logger, inputConfig, callback, opts)
+		vad, _ := NewSileroVAD(b.Context(), logger, inputConfig, callback, opts)
 		vads[i] = vad.(*SileroVAD)
 		b.Cleanup(func() { vad.Close() })
 	}
@@ -349,7 +349,7 @@ func BenchmarkSileroVAD_Process_Resample_8kHz(b *testing.B) {
 	callback := func(internal_type.InterruptionPacket) error { return nil }
 	opts := newTestOptions(b, 0.5)
 
-	vad, _ := NewSileroVAD(logger, inputConfig, callback, opts)
+	vad, _ := NewSileroVAD(b.Context(), logger, inputConfig, callback, opts)
 	b.Cleanup(func() { vad.Close() })
 
 	data := generateBenchmarkSilence(4000) // 500ms at 8kHz
@@ -371,7 +371,7 @@ func BenchmarkSileroVAD_Process_Resample_24kHz(b *testing.B) {
 	callback := func(internal_type.InterruptionPacket) error { return nil }
 	opts := newTestOptions(b, 0.5)
 
-	vad, _ := NewSileroVAD(logger, inputConfig, callback, opts)
+	vad, _ := NewSileroVAD(b.Context(), logger, inputConfig, callback, opts)
 	b.Cleanup(func() { vad.Close() })
 
 	data := generateBenchmarkSilence(12000) // 500ms at 24kHz
@@ -393,7 +393,7 @@ func BenchmarkSileroVAD_Process_Resample_48kHz(b *testing.B) {
 	callback := func(internal_type.InterruptionPacket) error { return nil }
 	opts := newTestOptions(b, 0.5)
 
-	vad, _ := NewSileroVAD(logger, inputConfig, callback, opts)
+	vad, _ := NewSileroVAD(b.Context(), logger, inputConfig, callback, opts)
 	b.Cleanup(func() { vad.Close() })
 
 	data := generateBenchmarkSilence(24000) // 500ms at 48kHz
@@ -449,7 +449,7 @@ func BenchmarkSileroVAD_Initialization(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		vad, err := NewSileroVAD(logger, inputConfig, callback, opts)
+		vad, err := NewSileroVAD(b.Context(), logger, inputConfig, callback, opts)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -496,7 +496,7 @@ func BenchmarkSileroVAD_Process_WithCallback(b *testing.B) {
 	}
 	opts := newTestOptions(b, 0.3)
 
-	vad, _ := NewSileroVAD(logger, inputConfig, callback, opts)
+	vad, _ := NewSileroVAD(b.Context(), logger, inputConfig, callback, opts)
 	b.Cleanup(func() { vad.Close() })
 
 	speech := generateBenchmarkSineWave(8000, 440, 0.8)

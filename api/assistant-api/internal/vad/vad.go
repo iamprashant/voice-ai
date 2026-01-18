@@ -6,6 +6,8 @@
 package internal_vad
 
 import (
+	"context"
+
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	internal_vad_silero "github.com/rapidaai/api/assistant-api/internal/vad/internal/silero_vad"
 	"github.com/rapidaai/pkg/commons"
@@ -21,13 +23,13 @@ const (
 )
 
 // logger, audioConfig, opts
-func GetVAD(aa VADIdentifier, logger commons.Logger, intputAudio *protos.AudioConfig,
+func GetVAD(ctx context.Context, aa VADIdentifier, logger commons.Logger, intputAudio *protos.AudioConfig,
 	callback internal_type.VADCallback,
 	options utils.Option) (internal_type.Vad, error) {
 	switch aa {
 	case SILERO_VAD:
-		return internal_vad_silero.NewSileroVAD(logger, intputAudio, callback, options)
+		return internal_vad_silero.NewSileroVAD(ctx, logger, intputAudio, callback, options)
 	default:
-		return internal_vad_silero.NewSileroVAD(logger, intputAudio, callback, options)
+		return internal_vad_silero.NewSileroVAD(ctx, logger, intputAudio, callback, options)
 	}
 }

@@ -33,7 +33,7 @@ func TestGetVAD_SILERO_VAD(t *testing.T) {
 		Channels:    1,
 	}
 
-	vad, err := GetVAD(SILERO_VAD, logger, audioConfig, MockVADCallback, nil)
+	vad, err := GetVAD(t.Context(), SILERO_VAD, logger, audioConfig, MockVADCallback, nil)
 
 	require.NoError(t, err, "GetVAD should not return error for SILERO_VAD")
 	require.NotNil(t, vad, "GetVAD should return non-nil VAD instance")
@@ -49,7 +49,7 @@ func TestGetVAD_TEN_VAD(t *testing.T) {
 		Channels:    1,
 	}
 
-	vad, err := GetVAD(TEN_VAD, logger, audioConfig, MockVADCallback, nil)
+	vad, err := GetVAD(t.Context(), TEN_VAD, logger, audioConfig, MockVADCallback, nil)
 
 	require.NoError(t, err, "GetVAD should not return error for TEN_VAD")
 	require.NotNil(t, vad, "GetVAD should return non-nil VAD instance")
@@ -66,7 +66,7 @@ func TestGetVAD_InvalidIdentifier(t *testing.T) {
 	}
 	invalidIdentifier := VADIdentifier("invalid_vad")
 
-	vad, err := GetVAD(invalidIdentifier, logger, audioConfig, MockVADCallback, nil)
+	vad, err := GetVAD(t.Context(), invalidIdentifier, logger, audioConfig, MockVADCallback, nil)
 
 	require.NoError(t, err, "GetVAD should default to SILERO_VAD for invalid identifier")
 	require.NotNil(t, vad, "GetVAD should return non-nil VAD instance")
@@ -81,7 +81,7 @@ func TestGetVAD_WithNilLogger(t *testing.T) {
 		Channels:    1,
 	}
 
-	vad, err := GetVAD(SILERO_VAD, nil, audioConfig, MockVADCallback, nil)
+	vad, err := GetVAD(t.Context(), SILERO_VAD, nil, audioConfig, MockVADCallback, nil)
 
 	if err != nil {
 		t.Logf("GetVAD returned error with nil logger: %v", err)
@@ -94,7 +94,7 @@ func TestGetVAD_WithNilLogger(t *testing.T) {
 func TestGetVAD_WithNilAudioConfig(t *testing.T) {
 	logger := createMockLogger(t)
 
-	vad, err := GetVAD(SILERO_VAD, logger, nil, MockVADCallback, nil)
+	vad, err := GetVAD(t.Context(), SILERO_VAD, logger, nil, MockVADCallback, nil)
 
 	if err != nil {
 		t.Logf("GetVAD returned error with nil audio config: %v", err)
@@ -112,7 +112,7 @@ func TestGetVAD_WithNilCallback(t *testing.T) {
 		Channels:    1,
 	}
 
-	vad, err := GetVAD(SILERO_VAD, logger, audioConfig, nil, nil)
+	vad, err := GetVAD(t.Context(), SILERO_VAD, logger, audioConfig, nil, nil)
 
 	if err != nil {
 		t.Logf("GetVAD returned error with nil callback: %v", err)
@@ -160,7 +160,7 @@ func TestGetVAD_WithDifferentAudioFormats(t *testing.T) {
 				Channels:    1,
 			}
 
-			vad, err := GetVAD(SILERO_VAD, logger, audioConfig, MockVADCallback, nil)
+			vad, err := GetVAD(t.Context(), SILERO_VAD, logger, audioConfig, MockVADCallback, nil)
 
 			require.NoError(t, err, "GetVAD should not error for %s", tc.name)
 			require.NotNil(t, vad, "GetVAD should return VAD instance for %s", tc.name)
@@ -177,8 +177,8 @@ func TestGetVAD_ConsistentResults(t *testing.T) {
 		Channels:    1,
 	}
 
-	vad1, err1 := GetVAD(SILERO_VAD, logger, audioConfig, MockVADCallback, nil)
-	vad2, err2 := GetVAD(SILERO_VAD, logger, audioConfig, MockVADCallback, nil)
+	vad1, err1 := GetVAD(t.Context(), SILERO_VAD, logger, audioConfig, MockVADCallback, nil)
+	vad2, err2 := GetVAD(t.Context(), SILERO_VAD, logger, audioConfig, MockVADCallback, nil)
 
 	require.NoError(t, err1)
 	require.NoError(t, err2)
@@ -204,7 +204,7 @@ func TestGetVAD_AllIdentifiers(t *testing.T) {
 
 	for _, identifier := range identifiers {
 		t.Run(string(identifier), func(t *testing.T) {
-			vad, err := GetVAD(identifier, logger, audioConfig, MockVADCallback, nil)
+			vad, err := GetVAD(t.Context(), identifier, logger, audioConfig, MockVADCallback, nil)
 
 			require.NoError(t, err, "GetVAD should not error for identifier: %s", identifier)
 			require.NotNil(t, vad, "GetVAD should return VAD instance for identifier: %s", identifier)
@@ -250,7 +250,7 @@ func BenchmarkGetVAD_SILERO_VAD(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = GetVAD(SILERO_VAD, logger, audioConfig, MockVADCallback, nil)
+		_, _ = GetVAD(b.Context(), SILERO_VAD, logger, audioConfig, MockVADCallback, nil)
 	}
 }
 
@@ -265,7 +265,7 @@ func BenchmarkGetVAD_TEN_VAD(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = GetVAD(TEN_VAD, logger, audioConfig, MockVADCallback, nil)
+		_, _ = GetVAD(b.Context(), TEN_VAD, logger, audioConfig, MockVADCallback, nil)
 	}
 }
 

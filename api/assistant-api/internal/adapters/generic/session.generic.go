@@ -510,8 +510,10 @@ func (r *GenericRequestor) connectSpeakerAndInitializeBehavior(
 	ctx context.Context,
 	audioOutputConfig *protos.AudioConfig,
 ) {
-	if err := r.ConnectSpeaker(ctx, audioOutputConfig); err != nil {
-		r.logger.Tracef(ctx, "failed to connect speaker: %+v", err)
+	if audioOutputConfig != nil {
+		if err := r.ConnectSpeaker(ctx, audioOutputConfig); err != nil {
+			r.logger.Tracef(ctx, "failed to connect speaker: %+v", err)
+		}
 	}
 
 	if err := r.InitializeBehavior(ctx); err != nil {
@@ -552,8 +554,10 @@ func (r *GenericRequestor) startBackgroundTasks(
 
 	// Establish speech-to-text listener connection
 	utils.Go(ctx, func() {
-		if err := r.ConnectListener(ctx, audioInputConfig); err != nil {
-			r.logger.Tracef(ctx, "failed to connect listener: %+v", err)
+		if audioInputConfig != nil {
+			if err := r.ConnectListener(ctx, audioInputConfig); err != nil {
+				r.logger.Tracef(ctx, "failed to connect listener: %+v", err)
+			}
 		}
 	})
 

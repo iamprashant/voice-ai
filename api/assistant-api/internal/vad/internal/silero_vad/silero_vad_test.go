@@ -46,7 +46,7 @@ func getModelPath() string {
 func newSileroOrSkip(t *testing.T, inputCfg *protos.AudioConfig, threshold float64, cb internal_type.VADCallback) *SileroVAD {
 	logger, err := commons.NewApplicationLoggerWithOptions()
 	opts := newTestOptions(t, threshold)
-	vad, err := NewSileroVAD(logger, inputCfg, cb, opts)
+	vad, err := NewSileroVAD(t.Context(), logger, inputCfg, cb, opts)
 	if err != nil {
 		if os.IsNotExist(err) || strings.Contains(err.Error(), "no such file") {
 			t.Skipf("silero model missing at %s", getModelPath())
@@ -236,7 +236,7 @@ func TestSileroVAD_Close_Idempotent(t *testing.T) {
 	callback := func(internal_type.InterruptionPacket) error { return nil }
 	opts := newTestOptions(t, 0.5)
 
-	vad, err := NewSileroVAD(logger, inputConfig, callback, opts)
+	vad, err := NewSileroVAD(t.Context(), logger, inputConfig, callback, opts)
 	if err != nil {
 		if os.IsNotExist(err) || strings.Contains(err.Error(), "no such file") {
 			t.Skipf("silero model missing at %s", getModelPath())
