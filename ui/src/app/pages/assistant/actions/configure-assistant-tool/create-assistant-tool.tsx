@@ -72,10 +72,6 @@ export const CreateTool: FC<{ assistantId: string }> = ({ assistantId }) => {
       return false;
     }
 
-    if (!toolDefinition.description) {
-      setErrorMessage('Please provide a description for the tool.');
-      return false;
-    }
     if (!toolDefinition.parameters) {
       setErrorMessage('Please provide valid parameters for the tool.');
       return false;
