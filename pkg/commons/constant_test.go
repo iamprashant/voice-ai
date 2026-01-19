@@ -8,7 +8,7 @@ package commons
 import (
 	"testing"
 
-	lexatic_backend "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
 func TestTelemetryIndex(t *testing.T) {
@@ -130,17 +130,17 @@ func TestResponseContentFormat_String(t *testing.T) {
 func TestMessageContent_StringContent(t *testing.T) {
 	tests := []struct {
 		name     string
-		contents []*lexatic_backend.Content
+		contents []*protos.Content
 		expected string
 	}{
 		{
 			name:     "empty contents",
-			contents: []*lexatic_backend.Content{},
+			contents: []*protos.Content{},
 			expected: "",
 		},
 		{
 			name: "single text raw content",
-			contents: []*lexatic_backend.Content{
+			contents: []*protos.Content{
 				{
 					ContentType:   string(TEXT_CONTENT),
 					ContentFormat: string(TEXT_CONTENT_FORMAT_RAW),
@@ -151,7 +151,7 @@ func TestMessageContent_StringContent(t *testing.T) {
 		},
 		{
 			name: "multiple contents with text",
-			contents: []*lexatic_backend.Content{
+			contents: []*protos.Content{
 				{
 					ContentType:   string(AUDIO_CONTENT),
 					ContentFormat: string(AUDIO_CONTENT_FORMAT_RAW),
@@ -172,7 +172,7 @@ func TestMessageContent_StringContent(t *testing.T) {
 		},
 		{
 			name: "text content but not raw format",
-			contents: []*lexatic_backend.Content{
+			contents: []*protos.Content{
 				{
 					ContentType:   string(TEXT_CONTENT),
 					ContentFormat: string(AUDIO_CONTENT_FORMAT_URL), // not raw
@@ -183,7 +183,7 @@ func TestMessageContent_StringContent(t *testing.T) {
 		},
 		{
 			name: "multiple text contents",
-			contents: []*lexatic_backend.Content{
+			contents: []*protos.Content{
 				{
 					ContentType:   string(TEXT_CONTENT),
 					ContentFormat: string(TEXT_CONTENT_FORMAT_RAW),
@@ -213,9 +213,9 @@ func TestMessageContent_StringContent(t *testing.T) {
 }
 
 func TestToMessageContent(t *testing.T) {
-	original := &lexatic_backend.Message{
+	original := &protos.Message{
 		Role: "user",
-		Contents: []*lexatic_backend.Content{
+		Contents: []*protos.Content{
 			{
 				ContentType:   string(TEXT_CONTENT),
 				ContentFormat: string(TEXT_CONTENT_FORMAT_RAW),

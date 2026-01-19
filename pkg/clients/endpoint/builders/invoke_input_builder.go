@@ -8,7 +8,7 @@ package endpoint_client_builders
 import (
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	protos "github.com/rapidaai/protos"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
@@ -23,12 +23,12 @@ func NewInputInvokeBuilder(logger commons.Logger) InputInvokeBuilder {
 }
 
 func (in *inputInvokeBuilder) Invoke(
-	endpointDef *lexatic_backend.EndpointDefinition,
+	endpointDef *protos.EndpointDefinition,
 	args map[string]*anypb.Any,
 	metadata map[string]*anypb.Any,
 	options map[string]*anypb.Any,
-) *lexatic_backend.InvokeRequest {
-	request := &lexatic_backend.InvokeRequest{
+) *protos.InvokeRequest {
+	request := &protos.InvokeRequest{
 		Endpoint: endpointDef,
 		Args:     args,
 		Metadata: metadata,

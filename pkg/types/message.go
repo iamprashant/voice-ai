@@ -11,7 +11,7 @@ import (
 
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
 func OnlyStringContent(Contents []*Content) string {
@@ -29,7 +29,7 @@ func OnlyStringContent(Contents []*Content) string {
 	return builder.String()
 }
 
-func ContentString(c *lexatic_backend.Content) string {
+func ContentString(c *protos.Content) string {
 	var builder strings.Builder
 	if commons.ResponseContentType(c.GetContentType()) == commons.TEXT_CONTENT {
 		if commons.ResponseContentFormat(c.GetContentFormat()) == commons.TEXT_CONTENT_FORMAT_RAW {
@@ -39,7 +39,7 @@ func ContentString(c *lexatic_backend.Content) string {
 	return builder.String()
 }
 
-func OnlyStringProtoContent(Contents []*lexatic_backend.Content) string {
+func OnlyStringProtoContent(Contents []*protos.Content) string {
 	var builder strings.Builder
 	if len(Contents) == 0 {
 		return ""
@@ -54,7 +54,7 @@ func OnlyStringProtoContent(Contents []*lexatic_backend.Content) string {
 	return builder.String()
 }
 
-func ContainsAudioContent(Contents []*lexatic_backend.Content) bool {
+func ContainsAudioContent(Contents []*protos.Content) bool {
 	for _, c := range Contents {
 		if commons.ResponseContentType(c.GetContentType()) == commons.AUDIO_CONTENT {
 			return true
@@ -63,7 +63,7 @@ func ContainsAudioContent(Contents []*lexatic_backend.Content) bool {
 	return false
 }
 
-func ToMessage(msg *lexatic_backend.Message) *Message {
+func ToMessage(msg *protos.Message) *Message {
 	out := &Message{}
 	err := utils.Cast(msg, out)
 	if err != nil {
@@ -73,7 +73,7 @@ func ToMessage(msg *lexatic_backend.Message) *Message {
 	return out
 }
 
-func ToMessages(msgs []*lexatic_backend.Message) []*Message {
+func ToMessages(msgs []*protos.Message) []*Message {
 	out := make([]*Message, 0, len(msgs))
 	for _, msg := range msgs {
 		if convertedMsg := ToMessage(msg); convertedMsg != nil {

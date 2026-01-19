@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"strings"
 
-	lexatic_backend "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
 var (
@@ -76,7 +76,7 @@ func (rct ResponseContentFormat) String() string {
 	return string(rct)
 }
 
-type MessageContent lexatic_backend.Message
+type MessageContent protos.Message
 
 func (mc *MessageContent) StringContent() string {
 	var builder strings.Builder
@@ -93,7 +93,7 @@ func (mc *MessageContent) StringContent() string {
 	return builder.String()
 }
 
-func ToMessageContent(msg *lexatic_backend.Message) *MessageContent {
+func ToMessageContent(msg *protos.Message) *MessageContent {
 	// copy the message avoid locking
 	return &MessageContent{
 		Role:     msg.GetRole(),

@@ -9,7 +9,7 @@ import (
 	"github.com/rapidaai/pkg/commons"
 	gorm_types "github.com/rapidaai/pkg/models/gorm/types"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -25,12 +25,12 @@ func NewRerankingInputBuilder(logger commons.Logger) InputRerankingBuilder {
 }
 
 func (in *rerankingInputBuilder) Reranking(
-	credential *lexatic_backend.Credential,
+	credential *protos.Credential,
 	modelOpts map[string]*anypb.Any,
 	additionalData map[string]string,
-	contents map[int32]*lexatic_backend.Content,
-) *lexatic_backend.RerankingRequest {
-	return &lexatic_backend.RerankingRequest{
+	contents map[int32]*protos.Content,
+) *protos.RerankingRequest {
+	return &protos.RerankingRequest{
 		Credential:      credential,
 		ModelParameters: modelOpts,
 		Content:         contents,
@@ -39,8 +39,8 @@ func (in *rerankingInputBuilder) Reranking(
 
 }
 
-func (in *rerankingInputBuilder) Credential(i uint64, dp *structpb.Struct) *lexatic_backend.Credential {
-	return &lexatic_backend.Credential{
+func (in *rerankingInputBuilder) Credential(i uint64, dp *structpb.Struct) *protos.Credential {
+	return &protos.Credential{
 		Id:    i,
 		Value: dp,
 	}

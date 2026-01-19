@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/rapidaai/pkg/commons"
-	lexatic_backend "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
 func TestOnlyStringContent(t *testing.T) {
@@ -93,12 +93,12 @@ func TestOnlyStringContent(t *testing.T) {
 func TestContentString(t *testing.T) {
 	tests := []struct {
 		name string
-		c    *lexatic_backend.Content
+		c    *protos.Content
 		want string
 	}{
 		{
 			name: "text content raw",
-			c: &lexatic_backend.Content{
+			c: &protos.Content{
 				ContentType:   string(commons.TEXT_CONTENT),
 				ContentFormat: string(commons.TEXT_CONTENT_FORMAT_RAW),
 				Content:       []byte("content"),
@@ -107,7 +107,7 @@ func TestContentString(t *testing.T) {
 		},
 		{
 			name: "non-text content",
-			c: &lexatic_backend.Content{
+			c: &protos.Content{
 				ContentType:   string(commons.AUDIO_CONTENT),
 				ContentFormat: "mp3",
 				Content:       []byte("audio"),
@@ -116,7 +116,7 @@ func TestContentString(t *testing.T) {
 		},
 		{
 			name: "text non-raw",
-			c: &lexatic_backend.Content{
+			c: &protos.Content{
 				ContentType:   string(commons.TEXT_CONTENT),
 				ContentFormat: "html",
 				Content:       []byte("<p>text</p>"),
@@ -137,17 +137,17 @@ func TestContentString(t *testing.T) {
 func TestOnlyStringProtoContent(t *testing.T) {
 	tests := []struct {
 		name     string
-		contents []*lexatic_backend.Content
+		contents []*protos.Content
 		want     string
 	}{
 		{
 			name:     "empty",
-			contents: []*lexatic_backend.Content{},
+			contents: []*protos.Content{},
 			want:     "",
 		},
 		{
 			name: "single text",
-			contents: []*lexatic_backend.Content{
+			contents: []*protos.Content{
 				{
 					ContentType:   string(commons.TEXT_CONTENT),
 					ContentFormat: string(commons.TEXT_CONTENT_FORMAT_RAW),
@@ -158,7 +158,7 @@ func TestOnlyStringProtoContent(t *testing.T) {
 		},
 		{
 			name: "multiple",
-			contents: []*lexatic_backend.Content{
+			contents: []*protos.Content{
 				{
 					ContentType:   string(commons.TEXT_CONTENT),
 					ContentFormat: string(commons.TEXT_CONTENT_FORMAT_RAW),
@@ -186,17 +186,17 @@ func TestOnlyStringProtoContent(t *testing.T) {
 func TestContainsAudioContent(t *testing.T) {
 	tests := []struct {
 		name     string
-		contents []*lexatic_backend.Content
+		contents []*protos.Content
 		want     bool
 	}{
 		{
 			name:     "empty",
-			contents: []*lexatic_backend.Content{},
+			contents: []*protos.Content{},
 			want:     false,
 		},
 		{
 			name: "has audio",
-			contents: []*lexatic_backend.Content{
+			contents: []*protos.Content{
 				{
 					ContentType: string(commons.TEXT_CONTENT),
 				},
@@ -208,7 +208,7 @@ func TestContainsAudioContent(t *testing.T) {
 		},
 		{
 			name: "no audio",
-			contents: []*lexatic_backend.Content{
+			contents: []*protos.Content{
 				{
 					ContentType: string(commons.TEXT_CONTENT),
 				},
@@ -227,10 +227,10 @@ func TestContainsAudioContent(t *testing.T) {
 }
 
 func TestToMessage(t *testing.T) {
-	protoMsg := &lexatic_backend.Message{
+	protoMsg := &protos.Message{
 
 		Role: "user",
-		Contents: []*lexatic_backend.Content{
+		Contents: []*protos.Content{
 			{
 				ContentType: string(commons.TEXT_CONTENT),
 				Content:     []byte("test"),
@@ -255,7 +255,7 @@ func TestToMessage(t *testing.T) {
 }
 
 func TestToMessages(t *testing.T) {
-	protoMsgs := []*lexatic_backend.Message{
+	protoMsgs := []*protos.Message{
 		{
 			Role: "user",
 		},

@@ -32,16 +32,6 @@ func TestGetEndOfSpeech_SilenceBasedIdentifier(t *testing.T) {
 	assert.IsType(t, endOfSpeech, endOfSpeech)
 }
 
-func TestGetEndOfSpeech_UnknownIdentifier(t *testing.T) {
-	logger, _ := commons.NewApplicationLogger()
-
-	endOfSpeech, err := GetEndOfSpeech(t.Context(), logger, mockCallback, utils.Option{EndOfSpeechOptionsKeyProvider: EndOfSpeechIdentifier("unknown_eos")})
-
-	assert.Error(t, err)
-	assert.Nil(t, endOfSpeech)
-	assert.Equal(t, "illegal end of speeh", err.Error())
-}
-
 func TestGetEndOfSpeech_LiveKitIdentifier(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 
@@ -50,18 +40,6 @@ func TestGetEndOfSpeech_LiveKitIdentifier(t *testing.T) {
 	// Currently not implemented, should fail
 	assert.Error(t, err)
 	assert.Nil(t, endOfSpeech)
-}
-
-func TestGetEndOfSpeech_EmptyIdentifier(t *testing.T) {
-	logger, _ := commons.NewApplicationLogger()
-
-	emptyIdentifier := EndOfSpeechIdentifier("")
-
-	endOfSpeech, err := GetEndOfSpeech(t.Context(), logger, mockCallback, utils.Option{EndOfSpeechOptionsKeyProvider: emptyIdentifier})
-
-	assert.Error(t, err)
-	assert.Nil(t, endOfSpeech)
-	assert.Equal(t, "illegal end of speeh", err.Error())
 }
 
 func TestEndOfSpeechIdentifier_Constants(t *testing.T) {

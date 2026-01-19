@@ -9,7 +9,7 @@ import (
 	"github.com/rapidaai/pkg/commons"
 	gorm_types "github.com/rapidaai/pkg/models/gorm/types"
 	"github.com/rapidaai/pkg/utils"
-	lexatic_backend "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -24,19 +24,19 @@ func NewEmbeddingInputBuilder(logger commons.Logger) InputEmbeddingBuilder {
 	}
 }
 
-func (in *embeddingInputBuilder) Credential(i uint64, dp *structpb.Struct) *lexatic_backend.Credential {
-	return &lexatic_backend.Credential{
+func (in *embeddingInputBuilder) Credential(i uint64, dp *structpb.Struct) *protos.Credential {
+	return &protos.Credential{
 		Id:    i,
 		Value: dp,
 	}
 }
 func (in *embeddingInputBuilder) Embedding(
-	credential *lexatic_backend.Credential,
+	credential *protos.Credential,
 	modelOpts map[string]*anypb.Any,
 	additionalData map[string]string,
 	contents map[int32]string,
-) *lexatic_backend.EmbeddingRequest {
-	return &lexatic_backend.EmbeddingRequest{
+) *protos.EmbeddingRequest {
+	return &protos.EmbeddingRequest{
 		Credential:      credential,
 		ModelParameters: modelOpts,
 		Content:         contents,

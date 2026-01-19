@@ -7,6 +7,7 @@ package internal_end_of_speech
 
 import (
 	"context"
+	"fmt"
 
 	internal_silence_based "github.com/rapidaai/api/assistant-api/internal/end_of_speech/internal/silence_based"
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
@@ -27,6 +28,8 @@ func GetEndOfSpeech(ctx context.Context, logger commons.Logger, onCallback inter
 	switch EndOfSpeechIdentifier(provider) {
 	case SilenceBasedEndOfSpeech:
 		return internal_silence_based.NewSilenceBasedEndOfSpeech(logger, onCallback, opts)
+	case LiveKitEndOfSpeech:
+		return nil, fmt.Errorf("livekit end of speech is not implemented yet")
 	default:
 		return internal_silence_based.NewSilenceBasedEndOfSpeech(logger, onCallback, opts)
 	}
