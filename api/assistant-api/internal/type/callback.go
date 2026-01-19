@@ -11,8 +11,6 @@ import (
 
 type Callback interface {
 	OnPacket(ctx context.Context, pkts ...Packet) error
-	// OnGeneration(ctx context.Context, messageid string, out *types.Message) error
-	// OnGenerationComplete(ctx context.Context, messageid string, out *types.Message, metrics []*types.Metric) error
 }
 
 /*

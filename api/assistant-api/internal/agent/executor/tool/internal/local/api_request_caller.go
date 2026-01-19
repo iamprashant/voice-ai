@@ -50,12 +50,12 @@ func (afkTool *apiRequestToolCaller) Call(ctx context.Context, pkt internal_type
 
 	v, err := output.ToMap()
 	if err != nil {
-		return internal_type.LLMToolPacket{ContextID: pkt.ContextId(), Action: protos.AssistantConversationAction_API_REQUEST, Result: map[string]interface{}{
+		return internal_type.LLMToolPacket{Name: afkTool.Name(), ContextID: pkt.ContextId(), Action: protos.AssistantConversationAction_API_REQUEST, Result: map[string]interface{}{
 			"request":  body,
 			"response": output.ToString(),
 		}}
 	}
-	return internal_type.LLMToolPacket{ContextID: pkt.ContextId(), Action: protos.AssistantConversationAction_API_REQUEST, Result: v}
+	return internal_type.LLMToolPacket{Name: afkTool.Name(), ContextID: pkt.ContextId(), Action: protos.AssistantConversationAction_API_REQUEST, Result: v}
 }
 
 func NewApiRequestToolCaller(logger commons.Logger, toolOptions *internal_assistant_entity.AssistantTool, communcation internal_type.Communication) (internal_tool.ToolCaller, error) {

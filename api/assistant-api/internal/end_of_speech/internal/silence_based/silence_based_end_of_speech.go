@@ -253,16 +253,8 @@ func (eos *SilenceBasedEOS) fire(ctx context.Context, seg SpeechSegment) {
 		return
 	}
 	if seg.Text == "" {
-		eos.logger.Debugf(
-			"testing -> : ignore contextID=%s, text=%q, duration=%dms",
-			seg.ContextID, seg.Text, time.Since(seg.Timestamp).Milliseconds(),
-		)
 		return
 	}
-	eos.logger.Debugf(
-		"testing -> : contextID=%s, text=%q, duration=%dms",
-		seg.ContextID, seg.Text, time.Since(seg.Timestamp).Milliseconds(),
-	)
 
 	_ = eos.callback(ctx, internaltype.EndOfSpeechPacket{
 		Speech:    seg.Text,

@@ -96,14 +96,8 @@ func (executor *modelAssistantExecutor) Initialize(ctx context.Context, communic
 
 func (executor *modelAssistantExecutor) chat(
 	ctx context.Context,
-
-	// for communication
 	communication internal_type.Communication,
-
-	// llm packet
 	packet internal_type.LLMMessagePacket,
-
-	// histories or older conversation
 	histories ...*protos.Message,
 ) error {
 	var (
@@ -139,10 +133,9 @@ func (executor *modelAssistantExecutor) chat(
 				if len(output.GetToolCalls()) > 0 {
 					// append history of tool call
 					toolExecution, toolContents := executor.toolExecutor.ExecuteAll(ctx, packet, output.GetToolCalls(), communication)
+					err := executor.chat(ctx, communication, internal_type.LLMMessagePacket{ContextID: packet.ContextId(), Message: &types.Message{Contents: toolContents, Role: "tool"}}, append(histories, packet.Message.ToProto(), output)...)
 					communication.OnPacket(ctx, toolExecution...)
-					return executor.chat(ctx, communication,
-						internal_type.LLMMessagePacket{ContextID: packet.ContextId(), Message: &types.Message{Contents: toolContents, Role: "tool"}},
-						append(histories, packet.Message.ToProto(), output)...)
+					return err
 				}
 				return nil
 			}

@@ -114,18 +114,34 @@ func (aai *assemblyaiSTT) speechToTextCallback(conn *websocket.Conn, ctx context
 					continue
 				}
 
-				confidence := 0.0
-				for _, v := range transcript.Words {
-					confidence += v.Confidence
+				// filter and use only high confidence words
+				threshold := 0.0
+				if v, err := aai.assemblyaiOption.mdlOpts.GetFloat64("listen.threshold"); err == nil {
+					threshold = v
 				}
-				averageConfidence := confidence / float64(len(transcript.Words))
+
+				var filteredTranscript string
+				var totalConfidence float64
+				var wordCount int
+				for _, word := range transcript.Words {
+					if word.Confidence >= threshold {
+						filteredTranscript += word.Text + " "
+						totalConfidence += word.Confidence
+						wordCount++
+					}
+				}
+
+				if wordCount == 0 {
+					continue
+				}
+
 				aai.onPacket(
 					internal_type.InterruptionPacket{Source: internal_type.InterruptionSourceWord},
 					internal_type.SpeechToTextPacket{
-						Script:     transcript.Transcript,
+						Script:     filteredTranscript,
 						Language:   "en",
-						Confidence: averageConfidence,
-						Interim:    !transcript.EndOfTurn,
+						Confidence: totalConfidence / float64(wordCount),
+						Interim:    !transcript.EndOfTurn || !transcript.TurnIsFormatted,
 					})
 
 			case "Begin":
@@ -142,16 +158,13 @@ func (aai *assemblyaiSTT) speechToTextCallback(conn *websocket.Conn, ctx context
 func (aai *assemblyaiSTT) Transform(ctx context.Context, in internal_type.UserAudioPacket) error {
 	aai.mu.Lock()
 	defer aai.mu.Unlock()
-
 	if aai.connection == nil {
 		return fmt.Errorf("assembly-ai-stt: websocket connection is not initialized")
 	}
-
 	if err := aai.connection.WriteMessage(websocket.BinaryMessage, in.Content()); err != nil {
 		aai.logger.Errorf("assembly-ai-stt: error sending audio: %v", err)
 		return fmt.Errorf("error sending audio: %w", err)
 	}
-
 	return nil
 }
 

@@ -59,7 +59,7 @@ func (co *assemblyaiOption) GetSpeechToTextConnectionString() string {
 	params := url.Values{}
 	params.Add("sample_rate", fmt.Sprintf("%d", co.audioConfig.SampleRate))
 	params.Add("encoding", co.GetEncoding())
-
+	params.Add("format_turns", "true")
 	// Check and add language
 	if language, err := co.mdlOpts.
 		GetString("listen.language"); err == nil {

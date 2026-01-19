@@ -54,7 +54,6 @@ func NewSarvamSpeechToText(
 	}
 
 	ct, ctxCancel := context.WithCancel(ctx)
-
 	return &sarvamSpeechToText{
 		ctx:          ct,
 		ctxCancel:    ctxCancel,
@@ -95,7 +94,7 @@ func (cst *sarvamSpeechToText) speechToTextCallback(conn *websocket.Conn, ctx co
 							Script:     transcriptionData.Transcript,
 							Confidence: 0.9,
 							Language:   *transcriptionData.LanguageCode,
-							Interim:    true,
+							Interim:    false,
 						},
 					)
 				}

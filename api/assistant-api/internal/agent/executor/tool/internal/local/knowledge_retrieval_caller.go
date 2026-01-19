@@ -51,7 +51,7 @@ func (afkTool *knowledgeRetrievalToolCaller) Call(ctx context.Context, pkt inter
 	var contextString string
 
 	if err != nil || in == nil {
-		return internal_type.LLMToolPacket{ContextID: pkt.ContextId(), Action: protos.AssistantConversationAction_KNOWLEDGE_RETRIEVAL, Result: afkTool.Result("Required argument is missing or query, context is missing from argument list", false)}
+		return internal_type.LLMToolPacket{Name: afkTool.Name(), ContextID: pkt.ContextId(), Action: protos.AssistantConversationAction_KNOWLEDGE_RETRIEVAL, Result: afkTool.Result("Required argument is missing or query, context is missing from argument list", false)}
 	} else {
 		knowledges, err := communication.RetrieveToolKnowledge(afkTool.knowledge, pkt.ContextId(), *in, v, &internal_type.KnowledgeRetrieveOption{
 			EmbeddingProviderCredential: afkTool.providerCredential,
@@ -61,7 +61,7 @@ func (afkTool *knowledgeRetrievalToolCaller) Call(ctx context.Context, pkt inter
 		})
 
 		if len(knowledges) == 0 || err != nil {
-			return internal_type.LLMToolPacket{ContextID: pkt.ContextId(), Action: protos.AssistantConversationAction_KNOWLEDGE_RETRIEVAL, Result: afkTool.Result("Not able to find anything in knowledge from given documents.", true)}
+			return internal_type.LLMToolPacket{Name: afkTool.Name(), ContextID: pkt.ContextId(), Action: protos.AssistantConversationAction_KNOWLEDGE_RETRIEVAL, Result: afkTool.Result("Not able to find anything in knowledge from given documents.", true)}
 		} else {
 			var contextTemplateBuilder strings.Builder
 			for _, knowledge := range knowledges {
@@ -69,7 +69,7 @@ func (afkTool *knowledgeRetrievalToolCaller) Call(ctx context.Context, pkt inter
 				contextTemplateBuilder.WriteString("\n")
 			}
 			contextString = contextTemplateBuilder.String()
-			return internal_type.LLMToolPacket{ContextID: pkt.ContextId(), Action: protos.AssistantConversationAction_KNOWLEDGE_RETRIEVAL, Result: afkTool.Result(contextString, true)}
+			return internal_type.LLMToolPacket{Name: afkTool.Name(), ContextID: pkt.ContextId(), Action: protos.AssistantConversationAction_KNOWLEDGE_RETRIEVAL, Result: afkTool.Result(contextString, true)}
 		}
 	}
 

@@ -20,7 +20,7 @@ type endOfConversationCaller struct {
 }
 
 func (afkTool *endOfConversationCaller) Call(ctx context.Context, pkt internal_type.LLMPacket, toolId string, args string, communication internal_type.Communication) internal_type.LLMToolPacket {
-	return internal_type.LLMToolPacket{ContextID: pkt.ContextId(), Action: protos.AssistantConversationAction_END_CONVERSATION, Result: afkTool.Result("Disconnected successfully.", true)}
+	return internal_type.LLMToolPacket{Name: afkTool.Name(), ContextID: pkt.ContextId(), Action: protos.AssistantConversationAction_END_CONVERSATION, Result: afkTool.Result("Disconnected successfully.", true)}
 }
 
 func NewEndOfConversationCaller(logger commons.Logger, toolOptions *internal_assistant_entity.AssistantTool, communcation internal_type.Communication,

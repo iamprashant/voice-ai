@@ -7,7 +7,6 @@ package internal_end_of_speech
 
 import (
 	"context"
-	"errors"
 
 	internal_silence_based "github.com/rapidaai/api/assistant-api/internal/end_of_speech/internal/silence_based"
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
@@ -29,6 +28,6 @@ func GetEndOfSpeech(ctx context.Context, logger commons.Logger, onCallback inter
 	case SilenceBasedEndOfSpeech:
 		return internal_silence_based.NewSilenceBasedEndOfSpeech(logger, onCallback, opts)
 	default:
-		return nil, errors.New("illegal end of speeh")
+		return internal_silence_based.NewSilenceBasedEndOfSpeech(logger, onCallback, opts)
 	}
 }

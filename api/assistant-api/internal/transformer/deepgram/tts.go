@@ -161,9 +161,6 @@ func (t *deepgramTTS) Transform(ctx context.Context, in internal_type.LLMPacket)
 
 	switch input := in.(type) {
 	case internal_type.LLMStreamPacket:
-		// Normalize text before sending to TTS
-		t.logger.Debugf("testing ->  %s", t.normalizer.Normalize(ctx, input.Text))
-
 		if err := conn.WriteJSON(map[string]interface{}{
 			"type": "Speak",
 			"text": t.normalizer.Normalize(ctx, input.Text),

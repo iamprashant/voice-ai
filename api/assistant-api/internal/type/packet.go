@@ -120,7 +120,13 @@ func (f LLMMessagePacket) ContextId() string {
 	return f.ContextID
 }
 
+func (f LLMMessagePacket) IsToolCall() bool {
+	return f.Message != nil && f.Message.Role == "tool"
+}
+
 type LLMToolPacket struct {
+	// name of tool which user has configured
+	Name string
 
 	// contextID identifies the context to be flushed.
 	ContextID string

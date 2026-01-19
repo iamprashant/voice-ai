@@ -21,6 +21,25 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
+func InterfaceMapToAnyMap(in map[string]interface{}) (map[string]*anypb.Any, error) {
+	out := make(map[string]*anypb.Any)
+	for k, v := range in {
+		val, err := structpb.NewValue(v)
+		if err != nil {
+			return nil, err
+		}
+
+		anyVal, err := anypb.New(val)
+		if err != nil {
+			return nil, err
+		}
+
+		out[k] = anyVal
+	}
+
+	return out, nil
+}
+
 func AnyMapToInterfaceMap(anyMap map[string]*anypb.Any) (map[string]interface{}, error) {
 	interfaceMap := make(map[string]interface{})
 	for key, anyValue := range anyMap {
