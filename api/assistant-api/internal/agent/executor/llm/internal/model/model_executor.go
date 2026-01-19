@@ -293,7 +293,6 @@ func (executor *modelAssistantExecutor) Execute(ctx context.Context, communicati
 		internal_adapter_telemetry.MessageKV(pctk.ContextId()),
 	)
 	defer span.EndSpan(ctx, utils.AssistantAgentTextGenerationStage)
-
 	switch plt := pctk.(type) {
 	case internal_type.UserTextPacket:
 		return executor.handleUserTextPacket(ctx, communication, plt)

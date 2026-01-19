@@ -33,17 +33,21 @@ import {
 import { useRapidaStore } from '@/hooks';
 import { PageTitleBlock } from '@/app/components/blocks/page-title-block';
 import { PageHeaderBlock } from '@/app/components/blocks/page-header-block';
+import { PageLoader } from '@/app/components/loader/page-loader';
 
 export const VoiceAgent: FC<{
   connectConfig: ConnectionConfig;
   agentConfig: AgentConfig;
   agentCallback?: AgentCallback;
 }> = ({ connectConfig, agentConfig, agentCallback }) => {
+  //
   const voiceAgentContextValue = React.useMemo(() => {
     return new VI(connectConfig, agentConfig, agentCallback);
   }, [connectConfig, agentConfig, agentCallback]);
+
+  //
   const [assistant, setAssistant] = useState<Assistant | null>(null);
-  const { showLoader, hideLoader } = useRapidaStore();
+  const { loading, showLoader, hideLoader } = useRapidaStore();
 
   useEffect(() => {
     showLoader('block');
@@ -58,97 +62,102 @@ export const VoiceAgent: FC<{
       .catch();
   }, []);
 
-  return (
-    <div className="h-dvh flex p-8 text-sm/6 w-full">
-      <div className="relative overflow-hidden h-full mx-auto w-2/3 dark:bg-gray-950/50 border rounded-[2px]">
-        <div className="bg-white dark:bg-gray-950 z-10 absolute top-0 left-0 right-0 ">
-          <PageHeaderBlock className="border-b bg-light-background dark:bg-gray-900">
-            <a
-              href={`/deployment/assistant/${agentConfig.id}/overview`}
-              className="flex items-center hover:text-red-600 hover:cursor-pointer"
-            >
-              <ChevronLeft className="w-5 h-5 mr-1" strokeWidth={1.5} />
-              <PageTitleBlock className="text-sm/6">
-                Back to Assistant
-              </PageTitleBlock>
-            </a>
-          </PageHeaderBlock>
-          {!assistant?.getDebuggerdeployment()?.hasInputaudio() && (
-            <YellowNoticeBlock className="flex items-center justify-between space-x-3">
-              <Info className="shrink-0 w-4 h-4" />
-              <div className="text-sm font-medium">
-                Voice functionality is currently disabled. Please enable it to
-                enjoy a voice experience with your assistant.
-              </div>
+  if (loading) {
+    return <PageLoader />;
+  } else
+    return (
+      <div className="h-dvh flex p-8 text-sm/6 w-full">
+        <div className="relative overflow-hidden h-full mx-auto w-2/3 dark:bg-gray-950/50 border rounded-l-lg">
+          <div className="bg-white dark:bg-gray-950 z-10 absolute top-0 left-0 right-0 ">
+            <PageHeaderBlock className="border-b bg-light-background dark:bg-gray-900 pl-3">
               <a
-                target="_blank"
-                href={`/deployment/assistant/${assistant?.getId()}/manage/deployment/debugger`}
-                className="h-7 flex items-center font-medium hover:underline ml-auto text-yellow-600"
-                rel="noreferrer"
+                href={`/deployment/assistant/${agentConfig.id}/overview`}
+                className="flex items-center hover:text-red-600 hover:cursor-pointer"
               >
-                Enable voice
-                <ExternalLink
-                  className="shrink-0 w-4 h-4 ml-1.5"
-                  strokeWidth={1.5}
-                />
+                <ChevronLeft className="w-5 h-5 mr-1" strokeWidth={1.5} />
+                <PageTitleBlock className="text-sm/6">
+                  Back to Assistant
+                </PageTitleBlock>
               </a>
-            </YellowNoticeBlock>
-          )}
-        </div>
-        <div className="h-full flex flex-row flex-nowrap items-stretch">
-          <div className="flex flex-col grow min-w-0 flex-1">
-            <div className="flex flex-col justify-center grow min-h-0 px-4">
-              <div
-                className={cn('max-h-full flex gap-2 overflow-y-auto flex-col')}
-              >
-                <div className="flex flex-col items-center py-20 justify-center px-4">
-                  <div className="flex w-full flex-col items-start gap-1 ">
-                    <span className="text-3xl font-semibold">Hello,</span>
-                    <span className="text-xl font-medium opacity-80">
-                      How can I help you today?
-                    </span>
-                  </div>
-                  <div className="flex w-full flex-wrap items-center gap-2 mt-4">
-                    {[
-                      'What can you do?',
-                      'Can you connect me to a human?',
-                      'How can you help me?',
-                      'Can you connect me to a human?',
-                      'Do you remember our past conversations?',
-                    ].map((suggestion, idx) => {
-                      return (
-                        <QuickSuggestion
-                          key={`suggestion-${idx}`}
-                          suggestion={suggestion}
-                          onClick={async () => {
-                            await voiceAgentContextValue?.onSendText(
-                              suggestion,
-                            );
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
+            </PageHeaderBlock>
+            {!assistant?.getDebuggerdeployment()?.hasInputaudio() && (
+              <YellowNoticeBlock className="flex items-center justify-between space-x-3">
+                <Info className="shrink-0 w-4 h-4" />
+                <div className="text-sm font-medium">
+                  Voice functionality is currently disabled. Please enable it to
+                  enjoy a voice experience with your assistant.
                 </div>
-                <ConversationMessages vag={voiceAgentContextValue} />
+                <a
+                  target="_blank"
+                  href={`/deployment/assistant/${assistant?.getId()}/manage/deployment/debugger`}
+                  className="h-7 flex items-center font-medium hover:underline ml-auto text-yellow-600"
+                  rel="noreferrer"
+                >
+                  Enable voice
+                  <ExternalLink
+                    className="shrink-0 w-4 h-4 ml-1.5"
+                    strokeWidth={1.5}
+                  />
+                </a>
+              </YellowNoticeBlock>
+            )}
+          </div>
+          <div className="h-full flex flex-row flex-nowrap items-stretch">
+            <div className="flex flex-col grow min-w-0 flex-1">
+              <div className="flex flex-col justify-center grow min-h-0 px-4">
+                <div
+                  className={cn(
+                    'max-h-full flex gap-2 overflow-y-auto flex-col',
+                  )}
+                >
+                  <div className="flex flex-col items-center py-20 justify-center px-4">
+                    <div className="flex w-full flex-col items-start gap-1 ">
+                      <span className="text-3xl font-semibold">Hello,</span>
+                      <span className="text-xl font-medium opacity-80">
+                        How can I help you today?
+                      </span>
+                    </div>
+                    <div className="flex w-full flex-wrap items-center gap-2 mt-4">
+                      {[
+                        'What can you do?',
+                        'Can you connect me to a human?',
+                        'How can you help me?',
+                        'Can you connect me to a human?',
+                        'Do you remember our past conversations?',
+                      ].map((suggestion, idx) => {
+                        return (
+                          <QuickSuggestion
+                            key={`suggestion-${idx}`}
+                            suggestion={suggestion}
+                            onClick={async () => {
+                              await voiceAgentContextValue?.onSendText(
+                                suggestion,
+                              );
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <ConversationMessages vag={voiceAgentContextValue} />
+                </div>
               </div>
+              <MessagingAction
+                assistant={assistant}
+                placeholder="How can I help you?"
+                voiceAgent={voiceAgentContextValue}
+              />
             </div>
-            <MessagingAction
-              assistant={assistant}
-              placeholder="How can I help you?"
-              voiceAgent={voiceAgentContextValue}
-            />
           </div>
         </div>
+        <div className="shrink-0 flex flex-col overflow-auto border border-l-0 w-1/3 rounded-r-lg">
+          <VoiceAgentDebugger
+            voiceAgent={voiceAgentContextValue}
+            assistant={assistant}
+          />
+        </div>
       </div>
-      <div className="shrink-0 flex flex-col overflow-auto border border-l-0 w-1/3">
-        <VoiceAgentDebugger
-          voiceAgent={voiceAgentContextValue}
-          assistant={assistant}
-        />
-      </div>
-    </div>
-  );
+    );
 };
 
 export const VoiceAgentDebugger: FC<{
@@ -276,12 +285,13 @@ export const VoiceAgentDebugger: FC<{
                       </>
                     )}
                   </div>
-                  <InputGroup
-                    title="Arguments"
-                    childClass="p-0"
-                    className="m-0 border-x-0"
-                  >
-                    {variables.length > 0 ? (
+
+                  {variables.length > 0 ? (
+                    <InputGroup
+                      title="Arguments"
+                      childClass="p-0"
+                      className="m-0 border-x-0"
+                    >
                       <div className="text-sm leading-normal">
                         {variables.map((x, idx) => {
                           return (
@@ -369,12 +379,12 @@ export const VoiceAgentDebugger: FC<{
                           );
                         })}
                       </div>
-                    ) : (
-                      <YellowNoticeBlock>
-                        Assistant do not accept any arguments.
-                      </YellowNoticeBlock>
-                    )}
-                  </InputGroup>
+                    </InputGroup>
+                  ) : (
+                    <YellowNoticeBlock>
+                      Assistant do not accept any arguments.
+                    </YellowNoticeBlock>
+                  )}
                   <InputGroup
                     title="Deployment"
                     childClass="p-3 text-muted"
@@ -382,7 +392,7 @@ export const VoiceAgentDebugger: FC<{
                   >
                     <div className="space-y-4">
                       <div className="flex justify-between">
-                        <div className="text-sm uppercase tracking-wider">
+                        <div className="text-sm font-mono tracking-wider lowercase">
                           Input Mode
                         </div>
                         <div className="font-medium">
@@ -393,7 +403,7 @@ export const VoiceAgentDebugger: FC<{
                         </div>
                       </div>
                       <div className="flex justify-between">
-                        <div className="text-sm uppercase tracking-wider">
+                        <div className="text-sm font-mono tracking-wider lowercase">
                           Output Mode
                         </div>
                         <div className="font-medium">
@@ -414,10 +424,10 @@ export const VoiceAgentDebugger: FC<{
                           ?.getAudiooptionsList().length! > 0 && (
                           <div className="space-y-4">
                             <div className="flex justify-between">
-                              <div className="text-muted uppercase">
+                              <div className="text-muted font-mono lowercase tracking-wider">
                                 Listen.Provider
                               </div>
-                              <div className="font-medium mt-1 underline underline-offset-4">
+                              <div className="font-medium mt-1 font-mono">
                                 {assistant
                                   .getDebuggerdeployment()
                                   ?.getInputaudio()
@@ -435,10 +445,10 @@ export const VoiceAgentDebugger: FC<{
                                   className="flex justify-between"
                                   key={index}
                                 >
-                                  <div className="text-sm uppercase tracking-wider">
+                                  <div className="text-sm font-mono tracking-wider lowercase">
                                     {detail.getKey()}
                                   </div>
-                                  <div className="font-medium">
+                                  <div className="font-medium font-mono">
                                     {detail.getValue()}
                                   </div>
                                 </div>
@@ -455,10 +465,10 @@ export const VoiceAgentDebugger: FC<{
                           ?.getAudiooptionsList().length! > 0 && (
                           <div className="space-y-4">
                             <div className="flex justify-between">
-                              <div className="text-sm uppercase tracking-wider">
+                              <div className="text-sm font-mono tracking-wider lowercase">
                                 Listen.Provider
                               </div>
-                              <div className="font-medium mt-1 underline underline-offset-4">
+                              <div className="font-medium mt-1">
                                 {assistant
                                   .getDebuggerdeployment()
                                   ?.getOutputaudio()
@@ -476,7 +486,7 @@ export const VoiceAgentDebugger: FC<{
                                   key={index}
                                   className="flex justify-between"
                                 >
-                                  <div className="text-sm uppercase tracking-wider">
+                                  <div className="text-sm font-mono tracking-wider lowercase">
                                     {detail.getKey()}
                                   </div>
                                   <div className="font-medium">

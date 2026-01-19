@@ -31,7 +31,6 @@ func (io *GenericRequestor) Input(message *protos.AssistantConversationUserMessa
 		return io.OnPacket(io.Context(), internal_type.UserAudioPacket{Audio: msg.Audio.GetContent()})
 	case *protos.AssistantConversationUserMessage_Text:
 		return io.OnPacket(io.Context(), internal_type.UserTextPacket{Text: msg.Text.GetContent()})
-
 	default:
 		return fmt.Errorf("illegal input from the user %+v", msg)
 	}

@@ -21,19 +21,7 @@ func (kr *GenericRequestor) CreateKnowledgeLog(knowledgeId uint64, retrievalMeth
 	additionalData map[string]string,
 	status type_enums.RecordState,
 	request, response []byte) error {
-	_, err := kr.knowledgeService.CreateLog(
-		kr.Context(),
-		kr.Auth(),
-		knowledgeId,
-		retrievalMethod,
-		topK,
-		scoreThreshold,
-		documentCount,
-		timeTaken,
-		additionalData,
-		status,
-		request, response,
-	)
+	_, err := kr.knowledgeService.CreateLog(kr.Context(), kr.Auth(), knowledgeId, retrievalMethod, topK, scoreThreshold, documentCount, timeTaken, additionalData, status, request, response)
 	return err
 }
 
@@ -45,19 +33,7 @@ func (cr *GenericRequestor) CreateWebhookLog(
 	retryCount uint32,
 	status type_enums.RecordState,
 	request, response []byte) error {
-	_, err := cr.webhookService.CreateLog(
-		cr.ctx,
-		cr.auth,
-		webhookID,
-		cr.assistant.Id,
-		cr.assistantConversation.Id,
-		httpUrl, httpMethod,
-		event,
-		responseStatus,
-		timeTaken,
-		retryCount,
-		status,
-		request, response)
+	_, err := cr.webhookService.CreateLog(cr.ctx, cr.auth, webhookID, cr.assistant.Id, cr.assistantConversation.Id, httpUrl, httpMethod, event, responseStatus, timeTaken, retryCount, status, request, response)
 	return err
 }
 

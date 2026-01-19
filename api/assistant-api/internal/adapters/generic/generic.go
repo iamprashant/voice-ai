@@ -107,16 +107,7 @@ type GenericRequestor struct {
 	maxSessionTimer  *time.Timer
 }
 
-func NewGenericRequestor(
-	ctx context.Context,
-	config *config.AssistantConfig,
-	logger commons.Logger,
-	source utils.RapidaSource,
-	postgres connectors.PostgresConnector,
-	opensearch connectors.OpenSearchConnector,
-	redis connectors.RedisConnector,
-	storage storages.Storage,
-	streamer internal_streamers.Streamer,
+func NewGenericRequestor(ctx context.Context, config *config.AssistantConfig, logger commons.Logger, source utils.RapidaSource, postgres connectors.PostgresConnector, opensearch connectors.OpenSearchConnector, redis connectors.RedisConnector, storage storages.Storage, streamer internal_streamers.Streamer,
 ) GenericRequestor {
 
 	return GenericRequestor{
@@ -180,7 +171,6 @@ func (dm *GenericRequestor) Streamer() internal_streamers.Streamer {
 func (deb *GenericRequestor) onCreateMessage(ctx context.Context, msg internal_type.MessagePacket) error {
 	deb.histories = append(deb.histories, msg)
 	_, err := deb.conversationService.CreateConversationMessage(ctx, deb.Auth(), deb.Source(), deb.Assistant().Id, deb.Assistant().AssistantProviderId, deb.Conversation().Id, msg.ContextId(), msg.Role(), msg.Content())
-
 	if err != nil {
 		deb.logger.Error("unable to create message for the user")
 		return err
@@ -208,31 +198,19 @@ func (gr *GenericRequestor) CreateAssistantConversation(auth types.SimplePrincip
 		return conversation, err
 	}
 	utils.Go(gr.Context(), func() {
-		gr.CreateConversationArgument(auth, assistantId, conversation.Id, arguments)
+		gr.conversationService.ApplyConversationArgument(gr.Context(), auth, assistantId, conversation.Id, arguments)
 	})
 
 	utils.Go(gr.Context(), func() {
-		gr.CreateConversationOption(auth, assistantId, conversation.Id, options)
+		gr.conversationService.ApplyConversationOption(gr.Context(), auth, assistantId, conversation.Id, options)
 	})
 
 	utils.Go(gr.Context(), func() {
-		gr.CreateConversationMetadata(auth, assistantId, conversation.Id, metadata)
+		gr.conversationService.ApplyConversationMetadata(gr.Context(), auth, assistantId, conversation.Id, types.NewMetadataList(metadata))
 	})
 
 	return conversation, err
 
-}
-
-func (gr *GenericRequestor) CreateConversationArgument(auth types.SimplePrinciple, assistantId, assistantConversationId uint64, args map[string]interface{}) ([]*internal_conversation_gorm.AssistantConversationArgument, error) {
-	return gr.conversationService.ApplyConversationArgument(gr.Context(), auth, assistantId, assistantConversationId, args)
-}
-
-func (gr *GenericRequestor) CreateConversationMetadata(auth types.SimplePrinciple, assistantId, assistantConversationId uint64, metadata map[string]interface{}) ([]*internal_conversation_gorm.AssistantConversationMetadata, error) {
-	return gr.conversationService.ApplyConversationMetadata(gr.Context(), auth, assistantId, assistantConversationId, types.NewMetadataList(metadata))
-}
-
-func (gr *GenericRequestor) CreateConversationOption(auth types.SimplePrinciple, assistantId, assistantConversationId uint64, opts map[string]interface{}) ([]*internal_conversation_gorm.AssistantConversationOption, error) {
-	return gr.conversationService.ApplyConversationOption(gr.Context(), auth, assistantId, assistantConversationId, opts)
 }
 
 func (talking *GenericRequestor) BeginConversation(auth types.SimplePrinciple, assistant *internal_assistant_entity.Assistant, direction type_enums.ConversationDirection, identifier string, argument, metadata, options map[string]interface{}) (*internal_conversation_gorm.AssistantConversation, error) {
@@ -291,9 +269,7 @@ func (dm *GenericRequestor) GetHistories() []internal_type.MessagePacket {
 	return dm.histories
 }
 
-func (gr *GenericRequestor) CreateConversationRecording(
-	body []byte,
-) error {
+func (gr *GenericRequestor) CreateConversationRecording(body []byte) error {
 	if _, err := gr.conversationService.CreateConversationRecording(gr.ctx, gr.auth, gr.assistant.Id, gr.assistantConversation.Id, body); err != nil {
 		gr.logger.Errorf("unable to create recording for the conversation id %d with error : %v", err)
 		return err

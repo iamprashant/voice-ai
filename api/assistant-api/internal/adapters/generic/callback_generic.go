@@ -87,6 +87,79 @@ func (talking *GenericRequestor) callSpeechToText(ctx context.Context, vl intern
 	return nil
 }
 
+func (spk *GenericRequestor) callSpeaking(ctx context.Context, result internal_type.LLMPacket) error {
+	switch res := result.(type) {
+	case internal_type.LLMMessagePacket:
+		if spk.textToSpeechTransformer != nil {
+			inputMessage, err := spk.messaging.GetMessage()
+			if err != nil {
+				return nil
+			}
+			// might be stale packet
+			if result.ContextId() != inputMessage.GetId() {
+				return nil
+			}
+			ctx, span, _ := spk.Tracer().StartSpan(spk.Context(), utils.AssistantSpeakingStage)
+			defer span.EndSpan(ctx, utils.AssistantSpeakingStage)
+			span.AddAttributes(ctx,
+				internal_adapter_telemetry.MessageKV(res.ContextID),
+				internal_adapter_telemetry.KV{K: "activity", V: internal_adapter_telemetry.StringValue("finish_speaking")},
+			)
+			if err := spk.textToSpeechTransformer.Transform(spk.Context(), res); err != nil {
+				spk.logger.Errorf("speak: failed to send flush to text to speech transformer error: %v", err)
+			}
+		}
+	case internal_type.LLMStreamPacket:
+		inputMessage, err := spk.messaging.GetMessage()
+		if err != nil {
+			return nil
+		}
+		// might be stale packet
+		if result.ContextId() != inputMessage.GetId() {
+			return nil
+		}
+		if spk.textToSpeechTransformer != nil {
+			ctx, span, _ := spk.Tracer().StartSpan(spk.Context(), utils.AssistantSpeakingStage)
+			defer span.EndSpan(ctx, utils.AssistantSpeakingStage)
+			span.AddAttributes(ctx,
+				internal_adapter_telemetry.MessageKV(res.ContextID),
+				internal_adapter_telemetry.KV{K: "activity", V: internal_adapter_telemetry.StringValue("speak")},
+				internal_adapter_telemetry.KV{K: "script", V: internal_adapter_telemetry.StringValue(res.Text)},
+			)
+			if err := spk.textToSpeechTransformer.Transform(spk.Context(), res); err != nil {
+				spk.logger.Errorf("speak: failed to send flush to text to speech transformer error: %v", err)
+			}
+		}
+		if err := spk.Notify(ctx, &protos.AssistantConversationAssistantMessage{Time: timestamppb.Now(), Id: res.ContextId(), Completed: true, Message: &protos.AssistantConversationAssistantMessage_Text{Text: &protos.AssistantConversationMessageTextContent{Content: res.Text}}}); err != nil {
+			spk.logger.Tracef(ctx, "error while outputting chunk to the user: %w", err)
+		}
+	default:
+	}
+	return nil
+}
+
+func (talking *GenericRequestor) callTool(ctx context.Context, vl internal_type.LLMToolPacket) error {
+	anyArgs, err := utils.InterfaceMapToAnyMap(vl.Result)
+	if err != nil {
+		talking.logger.Errorf("error converting args to AnyMap: %v", err)
+	}
+	switch vl.Action {
+	case protos.AssistantConversationAction_END_CONVERSATION:
+		// wait for TTS to complete before sending disconnect action
+		time.Sleep(5 * time.Second)
+		talking.Notify(ctx, &protos.AssistantMessagingResponse_Action{
+			Action: &protos.AssistantConversationAction{
+				Name:   vl.Name,
+				Action: vl.Action,
+				Args:   anyArgs,
+			},
+		})
+		return nil
+	default:
+	}
+	return nil
+}
+
 /**/
 func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_type.Packet) error {
 	for _, p := range pkts {
@@ -259,8 +332,9 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				continue
 			}
 		case internal_type.LLMStreamPacket:
-			// bot had spoken reset the timer
+			// resetting idle timer as bot has sponken
 			talking.resetIdleTimeoutTimer(talking.Context())
+
 			// packet from llm reciecved
 			inputMessage, err := talking.messaging.GetMessage()
 			if err != nil {
@@ -284,7 +358,10 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 			// end of speech analyzer in case histoyrical data is to be used
 
 		case internal_type.LLMMessagePacket:
+			// resetting idle timer as bot has sponken
 			talking.resetIdleTimeoutTimer(talking.Context())
+
+			//
 			inputMessage, err := talking.messaging.GetMessage()
 			if err != nil {
 				continue
@@ -309,7 +386,7 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 
 			continue
 		case internal_type.LLMToolPacket:
-			talking.handleToolPacket(ctx, vl)
+			talking.callTool(ctx, vl)
 			continue
 		case internal_type.MetricPacket:
 			// metrics update for the message
@@ -320,6 +397,10 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				}
 			}
 		case internal_type.TextToSpeechEndPacket:
+
+			// resetting idle timer as bot has sponken
+			talking.resetIdleTimeoutTimer(talking.Context())
+
 			// notify the user about completion of tts
 			inputMessage, err := talking.messaging.GetMessage()
 			if err != nil {
@@ -335,6 +416,9 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 
 			continue
 		case internal_type.TextToSpeechAudioPacket:
+			// resetting idle timer as bot has sponken
+			talking.resetIdleTimeoutTimer(talking.Context())
+
 			// get current input message
 			inputMessage, err := talking.messaging.GetMessage()
 			if err != nil {
@@ -360,78 +444,5 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 		}
 	}
 
-	return nil
-}
-
-func (spk *GenericRequestor) callSpeaking(ctx context.Context, result internal_type.LLMPacket) error {
-	switch res := result.(type) {
-	case internal_type.LLMMessagePacket:
-		if spk.textToSpeechTransformer != nil {
-			inputMessage, err := spk.messaging.GetMessage()
-			if err != nil {
-				return nil
-			}
-			// might be stale packet
-			if result.ContextId() != inputMessage.GetId() {
-				return nil
-			}
-			ctx, span, _ := spk.Tracer().StartSpan(spk.Context(), utils.AssistantSpeakingStage)
-			defer span.EndSpan(ctx, utils.AssistantSpeakingStage)
-			span.AddAttributes(ctx,
-				internal_adapter_telemetry.MessageKV(res.ContextID),
-				internal_adapter_telemetry.KV{K: "activity", V: internal_adapter_telemetry.StringValue("finish_speaking")},
-			)
-			if err := spk.textToSpeechTransformer.Transform(spk.Context(), res); err != nil {
-				spk.logger.Errorf("speak: failed to send flush to text to speech transformer error: %v", err)
-			}
-		}
-	case internal_type.LLMStreamPacket:
-		inputMessage, err := spk.messaging.GetMessage()
-		if err != nil {
-			return nil
-		}
-		// might be stale packet
-		if result.ContextId() != inputMessage.GetId() {
-			return nil
-		}
-		if spk.textToSpeechTransformer != nil {
-			ctx, span, _ := spk.Tracer().StartSpan(spk.Context(), utils.AssistantSpeakingStage)
-			defer span.EndSpan(ctx, utils.AssistantSpeakingStage)
-			span.AddAttributes(ctx,
-				internal_adapter_telemetry.MessageKV(res.ContextID),
-				internal_adapter_telemetry.KV{K: "activity", V: internal_adapter_telemetry.StringValue("speak")},
-				internal_adapter_telemetry.KV{K: "script", V: internal_adapter_telemetry.StringValue(res.Text)},
-			)
-			if err := spk.textToSpeechTransformer.Transform(spk.Context(), res); err != nil {
-				spk.logger.Errorf("speak: failed to send flush to text to speech transformer error: %v", err)
-			}
-		}
-		if err := spk.Notify(ctx, &protos.AssistantConversationAssistantMessage{Time: timestamppb.Now(), Id: res.ContextId(), Completed: true, Message: &protos.AssistantConversationAssistantMessage_Text{Text: &protos.AssistantConversationMessageTextContent{Content: res.Text}}}); err != nil {
-			spk.logger.Tracef(ctx, "error while outputting chunk to the user: %w", err)
-		}
-	default:
-	}
-	return nil
-}
-
-func (talking *GenericRequestor) handleToolPacket(ctx context.Context, vl internal_type.LLMToolPacket) error {
-	anyArgs, err := utils.InterfaceMapToAnyMap(vl.Result)
-	if err != nil {
-		talking.logger.Errorf("error converting args to AnyMap: %v", err)
-	}
-	switch vl.Action {
-	case protos.AssistantConversationAction_END_CONVERSATION:
-		// wait for TTS to complete before sending disconnect action
-		time.Sleep(5 * time.Second)
-		talking.Notify(ctx, &protos.AssistantMessagingResponse_Action{
-			Action: &protos.AssistantConversationAction{
-				Name:   vl.Name,
-				Action: vl.Action,
-				Args:   anyArgs,
-			},
-		})
-		return nil
-	default:
-	}
 	return nil
 }
