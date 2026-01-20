@@ -46,13 +46,7 @@ func (cApi *ConversationGrpcApi) CreatePhoneCall(ctx context.Context, ir *protos
 		return utils.ErrorWithCode[protos.CreatePhoneCallResponse](200, err, "Illegal arguments for initialize request, please check and try again.")
 	}
 
-	assistant, err := cApi.assistantService.Get(ctx,
-		auth,
-		ir.GetAssistant().GetAssistantId(),
-		utils.GetVersionDefinition(ir.GetAssistant().GetVersion()),
-		&internal_services.GetAssistantOption{
-			InjectPhoneDeployment: true,
-		})
+	assistant, err := cApi.assistantService.Get(ctx, auth, ir.GetAssistant().GetAssistantId(), utils.GetVersionDefinition(ir.GetAssistant().GetVersion()), &internal_services.GetAssistantOption{InjectPhoneDeployment: true})
 	if err != nil {
 		cApi.logger.Debugf("illegal unable to find assistant %v", err)
 		return utils.ErrorWithCode[protos.CreatePhoneCallResponse](200, err, "Invalid assistant id, please check and try again.")
@@ -64,16 +58,7 @@ func (cApi *ConversationGrpcApi) CreatePhoneCall(ctx context.Context, ir *protos
 	}
 
 	// creating conversation
-	conversation, err := cApi.assistantConversationService.
-		CreateConversation(
-			ctx,
-			auth,
-			internal_adapter.Identifier(utils.PhoneCall, ctx, auth, toNumber),
-			assistant.Id,
-			assistant.AssistantProviderId,
-			type_enums.DIRECTION_OUTBOUND,
-			utils.PhoneCall,
-		)
+	conversation, err := cApi.assistantConversationService.CreateConversation(ctx, auth, internal_adapter.Identifier(utils.PhoneCall, ctx, auth, toNumber), assistant.Id, assistant.AssistantProviderId, type_enums.DIRECTION_OUTBOUND, utils.PhoneCall)
 	if err != nil {
 		cApi.logger.Errorf("unable to create conversation %+v", err)
 		return utils.ErrorWithCode[protos.CreatePhoneCallResponse](200, err, "Unable to create conversation session, please check and try again.")
@@ -88,121 +73,66 @@ func (cApi *ConversationGrpcApi) CreatePhoneCall(ctx context.Context, ir *protos
 	}
 	conversation.Options = o
 	// updating arguments
-	arguments, err := cApi.assistantConversationService.
-		ApplyConversationArgument(
-			ctx, auth, assistant.Id, conversation.Id, args,
-		)
+	arguments, err := cApi.assistantConversationService.ApplyConversationArgument(ctx, auth, assistant.Id, conversation.Id, args)
 	if err != nil {
 		cApi.logger.Debugf("unable to create argument %v", err)
 		return utils.ErrorWithCode[protos.CreatePhoneCallResponse](200, err, "Unable to create conversation arguments, please check and try again.")
 	}
 	conversation.Arguments = arguments
 	// updating metadata
-	metadatas, err := cApi.assistantConversationService.ApplyConversationMetadata(
-		ctx, auth, assistant.Id, conversation.Id,
-		types.NewMetadataList(mtd),
-	)
+	metadatas, err := cApi.assistantConversationService.ApplyConversationMetadata(ctx, auth, assistant.Id, conversation.Id, types.NewMetadataList(mtd))
 	if err != nil {
 		cApi.logger.Debugf("unable to create metadatas %v", err)
 		return utils.ErrorWithCode[protos.CreatePhoneCallResponse](200, err, "Unable to create conversation metadata, please check and try again.")
 	}
 	conversation.Metadatas = metadatas
-	credentialID, err := assistant.
-		AssistantPhoneDeployment.
-		GetOptions().
-		GetUint64("rapida.credential_id")
+	credentialID, err := assistant.AssistantPhoneDeployment.GetOptions().GetUint64("rapida.credential_id")
 	if err != nil {
-		cApi.
-			assistantConversationService.
-			ApplyConversationMetrics(
-				ctx,
-				auth,
-				assistant.Id,
-				conversation.Id,
-				[]*types.Metric{types.NewStatusMetric(type_enums.RECORD_FAILED)},
-			)
-		return utils.ErrorWithCode[protos.CreatePhoneCallResponse](200, err, "Please check the credential for telephony, please check and try again.")
-	}
-	vltC, err := cApi.vaultClient.GetCredential(ctx, auth, credentialID)
-	if err != nil {
-		cApi.assistantConversationService.
-			ApplyConversationMetrics(
-				ctx, auth, assistant.Id, conversation.Id, []*types.Metric{types.NewStatusMetric(type_enums.RECORD_FAILED)},
-			)
+		cApi.assistantConversationService.ApplyConversationMetrics(ctx, auth, assistant.Id, conversation.Id, []*types.Metric{types.NewStatusMetric(type_enums.RECORD_FAILED)})
 		return utils.ErrorWithCode[protos.CreatePhoneCallResponse](200, err, "Please check the credential for telephony, please check and try again.")
 	}
 
-	telephony, err := telephony.GetTelephony(
-		telephony.Telephony(
-			assistant.
-				AssistantPhoneDeployment.
-				TelephonyProvider),
-		cApi.cfg,
-		cApi.logger,
-	)
+	vltC, err := cApi.vaultClient.GetCredential(ctx, auth, credentialID)
 	if err != nil {
-		cApi.
-			assistantConversationService.
-			ApplyConversationMetrics(
-				ctx, auth, assistant.Id, conversation.Id, []*types.Metric{types.NewStatusMetric(type_enums.RECORD_FAILED)},
-			)
+		cApi.assistantConversationService.ApplyConversationMetrics(ctx, auth, assistant.Id, conversation.Id, []*types.Metric{types.NewStatusMetric(type_enums.RECORD_FAILED)})
+		return utils.ErrorWithCode[protos.CreatePhoneCallResponse](200, err, "Please check the credential for telephony, please check and try again.")
+	}
+
+	telephony, err := telephony.GetTelephony(telephony.Telephony(assistant.AssistantPhoneDeployment.TelephonyProvider), cApi.cfg, cApi.logger)
+	if err != nil {
+		cApi.assistantConversationService.ApplyConversationMetrics(ctx, auth, assistant.Id, conversation.Id, []*types.Metric{types.NewStatusMetric(type_enums.RECORD_FAILED)})
 		return utils.ErrorWithCode[protos.CreatePhoneCallResponse](200, err, "Please check the configuration for telephony, please check and try again.")
 	}
 
 	fromPhone := ir.GetFromNumber()
 	if utils.IsEmpty(fromPhone) {
-		fromNumber, err := assistant.
-			AssistantPhoneDeployment.
-			GetOptions().
-			GetString("phone")
+		fromNumber, err := assistant.AssistantPhoneDeployment.GetOptions().GetString("phone")
 		if err != nil {
-			cApi.assistantConversationService.
-				ApplyConversationMetrics(
-					ctx, auth, assistant.Id, conversation.Id, []*types.Metric{types.NewStatusMetric(type_enums.RECORD_FAILED)},
-				)
+			cApi.assistantConversationService.ApplyConversationMetrics(ctx, auth, assistant.Id, conversation.Id, []*types.Metric{types.NewStatusMetric(type_enums.RECORD_FAILED)})
 			return utils.ErrorWithCode[protos.CreatePhoneCallResponse](200, fmt.Errorf("failed to get Twilio phone number"), "Unable to retrieve the default phone number.")
 		}
 		fromPhone = fromNumber
 	}
 
-	meta, metric, event, err := telephony.MakeCall(
-		auth,
-		toNumber,
-		fromPhone,
-		ir.GetAssistant().GetAssistantId(),
-		conversation.Id,
-		vltC,
-		assistant.
-			AssistantPhoneDeployment.
-			GetOptions(),
-	)
+	meta, metric, event, err := telephony.MakeCall(auth, toNumber, fromPhone, ir.GetAssistant().GetAssistantId(), conversation.Id, vltC, assistant.AssistantPhoneDeployment.GetOptions())
 	if err != nil {
 		cApi.logger.Errorf("telephony call return error %v", err)
 	}
 
 	if metric != nil {
-		metrics, err := cApi.assistantConversationService.
-			ApplyConversationMetrics(
-				ctx, auth, assistant.Id, conversation.Id, metric,
-			)
+		metrics, err := cApi.assistantConversationService.ApplyConversationMetrics(ctx, auth, assistant.Id, conversation.Id, metric)
 		if err == nil {
 			conversation.Metrics = append(conversation.Metrics, metrics...)
 		}
 	}
 	if meta != nil {
-		mtds, err := cApi.assistantConversationService.
-			ApplyConversationMetadata(
-				ctx, auth, assistant.Id, conversation.Id, meta,
-			)
+		mtds, err := cApi.assistantConversationService.ApplyConversationMetadata(ctx, auth, assistant.Id, conversation.Id, meta)
 		if err == nil {
 			conversation.Metadatas = append(conversation.Metadatas, mtds...)
 		}
 	}
 	if event != nil {
-		evts, err := cApi.assistantConversationService.
-			ApplyConversationTelephonyEvent(
-				ctx, auth, assistant.AssistantPhoneDeployment.TelephonyProvider, assistant.Id, conversation.Id, event,
-			)
+		evts, err := cApi.assistantConversationService.ApplyConversationTelephonyEvent(ctx, auth, assistant.AssistantPhoneDeployment.TelephonyProvider, assistant.Id, conversation.Id, event)
 		if err == nil {
 			conversation.TelephonyEvents = append(conversation.TelephonyEvents, evts...)
 		}

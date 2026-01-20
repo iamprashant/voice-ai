@@ -61,18 +61,13 @@ func (md *GenericRequestor) OnEndConversation() error {
 			output := make(map[string]interface{})
 			for _, a := range md.assistant.AssistantAnalyses {
 				aArgs := md.Parse(utils.ConversationCompleted, a.GetParameters())
-				o, err := md.Analysis(
-					a.GetEndpointId(),
-					a.GetEndpointVersion(),
-					aArgs,
-				)
+				o, err := md.Analysis(a.GetEndpointId(), a.GetEndpointVersion(), aArgs)
 				if err != nil {
 					md.logger.Errorf("error while executing analysis, check the config")
 					continue
 				}
 				output[fmt.Sprintf("analysis.%s", a.GetName())] = o
 			}
-
 			md.onSetMetadata(md.Auth(), output)
 		}
 		for _, webhook := range md.assistant.AssistantWebhooks {
@@ -85,10 +80,7 @@ func (md *GenericRequestor) OnEndConversation() error {
 	return nil
 }
 
-func (hk *GenericRequestor) Analysis(
-	endpointId uint64, endpointVersion string,
-	arguments map[string]interface{},
-) (map[string]interface{}, error) {
+func (hk *GenericRequestor) Analysis(endpointId uint64, endpointVersion string, arguments map[string]interface{}) (map[string]interface{}, error) {
 	ivk, err := hk.analyze(
 		hk.Context(),
 		&protos.EndpointDefinition{
@@ -117,10 +109,7 @@ func (hk *GenericRequestor) Analysis(
 	return nil, fmt.Errorf("empty response from endpoint")
 }
 
-func (md *GenericRequestor) Webhook(
-	event string,
-	arguments map[string]interface{},
-	webhook *internal_assistant_entity.AssistantWebhook) {
+func (md *GenericRequestor) Webhook(event string, arguments map[string]interface{}, webhook *internal_assistant_entity.AssistantWebhook) {
 	utils.Go(md.Context(), func() {
 		startTime := time.Now()
 		var res *rest.APIResponse
@@ -194,10 +183,7 @@ func (md *GenericRequestor) SimplifyHistory(msgs []internal_type.MessagePacket) 
 	return out
 }
 
-func (md *GenericRequestor) Parse(
-	event utils.AssistantWebhookEvent,
-	mapping map[string]string,
-) map[string]interface{} {
+func (md *GenericRequestor) Parse(event utils.AssistantWebhookEvent, mapping map[string]string) map[string]interface{} {
 	arguments := make(map[string]interface{})
 	for key, value := range mapping {
 		if k, ok := strings.CutPrefix(key, "event."); ok {
@@ -266,11 +252,7 @@ func (md *GenericRequestor) Parse(
 	return arguments
 }
 
-func (ae *GenericRequestor) analyze(
-	ctx context.Context,
-	endpointDef *protos.EndpointDefinition,
-	arguments, metadata, opts map[string]interface{},
-) (*protos.InvokeResponse, error) {
+func (ae *GenericRequestor) analyze(ctx context.Context, endpointDef *protos.EndpointDefinition, arguments, metadata, opts map[string]interface{}) (*protos.InvokeResponse, error) {
 	inputBuilder := endpoint_client_builders.NewInputInvokeBuilder(ae.logger)
 	return ae.DeploymentCaller().Invoke(
 		ctx,
@@ -284,14 +266,7 @@ func (ae *GenericRequestor) analyze(
 	)
 }
 
-func (aw *GenericRequestor) webhook(
-	ctx context.Context,
-	timeout uint32,
-	baseUrl string,
-	method string,
-	headers map[string]string,
-	body map[string]interface{},
-) (*rest.APIResponse, error) {
+func (aw *GenericRequestor) webhook(ctx context.Context, timeout uint32, baseUrl string, method string, headers map[string]string, body map[string]interface{}) (*rest.APIResponse, error) {
 	client := rest.NewRestClientWithConfig(baseUrl, headers, timeout)
 	switch method {
 	case "POST":

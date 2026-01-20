@@ -8,7 +8,6 @@ package internal_adapter_generic
 import (
 	"context"
 	"errors"
-	"io"
 	"time"
 
 	internal_adapter_request_customizers "github.com/rapidaai/api/assistant-api/internal/adapters/customizers"
@@ -78,9 +77,7 @@ func (talking *GenericRequestor) callSpeechToText(ctx context.Context, vl intern
 	if talking.speechToTextTransformer != nil {
 		utils.Go(ctx, func() {
 			if err := talking.speechToTextTransformer.Transform(ctx, vl); err != nil {
-				if !errors.Is(err, io.EOF) {
-					talking.logger.Tracef(ctx, "error while transforming input %s and error %s", talking.speechToTextTransformer.Name(), err.Error())
-				}
+				talking.logger.Tracef(ctx, "error while transforming input %s and error %s", talking.speechToTextTransformer.Name(), err.Error())
 			}
 		})
 	}
@@ -139,21 +136,12 @@ func (spk *GenericRequestor) callSpeaking(ctx context.Context, result internal_t
 }
 
 func (talking *GenericRequestor) callTool(ctx context.Context, vl internal_type.LLMToolPacket) error {
-	anyArgs, err := utils.InterfaceMapToAnyMap(vl.Result)
-	if err != nil {
-		talking.logger.Errorf("error converting args to AnyMap: %v", err)
-	}
+	anyArgs, _ := utils.InterfaceMapToAnyMap(vl.Result)
 	switch vl.Action {
 	case protos.AssistantConversationAction_END_CONVERSATION:
-		// wait for TTS to complete before sending disconnect action
-		time.Sleep(5 * time.Second)
-		talking.Notify(ctx, &protos.AssistantMessagingResponse_Action{
-			Action: &protos.AssistantConversationAction{
-				Name:   vl.Name,
-				Action: vl.Action,
-				Args:   anyArgs,
-			},
-		})
+		if err := talking.Notify(ctx, &protos.AssistantMessagingResponse_Action{Action: &protos.AssistantConversationAction{Name: vl.Name, Action: vl.Action, Args: anyArgs}}); err != nil {
+			talking.logger.Errorf("error notifying end conversation action: %v", err)
+		}
 		return nil
 	default:
 	}
@@ -418,7 +406,6 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 		case internal_type.TextToSpeechAudioPacket:
 			// resetting idle timer as bot has sponken
 			talking.resetIdleTimeoutTimer(talking.Context())
-
 			// get current input message
 			inputMessage, err := talking.messaging.GetMessage()
 			if err != nil {
@@ -430,7 +417,7 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 			}
 
 			// notify the user about audio chunk
-			if err := talking.Notify(talking.Context(), &protos.AssistantConversationAssistantMessage{Time: timestamppb.Now(), Id: vl.ContextID, Message: &protos.AssistantConversationAssistantMessage_Audio{Audio: &protos.AssistantConversationMessageAudioContent{Content: vl.AudioChunk}}}); err != nil {
+			if err := talking.Notify(talking.Context(), &protos.AssistantConversationAssistantMessage{Time: timestamppb.Now(), Id: vl.ContextID, Message: &protos.AssistantConversationAssistantMessage_Audio{Audio: &protos.AssistantConversationMessageAudioContent{Content: vl.AudioChunk}}, Completed: false}); err != nil {
 				talking.logger.Tracef(talking.ctx, "error while outputing chunk to the user: %w", err)
 			}
 

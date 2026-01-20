@@ -8,7 +8,6 @@ package assistant_talk_api
 import (
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -140,29 +139,18 @@ func (cApi *ConversationApi) CallReciever(c *gin.Context) {
 }
 
 func (cApi *ConversationApi) CallTalker(c *gin.Context) {
-	start := time.Now()
-	upgrader := websocket.Upgrader{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
-		CheckOrigin: func(r *http.Request) bool {
-			return true
-		},
-	}
+	upgrader := websocket.Upgrader{ReadBufferSize: 1024, WriteBufferSize: 1024, CheckOrigin: func(r *http.Request) bool { return true }}
 	websocketConnection, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
-		cApi.logger.Errorf("illegal while upgrading vonage talker with error %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Unable to upgrade connection"})
 		return
 	}
-	cApi.logger.Benchmark("ConversationApi.CallTalker.upgradeConnection", time.Since(start))
-
 	auth, isAuthenticated := types.GetAuthPrinciple(c)
 	if !isAuthenticated {
-		cApi.logger.Errorf("illegal unable to authenticate")
 		c.JSON(http.StatusForbidden, gin.H{"error": "Unauthenticated request"})
 		return
 	}
 
-	cApi.logger.Benchmark("conversationapi.CallTalker.GetAuthPrinciple", time.Since(start))
 	// Extract the client source from the stream context
 	assistantId, err := strconv.ParseUint(c.Param("assistantId"), 10, 64)
 	if err != nil {
@@ -182,16 +170,50 @@ func (cApi *ConversationApi) CallTalker(c *gin.Context) {
 	tlp := c.Param("telephony")
 	_telephony, err := telephony.GetTelephony(telephony.Telephony(tlp), cApi.cfg, cApi.logger)
 	if err != nil {
+		cApi.assistantConversationService.ApplyConversationMetrics(c, auth, assistantId, conversationId, []*types.Metric{&types.Metric{Name: type_enums.STATUS.String(), Value: type_enums.RECORD_FAILED.String(), Description: "Invalid telephony"}})
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid telephony"})
 		return
 	}
 
-	talker, err := internal_adapter.GetTalker(utils.PhoneCall, c, cApi.cfg, cApi.logger, cApi.postgres, cApi.opensearch, cApi.redis, cApi.storage, _telephony.Streamer(c, websocketConnection, assistantId, "latest", conversationId))
+	assistant, err := cApi.assistantService.Get(c, auth, assistantId, nil, &internal_services.GetAssistantOption{InjectPhoneDeployment: true})
 	if err != nil {
-		cApi.logger.Errorf("illegal to get talker %v", err)
+		cApi.logger.Errorf("error while recieving call %v", err)
+		cApi.assistantConversationService.ApplyConversationMetrics(c, auth, assistant.Id, conversationId, []*types.Metric{&types.Metric{Name: type_enums.STATUS.String(), Value: type_enums.RECORD_FAILED.String(), Description: "Invalid assistant"}})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid assistant"})
 		return
 	}
+
+	if !assistant.IsPhoneDeploymentEnable() {
+		cApi.logger.Errorf("error while recieving call %v", "phone deployment not enabled")
+		cApi.assistantConversationService.ApplyConversationMetrics(c, auth, assistant.Id, conversationId, []*types.Metric{&types.Metric{Name: type_enums.STATUS.String(), Value: type_enums.RECORD_FAILED.String(), Description: "Phone deployment not enabled"}})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid phone deployment"})
+		return
+	}
+	credentialID, err := assistant.AssistantPhoneDeployment.GetOptions().GetUint64("rapida.credential_id")
+	if err != nil {
+		cApi.logger.Errorf("error while recieving call %v", err)
+		cApi.assistantConversationService.ApplyConversationMetrics(c, auth, assistant.Id, conversationId, []*types.Metric{&types.Metric{Name: type_enums.STATUS.String(), Value: type_enums.RECORD_FAILED.String(), Description: "Invalid phone deployment credential"}})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid phone deployment"})
+		return
+	}
+	cApi.logger.Debugf("got aith %+v", auth)
+	vltC, err := cApi.vaultClient.GetCredential(c, auth, credentialID)
+	if err != nil {
+		cApi.logger.Errorf("error while recieving call %v", err)
+		cApi.assistantConversationService.ApplyConversationMetrics(c, auth, assistant.Id, conversationId, []*types.Metric{&types.Metric{Name: type_enums.STATUS.String(), Value: type_enums.RECORD_FAILED.String(), Description: "Invalid phone deployment credential"}})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid phone deployment"})
+		return
+	}
+
+	talker, err := internal_adapter.GetTalker(utils.PhoneCall, c, cApi.cfg, cApi.logger, cApi.postgres, cApi.opensearch, cApi.redis, cApi.storage, _telephony.Streamer(c, websocketConnection, assistantId, "latest", conversationId, vltC))
+	if err != nil {
+		cApi.logger.Errorf("error while recieving call %v", err)
+		cApi.assistantConversationService.ApplyConversationMetrics(c, auth, assistant.Id, conversationId, []*types.Metric{&types.Metric{Name: type_enums.STATUS.String(), Value: type_enums.RECORD_FAILED.String(), Description: "Internal server error"}})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid talker"})
+		return
+	}
+
 	if err := talker.Talk(c, auth, internal_adapter.Identifier(utils.PhoneCall, c, auth, identifier)); err != nil {
-		cApi.logger.Errorf("illegal while initiating talker %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid talk"})
 	}
 }

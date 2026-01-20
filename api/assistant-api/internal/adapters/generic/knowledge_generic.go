@@ -19,16 +19,12 @@ import (
 	"github.com/rapidaai/pkg/utils"
 )
 
-var defaultTopK = 4
-var defaultScoreThreshold = 0.5
+const (
+	defaultTopK           = 4
+	defaultScoreThreshold = 0.5
+)
 
-func (kr *GenericRequestor) RetrieveToolKnowledge(
-	knowledge *internal_knowledge_gorm.Knowledge,
-	messageId string,
-	query string,
-	filter map[string]interface{},
-	kc *internal_type.KnowledgeRetrieveOption,
-) ([]internal_type.KnowledgeContextResult, error) {
+func (kr *GenericRequestor) RetrieveToolKnowledge(knowledge *internal_knowledge_gorm.Knowledge, messageId string, query string, filter map[string]interface{}, kc *internal_type.KnowledgeRetrieveOption) ([]internal_type.KnowledgeContextResult, error) {
 	start := time.Now()
 	result, err := kr.retrieve(kr.Context(), knowledge, query, filter, kc)
 	utils.Go(context.Background(), func() {
@@ -67,13 +63,7 @@ func (kr *GenericRequestor) RetrieveToolKnowledge(
 
 }
 
-func (kr *GenericRequestor) retrieve(
-	ctx context.Context,
-	knowledge *internal_knowledge_gorm.Knowledge,
-	query string,
-	filter map[string]interface{},
-	kc *internal_type.KnowledgeRetrieveOption,
-) ([]internal_type.KnowledgeContextResult, error) {
+func (kr *GenericRequestor) retrieve(ctx context.Context, knowledge *internal_knowledge_gorm.Knowledge, query string, filter map[string]interface{}, kc *internal_type.KnowledgeRetrieveOption) ([]internal_type.KnowledgeContextResult, error) {
 	topK := int(defaultTopK)
 	if kc.TopK != 0 {
 		topK = int(kc.TopK)
@@ -94,12 +84,7 @@ func (kr *GenericRequestor) retrieve(
 				"knowledge_id": fmt.Sprintf("%d", knowledge.Id),
 			},
 		}
-		embeddings, err := kr.queryEmbedder.TextQueryEmbedding(
-			ctx,
-			kr.Auth(),
-			query,
-			embeddingOpts,
-		)
+		embeddings, err := kr.queryEmbedder.TextQueryEmbedding(ctx, kr.Auth(), query, embeddingOpts)
 		if err != nil {
 			kr.logger.Errorf("Unable to get query embedding from integration for query %s error %v", query, err)
 			return Results, err

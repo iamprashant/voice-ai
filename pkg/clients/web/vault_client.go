@@ -86,9 +86,7 @@ func (client *vaultServiceClient) GetOauth2Credential(c context.Context,
 
 func (client *vaultServiceClient) GetCredential(c context.Context, auth types.SimplePrinciple, vaultId uint64) (*vault_api.VaultCredential, error) {
 	start := time.Now()
-
 	cacheKey := client.CacheKey(c, "GetCredential", fmt.Sprintf("%d", *auth.GetCurrentOrganizationId()), fmt.Sprintf("vlt__%d", vaultId))
-
 	cachedValue := client.Retrieve(c, cacheKey)
 	if cachedValue.HasError() {
 		client.logger.Errorf("Cache missed for the request: %v", cachedValue.Err)
