@@ -20,7 +20,7 @@ import (
 // any telephony integration must impliment this interface to provide consistent behaviour
 type Telephony interface {
 	// streamer
-	Streamer(c *gin.Context, connection *websocket.Conn, assistantID uint64, assistantVersion string, assistantConversationID uint64) internal_streamers.Streamer
+	Streamer(c *gin.Context, connection *websocket.Conn, assistantID uint64, assistantVersion string, assistantConversationID uint64, vltC *protos.VaultCredential) internal_streamers.Streamer
 
 	// for creating call throght telephony
 	MakeCall(auth types.SimplePrinciple, toPhone string, fromPhone string, assistantId, assistantConversationId uint64, vaultCredential *protos.VaultCredential, opts utils.Option) ([]*types.Metadata, []*types.Metric, []*types.Event, error)

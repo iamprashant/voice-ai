@@ -18,6 +18,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/rapidaai/api/assistant-api/config"
 	internal_streamers "github.com/rapidaai/api/assistant-api/internal/streamers"
+	internal_exotel "github.com/rapidaai/api/assistant-api/internal/telephony/exotel/internal"
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 
 	"github.com/rapidaai/pkg/commons"
@@ -27,6 +28,7 @@ import (
 )
 
 type exotelTelephony struct {
+	extl
 	logger commons.Logger
 	appCfg *config.AssistantConfig
 }
@@ -60,6 +62,7 @@ func (tpc *exotelTelephony) StatusCallback(c *gin.Context, auth types.SimplePrin
 
 func NewExotelTelephony(config *config.AssistantConfig, logger commons.Logger) (internal_type.Telephony, error) {
 	return &exotelTelephony{
+		extl:   NewExotel(logger),
 		logger: logger,
 		appCfg: config,
 	}, nil
@@ -164,15 +167,7 @@ func (tpc *exotelTelephony) MakeCall(
 		return mtds, []*types.Metric{types.NewMetric("STATUS", "FAILED", utils.Ptr("Status of telephony API - HTTP error"))}, event, fmt.Errorf("status code %d: %s", resp.StatusCode, string(bodyBytes))
 	}
 
-	var jsonResponse struct {
-		Call struct {
-			Sid              string  `json:"Sid"`
-			Status           string  `json:"Status"`
-			RecordingUrl     string  `json:"RecordingUrl"`
-			ConversationUuid *string `json:"ParentCallSid"` // Use pointers for nullable fields
-		} `json:"Call"`
-	}
-
+	var jsonResponse internal_exotel.MakeCallResponse
 	// Wrap the JSON decoding in a detailed error message
 	if err := json.Unmarshal(bodyBytes, &jsonResponse); err != nil {
 		event = append(event, types.NewEvent(jsonResponse.Call.Status, "Failed to decode response"))
@@ -195,10 +190,8 @@ func (tpc *exotelTelephony) IncomingCall(c *gin.Context, auth types.SimplePrinci
 	return nil
 }
 
-func (tpc *exotelTelephony) Streamer(c *gin.Context, connection *websocket.Conn, assistantID uint64, assistantVersion string, assistantConversationID uint64) internal_streamers.Streamer {
-	return NewExotelWebsocketStreamer(tpc.logger, connection, assistantID,
-		assistantVersion,
-		assistantConversationID)
+func (tpc *exotelTelephony) Streamer(c *gin.Context, connection *websocket.Conn, assistantID uint64, assistantVersion string, assistantConversationID uint64, vlt *protos.VaultCredential) internal_streamers.Streamer {
+	return NewExotelWebsocketStreamer(tpc.logger, connection, assistantID, assistantVersion, assistantConversationID, vlt)
 }
 
 func (tpc *exotelTelephony) AcceptCall(c *gin.Context) (*string, *string, error) {

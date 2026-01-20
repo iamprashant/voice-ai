@@ -76,6 +76,7 @@ func NewConversationApi(config *config.AssistantConfig, logger commons.Logger,
 		assistantConversationService: internal_assistant_service.NewAssistantConversationService(logger, postgres, storage_files.NewStorage(config.AssetStoreConfig, logger)),
 		assistantService:             internal_assistant_service.NewAssistantService(config, logger, postgres, opensearch),
 		storage:                      storage_files.NewStorage(config.AssetStoreConfig, logger),
+		vaultClient:                  web_client.NewVaultClientGRPC(&config.AppConfig, logger, redis),
 	}
 
 }

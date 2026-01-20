@@ -13,15 +13,16 @@ import (
 	"io"
 	"sync"
 
-	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	internal_audio "github.com/rapidaai/api/assistant-api/internal/audio"
 	internal_streamers "github.com/rapidaai/api/assistant-api/internal/streamers"
+	internal_twilio "github.com/rapidaai/api/assistant-api/internal/telephony/twilio/internal"
 	"github.com/rapidaai/pkg/commons"
 	protos "github.com/rapidaai/protos"
 )
 
 type twilioWebsocketStreamer struct {
+	twl
 	logger     commons.Logger
 	conn       *websocket.Conn
 	ctx        context.Context
@@ -39,29 +40,14 @@ type twilioWebsocketStreamer struct {
 	audioBufferLock sync.Mutex
 
 	//
-	encoder *base64.Encoding
+	encoder         *base64.Encoding
+	vaultCredential *protos.VaultCredential
 }
 
-type TwilioMediaEvent struct {
-	Event string `json:"event"`
-	Media struct {
-		Track     string `json:"track"`
-		Chunk     string `json:"chunk"`
-		Timestamp string `json:"timestamp"`
-		Payload   string `json:"payload"`
-	} `json:"media"`
-	StreamSid string `json:"streamSid"`
-}
-
-func NewTwilioWebsocketStreamer(
-	logger commons.Logger,
-	connection *websocket.Conn,
-	assistantId uint64,
-	version string,
-	conversationId uint64,
-) internal_streamers.Streamer {
+func NewTwilioWebsocketStreamer(logger commons.Logger, connection *websocket.Conn, assistantId uint64, version string, conversationId uint64, vlt *protos.VaultCredential) internal_streamers.Streamer {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &twilioWebsocketStreamer{
+		twl:        NewTwilio(logger),
 		logger:     logger,
 		conn:       connection,
 		ctx:        ctx,
@@ -77,6 +63,8 @@ func NewTwilioWebsocketStreamer(
 		inputAudioBuffer:  new(bytes.Buffer),
 		outputAudioBuffer: new(bytes.Buffer),
 		encoder:           base64.StdEncoding,
+		//
+		vaultCredential: vlt,
 	}
 }
 
@@ -93,7 +81,7 @@ func (tws *twilioWebsocketStreamer) Recv() (*protos.AssistantMessagingRequest, e
 		return nil, tws.handleWebSocketError(err)
 	}
 
-	var mediaEvent TwilioMediaEvent
+	var mediaEvent internal_twilio.TwilioMediaEvent
 	if err := json.Unmarshal(message, &mediaEvent); err != nil {
 		tws.logger.Error("Failed to unmarshal Twilio media event", "error", err.Error())
 		return nil, nil
@@ -113,68 +101,6 @@ func (tws *twilioWebsocketStreamer) Recv() (*protos.AssistantMessagingRequest, e
 	default:
 		tws.logger.Warn("Unhandled Twilio event", "event", mediaEvent.Event)
 		return nil, nil
-	}
-}
-
-// start event contains streamSid to be used for subsequent media messages
-func (tws *twilioWebsocketStreamer) handleStartEvent(mediaEvent TwilioMediaEvent) {
-	tws.streamSid = mediaEvent.StreamSid
-}
-
-// when exotel is connected then connect the assistant
-func (tws *twilioWebsocketStreamer) handleConnectEvent() (*protos.AssistantMessagingRequest, error) {
-	return &protos.AssistantMessagingRequest{
-		Request: &protos.AssistantMessagingRequest_Configuration{
-			Configuration: &protos.AssistantConversationConfiguration{
-				AssistantConversationId: tws.assistantConversationId,
-				Assistant: &protos.AssistantDefinition{
-					AssistantId: tws.assistant.AssistantId,
-					Version:     "latest",
-				},
-				InputConfig: &protos.StreamConfig{
-					Audio: internal_audio.NewMulaw8khzMonoAudioConfig(),
-				},
-				OutputConfig: &protos.StreamConfig{
-					Audio: internal_audio.NewMulaw8khzMonoAudioConfig(),
-				},
-			},
-		}}, nil
-}
-
-func (tws *twilioWebsocketStreamer) handleMediaEvent(mediaEvent TwilioMediaEvent) (*protos.AssistantMessagingRequest, error) {
-	payloadBytes, err := tws.encoder.DecodeString(mediaEvent.Media.Payload)
-	if err != nil {
-		tws.logger.Warn("Failed to decode media payload", "error", err.Error())
-		return nil, nil
-	}
-
-	tws.audioBufferLock.Lock()
-	defer tws.audioBufferLock.Unlock()
-
-	// 1ms 8 bytes @ 8kHz µ-law mono 60ms of audio as silero can't process smaller chunk for mulaw
-	tws.inputAudioBuffer.Write(payloadBytes)
-	const bufferSizeThreshold = 8 * 60
-
-	if tws.inputAudioBuffer.Len() >= bufferSizeThreshold {
-		audioRequest := tws.buildVoiceRequest(tws.inputAudioBuffer.Bytes())
-		tws.inputAudioBuffer.Reset()
-		return audioRequest, nil
-	}
-
-	return nil, nil
-}
-
-func (tws *twilioWebsocketStreamer) buildVoiceRequest(audioData []byte) *protos.AssistantMessagingRequest {
-	return &protos.AssistantMessagingRequest{
-		Request: &protos.AssistantMessagingRequest_Message{
-			Message: &protos.AssistantConversationUserMessage{
-				Message: &protos.AssistantConversationUserMessage_Audio{
-					Audio: &protos.AssistantConversationMessageAudioContent{
-						Content: audioData,
-					},
-				},
-			},
-		},
 	}
 }
 
@@ -240,6 +166,68 @@ func (tws *twilioWebsocketStreamer) Send(response *protos.AssistantMessagingResp
 	return nil
 }
 
+// start event contains streamSid to be used for subsequent media messages
+func (tws *twilioWebsocketStreamer) handleStartEvent(mediaEvent internal_twilio.TwilioMediaEvent) {
+	tws.streamSid = mediaEvent.StreamSid
+}
+
+// when exotel is connected then connect the assistant
+func (tws *twilioWebsocketStreamer) handleConnectEvent() (*protos.AssistantMessagingRequest, error) {
+	return &protos.AssistantMessagingRequest{
+		Request: &protos.AssistantMessagingRequest_Configuration{
+			Configuration: &protos.AssistantConversationConfiguration{
+				AssistantConversationId: tws.assistantConversationId,
+				Assistant: &protos.AssistantDefinition{
+					AssistantId: tws.assistant.AssistantId,
+					Version:     "latest",
+				},
+				InputConfig: &protos.StreamConfig{
+					Audio: internal_audio.NewMulaw8khzMonoAudioConfig(),
+				},
+				OutputConfig: &protos.StreamConfig{
+					Audio: internal_audio.NewMulaw8khzMonoAudioConfig(),
+				},
+			},
+		}}, nil
+}
+
+func (tws *twilioWebsocketStreamer) handleMediaEvent(mediaEvent internal_twilio.TwilioMediaEvent) (*protos.AssistantMessagingRequest, error) {
+	payloadBytes, err := tws.encoder.DecodeString(mediaEvent.Media.Payload)
+	if err != nil {
+		tws.logger.Warn("Failed to decode media payload", "error", err.Error())
+		return nil, nil
+	}
+
+	tws.audioBufferLock.Lock()
+	defer tws.audioBufferLock.Unlock()
+
+	// 1ms 8 bytes @ 8kHz µ-law mono 60ms of audio as silero can't process smaller chunk for mulaw
+	tws.inputAudioBuffer.Write(payloadBytes)
+	const bufferSizeThreshold = 8 * 60
+
+	if tws.inputAudioBuffer.Len() >= bufferSizeThreshold {
+		audioRequest := tws.buildVoiceRequest(tws.inputAudioBuffer.Bytes())
+		tws.inputAudioBuffer.Reset()
+		return audioRequest, nil
+	}
+
+	return nil, nil
+}
+
+func (tws *twilioWebsocketStreamer) buildVoiceRequest(audioData []byte) *protos.AssistantMessagingRequest {
+	return &protos.AssistantMessagingRequest{
+		Request: &protos.AssistantMessagingRequest_Message{
+			Message: &protos.AssistantConversationUserMessage{
+				Message: &protos.AssistantConversationUserMessage_Audio{
+					Audio: &protos.AssistantConversationMessageAudioContent{
+						Content: audioData,
+					},
+				},
+			},
+		},
+	}
+}
+
 func (tws *twilioWebsocketStreamer) sendTwilioMessage(
 	eventType string,
 	mediaData map[string]interface{}) error {
@@ -280,10 +268,4 @@ func (tws *twilioWebsocketStreamer) handleWebSocketError(err error) error {
 	tws.cancelFunc()
 	tws.conn = nil
 	return io.EOF
-}
-
-func (tpc *twilioWebsocketStreamer) Streamer(c *gin.Context, connection *websocket.Conn, assistantID uint64, assistantVersion string, assistantConversationID uint64) internal_streamers.Streamer {
-	return NewTwilioWebsocketStreamer(tpc.logger, connection, assistantID,
-		assistantVersion,
-		assistantConversationID)
 }
