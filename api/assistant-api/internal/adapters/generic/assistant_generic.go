@@ -11,7 +11,7 @@ import (
 	"time"
 
 	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
-	internal_conversation_gorm "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
+	internal_conversation_entity "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
 	internal_services "github.com/rapidaai/api/assistant-api/internal/services"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
@@ -21,7 +21,7 @@ func (dm *GenericRequestor) Assistant() *internal_assistant_entity.Assistant {
 	return dm.assistant
 }
 
-func (gr *GenericRequestor) Conversation() *internal_conversation_gorm.AssistantConversation {
+func (gr *GenericRequestor) Conversation() *internal_conversation_entity.AssistantConversation {
 	return gr.assistantConversation
 }
 

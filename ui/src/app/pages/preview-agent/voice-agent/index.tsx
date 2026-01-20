@@ -39,6 +39,7 @@ import {
 } from '@rapidaai/react';
 import { useEffect, useState } from 'react';
 import { Navigate, useParams, useSearchParams } from 'react-router-dom';
+import { PageLoader } from '@/app/components/loader/page-loader';
 
 /**
  *
@@ -75,6 +76,7 @@ export const PublicPreviewVoiceAgent = () => {
   );
 };
 
+//
 export const PreviewVoiceAgent = () => {
   const { user, authId, token, projectId } = useCurrentCredential();
   const { assistantId } = useParams();
@@ -85,7 +87,6 @@ export const PreviewVoiceAgent = () => {
 
   return (
     <VoiceAgent
-      //   agentCallback={agentCallback}
       connectConfig={ConnectionConfig.DefaultConnectionConfig(
         ConnectionConfig.WithDebugger({
           authorization: token,
@@ -106,6 +107,8 @@ export const PreviewVoiceAgent = () => {
     />
   );
 };
+
+//
 export const PreviewPhoneAgent = () => {
   const { authId, token, projectId } = useCurrentCredential();
   let connectionCfg = ConnectionConfig.DefaultConnectionConfig(
@@ -264,6 +267,7 @@ export const PreviewPhoneAgent = () => {
         });
     }
   }, []);
+
   if (!assistantId) {
     return <Navigate to="/404" replace />;
   }
@@ -333,256 +337,273 @@ export const PreviewPhoneAgent = () => {
   };
 
   return (
-    <div className="h-dvh flex justify-center">
-      <div className="bg-light-background dark:bg-gray-950/50 w-[700px]! mx-auto my-auto shadow-sm">
-        <div className="space-y-6 m-10">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-semibold">Hello,</h1>
-            <h3 className="text-xl font-medium opacity-80">
-              How can I help you with your call today?
-            </h3>
+    <>
+      {assistant ? (
+        <div className="h-dvh flex justify-center">
+          <div className="bg-light-background dark:bg-gray-950/50 w-[700px]! mx-auto my-auto shadow-sm border-[0.5px]">
+            <div className="space-y-6 m-10">
+              <div className="space-y-2">
+                <h1 className="text-3xl font-semibold">Hello,</h1>
+                <h3 className="text-xl font-medium opacity-80">
+                  How can I help you with your call today?
+                </h3>
+              </div>
+              <FieldSet className="mt-8">
+                <div
+                  className={cn(
+                    'p-px',
+                    'text-sm!',
+                    'outline-solid outline-transparent',
+                    'focus-within:outline-blue-600 focus:outline-blue-600 -outline-offset-1',
+                    'border-b border-gray-300 dark:border-gray-700',
+                    'dark:focus-within:border-blue-600 focus-within:border-blue-600',
+                    'transition-all duration-200 ease-in-out',
+                    'flex relative',
+                    'divide-x',
+                  )}
+                >
+                  <div className="w-44 relative">
+                    <Dropdown
+                      className="bg-white max-w-full dark:bg-gray-950 focus-within:border-none! focus-within:outline-hidden! border-none! outline-hidden"
+                      currentValue={country}
+                      setValue={v => {
+                        setCountry(v);
+                      }}
+                      allValue={countries}
+                      placeholder="Select country"
+                      option={c => (
+                        <span className="inline-flex items-center gap-2 sm:gap-2.5 max-w-full text-sm font-medium">
+                          <span className="truncate capitalize">{c.name}</span>
+                        </span>
+                      )}
+                      label={c => (
+                        <span className="inline-flex items-center gap-2 sm:gap-2.5 max-w-full text-sm font-medium">
+                          <span className="truncate capitalize">{c.name}</span>
+                        </span>
+                      )}
+                    />
+                  </div>
+                  <Input
+                    type="tel"
+                    placeholder="Enter your phone number"
+                    className="bg-white max-w-full dark:bg-gray-950 focus-within:border-none! focus-within:outline-hidden! border-none!"
+                    value={phoneNumber}
+                    onChange={handlePhoneNumberChange}
+                  />
+                </div>
+                <ErrorMessage message={error}></ErrorMessage>
+                {success && <GreenNoticeBlock>{success}</GreenNoticeBlock>}
+              </FieldSet>
+              <div className="flex justify-end">
+                <IBlueBGArrowButton onClick={handleSubmit} isLoading={loading}>
+                  Start Call
+                </IBlueBGArrowButton>
+              </div>
+            </div>
           </div>
-          <FieldSet className="mt-8">
-            <div
-              className={cn(
-                'p-px',
-                'text-sm!',
-                'outline-solid outline-transparent',
-                'focus-within:outline-blue-600 focus:outline-blue-600 -outline-offset-1',
-                'border-b border-gray-300 dark:border-gray-700',
-                'dark:focus-within:border-blue-600 focus-within:border-blue-600',
-                'transition-all duration-200 ease-in-out',
-                'flex relative',
-                'divide-x',
+
+          <div className="w-[500px] border-l h-dvh overflow-auto">
+            <div className="px-4 py-4 text-sm leading-normal ">
+              <div className="flex flex-row justify-between items-center text-sm tracking-wider">
+                <h3>Name</h3>
+              </div>
+              <div className="py-2 text-sm leading-normal">
+                {assistant.getName()}
+              </div>
+              {assistant.getDescription() && (
+                <>
+                  <div className="flex mt-4 flex-row  justify-between items-center text-sm tracking-wider">
+                    <h3>Description</h3>
+                  </div>
+                  <div className="py-2 text-sm leading-normal">
+                    {assistant.getDescription()}
+                  </div>
+                </>
               )}
-            >
-              <div className="w-44 relative">
-                <Dropdown
-                  className="bg-white max-w-full dark:bg-gray-950 focus-within:border-none! focus-within:outline-hidden! border-none! outline-hidden"
-                  currentValue={country}
-                  setValue={v => {
-                    setCountry(v);
-                  }}
-                  allValue={countries}
-                  placeholder="Select country"
-                  option={c => (
-                    <span className="inline-flex items-center gap-2 sm:gap-2.5 max-w-full text-sm font-medium">
-                      <span className="truncate capitalize">{c.name}</span>
-                    </span>
-                  )}
-                  label={c => (
-                    <span className="inline-flex items-center gap-2 sm:gap-2.5 max-w-full text-sm font-medium">
-                      <span className="truncate capitalize">{c.name}</span>
-                    </span>
-                  )}
-                />
-              </div>
-              <Input
-                type="tel"
-                placeholder="Enter your phone number"
-                className="bg-white max-w-full dark:bg-gray-950 focus-within:border-none! focus-within:outline-hidden! border-none!"
-                value={phoneNumber}
-                onChange={handlePhoneNumberChange}
-              />
             </div>
-            <ErrorMessage message={error}></ErrorMessage>
-            {success && <GreenNoticeBlock>{success}</GreenNoticeBlock>}
-          </FieldSet>
-          <div className="flex justify-end">
-            <IBlueBGArrowButton onClick={handleSubmit} isLoading={loading}>
-              Start Call
-            </IBlueBGArrowButton>
-          </div>
-        </div>
-      </div>
-      {assistant && (
-        <div className="w-[500px] border-l h-dvh overflow-auto">
-          <div className="px-4 py-4 text-sm leading-normal ">
-            <div className="flex flex-row justify-between items-center text-sm tracking-wider">
-              <h3>Name</h3>
-            </div>
-            <div className="py-2 text-sm leading-normal">
-              {assistant.getName()}
-            </div>
-            <div className="flex mt-4 flex-row  justify-between items-center text-sm tracking-wider">
-              <h3>Description</h3>
-            </div>
-            <div className="py-2 text-sm leading-normal">
-              {assistant.getDescription()}
-            </div>
-          </div>
-          <InputGroup title="Arguments" childClass="!p-0">
             {variables.length > 0 ? (
-              <div className="text-sm leading-normal">
-                {variables.map((x, idx) => {
-                  return (
-                    <InputVarForm
-                      key={idx}
-                      var={x}
-                      className="bg-light-background"
-                    >
-                      {x.getType() === InputVarType.textInput && (
-                        <TextTextarea
-                          id={x.getName()}
-                          defaultValue={x.getDefaultvalue()}
-                          onChange={(
-                            e: React.ChangeEvent<HTMLTextAreaElement>,
-                          ) => onChangeArgument(x.getName(), e.target.value)}
-                        />
-                      )}
-                      {x.getType() === InputVarType.paragraph && (
-                        <ParagraphTextarea
-                          id={x.getName()}
-                          defaultValue={x.getDefaultvalue()}
-                          onChange={(
-                            e: React.ChangeEvent<HTMLTextAreaElement>,
-                          ) => onChangeArgument(x.getName(), e.target.value)}
-                        />
-                      )}
-                      {x.getType() === InputVarType.number && (
-                        <NumberTextarea
-                          id={x.getName()}
-                          defaultValue={x.getDefaultvalue()}
-                          onChange={(
-                            e: React.ChangeEvent<HTMLTextAreaElement>,
-                          ) => onChangeArgument(x.getName(), e.target.value)}
-                        />
-                      )}
-                      {x.getType() === InputVarType.json && (
-                        <JsonTextarea
-                          id={x.getName()}
-                          defaultValue={x.getDefaultvalue()}
-                          onChange={(
-                            e: React.ChangeEvent<HTMLTextAreaElement>,
-                          ) => onChangeArgument(x.getName(), e.target.value)}
-                        />
-                      )}
-                      {x.getType() === InputVarType.url && (
-                        <UrlTextarea
-                          id={x.getName()}
-                          defaultValue={x.getDefaultvalue()}
-                          onChange={(
-                            e: React.ChangeEvent<HTMLTextAreaElement>,
-                          ) => onChangeArgument(x.getName(), e.target.value)}
-                        />
-                      )}
-                    </InputVarForm>
-                  );
-                })}
-              </div>
+              <InputGroup title="Arguments" childClass="!p-0">
+                <div className="text-sm leading-normal">
+                  {variables.map((x, idx) => {
+                    return (
+                      <InputVarForm
+                        key={idx}
+                        var={x}
+                        className="bg-light-background"
+                      >
+                        {x.getType() === InputVarType.textInput && (
+                          <TextTextarea
+                            id={x.getName()}
+                            defaultValue={x.getDefaultvalue()}
+                            onChange={(
+                              e: React.ChangeEvent<HTMLTextAreaElement>,
+                            ) => onChangeArgument(x.getName(), e.target.value)}
+                          />
+                        )}
+                        {x.getType() === InputVarType.paragraph && (
+                          <ParagraphTextarea
+                            id={x.getName()}
+                            defaultValue={x.getDefaultvalue()}
+                            onChange={(
+                              e: React.ChangeEvent<HTMLTextAreaElement>,
+                            ) => onChangeArgument(x.getName(), e.target.value)}
+                          />
+                        )}
+                        {x.getType() === InputVarType.number && (
+                          <NumberTextarea
+                            id={x.getName()}
+                            defaultValue={x.getDefaultvalue()}
+                            onChange={(
+                              e: React.ChangeEvent<HTMLTextAreaElement>,
+                            ) => onChangeArgument(x.getName(), e.target.value)}
+                          />
+                        )}
+                        {x.getType() === InputVarType.json && (
+                          <JsonTextarea
+                            id={x.getName()}
+                            defaultValue={x.getDefaultvalue()}
+                            onChange={(
+                              e: React.ChangeEvent<HTMLTextAreaElement>,
+                            ) => onChangeArgument(x.getName(), e.target.value)}
+                          />
+                        )}
+                        {x.getType() === InputVarType.url && (
+                          <UrlTextarea
+                            id={x.getName()}
+                            defaultValue={x.getDefaultvalue()}
+                            onChange={(
+                              e: React.ChangeEvent<HTMLTextAreaElement>,
+                            ) => onChangeArgument(x.getName(), e.target.value)}
+                          />
+                        )}
+                      </InputVarForm>
+                    );
+                  })}
+                </div>
+              </InputGroup>
             ) : (
               <YellowNoticeBlock>
                 Assistant do not accept any arguments.
               </YellowNoticeBlock>
             )}
-          </InputGroup>
-          <InputGroup title="Deployment" childClass="p-3 text-muted">
-            <div className="space-y-4">
-              <div className="flex justify-between">
-                <div className="text-sm uppercase tracking-wider">
-                  Input Mode
+            <InputGroup
+              title="Deployment"
+              className="m-0 border-0"
+              childClass="text-muted px-3"
+            >
+              <div className="space-y-4">
+                <div className="flex justify-between">
+                  <div className="text-sm font-mono lowercase tracking-wider">
+                    Input Mode
+                  </div>
+                  <div className="text-sm font-mono lowercase">
+                    Text
+                    {assistant?.getPhonedeployment()?.getInputaudio() &&
+                      ', Audio'}
+                  </div>
                 </div>
-                <div className="font-medium">
-                  Text
-                  {assistant?.getPhonedeployment()?.getInputaudio() &&
-                    ', Audio'}
+                <div className="flex justify-between">
+                  <div className="text-sm font-mono lowercase tracking-wider">
+                    Output Mode
+                  </div>
+                  <div className="text-sm font-mono lowercase">
+                    Text
+                    {assistant?.getPhonedeployment()?.getOutputaudio() &&
+                      ', Audio'}
+                  </div>
                 </div>
-              </div>
-              <div className="flex justify-between">
-                <div className="text-sm uppercase tracking-wider">
-                  Output Mode
-                </div>
-                <div className="font-medium">
-                  Text
-                  {assistant?.getPhonedeployment()?.getOutputaudio() &&
-                    ', Audio'}
-                </div>
-              </div>
-              {/*  */}
-              {assistant
-                .getPhonedeployment()
-                ?.getInputaudio()
-                ?.getAudiooptionsList() &&
-                assistant
+                {/*  */}
+                {assistant
                   .getPhonedeployment()
                   ?.getInputaudio()
-                  ?.getAudiooptionsList().length! > 0 && (
-                  <div className="space-y-4">
-                    <div className="flex justify-between">
-                      <div className="text-muted uppercase">
-                        Listen.Provider
-                      </div>
-                      <div className="font-medium mt-1 underline underline-offset-4">
-                        {assistant
-                          .getPhonedeployment()
-                          ?.getInputaudio()
-                          ?.getAudioprovider()}
-                      </div>
-                    </div>
-                    {assistant
-                      .getPhonedeployment()
-                      ?.getInputaudio()
-                      ?.getAudiooptionsList()
-                      .filter(d => d.getValue())
-                      .filter(d => d.getKey().startsWith('listen.'))
-                      .map((detail, index) => (
-                        <div className="flex justify-between" key={index}>
-                          <div className="text-sm uppercase tracking-wider">
-                            {detail.getKey()}
-                          </div>
-                          <div className="font-medium">{detail.getValue()}</div>
+                  ?.getAudiooptionsList() &&
+                  assistant
+                    .getPhonedeployment()
+                    ?.getInputaudio()
+                    ?.getAudiooptionsList().length! > 0 && (
+                    <div className="space-y-4">
+                      <div className="flex justify-between">
+                        <div className="text-sm text-muted font-mono lowercase">
+                          Listen.Provider
                         </div>
-                      ))}
-                  </div>
-                )}
-              {assistant
-                .getPhonedeployment()
-                ?.getInputaudio()
-                ?.getAudiooptionsList() &&
-                assistant
+                        <div className="text-sm font-mono lowercase mt-1">
+                          {assistant
+                            .getPhonedeployment()
+                            ?.getInputaudio()
+                            ?.getAudioprovider()}
+                        </div>
+                      </div>
+                      {assistant
+                        .getPhonedeployment()
+                        ?.getInputaudio()
+                        ?.getAudiooptionsList()
+                        .filter(d => d.getValue())
+                        .filter(d => d.getKey().startsWith('listen.'))
+                        .map((detail, index) => (
+                          <div className="flex justify-between" key={index}>
+                            <div className="text-sm font-mono lowercase tracking-wider">
+                              {detail.getKey()}
+                            </div>
+                            <div className="font-mono text-sm lowercase">
+                              {detail.getValue()}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                {assistant
                   .getPhonedeployment()
-                  ?.getOutputaudio()
-                  ?.getAudiooptionsList().length! > 0 && (
-                  <div className="space-y-4">
-                    <div className="flex justify-between">
-                      <div className="text-sm uppercase tracking-wider">
-                        Listen.Provider
-                      </div>
-                      <div className="font-medium mt-1 underline underline-offset-4">
-                        {assistant
-                          .getPhonedeployment()
-                          ?.getOutputaudio()
-                          ?.getAudioprovider()}
-                      </div>
-                    </div>
-                    {assistant
-                      .getPhonedeployment()
-                      ?.getOutputaudio()
-                      ?.getAudiooptionsList()
-                      .filter(d => d.getValue())
-                      .filter(d => d.getKey().startsWith('speak.'))
-                      .map((detail, index) => (
-                        <div key={index} className="flex justify-between">
-                          <div className="text-sm uppercase tracking-wider">
-                            {detail.getKey()}
-                          </div>
-                          <div className="font-medium">{detail.getValue()}</div>
+                  ?.getInputaudio()
+                  ?.getAudiooptionsList() &&
+                  assistant
+                    .getPhonedeployment()
+                    ?.getOutputaudio()
+                    ?.getAudiooptionsList().length! > 0 && (
+                    <div className="space-y-4">
+                      <div className="flex justify-between">
+                        <div className="text-sm font-mono lowercase tracking-wider">
+                          Listen.Provider
                         </div>
-                      ))}
+                        <div className="text-sm font-mono lowercase mt-1">
+                          {assistant
+                            .getPhonedeployment()
+                            ?.getOutputaudio()
+                            ?.getAudioprovider()}
+                        </div>
+                      </div>
+                      {assistant
+                        .getPhonedeployment()
+                        ?.getOutputaudio()
+                        ?.getAudiooptionsList()
+                        .filter(d => d.getValue())
+                        .filter(d => d.getKey().startsWith('speak.'))
+                        .map((detail, index) => (
+                          <div key={index} className="flex justify-between">
+                            <div className="text-sm font-mono lowercase tracking-wider">
+                              {detail.getKey()}
+                            </div>
+                            <div className="text-sm font-mono lowercase">
+                              {detail.getValue()}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                <div className="flex justify-between">
+                  <div className="text-sm font-mono lowercase tracking-wider">
+                    Telephony
                   </div>
-                )}
-              <div className="flex justify-between">
-                <div className="text-sm uppercase tracking-wider">
-                  Telephony
-                </div>
-                <div className="font-medium">
-                  {assistant?.getPhonedeployment()?.getPhoneprovidername()}
+                  <div className="text-sm font-mono lowercase">
+                    {assistant?.getPhonedeployment()?.getPhoneprovidername()}
+                  </div>
                 </div>
               </div>
-            </div>
-          </InputGroup>
+            </InputGroup>
+          </div>
         </div>
+      ) : (
+        <PageLoader />
       )}
-    </div>
+    </>
   );
 };

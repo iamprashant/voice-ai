@@ -63,10 +63,7 @@ func (cApi *ConversationGrpcApi) CreatePhoneCall(ctx context.Context, ir *protos
 		cApi.logger.Errorf("unable to create conversation %+v", err)
 		return utils.ErrorWithCode[protos.CreatePhoneCallResponse](200, err, "Unable to create conversation session, please check and try again.")
 	}
-	o, err := cApi.assistantConversationService.
-		ApplyConversationOption(
-			ctx, auth, assistant.Id, conversation.Id, opts,
-		)
+	o, err := cApi.assistantConversationService.ApplyConversationOption(ctx, auth, assistant.Id, conversation.Id, opts)
 	if err != nil {
 		cApi.logger.Debugf("unable to create options %v", err)
 		return utils.ErrorWithCode[protos.CreatePhoneCallResponse](200, err, "Unable to create conversation options, please check and try again.")
@@ -163,7 +160,6 @@ func (cApi *ConversationGrpcApi) CreateBulkPhoneCall(ctx context.Context, ir *pr
 		if resp.GetData() != nil {
 			out = append(out, resp.GetData())
 		}
-
 	}
 	return utils.Success[protos.CreateBulkPhoneCallResponse, []*protos.AssistantConversation](out)
 }

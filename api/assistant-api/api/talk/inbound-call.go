@@ -11,13 +11,17 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"golang.org/x/sync/errgroup"
 
 	internal_adapter "github.com/rapidaai/api/assistant-api/internal/adapters"
+	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
+	internal_conversation_entity "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
 	internal_services "github.com/rapidaai/api/assistant-api/internal/services"
 	telephony "github.com/rapidaai/api/assistant-api/internal/telephony"
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
+	protos "github.com/rapidaai/protos"
 )
 
 func (cApi *ConversationApi) UnviersalCallback(c *gin.Context) {
@@ -170,45 +174,61 @@ func (cApi *ConversationApi) CallTalker(c *gin.Context) {
 	tlp := c.Param("telephony")
 	_telephony, err := telephony.GetTelephony(telephony.Telephony(tlp), cApi.cfg, cApi.logger)
 	if err != nil {
-		cApi.assistantConversationService.ApplyConversationMetrics(c, auth, assistantId, conversationId, []*types.Metric{&types.Metric{Name: type_enums.STATUS.String(), Value: type_enums.RECORD_FAILED.String(), Description: "Invalid telephony"}})
+		cApi.assistantConversationService.ApplyConversationMetrics(c, auth, assistantId, conversationId, []*types.Metric{{Name: type_enums.STATUS.String(), Value: type_enums.RECORD_FAILED.String(), Description: "Invalid telephony"}})
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid telephony"})
 		return
 	}
 
-	assistant, err := cApi.assistantService.Get(c, auth, assistantId, nil, &internal_services.GetAssistantOption{InjectPhoneDeployment: true})
-	if err != nil {
-		cApi.logger.Errorf("error while recieving call %v", err)
-		cApi.assistantConversationService.ApplyConversationMetrics(c, auth, assistant.Id, conversationId, []*types.Metric{&types.Metric{Name: type_enums.STATUS.String(), Value: type_enums.RECORD_FAILED.String(), Description: "Invalid assistant"}})
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid assistant"})
-		return
-	}
+	var (
+		wg                    errgroup.Group
+		vltC                  *protos.VaultCredential
+		assistantConversation *internal_conversation_entity.AssistantConversation
+		assistant             *internal_assistant_entity.Assistant
+	)
+	wg.Go(func() error {
+		assistant, err = cApi.assistantService.Get(c, auth, assistantId, nil, &internal_services.GetAssistantOption{InjectPhoneDeployment: true})
+		if err != nil {
+			return err
+		}
 
-	if !assistant.IsPhoneDeploymentEnable() {
-		cApi.logger.Errorf("error while recieving call %v", "phone deployment not enabled")
-		cApi.assistantConversationService.ApplyConversationMetrics(c, auth, assistant.Id, conversationId, []*types.Metric{&types.Metric{Name: type_enums.STATUS.String(), Value: type_enums.RECORD_FAILED.String(), Description: "Phone deployment not enabled"}})
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid phone deployment"})
-		return
-	}
-	credentialID, err := assistant.AssistantPhoneDeployment.GetOptions().GetUint64("rapida.credential_id")
-	if err != nil {
-		cApi.logger.Errorf("error while recieving call %v", err)
-		cApi.assistantConversationService.ApplyConversationMetrics(c, auth, assistant.Id, conversationId, []*types.Metric{&types.Metric{Name: type_enums.STATUS.String(), Value: type_enums.RECORD_FAILED.String(), Description: "Invalid phone deployment credential"}})
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid phone deployment"})
-		return
-	}
-	cApi.logger.Debugf("got aith %+v", auth)
-	vltC, err := cApi.vaultClient.GetCredential(c, auth, credentialID)
-	if err != nil {
-		cApi.logger.Errorf("error while recieving call %v", err)
-		cApi.assistantConversationService.ApplyConversationMetrics(c, auth, assistant.Id, conversationId, []*types.Metric{&types.Metric{Name: type_enums.STATUS.String(), Value: type_enums.RECORD_FAILED.String(), Description: "Invalid phone deployment credential"}})
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid phone deployment"})
-		return
-	}
+		if !assistant.IsPhoneDeploymentEnable() {
+			return err
+		}
+		credentialID, err := assistant.AssistantPhoneDeployment.GetOptions().GetUint64("rapida.credential_id")
+		if err != nil {
+			return err
+		}
 
-	talker, err := internal_adapter.GetTalker(utils.PhoneCall, c, cApi.cfg, cApi.logger, cApi.postgres, cApi.opensearch, cApi.redis, cApi.storage, _telephony.Streamer(c, websocketConnection, assistantId, "latest", conversationId, vltC))
+		cApi.logger.Debugf("got aith %+v", auth)
+		vltC, err = cApi.vaultClient.GetCredential(c, auth, credentialID)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+
+	// get converstation to make sure if it exists and valid
+	wg.Go(func() error {
+		assistantConversation, err = cApi.assistantConversationService.Get(c, auth, assistantId, conversationId, internal_services.NewDefaultGetConversationOption())
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+
+	//
+	if err := wg.Wait(); err != nil {
+		cApi.assistantConversationService.ApplyConversationMetrics(c, auth, assistantId, conversationId, []*types.Metric{{Name: type_enums.STATUS.String(), Value: type_enums.RECORD_FAILED.String(), Description: "Invalid phone deployment credential"}})
+		cApi.logger.Errorf("error while recieving call %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid phone deployment"})
+		return
+	}
+	talker, err := internal_adapter.GetTalker(
+		utils.PhoneCall, c, cApi.cfg, cApi.logger, cApi.postgres, cApi.opensearch, cApi.redis, cApi.storage,
+		_telephony.Streamer(c, websocketConnection, assistant, assistantConversation, vltC))
 	if err != nil {
 		cApi.logger.Errorf("error while recieving call %v", err)
-		cApi.assistantConversationService.ApplyConversationMetrics(c, auth, assistant.Id, conversationId, []*types.Metric{&types.Metric{Name: type_enums.STATUS.String(), Value: type_enums.RECORD_FAILED.String(), Description: "Internal server error"}})
+		cApi.assistantConversationService.ApplyConversationMetrics(c, auth, assistantId, conversationId, []*types.Metric{{Name: type_enums.STATUS.String(), Value: type_enums.RECORD_FAILED.String(), Description: "Internal server error"}})
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid talker"})
 		return
 	}

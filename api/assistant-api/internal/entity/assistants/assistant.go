@@ -6,7 +6,7 @@
 package internal_assistant_entity
 
 import (
-	internal_conversation_gorm "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
+	internal_conversation_entity "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
 	gorm_model "github.com/rapidaai/pkg/models/gorm"
 	gorm_types "github.com/rapidaai/pkg/models/gorm/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
@@ -36,16 +36,16 @@ type Assistant struct {
 	AssistantTag *AssistantTag `json:"assistantTag" gorm:"foreignKey:AssistantId"`
 
 	// all the deployments only on need basis
-	AssistantDebuggerDeployment  *AssistantDebuggerDeployment                        `json:"debuggerDeployment"  gorm:"foreignKey:AssistantId"`
-	AssistantPhoneDeployment     *AssistantPhoneDeployment                           `json:"phoneDeployment"  gorm:"foreignKey:AssistantId"`
-	AssistantWhatsappDeployment  *AssistantWhatsappDeployment                        `json:"whatsappDeployment"  gorm:"foreignKey:AssistantId"`
-	AssistantWebPluginDeployment *AssistantWebPluginDeployment                       `json:"webPluginDeployment"  gorm:"foreignKey:AssistantId"`
-	AssistantApiDeployment       *AssistantApiDeployment                             `json:"apiDeployment"  gorm:"foreignKey:AssistantId"`
-	AssistantConversations       []*internal_conversation_gorm.AssistantConversation `json:"assistantConversations"  gorm:"foreignKey:AssistantId"`
-	AssistantKnowledges          []*AssistantKnowledge                               `json:"assistantKnowledges"  gorm:"foreignKey:AssistantId"`
-	AssistantTools               []*AssistantTool                                    `json:"assistantTools"  gorm:"foreignKey:AssistantId"`
-	AssistantAnalyses            []*AssistantAnalysis                                `json:"assistantAnalyses"  gorm:"foreignKey:AssistantId"`
-	AssistantWebhooks            []*AssistantWebhook                                 `json:"assistantWebhooks"  gorm:"foreignKey:AssistantId"`
+	AssistantDebuggerDeployment  *AssistantDebuggerDeployment                          `json:"debuggerDeployment"  gorm:"foreignKey:AssistantId"`
+	AssistantPhoneDeployment     *AssistantPhoneDeployment                             `json:"phoneDeployment"  gorm:"foreignKey:AssistantId"`
+	AssistantWhatsappDeployment  *AssistantWhatsappDeployment                          `json:"whatsappDeployment"  gorm:"foreignKey:AssistantId"`
+	AssistantWebPluginDeployment *AssistantWebPluginDeployment                         `json:"webPluginDeployment"  gorm:"foreignKey:AssistantId"`
+	AssistantApiDeployment       *AssistantApiDeployment                               `json:"apiDeployment"  gorm:"foreignKey:AssistantId"`
+	AssistantConversations       []*internal_conversation_entity.AssistantConversation `json:"assistantConversations"  gorm:"foreignKey:AssistantId"`
+	AssistantKnowledges          []*AssistantKnowledge                                 `json:"assistantKnowledges"  gorm:"foreignKey:AssistantId"`
+	AssistantTools               []*AssistantTool                                      `json:"assistantTools"  gorm:"foreignKey:AssistantId"`
+	AssistantAnalyses            []*AssistantAnalysis                                  `json:"assistantAnalyses"  gorm:"foreignKey:AssistantId"`
+	AssistantWebhooks            []*AssistantWebhook                                   `json:"assistantWebhooks"  gorm:"foreignKey:AssistantId"`
 }
 
 func (a *Assistant) IsPhoneDeploymentEnable() bool {

@@ -3,7 +3,7 @@
 //
 // Licensed under GPL-2.0 with Rapida Additional Terms.
 // See LICENSE.md or contact sales@rapida.ai for commercial usage.
-package internal_conversation_gorm
+package internal_conversation_entity
 
 import (
 	gorm_model "github.com/rapidaai/pkg/models/gorm"
@@ -41,7 +41,7 @@ func (ac *AssistantConversation) GetArguments() map[string]interface{} {
 	return args
 }
 
-func (ac *AssistantConversation) GetMetadatas() map[string]interface{} {
+func (ac *AssistantConversation) GetMetadatas() utils.Option {
 	mt := make(map[string]interface{})
 	if len(ac.Metadatas) > 0 {
 		for _, ar := range ac.Metadatas {

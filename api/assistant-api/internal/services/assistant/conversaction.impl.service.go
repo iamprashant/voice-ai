@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	internal_conversation_gorm "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
+	internal_conversation_entity "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
 	internal_services "github.com/rapidaai/api/assistant-api/internal/services"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
@@ -46,14 +46,14 @@ func (conversationService *assistantConversationService) GetAll(ctx context.Cont
 	auth types.SimplePrinciple,
 	assistantId uint64,
 	criterias []*protos.Criteria,
-	paginate *protos.Paginate, opts *internal_services.GetConversationOption) (int64, []*internal_conversation_gorm.AssistantConversation, error) {
+	paginate *protos.Paginate, opts *internal_services.GetConversationOption) (int64, []*internal_conversation_entity.AssistantConversation, error) {
 	start := time.Now()
 	db := conversationService.postgres.DB(ctx)
 	var (
-		conversations []*internal_conversation_gorm.AssistantConversation
+		conversations []*internal_conversation_entity.AssistantConversation
 		cnt           int64
 	)
-	qry := db.Model(internal_conversation_gorm.AssistantConversation{})
+	qry := db.Model(internal_conversation_entity.AssistantConversation{})
 	qry = qry.
 		Where("assistant_id = ? AND organization_id = ? AND project_id = ?", assistantId, *auth.GetCurrentOrganizationId(), *auth.GetCurrentProjectId())
 
@@ -108,11 +108,11 @@ func (conversationService *assistantConversationService) Get(
 	auth types.SimplePrinciple,
 	assistantId uint64,
 	assistantConversationId uint64,
-	opts *internal_services.GetConversationOption) (*internal_conversation_gorm.AssistantConversation, error) {
+	opts *internal_services.GetConversationOption) (*internal_conversation_entity.AssistantConversation, error) {
 	conversationService.logger.Debugf("assistantConversationService.Get with options %+v", opts)
 	start := time.Now()
 	db := conversationService.postgres.DB(ctx)
-	var assistantConversation *internal_conversation_gorm.AssistantConversation
+	var assistantConversation *internal_conversation_entity.AssistantConversation
 	qry := db.
 		Where("id = ? AND assistant_id = ? AND project_id = ? AND organization_id = ?",
 			assistantConversationId,
@@ -152,7 +152,7 @@ func (conversationService *assistantConversationService) Get(
 		utils.Go(ctx,
 			func() {
 				defer wg.Done()
-				var assistantConversationRecording []*internal_conversation_gorm.AssistantConversationRecording
+				var assistantConversationRecording []*internal_conversation_entity.AssistantConversationRecording
 				tx := db.
 					Where("assistant_conversation_id = ? AND status = ?", assistantConversationId, type_enums.RECORD_ACTIVE.String()).
 					Find(&assistantConversationRecording)
@@ -161,7 +161,7 @@ func (conversationService *assistantConversationService) Get(
 					return
 				}
 
-				assistantConversation.Recordings = make([]*internal_conversation_gorm.AssistantConversationRecording, 0)
+				assistantConversation.Recordings = make([]*internal_conversation_entity.AssistantConversationRecording, 0)
 				// updating all to public url
 				for _, recording := range assistantConversationRecording {
 					pUrl, err := conversationService.GetRecordingPublicUrl(ctx, recording.RecordingUrl)
@@ -185,10 +185,10 @@ func (conversationService *assistantConversationService) GetConversation(
 	identifier string,
 	assistantId uint64,
 	assistantConversationId uint64,
-	opts *internal_services.GetConversationOption) (*internal_conversation_gorm.AssistantConversation, error) {
+	opts *internal_services.GetConversationOption) (*internal_conversation_entity.AssistantConversation, error) {
 	start := time.Now()
 	db := conversationService.postgres.DB(ctx)
-	var assistantConversation *internal_conversation_gorm.AssistantConversation
+	var assistantConversation *internal_conversation_entity.AssistantConversation
 	qry := db.
 		Where("id = ? AND identifier = ? AND assistant_id = ? AND project_id = ? AND organization_id = ?",
 			assistantConversationId,
@@ -233,10 +233,10 @@ func (conversationService *assistantConversationService) CreateConversation(
 	identifier string,
 	assistantId uint64,
 	assistantProviderModelId uint64,
-	direction type_enums.ConversationDirection, source utils.RapidaSource) (*internal_conversation_gorm.AssistantConversation, error) {
+	direction type_enums.ConversationDirection, source utils.RapidaSource) (*internal_conversation_entity.AssistantConversation, error) {
 	start := time.Now()
 	db := conversationService.postgres.DB(ctx)
-	conversation := &internal_conversation_gorm.AssistantConversation{
+	conversation := &internal_conversation_entity.AssistantConversation{
 		Organizational: gorm_models.Organizational{
 			ProjectId:      *auth.GetCurrentProjectId(),
 			OrganizationId: *auth.GetCurrentOrganizationId(),
@@ -266,7 +266,7 @@ func (conversationService *assistantConversationService) ApplyConversationMetada
 	assistantId,
 	assistantConversationId uint64,
 	metadata []*types.Metadata,
-) ([]*internal_conversation_gorm.AssistantConversationMetadata, error) {
+) ([]*internal_conversation_entity.AssistantConversationMetadata, error) {
 	start := time.Now()
 	//
 	if len(metadata) == 0 {
@@ -275,10 +275,10 @@ func (conversationService *assistantConversationService) ApplyConversationMetada
 	}
 
 	db := conversationService.postgres.DB(ctx)
-	_metadatas := make([]*internal_conversation_gorm.AssistantConversationMetadata, 0)
+	_metadatas := make([]*internal_conversation_entity.AssistantConversationMetadata, 0)
 	//
 	for _, mt := range metadata {
-		_meta := &internal_conversation_gorm.AssistantConversationMetadata{
+		_meta := &internal_conversation_entity.AssistantConversationMetadata{
 			AssistantConversationId: assistantConversationId,
 			Metadata: gorm_models.Metadata{
 				Key: mt.Key,
@@ -312,17 +312,17 @@ func (conversationService *assistantConversationService) ApplyConversationOption
 	auth types.SimplePrinciple,
 	assistantId,
 	assistantConversationId uint64,
-	opts map[string]interface{}) ([]*internal_conversation_gorm.AssistantConversationOption, error) {
+	opts map[string]interface{}) ([]*internal_conversation_entity.AssistantConversationOption, error) {
 	start := time.Now()
 	if len(opts) == 0 {
 		return nil, nil
 	}
 
 	db := conversationService.postgres.DB(ctx)
-	options := make([]*internal_conversation_gorm.AssistantConversationOption, 0)
+	options := make([]*internal_conversation_entity.AssistantConversationOption, 0)
 
 	for k, o := range opts {
-		option := &internal_conversation_gorm.AssistantConversationOption{
+		option := &internal_conversation_entity.AssistantConversationOption{
 			AssistantConversationId: assistantConversationId,
 			Metadata: gorm_models.Metadata{
 				Key: k,
@@ -358,17 +358,17 @@ func (conversationService *assistantConversationService) ApplyConversationArgume
 	assistantId,
 	assistantConversationId uint64,
 	arguments map[string]interface{},
-) ([]*internal_conversation_gorm.AssistantConversationArgument, error) {
+) ([]*internal_conversation_entity.AssistantConversationArgument, error) {
 	start := time.Now()
 	if len(arguments) == 0 {
 		return nil, nil
 	}
 
 	db := conversationService.postgres.DB(ctx)
-	_arguments := make([]*internal_conversation_gorm.AssistantConversationArgument, 0)
+	_arguments := make([]*internal_conversation_entity.AssistantConversationArgument, 0)
 
 	for k, arg := range arguments {
-		ag := &internal_conversation_gorm.AssistantConversationArgument{
+		ag := &internal_conversation_entity.AssistantConversationArgument{
 			AssistantConversationId: assistantConversationId,
 			Argument: gorm_models.Argument{
 				Name: k,
@@ -408,12 +408,12 @@ func (conversationService *assistantConversationService) ApplyConversationMetric
 	assistantId,
 	assistantConversationId uint64,
 	metrics []*types.Metric,
-) ([]*internal_conversation_gorm.AssistantConversationMetric, error) {
+) ([]*internal_conversation_entity.AssistantConversationMetric, error) {
 	start := time.Now()
 	db := conversationService.postgres.DB(ctx)
-	mtrs := make([]*internal_conversation_gorm.AssistantConversationMetric, 0)
+	mtrs := make([]*internal_conversation_entity.AssistantConversationMetric, 0)
 	for _, mtr := range metrics {
-		_mtr := &internal_conversation_gorm.AssistantConversationMetric{
+		_mtr := &internal_conversation_entity.AssistantConversationMetric{
 			Metric: gorm_models.Metric{
 				Name:        mtr.GetName(),
 				Value:       mtr.GetValue(),
@@ -451,10 +451,10 @@ func (conversationService *assistantConversationService) CreateConversationMetri
 	assistantId uint64,
 	assistantConversationId uint64,
 	name, description, value string,
-) (*internal_conversation_gorm.AssistantConversationMetric, error) {
+) (*internal_conversation_entity.AssistantConversationMetric, error) {
 	start := time.Now()
 	db := conversationService.postgres.DB(ctx)
-	metric := &internal_conversation_gorm.AssistantConversationMetric{
+	metric := &internal_conversation_entity.AssistantConversationMetric{
 		Metric: gorm_models.Metric{
 			Name:        fmt.Sprintf("%s.%s", "custom", name),
 			Description: description,
@@ -489,12 +489,12 @@ func (conversationService *assistantConversationService) CreateCustomConversatio
 	assistantId uint64,
 	assistantConversationId uint64,
 	metrics []*protos.Metric,
-) ([]*internal_conversation_gorm.AssistantConversationMetric, error) {
+) ([]*internal_conversation_entity.AssistantConversationMetric, error) {
 	start := time.Now()
 	db := conversationService.postgres.DB(ctx)
-	mtrx := make([]*internal_conversation_gorm.AssistantConversationMetric, 0)
+	mtrx := make([]*internal_conversation_entity.AssistantConversationMetric, 0)
 	for _, v := range metrics {
-		metric := &internal_conversation_gorm.AssistantConversationMetric{
+		metric := &internal_conversation_entity.AssistantConversationMetric{
 			Metric: gorm_models.Metric{
 				Name:        fmt.Sprintf("%s.%s", "custom", v.GetName()),
 				Description: v.GetDescription(),
@@ -532,7 +532,7 @@ func (conversationService *assistantConversationService) CreateConversationRecor
 	assistantId,
 	assistantConversationId uint64,
 	body []byte,
-) (*internal_conversation_gorm.AssistantConversationRecording, error) {
+) (*internal_conversation_entity.AssistantConversationRecording, error) {
 	start := time.Now()
 	db := conversationService.postgres.DB(ctx)
 
@@ -542,7 +542,7 @@ func (conversationService *assistantConversationService) CreateConversationRecor
 	key := conversationService.ObjectKey(s3Prefix, recordingId, fmt.Sprintf("recording-%d.wav", assistantConversationId))
 	conversationService.storage.Store(ctx, key, body)
 
-	conversationRecording := &internal_conversation_gorm.AssistantConversationRecording{
+	conversationRecording := &internal_conversation_entity.AssistantConversationRecording{
 		Audited: gorm_models.Audited{
 			Id: recordingId,
 		},
@@ -590,13 +590,13 @@ func (eService *assistantConversationService) ApplyConversationTelephonyEvent(
 	assistantId,
 	assistantConversationId uint64,
 	events []*types.Event,
-) ([]*internal_conversation_gorm.AssistantConversationTelephonyEvent, error) {
+) ([]*internal_conversation_entity.AssistantConversationTelephonyEvent, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
 
-	telephonyEvent := make([]*internal_conversation_gorm.AssistantConversationTelephonyEvent, 0)
+	telephonyEvent := make([]*internal_conversation_entity.AssistantConversationTelephonyEvent, 0)
 	for _, v := range events {
-		tE := &internal_conversation_gorm.AssistantConversationTelephonyEvent{
+		tE := &internal_conversation_entity.AssistantConversationTelephonyEvent{
 			AssistantConversationId: assistantConversationId,
 			Event: *gorm_models.NewEvent(
 				v.EventType,

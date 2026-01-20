@@ -13,6 +13,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/rapidaai/api/assistant-api/config"
+	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
+	internal_conversation_entity "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
 	internal_streamers "github.com/rapidaai/api/assistant-api/internal/streamers"
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 
@@ -20,20 +22,42 @@ import (
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
 	"github.com/rapidaai/protos"
+	"github.com/twilio/twilio-go"
 	openapi "github.com/twilio/twilio-go/rest/api/v2010"
 )
 
 type twilioTelephony struct {
-	twl
 	appCfg *config.AssistantConfig
 	logger commons.Logger
 }
 
 func NewTwilioTelephony(config *config.AssistantConfig, logger commons.Logger) (internal_type.Telephony, error) {
 	return &twilioTelephony{
-		twl:    NewTwilio(logger),
 		appCfg: config,
 		logger: logger,
+	}, nil
+}
+
+func (tpc *twilioTelephony) client(vaultCredential *protos.VaultCredential) (*twilio.RestClient, error) {
+	clientParams, err := tpc.clientParam(vaultCredential)
+	if err != nil {
+		return nil, err
+	}
+	return twilio.NewRestClientWithParams(*clientParams), nil
+}
+
+func (tpc *twilioTelephony) clientParam(vaultCredential *protos.VaultCredential) (*twilio.ClientParams, error) {
+	accountSid, ok := vaultCredential.GetValue().AsMap()["account_sid"]
+	if !ok {
+		return nil, fmt.Errorf("illegal vault config accountSid is not found")
+	}
+	authToken, ok := vaultCredential.GetValue().AsMap()["account_token"]
+	if !ok {
+		return nil, fmt.Errorf("illegal vault config account_token not found")
+	}
+	return &twilio.ClientParams{
+		Username: accountSid.(string),
+		Password: authToken.(string),
 	}, nil
 }
 
@@ -66,8 +90,6 @@ func (tpc *twilioTelephony) StatusCallback(c *gin.Context, auth types.SimplePrin
 	if streamEvent, ok := eventDetails["StreamEvent"]; ok {
 		callStatusOrStreamEvent = streamEvent
 	}
-
-	tpc.logger.Infof("parsed twilio event details: %+v", eventDetails)
 	return []*types.Metric{types.NewMetric("STATUS", fmt.Sprintf("%v", callStatusOrStreamEvent), utils.Ptr("Status of conversation"))}, []*types.Event{types.NewEvent(fmt.Sprintf("%v", callStatusOrStreamEvent), eventDetails)}, nil
 
 }
@@ -82,7 +104,7 @@ func (tpc *twilioTelephony) MakeCall(auth types.SimplePrinciple, toPhone string,
 		types.NewEvent("api-call", map[string]interface{}{}),
 	}
 
-	client, err := tpc.Client(vaultCredential)
+	client, err := tpc.client(vaultCredential)
 	if err != nil {
 		mtds = append(mtds, types.NewMetadata("telephony.error", fmt.Sprintf("authentication error: %s", err.Error())))
 		return mtds, []*types.Metric{types.NewMetric("STATUS", "FAILED", utils.Ptr("Status of telephony api"))}, event, err
@@ -116,7 +138,7 @@ func (tpc *twilioTelephony) MakeCall(auth types.SimplePrinciple, toPhone string,
 	}
 
 	event = append(event, types.NewEvent(*resp.Status, resp))
-	mtds = append(mtds, types.NewMetadata("telephony.conversation_reference", *resp.Sid))
+	mtds = append(mtds, types.NewMetadata("telephony.uuid", *resp.Sid))
 	return mtds, []*types.Metric{types.NewMetric("STATUS", "SUCCESS", utils.Ptr("Status of telephony api"))}, event, nil
 }
 
@@ -154,8 +176,8 @@ func (tpc *twilioTelephony) IncomingCall(c *gin.Context, auth types.SimplePrinci
 	return nil
 }
 
-func (tpc *twilioTelephony) Streamer(c *gin.Context, connection *websocket.Conn, assistantID uint64, assistantVersion string, assistantConversationID uint64, vlt *protos.VaultCredential) internal_streamers.Streamer {
-	return NewTwilioWebsocketStreamer(tpc.logger, connection, assistantID, assistantVersion, assistantConversationID, vlt)
+func (tpc *twilioTelephony) Streamer(c *gin.Context, connection *websocket.Conn, assistant *internal_assistant_entity.Assistant, conversation *internal_conversation_entity.AssistantConversation, vlt *protos.VaultCredential) internal_streamers.Streamer {
+	return NewTwilioWebsocketStreamer(tpc.logger, connection, assistant, conversation, vlt)
 }
 
 func (tpc *twilioTelephony) AcceptCall(c *gin.Context) (*string, *string, error) {

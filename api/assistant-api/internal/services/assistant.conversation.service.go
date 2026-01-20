@@ -8,7 +8,7 @@ package internal_services
 import (
 	"context"
 
-	internal_conversation_gorm "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
+	internal_conversation_entity "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
 	internal_message_gorm "github.com/rapidaai/api/assistant-api/internal/entity/messages"
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
@@ -138,7 +138,7 @@ type AssistantConversationService interface {
 		criterias []*workflow_api.Criteria,
 		paginate *workflow_api.Paginate,
 		opts *GetConversationOption,
-	) (int64, []*internal_conversation_gorm.AssistantConversation, error)
+	) (int64, []*internal_conversation_entity.AssistantConversation, error)
 
 	// later you will ask why two let me tell you one for end user
 	// comming from request adapter
@@ -148,13 +148,13 @@ type AssistantConversationService interface {
 		idenifier string,
 		assistantId uint64,
 		assistantConversationId uint64,
-		opts *GetConversationOption) (*internal_conversation_gorm.AssistantConversation, error)
+		opts *GetConversationOption) (*internal_conversation_entity.AssistantConversation, error)
 
 	Get(ctx context.Context,
 		auth types.SimplePrinciple,
 		assistantId uint64,
 		assistantConversationId uint64,
-		opts *GetConversationOption) (*internal_conversation_gorm.AssistantConversation, error)
+		opts *GetConversationOption) (*internal_conversation_entity.AssistantConversation, error)
 
 	//
 	GetAllConversationMessage(context.Context,
@@ -169,7 +169,7 @@ type AssistantConversationService interface {
 		uint64,
 		[]*workflow_api.Criteria,
 		*workflow_api.Paginate,
-		*workflow_api.Ordering) (int64, []*internal_conversation_gorm.AssistantConversationAction, error)
+		*workflow_api.Ordering) (int64, []*internal_conversation_entity.AssistantConversationAction, error)
 
 	GetAllAssistantMessage(
 		ctx context.Context,
@@ -192,7 +192,7 @@ type AssistantConversationService interface {
 		assistantId uint64,
 		assistantConversationId uint64,
 		name, description, value string,
-	) (*internal_conversation_gorm.AssistantConversationMetric, error)
+	) (*internal_conversation_entity.AssistantConversationMetric, error)
 
 	CreateCustomConversationMetric(
 		ctx context.Context,
@@ -200,7 +200,7 @@ type AssistantConversationService interface {
 		assistantId uint64,
 		assistantConversationId uint64,
 		metrics []*workflow_api.Metric,
-	) ([]*internal_conversation_gorm.AssistantConversationMetric, error)
+	) ([]*internal_conversation_entity.AssistantConversationMetric, error)
 
 	CreateConversationMessage(
 		ctx context.Context,
@@ -244,14 +244,14 @@ type AssistantConversationService interface {
 		identifier string,
 		assistantId uint64,
 		assistantProviderModelId uint64,
-		direction type_enums.ConversationDirection, source utils.RapidaSource) (*internal_conversation_gorm.AssistantConversation, error)
+		direction type_enums.ConversationDirection, source utils.RapidaSource) (*internal_conversation_entity.AssistantConversation, error)
 
 	CreateLLMAction(ctx context.Context,
 		auth types.SimplePrinciple,
 		assistantId uint64,
 		conversationId uint64,
 		assistantConversationMessageId string,
-		in, out *types.Message, metrics []*types.Metric) (*internal_conversation_gorm.AssistantConversationAction, error)
+		in, out *types.Message, metrics []*types.Metric) (*internal_conversation_entity.AssistantConversationAction, error)
 
 	CreateToolAction(ctx context.Context,
 		auth types.SimplePrinciple,
@@ -260,7 +260,7 @@ type AssistantConversationService interface {
 		assistantConversationMessageId string,
 		in, out map[string]interface{},
 		metrics []*types.Metric) (
-		*internal_conversation_gorm.AssistantConversationAction, error)
+		*internal_conversation_entity.AssistantConversationAction, error)
 
 	// all about conversation
 	ApplyConversationMetadata(
@@ -269,7 +269,7 @@ type AssistantConversationService interface {
 		assistantId uint64,
 		assistantConversationId uint64,
 		metadata []*types.Metadata,
-	) ([]*internal_conversation_gorm.AssistantConversationMetadata, error)
+	) ([]*internal_conversation_entity.AssistantConversationMetadata, error)
 
 	ApplyConversationArgument(
 		ctx context.Context,
@@ -277,13 +277,13 @@ type AssistantConversationService interface {
 		assistantId uint64,
 		assistantConversationId uint64,
 		arguments map[string]interface{},
-	) ([]*internal_conversation_gorm.AssistantConversationArgument, error)
+	) ([]*internal_conversation_entity.AssistantConversationArgument, error)
 
 	ApplyConversationOption(ctx context.Context,
 		auth types.SimplePrinciple,
 		assistantId uint64,
 		assistantConversationId uint64,
-		opts map[string]interface{}) ([]*internal_conversation_gorm.AssistantConversationOption, error)
+		opts map[string]interface{}) ([]*internal_conversation_entity.AssistantConversationOption, error)
 
 	ApplyConversationMetrics(
 		ctx context.Context,
@@ -291,7 +291,7 @@ type AssistantConversationService interface {
 		assistantId uint64,
 		assistantConversationId uint64,
 		metrics []*types.Metric,
-	) ([]*internal_conversation_gorm.AssistantConversationMetric, error)
+	) ([]*internal_conversation_entity.AssistantConversationMetric, error)
 
 	CreateConversationRecording(
 		ctx context.Context,
@@ -299,7 +299,7 @@ type AssistantConversationService interface {
 		assistantId uint64,
 		assistantConversationId uint64,
 		body []byte,
-	) (*internal_conversation_gorm.AssistantConversationRecording, error)
+	) (*internal_conversation_entity.AssistantConversationRecording, error)
 
 	ApplyConversationTelephonyEvent(
 		ctx context.Context,
@@ -308,5 +308,5 @@ type AssistantConversationService interface {
 		assistantId uint64,
 		assistantConversationId uint64,
 		events []*types.Event,
-	) ([]*internal_conversation_gorm.AssistantConversationTelephonyEvent, error)
+	) ([]*internal_conversation_entity.AssistantConversationTelephonyEvent, error)
 }

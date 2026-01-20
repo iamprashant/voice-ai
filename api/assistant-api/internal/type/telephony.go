@@ -11,6 +11,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
+	internal_conversation_entity "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
 	internal_streamers "github.com/rapidaai/api/assistant-api/internal/streamers"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
@@ -20,7 +22,7 @@ import (
 // any telephony integration must impliment this interface to provide consistent behaviour
 type Telephony interface {
 	// streamer
-	Streamer(c *gin.Context, connection *websocket.Conn, assistantID uint64, assistantVersion string, assistantConversationID uint64, vltC *protos.VaultCredential) internal_streamers.Streamer
+	Streamer(c *gin.Context, connection *websocket.Conn, assistant *internal_assistant_entity.Assistant, assistantConversation *internal_conversation_entity.AssistantConversation, vltC *protos.VaultCredential) internal_streamers.Streamer
 
 	// for creating call throght telephony
 	MakeCall(auth types.SimplePrinciple, toPhone string, fromPhone string, assistantId, assistantConversationId uint64, vaultCredential *protos.VaultCredential, opts utils.Option) ([]*types.Metadata, []*types.Metric, []*types.Event, error)

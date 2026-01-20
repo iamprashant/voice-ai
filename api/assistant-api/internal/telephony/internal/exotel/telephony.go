@@ -17,8 +17,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/rapidaai/api/assistant-api/config"
+	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
+	internal_conversation_entity "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
 	internal_streamers "github.com/rapidaai/api/assistant-api/internal/streamers"
-	internal_exotel "github.com/rapidaai/api/assistant-api/internal/telephony/exotel/internal"
+	internal_exotel "github.com/rapidaai/api/assistant-api/internal/telephony/internal/exotel/internal"
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 
 	"github.com/rapidaai/pkg/commons"
@@ -28,7 +30,6 @@ import (
 )
 
 type exotelTelephony struct {
-	extl
 	logger commons.Logger
 	appCfg *config.AssistantConfig
 }
@@ -62,15 +63,12 @@ func (tpc *exotelTelephony) StatusCallback(c *gin.Context, auth types.SimplePrin
 
 func NewExotelTelephony(config *config.AssistantConfig, logger commons.Logger) (internal_type.Telephony, error) {
 	return &exotelTelephony{
-		extl:   NewExotel(logger),
 		logger: logger,
 		appCfg: config,
 	}, nil
 }
 
-func (tpc *exotelTelephony) ClientUrl(
-	vaultCredential *protos.VaultCredential,
-	opts utils.Option) (*string, error) {
+func (tpc *exotelTelephony) ClientUrl(vaultCredential *protos.VaultCredential, opts utils.Option) (*string, error) {
 	accountSid, ok := vaultCredential.GetValue().AsMap()["account_sid"]
 	if !ok {
 		return nil, fmt.Errorf("illegal vault config accountSid is not found")
@@ -174,7 +172,7 @@ func (tpc *exotelTelephony) MakeCall(
 		return mtds, []*types.Metric{types.NewMetric("STATUS", "FAILED", utils.Ptr("Status of transaction"))}, event, err
 	}
 
-	mtds = append(mtds, types.NewMetadata("telephony.conversation_reference", jsonResponse.Call.Sid))
+	mtds = append(mtds, types.NewMetadata("telephony.uuid", jsonResponse.Call.Sid))
 	event = append(event, types.NewEvent(jsonResponse.Call.Status, jsonResponse))
 	return mtds, []*types.Metric{types.NewMetric("STATUS", "SUCCESS", utils.Ptr("Status of telephony api"))}, event, nil
 }
@@ -190,8 +188,8 @@ func (tpc *exotelTelephony) IncomingCall(c *gin.Context, auth types.SimplePrinci
 	return nil
 }
 
-func (tpc *exotelTelephony) Streamer(c *gin.Context, connection *websocket.Conn, assistantID uint64, assistantVersion string, assistantConversationID uint64, vlt *protos.VaultCredential) internal_streamers.Streamer {
-	return NewExotelWebsocketStreamer(tpc.logger, connection, assistantID, assistantVersion, assistantConversationID, vlt)
+func (tpc *exotelTelephony) Streamer(c *gin.Context, connection *websocket.Conn, assistant *internal_assistant_entity.Assistant, conversation *internal_conversation_entity.AssistantConversation, vlt *protos.VaultCredential) internal_streamers.Streamer {
+	return NewExotelWebsocketStreamer(tpc.logger, connection, assistant, conversation, vlt)
 }
 
 func (tpc *exotelTelephony) AcceptCall(c *gin.Context) (*string, *string, error) {
@@ -204,11 +202,7 @@ func (tpc *exotelTelephony) AcceptCall(c *gin.Context) (*string, *string, error)
 
 	socketUrl, ok := queryParams["CustomField"]
 	if ok {
-		response := map[string]string{
-			"url": fmt.Sprintf("wss://%s/%s",
-				tpc.appCfg.PublicAssistantHost,
-				socketUrl),
-		}
+		response := map[string]string{"url": fmt.Sprintf("wss://%s/%s", tpc.appCfg.PublicAssistantHost, socketUrl)}
 		c.JSON(http.StatusOK, response)
 		return nil, nil, fmt.Errorf("outbound call triggered")
 	}

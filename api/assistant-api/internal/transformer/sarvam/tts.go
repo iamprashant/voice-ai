@@ -13,7 +13,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/dvonthenen/websocket"
+	"github.com/gorilla/websocket"
 	sarvam_internal "github.com/rapidaai/api/assistant-api/internal/transformer/sarvam/internal"
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/commons"

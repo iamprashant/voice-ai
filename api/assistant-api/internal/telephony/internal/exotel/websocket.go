@@ -6,88 +6,48 @@
 package internal_exotel_telephony
 
 import (
-	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"io"
-	"sync"
 
 	"github.com/gorilla/websocket"
 	internal_audio "github.com/rapidaai/api/assistant-api/internal/audio"
+	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
+	internal_conversation_entity "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
 	streamers "github.com/rapidaai/api/assistant-api/internal/streamers"
-	internal_exotel "github.com/rapidaai/api/assistant-api/internal/telephony/exotel/internal"
+	internal_telephony_base "github.com/rapidaai/api/assistant-api/internal/telephony/internal/base"
+	internal_exotel "github.com/rapidaai/api/assistant-api/internal/telephony/internal/exotel/internal"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/protos"
 )
 
 type exotelWebsocketStreamer struct {
-	extl
-	logger     commons.Logger
-	conn       *websocket.Conn
-	ctx        context.Context
-	cancelFunc context.CancelFunc
-
-	assistant               *protos.AssistantDefinition
-	version                 string
-	assistantConversationId uint64
-	streamSid               string
-
-	//
-	// mutex
-	audioBufferLock   sync.Mutex
-	inputAudioBuffer  *bytes.Buffer
-	outputAudioBuffer *bytes.Buffer
-	encoder           *base64.Encoding
-	vaultCredential   *protos.VaultCredential
+	streamer internal_telephony_base.BaseTelephonyStreamer
+	logger   commons.Logger
+	streamID string
 }
 
-func NewExotelWebsocketStreamer(
-	logger commons.Logger,
-	connection *websocket.Conn,
-	assistantId uint64,
-	version string,
-	conversationId uint64,
-	vlt *protos.VaultCredential,
+func NewExotelWebsocketStreamer(logger commons.Logger, connection *websocket.Conn, assistant *internal_assistant_entity.Assistant, conversation *internal_conversation_entity.AssistantConversation, vlt *protos.VaultCredential,
 ) streamers.Streamer {
-	ctx, cancel := context.WithCancel(context.Background())
 	return &exotelWebsocketStreamer{
-		extl:                    NewExotel(logger),
-		logger:                  logger,
-		conn:                    connection,
-		ctx:                     ctx,
-		cancelFunc:              cancel,
-		assistant:               &protos.AssistantDefinition{AssistantId: assistantId, Version: version},
-		version:                 version,
-		assistantConversationId: conversationId,
-
-		//
-		inputAudioBuffer:  new(bytes.Buffer),
-		outputAudioBuffer: new(bytes.Buffer),
-		encoder:           base64.StdEncoding,
-		vaultCredential:   vlt,
+		logger:   logger,
+		streamID: "",
+		streamer: internal_telephony_base.NewBaseTelephonyStreamer(logger, connection, assistant, conversation, vlt),
 	}
 }
 
 func (exotel *exotelWebsocketStreamer) Context() context.Context {
-	return exotel.ctx
+	return exotel.streamer.Context()
 }
 
 func (exotel *exotelWebsocketStreamer) Recv() (*protos.AssistantMessagingRequest, error) {
-	if exotel.conn == nil {
-		exotel.logger.Error("WebSocket connection is nil")
+	if exotel.streamer.Connection() == nil {
 		return nil, io.EOF
 	}
 
-	_, message, err := exotel.conn.ReadMessage()
+	_, message, err := exotel.streamer.Connection().ReadMessage()
 	if err != nil {
-		if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-			exotel.logger.Error("Unexpected websocket close error", "error", err.Error())
-		} else {
-			exotel.logger.Error("Failed to read message from WebSocket", "error", err.Error())
-		}
-		exotel.cancelFunc()
-		exotel.conn = nil
+		exotel.streamer.Cancel()
 		return nil, io.EOF
 	}
 
@@ -99,7 +59,7 @@ func (exotel *exotelWebsocketStreamer) Recv() (*protos.AssistantMessagingRequest
 
 	switch mediaEvent.Event {
 	case "connected":
-		return exotel.handleConnectEvent()
+		return exotel.streamer.CreateConnectionRequest(internal_audio.NewLinear8khzMonoAudioConfig(), internal_audio.NewLinear8khzMonoAudioConfig())
 	case "start":
 		exotel.handleStartEvent(mediaEvent)
 		return nil, nil
@@ -108,7 +68,7 @@ func (exotel *exotelWebsocketStreamer) Recv() (*protos.AssistantMessagingRequest
 	case "dtmf":
 		return nil, nil
 	case "stop":
-		exotel.cancelFunc()
+		exotel.streamer.Cancel()
 		return nil, io.EOF
 	default:
 		exotel.logger.Warn("Unhandled Exotel event", "event", mediaEvent.Event)
@@ -129,16 +89,16 @@ func (exotel *exotelWebsocketStreamer) Send(response *protos.AssistantMessagingR
 			audioData := content.Audio.GetContent()
 
 			// Use vng.audioBuffer to handle pending data across calls
-			exotel.audioBufferLock.Lock()
-			defer exotel.audioBufferLock.Unlock()
+			exotel.streamer.LockOutputAudioBuffer()
+			defer exotel.streamer.UnlockOutputAudioBuffer()
 
 			// Append incoming audio data to the buffer
-			exotel.outputAudioBuffer.Write(audioData)
+			exotel.streamer.OutputBuffer().Write(audioData)
 			// Process and send chunks of 640 bytes
-			for exotel.outputAudioBuffer.Len() >= bufferSizeThreshold && exotel.streamSid != "" {
-				chunk := exotel.outputAudioBuffer.Next(bufferSizeThreshold) // Get and remove the next 640 bytes
+			for exotel.streamer.OutputBuffer().Len() >= bufferSizeThreshold && exotel.streamID != "" {
+				chunk := exotel.streamer.OutputBuffer().Next(bufferSizeThreshold) // Get and remove the next 640 bytes
 				if err := exotel.sendingExotelMessage("media", map[string]interface{}{
-					"payload": exotel.encoder.EncodeToString(chunk),
+					"payload": exotel.streamer.Encoder().EncodeToString(chunk),
 				}); err != nil {
 					exotel.logger.Error("Failed to send audio chunk", "error", err.Error())
 					return err
@@ -146,23 +106,23 @@ func (exotel *exotelWebsocketStreamer) Send(response *protos.AssistantMessagingR
 			}
 
 			// If response is marked as completed, flush any remaining audio in the buffer
-			if data.Assistant.GetCompleted() && exotel.outputAudioBuffer.Len() > 0 {
-				remainingChunk := exotel.outputAudioBuffer.Bytes()
+			if data.Assistant.GetCompleted() && exotel.streamer.OutputBuffer().Len() > 0 {
+				remainingChunk := exotel.streamer.OutputBuffer().Bytes()
 				if err := exotel.sendingExotelMessage("media", map[string]interface{}{
-					"payload": exotel.encoder.EncodeToString(remainingChunk),
+					"payload": exotel.streamer.Encoder().EncodeToString(remainingChunk),
 				}); err != nil {
 					exotel.logger.Errorf("Failed to send final audio chunk", "error", err.Error())
 					return err
 				}
-				exotel.outputAudioBuffer.Reset() // Clear the buffer after flushing
+				exotel.streamer.OutputBuffer().Reset() // Clear the buffer after flushing
 			}
 		}
 	case *protos.AssistantMessagingResponse_Interruption:
 		// interrupt on word given by stt
 		if data.Interruption.Type == protos.AssistantConversationInterruption_INTERRUPTION_TYPE_WORD {
-			exotel.audioBufferLock.Lock()
-			exotel.outputAudioBuffer.Reset()
-			exotel.audioBufferLock.Unlock()
+			exotel.streamer.LockInputAudioBuffer()
+			exotel.streamer.OutputBuffer().Reset()
+			exotel.streamer.UnlockInputAudioBuffer()
 
 			//
 			if err := exotel.sendingExotelMessage("clear", nil); err != nil {
@@ -171,7 +131,7 @@ func (exotel *exotelWebsocketStreamer) Send(response *protos.AssistantMessagingR
 		}
 	case *protos.AssistantMessagingResponse_Action:
 		if data.Action.GetAction() == protos.AssistantConversationAction_END_CONVERSATION {
-			if err := exotel.conn.Close(); err != nil {
+			if err := exotel.streamer.Connection().Close(); err != nil {
 				// terminate the conversation as end tool call is triggered
 				exotel.logger.Errorf("Error disconnecting command:", err)
 			}
@@ -182,89 +142,52 @@ func (exotel *exotelWebsocketStreamer) Send(response *protos.AssistantMessagingR
 
 // start event contains streamSid to be used for subsequent media messages
 func (exotel *exotelWebsocketStreamer) handleStartEvent(mediaEvent internal_exotel.ExotelMediaEvent) {
-	exotel.streamSid = mediaEvent.StreamSid
+	exotel.streamID = mediaEvent.StreamSid
 }
 
 // when exotel is connected then connect the assistant
-func (exotel *exotelWebsocketStreamer) handleConnectEvent() (*protos.AssistantMessagingRequest, error) {
-	return &protos.AssistantMessagingRequest{
-		Request: &protos.AssistantMessagingRequest_Configuration{
-			Configuration: &protos.AssistantConversationConfiguration{
-				AssistantConversationId: exotel.assistantConversationId,
-				Assistant: &protos.AssistantDefinition{
-					AssistantId: exotel.assistant.AssistantId,
-					Version:     "latest",
-				},
-				InputConfig: &protos.StreamConfig{
-					Audio: internal_audio.NewLinear8khzMonoAudioConfig(),
-				},
-				OutputConfig: &protos.StreamConfig{
-					Audio: internal_audio.NewLinear8khzMonoAudioConfig(),
-				},
-			},
-		}}, nil
-}
 
 func (exotel *exotelWebsocketStreamer) handleMediaEvent(mediaEvent internal_exotel.ExotelMediaEvent) (*protos.AssistantMessagingRequest, error) {
-	payloadBytes, err := exotel.encoder.DecodeString(mediaEvent.Media.Payload)
+	payloadBytes, err := exotel.streamer.Encoder().DecodeString(mediaEvent.Media.Payload)
 	if err != nil {
 		exotel.logger.Warn("Failed to decode media payload", "error", err.Error())
 		return nil, nil
 	}
 
-	exotel.audioBufferLock.Lock()
-	defer exotel.audioBufferLock.Unlock()
+	exotel.streamer.LockInputAudioBuffer()
+	defer exotel.streamer.UnlockInputAudioBuffer()
 
 	// 1ms 8 bytes @ 8kHz µ-law mono 60ms of audio as silero can't process smaller chunk for mulaw
-	exotel.inputAudioBuffer.Write(payloadBytes)
+	exotel.streamer.InputBuffer().Write(payloadBytes)
 	const bufferSizeThreshold = 32 * 60
 
-	if exotel.inputAudioBuffer.Len() >= bufferSizeThreshold {
-		audioRequest := exotel.buildVoiceRequest(exotel.inputAudioBuffer.Bytes())
-		exotel.inputAudioBuffer.Reset()
+	if exotel.streamer.InputBuffer().Len() >= bufferSizeThreshold {
+		audioRequest := exotel.streamer.CreateVoiceRequest(exotel.streamer.InputBuffer().Bytes())
+		exotel.streamer.InputBuffer().Reset()
 		return audioRequest, nil
 	}
 
 	return nil, nil
 }
 
-func (exotel *exotelWebsocketStreamer) buildVoiceRequest(audioData []byte) *protos.AssistantMessagingRequest {
-	return &protos.AssistantMessagingRequest{
-		Request: &protos.AssistantMessagingRequest_Message{
-			Message: &protos.AssistantConversationUserMessage{
-				Message: &protos.AssistantConversationUserMessage_Audio{
-					Audio: &protos.AssistantConversationMessageAudioContent{
-						Content: audioData,
-					},
-				},
-			},
-		},
-	}
-}
-
-func (exotel *exotelWebsocketStreamer) sendingExotelMessage(
-	eventType string,
-	mediaData map[string]interface{}) error {
-	if exotel.conn == nil || exotel.streamSid == "" {
+func (exotel *exotelWebsocketStreamer) sendingExotelMessage(eventType string, mediaData map[string]interface{}) error {
+	if exotel.streamer.Connection() == nil || exotel.streamID == "" {
 		return nil
 	}
 	message := map[string]interface{}{
 		"event":     eventType,
-		"streamSid": exotel.streamSid,
+		"streamSid": exotel.streamID,
 	}
 	if mediaData != nil {
 		message["media"] = mediaData
 	}
-
 	exotelMessageJSON, err := json.Marshal(message)
 	if err != nil {
 		return exotel.handleError("Failed to marshal Exotel message", err)
 	}
-
-	if err := exotel.conn.WriteMessage(websocket.TextMessage, exotelMessageJSON); err != nil {
+	if err := exotel.streamer.Connection().WriteMessage(websocket.TextMessage, exotelMessageJSON); err != nil {
 		return exotel.handleError("Failed to send message to Exotel", err)
 	}
-
 	return nil
 }
 

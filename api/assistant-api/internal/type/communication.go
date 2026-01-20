@@ -9,7 +9,7 @@ import (
 	"context"
 
 	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
-	internal_conversation_gorm "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
+	internal_conversation_entity "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
 	internal_knowledge_gorm "github.com/rapidaai/api/assistant-api/internal/entity/knowledges"
 	internal_adapter_tracing "github.com/rapidaai/api/assistant-api/internal/telemetry"
 
@@ -73,7 +73,7 @@ type Communication interface {
 	GetBehavior() (*internal_assistant_entity.AssistantDeploymentBehavior, error)
 
 	// current conversation
-	Conversation() *internal_conversation_gorm.AssistantConversation
+	Conversation() *internal_conversation_entity.AssistantConversation
 
 	// later will create an interface to move all the conversation
 	// idea is have custom history maintainer eg: database, inmemory

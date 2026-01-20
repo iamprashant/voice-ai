@@ -65,13 +65,7 @@ func TalkCallbackApiRoute(
 	redis connectors.RedisConnector,
 	opensearch connectors.OpenSearchConnector) {
 	apiv1 := engine.Group("v1/talk")
-	talkRpcApi := assistantTalkApi.NewConversationApi(cfg,
-		logger,
-		postgres,
-		redis,
-		opensearch,
-		opensearch,
-	)
+	talkRpcApi := assistantTalkApi.NewConversationApi(cfg, logger, postgres, redis, opensearch, opensearch)
 	{
 		// global
 		apiv1.GET("/:telephony/event/:assistantId", talkRpcApi.UnviersalCallback)

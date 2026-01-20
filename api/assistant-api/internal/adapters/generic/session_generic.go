@@ -19,7 +19,7 @@ import (
 	internal_adapter_request_customizers "github.com/rapidaai/api/assistant-api/internal/adapters/customizers"
 	internal_audio_recorder "github.com/rapidaai/api/assistant-api/internal/audio/recorder"
 	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
-	internal_conversation_gorm "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
+	internal_conversation_entity "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
 	internal_telemetry "github.com/rapidaai/api/assistant-api/internal/telemetry"
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/types"
@@ -487,7 +487,7 @@ func (r *GenericRequestor) initializeExecutor(ctx context.Context) error {
 // allowing the client to track the session.
 func (r *GenericRequestor) notifyConfiguration(
 	ctx context.Context,
-	conversation *internal_conversation_gorm.AssistantConversation,
+	conversation *internal_conversation_entity.AssistantConversation,
 	assistant *internal_assistant_entity.Assistant,
 ) {
 	configNotification := &protos.AssistantConversationConfiguration{

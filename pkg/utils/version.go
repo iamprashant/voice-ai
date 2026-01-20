@@ -6,6 +6,7 @@
 package utils
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -24,4 +25,8 @@ func GetVersionDefinition(version string) *uint64 {
 		return nil
 	}
 	return &_pid
+}
+
+func GetVersionString(version uint64) string {
+	return fmt.Sprintf("%s%d", VERSION_PREFIX, version)
 }

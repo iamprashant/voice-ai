@@ -13,6 +13,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/rapidaai/api/assistant-api/config"
+	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
+	internal_conversation_entity "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
 	internal_streamers "github.com/rapidaai/api/assistant-api/internal/streamers"
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/commons"
@@ -24,14 +26,12 @@ import (
 )
 
 type vonageTelephony struct {
-	vg
 	appCfg *config.AssistantConfig
 	logger commons.Logger
 }
 
 func NewVonageTelephony(config *config.AssistantConfig, logger commons.Logger) (internal_type.Telephony, error) {
 	return &vonageTelephony{
-		vg:     NewVonage(logger),
 		logger: logger,
 		appCfg: config,
 	}, nil
@@ -117,7 +117,8 @@ func (vt *vonageTelephony) MakeCall(
 		return mtds, []*types.Metric{types.NewMetric("STATUS", "FAILED", utils.Ptr("Status of telephony api"))}, event, err
 	}
 
-	mtds = append(mtds, types.NewMetadata("telephony.conversation_reference", result.ConversationUuid))
+	mtds = append(mtds, types.NewMetadata("telephony.conversation_uuid", result.ConversationUuid))
+	mtds = append(mtds, types.NewMetadata("telephony.uuid", result.Uuid))
 	event = append(event, types.NewEvent(result.Status, result))
 	return mtds, []*types.Metric{types.NewMetric("STATUS", "SUCCESS", utils.Ptr("Status of telephony api"))}, event, nil
 }
@@ -142,8 +143,8 @@ func (vt *vonageTelephony) IncomingCall(c *gin.Context, auth types.SimplePrincip
 	return nil
 }
 
-func (tpc *vonageTelephony) Streamer(c *gin.Context, connection *websocket.Conn, assistantID uint64, assistantVersion string, assistantConversationID uint64, vlt *protos.VaultCredential) internal_streamers.Streamer {
-	return NewVonageWebsocketStreamer(tpc.logger, connection, assistantID, assistantVersion, assistantConversationID, vlt)
+func (tpc *vonageTelephony) Streamer(c *gin.Context, connection *websocket.Conn, assistant *internal_assistant_entity.Assistant, assistantConversation *internal_conversation_entity.AssistantConversation, vltC *protos.VaultCredential) internal_streamers.Streamer {
+	return NewVonageWebsocketStreamer(tpc.logger, connection, assistant, assistantConversation, vltC)
 }
 
 func (tpc *vonageTelephony) AcceptCall(c *gin.Context) (*string, *string, error) {
@@ -166,4 +167,20 @@ func (tpc *vonageTelephony) AcceptCall(c *gin.Context) (*string, *string, error)
 		return nil, nil, fmt.Errorf("missing assistantId path parameter")
 	}
 	return utils.Ptr(clientNumber), utils.Ptr(assistantID), nil
+}
+
+func (tpc *vonageTelephony) Auth(vaultCredential *protos.VaultCredential) (vonage.Auth, error) {
+	privateKey, ok := vaultCredential.GetValue().AsMap()["private_key"]
+	if !ok {
+		return nil, fmt.Errorf("illegal vault config privateKey is not found")
+	}
+	applicationId, ok := vaultCredential.GetValue().AsMap()["application_id"]
+	if !ok {
+		return nil, fmt.Errorf("illegal vault config application_id is not found")
+	}
+	clientAuth, err := vonage.CreateAuthFromAppPrivateKey(applicationId.(string), []byte(privateKey.(string)))
+	if err != nil {
+		return nil, err
+	}
+	return clientAuth, nil
 }

@@ -21,7 +21,7 @@ import (
 	internal_agent_executor_llm "github.com/rapidaai/api/assistant-api/internal/agent/executor/llm"
 	internal_agent_rerankers "github.com/rapidaai/api/assistant-api/internal/agent/reranker"
 	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
-	internal_conversation_gorm "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
+	internal_conversation_entity "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
 	internal_knowledge_gorm "github.com/rapidaai/api/assistant-api/internal/entity/knowledges"
 	internal_services "github.com/rapidaai/api/assistant-api/internal/services"
 	internal_assistant_service "github.com/rapidaai/api/assistant-api/internal/services/assistant"
@@ -93,7 +93,7 @@ type GenericRequestor struct {
 
 	// states
 	assistant             *internal_assistant_entity.Assistant
-	assistantConversation *internal_conversation_gorm.AssistantConversation
+	assistantConversation *internal_conversation_entity.AssistantConversation
 	histories             []internal_type.MessagePacket
 
 	args      map[string]interface{}
@@ -182,7 +182,7 @@ func (dm *GenericRequestor) Tracer() internal_telemetry.VoiceAgentTracer {
 	return dm.tracer
 }
 
-func (gr *GenericRequestor) GetAssistantConversation(auth types.SimplePrinciple, assistantId uint64, assistantConversationId uint64, identifier string) (*internal_conversation_gorm.AssistantConversation, error) {
+func (gr *GenericRequestor) GetAssistantConversation(auth types.SimplePrinciple, assistantId uint64, assistantConversationId uint64, identifier string) (*internal_conversation_entity.AssistantConversation, error) {
 	return gr.conversationService.GetConversation(gr.Context(), auth, identifier, assistantId, assistantConversationId, &internal_services.GetConversationOption{
 		InjectContext:  true,
 		InjectArgument: true,
@@ -192,7 +192,7 @@ func (gr *GenericRequestor) GetAssistantConversation(auth types.SimplePrinciple,
 	)
 }
 
-func (gr *GenericRequestor) CreateAssistantConversation(auth types.SimplePrinciple, assistantId uint64, assistantProviderModelId uint64, identifier string, direction type_enums.ConversationDirection, arguments map[string]interface{}, metadata map[string]interface{}, options map[string]interface{}) (*internal_conversation_gorm.AssistantConversation, error) {
+func (gr *GenericRequestor) CreateAssistantConversation(auth types.SimplePrinciple, assistantId uint64, assistantProviderModelId uint64, identifier string, direction type_enums.ConversationDirection, arguments map[string]interface{}, metadata map[string]interface{}, options map[string]interface{}) (*internal_conversation_entity.AssistantConversation, error) {
 	conversation, err := gr.conversationService.CreateConversation(gr.Context(), auth, identifier, assistantId, assistantProviderModelId, direction, gr.Source())
 	if err != nil {
 		return conversation, err
@@ -213,7 +213,7 @@ func (gr *GenericRequestor) CreateAssistantConversation(auth types.SimplePrincip
 
 }
 
-func (talking *GenericRequestor) BeginConversation(auth types.SimplePrinciple, assistant *internal_assistant_entity.Assistant, direction type_enums.ConversationDirection, identifier string, argument, metadata, options map[string]interface{}) (*internal_conversation_gorm.AssistantConversation, error) {
+func (talking *GenericRequestor) BeginConversation(auth types.SimplePrinciple, assistant *internal_assistant_entity.Assistant, direction type_enums.ConversationDirection, identifier string, argument, metadata, options map[string]interface{}) (*internal_conversation_entity.AssistantConversation, error) {
 	talking.assistant = assistant
 	talking.args = argument
 	talking.options = options
@@ -227,7 +227,7 @@ func (talking *GenericRequestor) BeginConversation(auth types.SimplePrinciple, a
 	return conversation, err
 }
 
-func (talking *GenericRequestor) ResumeConversation(auth types.SimplePrinciple, assistant *internal_assistant_entity.Assistant, conversationId uint64, identifier string) (*internal_conversation_gorm.AssistantConversation, error) {
+func (talking *GenericRequestor) ResumeConversation(auth types.SimplePrinciple, assistant *internal_assistant_entity.Assistant, conversationId uint64, identifier string) (*internal_conversation_entity.AssistantConversation, error) {
 	talking.assistant = assistant
 	conversation, err := talking.GetAssistantConversation(auth, assistant.Id, conversationId, identifier)
 	if err != nil {

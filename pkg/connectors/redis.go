@@ -239,7 +239,6 @@ func (rs *RedisResponse) ResultStruct(output interface{}) error {
 	}
 	switch rs.Result.(type) {
 	case string:
-		fmt.Println("trying to deserialize from string")
 		return json.Unmarshal([]byte(rs.Result.(string)), &output)
 	case interface{}:
 		sgl, ok := rs.Result.([]interface{})

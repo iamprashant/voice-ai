@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"time"
 
-	internal_conversation_gorm "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
+	internal_conversation_entity "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
 	gorm_models "github.com/rapidaai/pkg/models/gorm"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/protos"
@@ -24,11 +24,11 @@ func (conversationService *assistantConversationService) GetAllMessageActions(
 	criterias []*protos.Criteria,
 	paginate *protos.Paginate,
 	ordering *protos.Ordering,
-) (int64, []*internal_conversation_gorm.AssistantConversationAction, error) {
+) (int64, []*internal_conversation_entity.AssistantConversationAction, error) {
 	start := time.Now()
 	db := conversationService.postgres.DB(ctx)
 	var (
-		conversationMessage []*internal_conversation_gorm.AssistantConversationAction
+		conversationMessage []*internal_conversation_entity.AssistantConversationAction
 		cnt                 int64
 		orderClause         = clause.OrderByColumn{
 			Column: clause.Column{Name: "created_date"},
@@ -47,7 +47,7 @@ func (conversationService *assistantConversationService) GetAllMessageActions(
 	}
 
 	qry := db.
-		Model(internal_conversation_gorm.AssistantConversationAction{}).
+		Model(internal_conversation_entity.AssistantConversationAction{}).
 		Where("assistant_conversation_id = ? ", assistantConversationId)
 	for _, ct := range criterias {
 		qry.Where(fmt.Sprintf("%s %s ?", ct.GetKey(), ct.GetLogic()), ct.GetValue())
@@ -78,10 +78,10 @@ func (conversationService *assistantConversationService) CreateLLMAction(
 	assistantId,
 	assistantConversationId uint64,
 	messageId string,
-	in, out *types.Message, metrics []*types.Metric) (*internal_conversation_gorm.AssistantConversationAction, error) {
+	in, out *types.Message, metrics []*types.Metric) (*internal_conversation_entity.AssistantConversationAction, error) {
 	start := time.Now()
 	db := conversationService.postgres.DB(ctx)
-	aca := &internal_conversation_gorm.AssistantConversationAction{
+	aca := &internal_conversation_entity.AssistantConversationAction{
 		AssistantConversationMessageId: messageId,
 		AssistantConversationId:        assistantConversationId,
 		AssistantId:                    assistantId,
@@ -106,10 +106,10 @@ func (conversationService *assistantConversationService) CreateToolAction(
 	assistantId uint64,
 	assistantConversationId uint64,
 	messageId string,
-	in, out map[string]interface{}, metrics []*types.Metric) (*internal_conversation_gorm.AssistantConversationAction, error) {
+	in, out map[string]interface{}, metrics []*types.Metric) (*internal_conversation_entity.AssistantConversationAction, error) {
 	start := time.Now()
 	db := conversationService.postgres.DB(ctx)
-	aca := &internal_conversation_gorm.AssistantConversationAction{
+	aca := &internal_conversation_entity.AssistantConversationAction{
 		AssistantConversationMessageId: messageId,
 		AssistantConversationId:        assistantConversationId,
 		AssistantId:                    assistantId,
@@ -136,12 +136,12 @@ func (conversationService *assistantConversationService) ApplyToolMetrics(
 	assistantConversationActionId uint64,
 	assistantConversationMessageId string,
 	metrics []*types.Metric,
-) ([]*internal_conversation_gorm.AssistantConversationActionMetric, error) {
+) ([]*internal_conversation_entity.AssistantConversationActionMetric, error) {
 	start := time.Now()
 	db := conversationService.postgres.DB(ctx)
-	mtrs := make([]*internal_conversation_gorm.AssistantConversationActionMetric, 0)
+	mtrs := make([]*internal_conversation_entity.AssistantConversationActionMetric, 0)
 	for _, mtr := range metrics {
-		_mtr := &internal_conversation_gorm.AssistantConversationActionMetric{
+		_mtr := &internal_conversation_entity.AssistantConversationActionMetric{
 			Metric: gorm_models.Metric{
 				Name:        mtr.GetName(),
 				Value:       mtr.GetValue(),
