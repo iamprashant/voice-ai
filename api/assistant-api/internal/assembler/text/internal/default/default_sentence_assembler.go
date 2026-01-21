@@ -24,13 +24,16 @@ type textAssembler struct {
 
 	result chan internal_type.Packet
 
-	mu sync.RWMutex
+	mu sync.Mutex // Changed from RWMutex - we rarely have read-only operations
 
 	// buffering state
 	buffer         strings.Builder
 	currentContext string
 	boundaryRegex  *regexp.Regexp
 	hasBoundaries  bool
+
+	// optimization: reusable slice to reduce allocations
+	toEmitBuffer []internal_type.Packet
 }
 
 // NewTextTokenizer creates a new sentence tokenizer with the given logger and options.
@@ -48,9 +51,10 @@ type textAssembler struct {
 //	}
 func NewDefaultLLMTextAssembler(context context.Context, logger commons.Logger, options utils.Option) (internal_type.LLMTextAssembler, error) {
 	st := &textAssembler{
-		ctx:    context,
-		logger: logger,
-		result: make(chan internal_type.Packet, 16),
+		ctx:          context,
+		logger:       logger,
+		result:       make(chan internal_type.Packet, 32), // Increased buffer for better throughput
+		toEmitBuffer: make([]internal_type.Packet, 0, 8),  // Pre-allocate slice
 	}
 	if err := st.initializeBoundaries(options, logger); err != nil {
 		return nil, err
@@ -117,28 +121,33 @@ func filterBoundaries(boundaries []string) []string {
 //		IsComplete: true,
 //	})
 func (st *textAssembler) Assemble(ctx context.Context, sentences ...internal_type.LLMPacket) error {
+	// Process all sentences with lock held once, then emit without lock
+	st.mu.Lock()
+	st.toEmitBuffer = st.toEmitBuffer[:0] // Reset reusable buffer
+
 	for _, sentence := range sentences {
-		toEmit := st.extractAndQueue(sentence)
-		// Send queued results while respecting context cancellation
-		for _, s := range toEmit {
-			select {
-			case st.result <- s:
-			case <-ctx.Done():
-				return ctx.Err()
-			}
+		st.extractAndQueueLocked(sentence)
+	}
+
+	// Copy results to avoid holding lock during channel operations
+	toEmit := make([]internal_type.Packet, len(st.toEmitBuffer))
+	copy(toEmit, st.toEmitBuffer)
+	st.mu.Unlock()
+
+	// Send queued results while respecting context cancellation
+	for _, s := range toEmit {
+		select {
+		case st.result <- s:
+		case <-ctx.Done():
+			return ctx.Err()
 		}
 	}
 	return nil
 }
 
-// extractAndQueue extracts complete sentences from the input and returns them
-// in emission order. It safely manages buffer state and context switching.
-
-func (st *textAssembler) extractAndQueue(sentence internal_type.LLMPacket) []internal_type.Packet {
-	st.mu.Lock()
-	defer st.mu.Unlock()
-	var toEmit []internal_type.Packet
-
+// extractAndQueueLocked extracts complete sentences from the input.
+// MUST be called with lock held. Appends results to st.toEmitBuffer.
+func (st *textAssembler) extractAndQueueLocked(sentence internal_type.LLMPacket) {
 	switch input := sentence.(type) {
 	case internal_type.LLMStreamPacket:
 		// Handle context switch - just clean buffer, do NOT emit
@@ -151,63 +160,54 @@ func (st *textAssembler) extractAndQueue(sentence internal_type.LLMPacket) []int
 
 		// Extract sentences at boundaries
 		if st.hasBoundaries {
-			toEmit = append(toEmit, st.extractTextsByBoundary(input.ContextID)...)
+			st.extractTextsByBoundaryLocked(input.ContextID)
 		}
 	case internal_type.LLMMessagePacket:
-		if remaining := st.getBufferContent(); remaining != "" {
-			toEmit = append(toEmit, internal_type.LLMStreamPacket{
-				ContextID: st.currentContext,
-				Text:      remaining,
-			})
+		// Flush remaining buffer
+		if st.buffer.Len() > 0 {
+			content := st.buffer.String()
+			if content != "" {
+				st.toEmitBuffer = append(st.toEmitBuffer, internal_type.LLMStreamPacket{
+					ContextID: st.currentContext,
+					Text:      content,
+				})
+			}
 			st.buffer.Reset()
 		}
-		toEmit = append(toEmit, input)
+		st.toEmitBuffer = append(st.toEmitBuffer, input)
 	default:
 		st.logger.Warnf("Unsupported tokenizer input type: %T", sentence)
-		return nil
 	}
-
-	return toEmit
 }
 
-// extractTextsByBoundary extracts all sentences that end at boundaries.
-// Called with lock held.
-func (st *textAssembler) extractTextsByBoundary(contextId string) []internal_type.Packet {
-	var sentences []internal_type.Packet
+// extractTextsByBoundaryLocked extracts all sentences that end at boundaries.
+// MUST be called with lock held. Appends to st.toEmitBuffer.
+func (st *textAssembler) extractTextsByBoundaryLocked(contextId string) {
+	text := st.buffer.String()
 
-	for {
-		sentence, remaining := st.extractText(st.buffer.String())
-		if sentence == "" {
-			break
+	// Find all boundaries at once instead of iterating
+	matches := st.boundaryRegex.FindAllStringIndex(text, -1)
+	if len(matches) == 0 {
+		return
+	}
+
+	// Extract complete sentences up to the last boundary
+	lastBoundary := matches[len(matches)-1][1]
+	if lastBoundary > 0 {
+		completeText := strings.TrimSpace(text[:lastBoundary])
+		if completeText != "" {
+			st.toEmitBuffer = append(st.toEmitBuffer, internal_type.LLMStreamPacket{
+				ContextID: contextId,
+				Text:      completeText,
+			})
 		}
-		sentences = append(sentences, internal_type.LLMStreamPacket{ContextID: contextId, Text: sentence})
+
+		// Keep only the remaining text after last boundary
 		st.buffer.Reset()
-		st.buffer.WriteString(remaining)
+		if lastBoundary < len(text) {
+			st.buffer.WriteString(text[lastBoundary:])
+		}
 	}
-
-	return sentences
-}
-
-// getBufferContent returns the trimmed buffer content.
-// Called with lock held.
-func (st *textAssembler) getBufferContent() string {
-	return strings.TrimSpace(st.buffer.String())
-}
-
-// extractText extracts a single sentence from text using the boundary regex.
-// Returns the sentence and remaining text.
-// Called with lock held.
-func (st *textAssembler) extractText(text string) (string, string) {
-	if st.boundaryRegex == nil || text == "" {
-		return "", text
-	}
-
-	loc := st.boundaryRegex.FindStringIndex(text)
-	if loc != nil {
-		return strings.TrimSpace(text[:loc[1]]), text[loc[1]:]
-	}
-
-	return "", text
 }
 
 // Result returns a read-only channel that receives complete sentences.
@@ -249,8 +249,8 @@ func (st *textAssembler) Close() error {
 
 // String returns a string representation of the tokenizer for debugging.
 func (st *textAssembler) String() string {
-	st.mu.RLock()
-	defer st.mu.RUnlock()
+	st.mu.Lock()
+	defer st.mu.Unlock()
 
 	return fmt.Sprintf("TextAssembler{context=%q, bufferLen=%d, hasBoundaries=%v}", st.currentContext, st.buffer.Len(), st.hasBoundaries)
 }

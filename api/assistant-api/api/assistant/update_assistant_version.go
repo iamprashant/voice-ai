@@ -25,7 +25,6 @@ func (assistantApi *assistantGrpcApi) UpdateAssistantVersion(ctx context.Context
 		)
 	}
 
-	assistantApi.logger.Debug("check %+v and got %+v", cer)
 	ep, err := assistantApi.assistantService.UpdateAssistantVersion(
 		ctx,
 		iAuth,

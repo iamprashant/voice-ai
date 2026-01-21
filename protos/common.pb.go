@@ -7,14 +7,13 @@
 package protos
 
 import (
-	reflect "reflect"
-	sync "sync"
-
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	anypb "google.golang.org/protobuf/types/known/anypb"
 	structpb "google.golang.org/protobuf/types/known/structpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	reflect "reflect"
+	sync "sync"
 )
 
 const (
@@ -1340,7 +1339,7 @@ type ToolCall struct {
 	unknownFields protoimpl.UnknownFields
 
 	// tool call id
-	Id   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Type string `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
 	// tool call is function than the function and their parameter
 	Function *FunctionCall `protobuf:"bytes,3,opt,name=function,proto3,oneof" json:"function,omitempty"`
@@ -1556,28 +1555,28 @@ type Knowledge struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id                             uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name                           string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Description                    string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	Visibility                     string                 `protobuf:"bytes,4,opt,name=visibility,proto3" json:"visibility,omitempty"`
-	Language                       string                 `protobuf:"bytes,5,opt,name=language,proto3" json:"language,omitempty"`
-	EmbeddingModelProviderId       uint64                 `protobuf:"varint,6,opt,name=embeddingModelProviderId,proto3" json:"embeddingModelProviderId,omitempty"`
-	EmbeddingModelProviderName     string                 `protobuf:"bytes,7,opt,name=embeddingModelProviderName,proto3" json:"embeddingModelProviderName,omitempty"`
-	KnowledgeEmbeddingModelOptions []*Metadata            `protobuf:"bytes,8,rep,name=knowledgeEmbeddingModelOptions,proto3" json:"knowledgeEmbeddingModelOptions,omitempty"`
-	Status                         string                 `protobuf:"bytes,12,opt,name=status,proto3" json:"status,omitempty"`
-	CreatedBy                      uint64                 `protobuf:"varint,13,opt,name=createdBy,proto3" json:"createdBy,omitempty"`
-	CreatedUser                    *User                  `protobuf:"bytes,14,opt,name=createdUser,proto3" json:"createdUser,omitempty"`
-	UpdatedBy                      uint64                 `protobuf:"varint,15,opt,name=updatedBy,proto3" json:"updatedBy,omitempty"`
-	UpdatedUser                    *User                  `protobuf:"bytes,16,opt,name=updatedUser,proto3" json:"updatedUser,omitempty"`
-	CreatedDate                    *timestamppb.Timestamp `protobuf:"bytes,17,opt,name=createdDate,proto3" json:"createdDate,omitempty"`
-	UpdatedDate                    *timestamppb.Timestamp `protobuf:"bytes,18,opt,name=updatedDate,proto3" json:"updatedDate,omitempty"`
-	OrganizationId                 uint64                 `protobuf:"varint,19,opt,name=organizationId,proto3" json:"organizationId,omitempty"`
-	ProjectId                      uint64                 `protobuf:"varint,20,opt,name=projectId,proto3" json:"projectId,omitempty"`
-	Organization                   *Organization          `protobuf:"bytes,21,opt,name=organization,proto3" json:"organization,omitempty"`
-	KnowledgeTag                   *Tag                   `protobuf:"bytes,22,opt,name=knowledgeTag,proto3" json:"knowledgeTag,omitempty"`
-	DocumentCount                  uint32                 `protobuf:"varint,23,opt,name=documentCount,proto3" json:"documentCount,omitempty"`
-	TokenCount                     uint32                 `protobuf:"varint,24,opt,name=tokenCount,proto3" json:"tokenCount,omitempty"`
-	WordCount                      uint32                 `protobuf:"varint,25,opt,name=wordCount,proto3" json:"wordCount,omitempty"`
+	Id                             uint64      `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name                           string      `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Description                    string      `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	Visibility                     string      `protobuf:"bytes,4,opt,name=visibility,proto3" json:"visibility,omitempty"`
+	Language                       string      `protobuf:"bytes,5,opt,name=language,proto3" json:"language,omitempty"`
+	EmbeddingModelProviderId       uint64      `protobuf:"varint,6,opt,name=embeddingModelProviderId,proto3" json:"embeddingModelProviderId,omitempty"`
+	EmbeddingModelProviderName     string      `protobuf:"bytes,7,opt,name=embeddingModelProviderName,proto3" json:"embeddingModelProviderName,omitempty"`
+	KnowledgeEmbeddingModelOptions []*Metadata `protobuf:"bytes,8,rep,name=knowledgeEmbeddingModelOptions,proto3" json:"knowledgeEmbeddingModelOptions,omitempty"`
+	Status      string                 `protobuf:"bytes,12,opt,name=status,proto3" json:"status,omitempty"`
+	CreatedBy   uint64                 `protobuf:"varint,13,opt,name=createdBy,proto3" json:"createdBy,omitempty"`
+	CreatedUser *User                  `protobuf:"bytes,14,opt,name=createdUser,proto3" json:"createdUser,omitempty"`
+	UpdatedBy   uint64                 `protobuf:"varint,15,opt,name=updatedBy,proto3" json:"updatedBy,omitempty"`
+	UpdatedUser *User                  `protobuf:"bytes,16,opt,name=updatedUser,proto3" json:"updatedUser,omitempty"`
+	CreatedDate *timestamppb.Timestamp `protobuf:"bytes,17,opt,name=createdDate,proto3" json:"createdDate,omitempty"`
+	UpdatedDate *timestamppb.Timestamp `protobuf:"bytes,18,opt,name=updatedDate,proto3" json:"updatedDate,omitempty"`
+	OrganizationId uint64        `protobuf:"varint,19,opt,name=organizationId,proto3" json:"organizationId,omitempty"`
+	ProjectId      uint64        `protobuf:"varint,20,opt,name=projectId,proto3" json:"projectId,omitempty"`
+	Organization   *Organization `protobuf:"bytes,21,opt,name=organization,proto3" json:"organization,omitempty"`
+	KnowledgeTag   *Tag          `protobuf:"bytes,22,opt,name=knowledgeTag,proto3" json:"knowledgeTag,omitempty"`
+	DocumentCount  uint32        `protobuf:"varint,23,opt,name=documentCount,proto3" json:"documentCount,omitempty"`
+	TokenCount     uint32        `protobuf:"varint,24,opt,name=tokenCount,proto3" json:"tokenCount,omitempty"`
+	WordCount      uint32        `protobuf:"varint,25,opt,name=wordCount,proto3" json:"wordCount,omitempty"`
 }
 
 func (x *Knowledge) Reset() {
@@ -2805,11 +2804,11 @@ type AssistantConversationConfiguration struct {
 	AssistantConversationId uint64                 `protobuf:"varint,1,opt,name=assistantConversationId,proto3" json:"assistantConversationId,omitempty"`
 	Assistant               *AssistantDefinition   `protobuf:"bytes,2,opt,name=assistant,proto3" json:"assistant,omitempty"`
 	Time                    *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=time,proto3" json:"time,omitempty"`
-	Metadata                map[string]*anypb.Any  `protobuf:"bytes,4,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	Args                    map[string]*anypb.Any  `protobuf:"bytes,5,rep,name=args,proto3" json:"args,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	Options                 map[string]*anypb.Any  `protobuf:"bytes,6,rep,name=options,proto3" json:"options,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	InputConfig             *StreamConfig          `protobuf:"bytes,7,opt,name=inputConfig,proto3" json:"inputConfig,omitempty"`
-	OutputConfig            *StreamConfig          `protobuf:"bytes,8,opt,name=outputConfig,proto3" json:"outputConfig,omitempty"`
+	Metadata     map[string]*anypb.Any `protobuf:"bytes,4,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	Args         map[string]*anypb.Any `protobuf:"bytes,5,rep,name=args,proto3" json:"args,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	Options      map[string]*anypb.Any `protobuf:"bytes,6,rep,name=options,proto3" json:"options,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	InputConfig  *StreamConfig         `protobuf:"bytes,7,opt,name=inputConfig,proto3" json:"inputConfig,omitempty"`
+	OutputConfig *StreamConfig         `protobuf:"bytes,8,opt,name=outputConfig,proto3" json:"outputConfig,omitempty"`
 }
 
 func (x *AssistantConversationConfiguration) Reset() {
@@ -3452,10 +3451,10 @@ type AssistantConversationAssistantMessage struct {
 	//
 	//	*AssistantConversationAssistantMessage_Audio
 	//	*AssistantConversationAssistantMessage_Text
-	Message   isAssistantConversationAssistantMessage_Message `protobuf_oneof:"message"`
-	Id        string                                          `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	Completed bool                                            `protobuf:"varint,3,opt,name=completed,proto3" json:"completed,omitempty"`
-	Time      *timestamppb.Timestamp                          `protobuf:"bytes,4,opt,name=time,proto3" json:"time,omitempty"`
+	Message isAssistantConversationAssistantMessage_Message `protobuf_oneof:"message"`
+	Id        string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	Completed bool                   `protobuf:"varint,3,opt,name=completed,proto3" json:"completed,omitempty"`
+	Time      *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=time,proto3" json:"time,omitempty"`
 }
 
 func (x *AssistantConversationAssistantMessage) Reset() {

@@ -98,7 +98,7 @@ func (r *GenericRequestor) initializeMaxSessionDuration(ctx context.Context, beh
 		return
 	}
 
-	timeoutDuration := time.Duration(*behavior.MaxSessionDuration) * time.Minute
+	timeoutDuration := time.Duration(*behavior.MaxSessionDuration) * time.Second
 	r.maxSessionTimer = time.AfterFunc(timeoutDuration, func() {
 		inputMessage, err := r.messaging.GetMessage()
 		if err != nil {
@@ -209,7 +209,7 @@ func (r *GenericRequestor) startIdleTimeoutTimer(ctx context.Context) {
 		return
 	}
 
-	timeoutDuration := time.Duration(*behavior.IdealTimeout) * time.Minute
+	timeoutDuration := time.Duration(*behavior.IdealTimeout) * time.Second
 	r.idleTimeoutTimer = time.AfterFunc(timeoutDuration, func() {
 		if err := r.onIdleTimeout(ctx); err != nil {
 			r.logger.Errorf("error while handling idle timeout: %v", err)

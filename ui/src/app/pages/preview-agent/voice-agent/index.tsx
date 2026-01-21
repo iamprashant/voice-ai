@@ -50,28 +50,24 @@ export const PublicPreviewVoiceAgent = () => {
   const { assistantId } = useParams();
   const authId = searchParams.get('authId');
   const token = searchParams.get('token');
-  const name = searchParams.get('name');
 
-  if (!assistantId || !authId || !token || !name) {
+  if (!assistantId || !token) {
     return <Navigate to="/404" replace />;
   }
 
   return (
     <VoiceAgent
+      debug={false}
       connectConfig={ConnectionConfig.DefaultConnectionConfig(
         ConnectionConfig.WithSDK({
           ApiKey: token,
-          UserId: authId,
+          UserId: '' + (authId || 'public_user'),
         }),
-      )}
+      ).withCustomEndpoint(CONFIG.connection)}
       agentConfig={new AgentConfig(
         assistantId,
         new InputOptions([Channel.Audio, Channel.Text], Channel.Text),
-      )
-        .addKeywords([name])
-        .addArgument('name', name)
-        .addMetadata('name', StringToAny(name))
-        .addMetadata('authId', StringToAny(authId))}
+      ).addMetadata('authId', StringToAny('' + (authId || 'public_user')))}
     />
   );
 };
@@ -87,6 +83,7 @@ export const PreviewVoiceAgent = () => {
 
   return (
     <VoiceAgent
+      debug={true}
       connectConfig={ConnectionConfig.DefaultConnectionConfig(
         ConnectionConfig.WithDebugger({
           authorization: token,

@@ -113,8 +113,6 @@ func (cApi *ConversationApi) CallReciever(c *gin.Context) {
 
 	clientNumber, telemetries, err := _telephony.ReceiveCall(c)
 	if err != nil {
-		cApi.logger.Errorf("failed to receive call: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to process incoming call"})
 		return
 	}
 

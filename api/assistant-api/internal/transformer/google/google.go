@@ -80,7 +80,6 @@ func (gog *googleOption) SpeechToTextOptions() *speechpb.StreamingRecognitionCon
 	audioEncoding := gog.GetSpeechToTextEncoding(gog.audioConfig.GetAudioFormat())
 
 	opts := &speechpb.StreamingRecognitionConfig{
-
 		Config: &speechpb.RecognitionConfig{
 			DecodingConfig: &speechpb.RecognitionConfig_ExplicitDecodingConfig{
 				ExplicitDecodingConfig: &speechpb.ExplicitDecodingConfig{

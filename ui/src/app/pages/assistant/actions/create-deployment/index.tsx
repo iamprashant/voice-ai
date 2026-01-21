@@ -22,22 +22,18 @@ import {
   Phone,
   Plus,
   RotateCw,
-  Speech,
 } from 'lucide-react';
-import { FC, useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Speaker } from 'lucide-react';
 import {
   Assistant,
   AssistantDefinition,
   ConnectionConfig,
-  DeploymentAudioProvider,
   GetAssistant,
   GetAssistantRequest,
 } from '@rapidaai/react';
 import toast from 'react-hot-toast/headless';
 import { connectionConfig } from '@/configs';
-import { ProviderPill } from '@/app/components/pill/provider-model-pill';
 import { PlusIcon } from '@/app/components/Icon/plus';
 import { Popover } from '@/app/components/popover';
 import { ActionableEmptyMessage } from '@/app/components/container/message/actionable-empty-message';
@@ -276,25 +272,6 @@ export const ConfigureAssistantDeploymentPage = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-6 text-sm px-4 py-4 text-muted">
-              <FieldSet className="col-span-2">
-                <FormLabel>Public Url</FormLabel>
-                <div className="flex items-center gap-2">
-                  <code className="flex-1 dark:bg-gray-950 bg-gray-100 px-3 py-2 font-mono text-xs min-w-0 overflow-hidden">
-                    {`https://www.rapida.ai/public/assistant/${assistantId}?token={{PROJECT_CRDENTIAL_KEY}}`}
-                  </code>
-                  <div className="flex shrink-0 border divide-x">
-                    <CopyButton className="h-7 w-7">
-                      {`https://www.rapida.ai/public/assistant/2214276472644829184?token={{PROJECT_CRDENTIAL_KEY}}`}
-                    </CopyButton>
-                  </div>
-                </div>
-                <InputHelper>
-                  You can add all the additional agent arguments in query
-                  parameters for example if you are expecting argument
-                  <code className="text-red-600">`name`</code>
-                  add <code className="text-red-600">`?name=your-name`</code>
-                </InputHelper>
-              </FieldSet>
               <div className="space-y-4">
                 <div>
                   <div className="text-muted-foreground">Input Mode</div>
@@ -358,6 +335,25 @@ export const ConfigureAssistantDeploymentPage = () => {
                 </IButton>
               </div>
             </div>
+            <FieldSet className="col-span-2 px-4 py-4 ">
+              <FormLabel>Public Url</FormLabel>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 dark:bg-gray-950 bg-gray-100 px-3 py-2 font-mono text-xs min-w-0 overflow-hidden">
+                  {`https://app.rapida.ai/preview/public/assistant/${assistantId}?token={{PROJECT_CRDENTIAL_KEY}}`}
+                </code>
+                <div className="flex shrink-0 border divide-x">
+                  <CopyButton className="h-7 w-7">
+                    {`https://app.rapida.ai/preview/public/assistant/${assistantId}?token={{PROJECT_CRDENTIAL_KEY}}`}
+                  </CopyButton>
+                </div>
+              </div>
+              <InputHelper>
+                You can add all the additional agent arguments in query
+                parameters for example if you are expecting argument
+                <code className="text-red-600">`name`</code>
+                add <code className="text-red-600">`?name=your-name`</code>
+              </InputHelper>
+            </FieldSet>
             <div className="grid grid-cols-2 gap-6 text-sm px-4 py-4 text-muted">
               <div className="space-y-4">
                 <div>
@@ -668,94 +664,3 @@ export const ConfigureAssistantDeploymentPage = () => {
     </div>
   );
 };
-
-// Helper components
-
-const VoiceInput: FC<{ deployment?: DeploymentAudioProvider }> = ({
-  deployment,
-}) => (
-  <div className="bg-gray-50 dark:bg-gray-950">
-    <div className="flex items-center space-x-2 border-b py-1 px-4 h-10">
-      <Speech className="w-4 h-4" />
-      <h4 className="font-medium">Speech to text</h4>
-    </div>
-    {deployment?.getAudiooptionsList() ? (
-      deployment?.getAudiooptionsList().length > 0 && (
-        <div className="text-xs text-gray-500 dark:text-gray-400 py-3 px-3 space-y-6">
-          <FieldSet>
-            <FormLabel>Provider</FormLabel>
-            <ProviderPill provider={deployment?.getAudioprovider()} />
-          </FieldSet>
-          <div className="grid grid-cols-2 gap-4">
-            {deployment
-              ?.getAudiooptionsList()
-              .filter(d => d.getValue())
-              .filter(d => d.getKey().startsWith('listen.'))
-              .map((detail, index) => (
-                <FieldSet key={index}>
-                  <FormLabel>{detail.getKey()}</FormLabel>
-                  <div className="flex items-center gap-2">
-                    <code className="flex-1 dark:bg-gray-900 bg-gray-100 px-3 py-2 font-mono text-xs min-w-0 overflow-hidden">
-                      {detail.getValue()}
-                    </code>
-                    <div className="flex shrink-0 border divide-x">
-                      <CopyButton className="h-7 w-7">
-                        {detail.getValue()}
-                      </CopyButton>
-                    </div>
-                  </div>
-                </FieldSet>
-              ))}
-          </div>
-        </div>
-      )
-    ) : (
-      <YellowNoticeBlock>Voice input is not enabled</YellowNoticeBlock>
-    )}
-  </div>
-);
-
-const VoiceOutput: FC<{ deployment?: DeploymentAudioProvider }> = ({
-  deployment,
-}) => (
-  <div className="bg-gray-50 dark:bg-gray-950">
-    <div className="flex items-center space-x-2 border-b py-2 px-4  h-10">
-      <Speaker className="w-4 h-4" />
-      <h4 className="font-medium">Text to speech</h4>
-    </div>
-    {deployment?.getAudiooptionsList() ? (
-      deployment?.getAudiooptionsList().length > 0 && (
-        <div className="text-xs text-gray-500 dark:text-gray-400 py-3 px-3 space-y-6">
-          <FieldSet>
-            <FormLabel>Provider</FormLabel>
-            <ProviderPill provider={deployment?.getAudioprovider()} />
-          </FieldSet>
-          <div className="grid grid-cols-2 gap-4">
-            {deployment
-              ?.getAudiooptionsList()
-              .filter(d => d.getValue())
-              .filter(d => d.getKey().startsWith('speak.'))
-              .map((detail, index) => (
-                <FieldSet key={index}>
-                  <FormLabel>{detail.getKey()}</FormLabel>
-                  <div className="flex items-center gap-2">
-                    <code className="flex-1 dark:bg-gray-900 bg-gray-100 px-3 py-2 font-mono text-xs min-w-0 overflow-hidden">
-                      {detail.getValue()}
-                    </code>
-
-                    <div className="flex shrink-0 border divide-x">
-                      <CopyButton className="h-7 w-7">
-                        {detail.getValue()}
-                      </CopyButton>
-                    </div>
-                  </div>
-                </FieldSet>
-              ))}
-          </div>
-        </div>
-      )
-    ) : (
-      <YellowNoticeBlock>Voice output is not enabled</YellowNoticeBlock>
-    )}
-  </div>
-);

@@ -96,7 +96,9 @@ func (rt *sarvamTextToSpeech) textToSpeechCallback(conn *websocket.Conn, ctx con
 
 		_, audioChunk, err := conn.ReadMessage()
 		if err != nil {
-			rt.logger.Errorf("sarvam-tts: error reading from WebSocket: %v", err)
+			if err := rt.Initialize(); err != nil {
+				rt.logger.Errorf("sarvam-tts: failed to re-initialize after 408 timeout: %v", err)
+			}
 			return
 		}
 

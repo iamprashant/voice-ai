@@ -101,9 +101,9 @@ const ConfigureAssistantDebuggerDeployment: FC<{ assistantId: string }> = ({
   const [experienceConfig, setExperienceConfig] = useState<ExperienceConfig>({
     greeting: undefined,
     messageOnError: undefined,
-    idealTimeout: '5',
+    idealTimeout: '30',
     idealMessage: 'Are you there?',
-    maxCallDuration: '10',
+    maxCallDuration: '300',
     idleTimeoutBackoffTimes: '2',
   });
 

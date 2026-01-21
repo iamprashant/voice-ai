@@ -101,11 +101,11 @@ export const ConfigureExperience: FC<{
               />
             </FieldSet>
             <FieldSet>
-              <FormLabel>Idle Silence Timeout (minute)</FormLabel>
+              <FormLabel>Idle Silence Timeout (Seconds)</FormLabel>
               <div className="flex space-x-2 justify-center items-center">
                 <Slider
-                  min={2}
-                  max={7}
+                  min={15}
+                  max={120}
                   step={1}
                   value={
                     experienceConfig.idealTimeout &&
@@ -172,11 +172,11 @@ export const ConfigureExperience: FC<{
               </InputHelper>
             </FieldSet>
             <FieldSet>
-              <FormLabel>Maximum Session Duration (Minute)</FormLabel>
+              <FormLabel>Maximum Session Duration (Second)</FormLabel>
               <div className="flex space-x-2 justify-center items-center">
                 <Slider
-                  min={5}
-                  max={15}
+                  min={180}
+                  max={600}
                   step={1}
                   value={
                     experienceConfig.maxCallDuration &&

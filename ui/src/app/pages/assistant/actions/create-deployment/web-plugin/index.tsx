@@ -120,11 +120,11 @@ const ConfigureAssistantWebDeployment: FC<{ assistantId: string }> = ({
     useState<WebWidgetExperienceConfig>({
       greeting: undefined,
       messageOnError: undefined,
-      idealTimeout: '3',
+      idealTimeout: '30',
       idealMessage: 'Are you there?',
-      maxCallDuration: '10',
-      suggestions: [],
+      maxCallDuration: '300',
       idleTimeoutBackoffTimes: '2',
+      suggestions: [],
     });
 
   const [featureConfig, setFeatureConfig] = useState<FeatureConfig>({

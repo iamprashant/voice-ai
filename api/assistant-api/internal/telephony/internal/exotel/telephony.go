@@ -199,5 +199,12 @@ func (tpc *exotelTelephony) ReceiveCall(c *gin.Context) (*string, []types.Teleme
 		return nil, telemetry, fmt.Errorf("missing or empty 'from' query parameter")
 	}
 
-	return utils.Ptr(clientNumber), telemetry, nil
+	// Build telemetry similar to Twilio
+	if v, ok := queryParams["CallSid"]; ok && v != "" {
+		telemetry = append(telemetry,
+			types.NewMetadata("telephony.uuid", v),
+		)
+	}
+
+	return utils.Ptr(clientNumber), append(telemetry, types.NewEvent("webhook", queryParams), types.NewMetric("STATUS", "SUCCESS", utils.Ptr("Status of telephony api"))), nil
 }

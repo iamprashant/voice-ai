@@ -22,11 +22,13 @@ const (
 func (elabs *elevenLabsOption) GetEncoding() string {
 	switch elabs.audioConfig.GetAudioFormat() {
 	case protos.AudioConfig_LINEAR16:
+		if elabs.audioConfig.GetSampleRate() == 8000 {
+			return "pcm_8000"
+		}
 		return "pcm_16000"
 	case protos.AudioConfig_MuLaw8:
 		return "ulaw_8000"
 	default:
-		elabs.logger.Debugf("Warning: Invalid encoding mdlOpts. Using default (linear16).")
 		return "pcm_16000"
 	}
 }

@@ -36,10 +36,11 @@ import { PageHeaderBlock } from '@/app/components/blocks/page-header-block';
 import { PageLoader } from '@/app/components/loader/page-loader';
 
 export const VoiceAgent: FC<{
+  debug: boolean;
   connectConfig: ConnectionConfig;
   agentConfig: AgentConfig;
   agentCallback?: AgentCallback;
-}> = ({ connectConfig, agentConfig, agentCallback }) => {
+}> = ({ debug, connectConfig, agentConfig, agentCallback }) => {
   //
   const voiceAgentContextValue = React.useMemo(() => {
     return new VI(connectConfig, agentConfig, agentCallback);
@@ -68,40 +69,66 @@ export const VoiceAgent: FC<{
     return (
       <div className="h-dvh flex p-8 text-sm/6 w-full">
         <div className="relative overflow-hidden h-full mx-auto w-2/3 dark:bg-gray-950/50 border rounded-l-lg">
-          <div className="bg-white dark:bg-gray-950 z-10 absolute top-0 left-0 right-0 ">
-            <PageHeaderBlock className="border-b bg-light-background dark:bg-gray-900 pl-3">
-              <a
-                href={`/deployment/assistant/${agentConfig.id}/overview`}
-                className="flex items-center hover:text-red-600 hover:cursor-pointer"
-              >
-                <ChevronLeft className="w-5 h-5 mr-1" strokeWidth={1.5} />
-                <PageTitleBlock className="text-sm/6">
-                  Back to Assistant
-                </PageTitleBlock>
-              </a>
-            </PageHeaderBlock>
-            {!assistant?.getDebuggerdeployment()?.hasInputaudio() && (
-              <YellowNoticeBlock className="flex items-center justify-between space-x-3">
-                <Info className="shrink-0 w-4 h-4" />
-                <div className="text-sm font-medium">
-                  Voice functionality is currently disabled. Please enable it to
-                  enjoy a voice experience with your assistant.
-                </div>
+          {debug ? (
+            <div className="bg-white dark:bg-gray-950 z-10 absolute top-0 left-0 right-0 ">
+              <PageHeaderBlock className="border-b bg-light-background dark:bg-gray-900 pl-3">
                 <a
-                  target="_blank"
-                  href={`/deployment/assistant/${assistant?.getId()}/manage/deployment/debugger`}
-                  className="h-7 flex items-center font-medium hover:underline ml-auto text-yellow-600"
-                  rel="noreferrer"
+                  href={`/deployment/assistant/${agentConfig.id}/overview`}
+                  className="flex items-center hover:text-red-600 hover:cursor-pointer"
                 >
-                  Enable voice
-                  <ExternalLink
-                    className="shrink-0 w-4 h-4 ml-1.5"
-                    strokeWidth={1.5}
-                  />
+                  <ChevronLeft className="w-5 h-5 mr-1" strokeWidth={1.5} />
+                  <PageTitleBlock className="text-sm/6">
+                    Back to Assistant
+                  </PageTitleBlock>
                 </a>
-              </YellowNoticeBlock>
-            )}
-          </div>
+              </PageHeaderBlock>
+              {!assistant?.getDebuggerdeployment()?.hasInputaudio() && (
+                <YellowNoticeBlock className="flex items-center justify-between space-x-3">
+                  <Info className="shrink-0 w-4 h-4" />
+                  <div className="text-sm font-medium">
+                    Voice functionality is currently disabled. Please enable it
+                    to enjoy a voice experience with your assistant.
+                  </div>
+                  <a
+                    target="_blank"
+                    href={`/deployment/assistant/${assistant?.getId()}/manage/deployment/debugger`}
+                    className="h-7 flex items-center font-medium hover:underline ml-auto text-yellow-600"
+                    rel="noreferrer"
+                  >
+                    Enable voice
+                    <ExternalLink
+                      className="shrink-0 w-4 h-4 ml-1.5"
+                      strokeWidth={1.5}
+                    />
+                  </a>
+                </YellowNoticeBlock>
+              )}
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-gray-950 z-10 absolute top-0 left-0 right-0">
+              {!assistant?.getApideployment()?.hasInputaudio() && (
+                <YellowNoticeBlock className="flex items-center justify-between space-x-3">
+                  <Info className="shrink-0 w-4 h-4" />
+                  <div className="text-sm font-medium">
+                    Voice functionality is currently disabled. Please enable it
+                    to enjoy a voice experience with your assistant.
+                  </div>
+                  <a
+                    target="_blank"
+                    href={`/deployment/assistant/${assistant?.getId()}/manage/deployment/debugger`}
+                    className="h-7 flex items-center font-medium hover:underline ml-auto text-yellow-600"
+                    rel="noreferrer"
+                  >
+                    Enable voice
+                    <ExternalLink
+                      className="shrink-0 w-4 h-4 ml-1.5"
+                      strokeWidth={1.5}
+                    />
+                  </a>
+                </YellowNoticeBlock>
+              )}
+            </div>
+          )}
           <div className="h-full flex flex-row flex-nowrap items-stretch">
             <div className="flex flex-col grow min-w-0 flex-1">
               <div className="flex flex-col justify-center grow min-h-0 px-4">

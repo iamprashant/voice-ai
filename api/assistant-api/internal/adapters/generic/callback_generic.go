@@ -263,6 +263,8 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				continue
 			}
 		case internal_type.SpeechToTextPacket:
+			talking.logger.Debugf("testing packet stt-> %+v", vl)
+
 			ctx, span, _ := talking.Tracer().StartSpan(talking.Context(), utils.AssistantListeningStage,
 				internal_telemetry.KV{
 					K: "transcript",
@@ -290,6 +292,8 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 			continue
 
 		case internal_type.EndOfSpeechPacket:
+			talking.logger.Debugf("testing packet eos-> %+v", vl)
+			//
 			ctx, span, _ := talking.Tracer().StartSpan(talking.Context(), utils.AssistantUtteranceStage)
 			span.EndSpan(ctx,
 				utils.AssistantUtteranceStage,
@@ -320,6 +324,7 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				continue
 			}
 		case internal_type.LLMStreamPacket:
+			talking.logger.Debugf("testing packet llmstream-> %+v", vl)
 			// resetting idle timer as bot has sponken
 			talking.resetIdleTimeoutTimer(talking.Context())
 
@@ -346,6 +351,8 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 			// end of speech analyzer in case histoyrical data is to be used
 
 		case internal_type.LLMMessagePacket:
+
+			talking.logger.Debugf("testing packet llmend->")
 			// resetting idle timer as bot has sponken
 			talking.resetIdleTimeoutTimer(talking.Context())
 
@@ -386,6 +393,7 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 			}
 		case internal_type.TextToSpeechEndPacket:
 
+			talking.logger.Debugf("testing packet tts end -> %+v", vl)
 			// resetting idle timer as bot has sponken
 			talking.resetIdleTimeoutTimer(talking.Context())
 
@@ -404,6 +412,8 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 
 			continue
 		case internal_type.TextToSpeechAudioPacket:
+
+			talking.logger.Debugf("testing packet ttsstream -> audio ")
 			// resetting idle timer as bot has sponken
 			talking.resetIdleTimeoutTimer(talking.Context())
 			// get current input message

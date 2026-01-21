@@ -89,6 +89,9 @@ func (az *azureOption) GetSpeechSynthesisOutputFormat() common.SpeechSynthesisOu
 	case protos.AudioConfig_MuLaw8:
 		return common.Raw8Khz8BitMonoMULaw
 	case protos.AudioConfig_LINEAR16:
+		if az.audioConfig.GetSampleRate() == 8000 {
+			return common.Raw8Khz16BitMonoPcm
+		}
 		return common.Raw16Khz16BitMonoPcm
 	default:
 		return common.Raw16Khz16BitMonoPcm
