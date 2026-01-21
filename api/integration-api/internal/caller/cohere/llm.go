@@ -250,12 +250,17 @@ func (llc *largeLanguageCaller) GetChatStreamRequest(opts *internal_callers.Chat
 	if len(opts.ToolDefinitions) > 0 {
 		options.Tools = make([]*cohere.ToolV2, len(opts.ToolDefinitions))
 		for idx, tl := range opts.ToolDefinitions {
+			fn := &cohere.ToolV2Function{
+				Name: tl.Function.Name,
+			}
+			if tl.Function.Parameters != nil {
+				fn.Parameters = tl.Function.Parameters.ToMap()
+			}
+			if tl.Function.Description != "" {
+				fn.Description = &tl.Function.Description
+			}
 			options.Tools[idx] = &cohere.ToolV2{
-				Function: &cohere.ToolV2Function{
-					Name:        tl.Function.Name,
-					Description: &tl.Function.Description,
-					Parameters:  tl.Function.Parameters.ToMap(),
-				},
+				Function: fn,
 			}
 		}
 	}

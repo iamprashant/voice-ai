@@ -31,9 +31,11 @@ func (executor *toolCaller) ExecutionMethod() string {
 
 func (executor *toolCaller) Definition() (*protos.FunctionDefinition, error) {
 	definition := &protos.FunctionDefinition{
-		Name:        executor.toolOptions.Name,
-		Description: executor.toolOptions.Description,
-		Parameters:  &protos.FunctionParameter{},
+		Name:       executor.toolOptions.Name,
+		Parameters: &protos.FunctionParameter{},
+	}
+	if executor.toolOptions.Description != nil && *executor.toolOptions.Description != "" {
+		definition.Description = *executor.toolOptions.Description
 	}
 	if err := utils.Cast(executor.toolOptions.Fields, definition.Parameters); err != nil {
 		return nil, err
@@ -43,16 +45,8 @@ func (executor *toolCaller) Definition() (*protos.FunctionDefinition, error) {
 
 func (executor *toolCaller) Result(msg string, success bool) map[string]interface{} {
 	if success {
-		return map[string]interface{}{
-			"data":    msg,
-			"success": true,
-			"status":  "SUCCESS",
-		}
+		return map[string]interface{}{"data": msg, "success": true, "status": "SUCCESS"}
 	} else {
-		return map[string]interface{}{
-			"error":   msg,
-			"success": false,
-			"status":  "FAIL",
-		}
+		return map[string]interface{}{"error": msg, "success": false, "status": "FAIL"}
 	}
 }

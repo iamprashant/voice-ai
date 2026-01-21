@@ -371,6 +371,9 @@ func (llc *largeLanguageCaller) buildFunctionProperties(fpp *internal_callers.Fu
 		Type:        genai.Type(fpp.Type),
 		Description: fpp.Description,
 	}
+	if fpp.Description != "" {
+		schema.Description = fpp.Description
+	}
 	if fpp.Enum != nil {
 		schema.Enum = make([]string, len(fpp.Enum))
 		for i, v := range fpp.Enum {

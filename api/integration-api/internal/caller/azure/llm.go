@@ -311,8 +311,10 @@ func (llc *largeLanguageCaller) getChatCompleteParameter(
 				fn := tl.Function
 				if fn != nil {
 					funcDef := openai.FunctionDefinitionParam{
-						Name:        fn.Name,
-						Description: openai.String(fn.Description),
+						Name: fn.Name,
+					}
+					if fn.Description != "" {
+						funcDef.Description = openai.String(fn.Description)
 					}
 					if fn.Parameters != nil {
 						funcDef.Parameters = fn.Parameters.ToMap()

@@ -33,8 +33,7 @@ type assistantToolService struct {
 }
 
 // CreateAssistantTool implements internal_services.AssistantToolService.
-func (eService *assistantToolService) Create(ctx context.Context, auth types.SimplePrinciple, assistantId uint64,
-	name string, description string, fields map[string]interface{}, executionMethod string, options []*protos.Metadata) (*internal_assistant_entity.AssistantTool, error) {
+func (eService *assistantToolService) Create(ctx context.Context, auth types.SimplePrinciple, assistantId uint64, name string, description *string, fields map[string]interface{}, executionMethod string, options []*protos.Metadata) (*internal_assistant_entity.AssistantTool, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
 
@@ -157,7 +156,7 @@ func (eService *assistantToolService) Get(ctx context.Context, auth types.Simple
 // UpdateAssistantTool implements internal_services.AssistantToolService.
 func (eService *assistantToolService) Update(ctx context.Context, auth types.SimplePrinciple,
 	toolId uint64,
-	assistantId uint64, name string, description string, fields map[string]interface{}, executionMethod string, options []*protos.Metadata) (*internal_assistant_entity.AssistantTool, error) {
+	assistantId uint64, name string, description *string, fields map[string]interface{}, executionMethod string, options []*protos.Metadata) (*internal_assistant_entity.AssistantTool, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
 

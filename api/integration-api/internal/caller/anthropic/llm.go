@@ -253,8 +253,10 @@ func (llc *largeLanguageCaller) GetMessageNewParams(opts *internal_callers.ChatC
 				fn := tl.Function
 				if fn != nil {
 					funcDef := &anthropic.ToolParam{
-						Name:        fn.Name,
-						Description: anthropic.String(fn.Description),
+						Name: fn.Name,
+					}
+					if fn.Description != "" {
+						funcDef.Description = anthropic.String(fn.Description)
 					}
 					if fn.Parameters != nil {
 						funcDef.InputSchema = anthropic.ToolInputSchemaParam{
