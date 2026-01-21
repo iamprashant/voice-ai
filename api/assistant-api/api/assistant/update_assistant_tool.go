@@ -27,7 +27,7 @@ func (assistantApi *assistantGrpcApi) UpdateAssistantTool(ctx context.Context, c
 		cawr.GetId(),
 		cawr.GetAssistantId(),
 		cawr.GetName(),
-		cawr.GetDescription(),
+		&cawr.Description,
 		cawr.GetFields().AsMap(),
 		cawr.GetExecutionMethod(),
 		cawr.GetExecutionOptions())

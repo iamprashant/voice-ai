@@ -16,7 +16,7 @@ type AssistantTool struct {
 	gorm_model.Mutable
 	AssistantId      uint64                  `json:"assistantId" gorm:"type:bigint;not null"`
 	Name             string                  `json:"name" gorm:"type:bigint;not null"`
-	Description      string                  `json:"description" gorm:"type:bigint;not null"`
+	Description      *string                 `json:"description" gorm:"type:bigint;not null"`
 	Fields           gorm_types.InterfaceMap `json:"fields" gorm:"type:string;size:200;not null;"`
 	ExecutionMethod  string                  `json:"executionMethod" gorm:"type:string;size:50;not null;"`
 	ExecutionOptions []*AssistantToolOption  `json:"executionOptions" gorm:"foreignKey:AssistantToolId"`

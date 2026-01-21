@@ -171,6 +171,9 @@ func (llc *largeLanguageCaller) GetContentConfig(
 						Name:        fn.Name,
 						Description: fn.Description,
 					}
+					if fn.Description != "" {
+						funcDef.Description = fn.Description
+					}
 					if fn.Parameters != nil {
 						funcDef.Parameters = llc.ToGoogleSchema(fn.Parameters)
 					}
