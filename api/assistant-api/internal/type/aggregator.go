@@ -9,24 +9,24 @@ import (
 	"context"
 )
 
-// LLMSentenceAssembler defines the contract for components that transform
-// streamed or batched text inputs into tokenized sentence outputs.
+// LLMTextAggregator defines the contract for components that transform
+// streamed or batched text inputs into aggregated sentence outputs.
 //
 // Implementations are expected to:
-//   - Accept inputs via Tokenize
+//   - Accept inputs via Aggregate
 //   - Emit results asynchronously on the Result channel
 //   - Release resources and stop processing on Close
-type LLMTextAssembler interface {
-	// Tokenize consumes a tokenizer input (such as an LLMStreamChunk
+type LLMTextAggregator interface {
+	// Aggregate consumes an aggregator input (such as an LLMStreamChunk
 	// or Finalize signal). Implementations should respect context
 	// cancellation and deadlines.
-	Assemble(ctx context.Context, in ...LLMPacket) error
+	Aggregate(ctx context.Context, in ...LLMPacket) error
 
-	// Result returns a read-only channel on which tokenized outputs
+	// Result returns a read-only channel on which aggregated outputs
 	// are delivered.
 	Result() <-chan Packet
 
-	// Close terminates the tokenizer, releases resources,
+	// Close terminates the aggregator, releases resources,
 	// and closes the Result channel.
 	Close() error
 }

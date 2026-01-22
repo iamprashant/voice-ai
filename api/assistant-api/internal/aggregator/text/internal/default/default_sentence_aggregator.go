@@ -3,7 +3,7 @@
 //
 // Licensed under GPL-2.0 with Rapida Additional Terms.
 // See LICENSE.md or contact sales@rapida.ai for commercial usage.
-package internal_default_assembler
+package internal_default_aggregator
 
 import (
 	"context"
@@ -17,8 +17,8 @@ import (
 	"github.com/rapidaai/pkg/utils"
 )
 
-// TextTokenizer implements sentence-level tokenization for streaming text.
-type textAssembler struct {
+// textAggregator implements sentence-level aggregation for streaming text.
+type textAggregator struct {
 	logger commons.Logger
 	ctx    context.Context
 
@@ -36,7 +36,7 @@ type textAssembler struct {
 	toEmitBuffer []internal_type.Packet
 }
 
-// NewTextTokenizer creates a new sentence tokenizer with the given logger and options.
+// NewDefaultLLMTextAggregator creates a new sentence aggregator with the given logger and options.
 //
 // The options parameter should contain "speaker.sentence.boundaries" which is a
 // comma-separated list of sentence delimiters (e.g., ".,?!").
@@ -45,12 +45,12 @@ type textAssembler struct {
 //
 // Example:
 //
-//	tokenizer, err := NewTextTokenizer(logger, options)
+//	aggregator, err := NewDefaultLLMTextAggregator(logger, options)
 //	if err != nil {
 //		return err
 //	}
-func NewDefaultLLMTextAssembler(context context.Context, logger commons.Logger, options utils.Option) (internal_type.LLMTextAssembler, error) {
-	st := &textAssembler{
+func NewDefaultLLMTextAggregator(context context.Context, logger commons.Logger, options utils.Option) (internal_type.LLMTextAggregator, error) {
+	st := &textAggregator{
 		ctx:          context,
 		logger:       logger,
 		result:       make(chan internal_type.Packet, 32), // Increased buffer for better throughput
@@ -64,7 +64,7 @@ func NewDefaultLLMTextAssembler(context context.Context, logger commons.Logger, 
 
 // initializeBoundaries sets up the boundary regex from configuration options.
 // It safely handles missing or invalid boundary configurations.
-func (st *textAssembler) initializeBoundaries(options utils.Option, logger commons.Logger) error {
+func (st *textAggregator) initializeBoundaries(options utils.Option, logger commons.Logger) error {
 	boundariesRaw, err := options.GetString("speaker.sentence.boundaries")
 	if err != nil || boundariesRaw == "" {
 		return nil
@@ -106,7 +106,7 @@ func filterBoundaries(boundaries []string) []string {
 	return valid
 }
 
-// Tokenize processes a text segment and emits complete sentences.
+// Aggregate processes a text segment and emits complete sentences.
 //
 // It handles context switching by flushing any pending text in the previous context.
 // When sentence.IsComplete is true, any remaining buffered text is emitted as a complete sentence.
@@ -115,12 +115,12 @@ func filterBoundaries(boundaries []string) []string {
 //
 // Example:
 //
-//	err := tokenizer.Tokenize(ctx, Text{
+//	err := aggregator.Aggregate(ctx, Text{
 //		ContextId:  "speaker1",
 //		Text:   "Hello world.",
 //		IsComplete: true,
 //	})
-func (st *textAssembler) Assemble(ctx context.Context, sentences ...internal_type.LLMPacket) error {
+func (st *textAggregator) Aggregate(ctx context.Context, sentences ...internal_type.LLMPacket) error {
 	// Process all sentences with lock held once, then emit without lock
 	st.mu.Lock()
 	st.toEmitBuffer = st.toEmitBuffer[:0] // Reset reusable buffer
@@ -147,7 +147,7 @@ func (st *textAssembler) Assemble(ctx context.Context, sentences ...internal_typ
 
 // extractAndQueueLocked extracts complete sentences from the input.
 // MUST be called with lock held. Appends results to st.toEmitBuffer.
-func (st *textAssembler) extractAndQueueLocked(sentence internal_type.LLMPacket) {
+func (st *textAggregator) extractAndQueueLocked(sentence internal_type.LLMPacket) {
 	switch input := sentence.(type) {
 	case internal_type.LLMStreamPacket:
 		// Handle context switch - just clean buffer, do NOT emit
@@ -182,7 +182,7 @@ func (st *textAssembler) extractAndQueueLocked(sentence internal_type.LLMPacket)
 
 // extractTextsByBoundaryLocked extracts all sentences that end at boundaries.
 // MUST be called with lock held. Appends to st.toEmitBuffer.
-func (st *textAssembler) extractTextsByBoundaryLocked(contextId string) {
+func (st *textAggregator) extractTextsByBoundaryLocked(contextId string) {
 	text := st.buffer.String()
 
 	// Find all boundaries at once instead of iterating
@@ -217,20 +217,20 @@ func (st *textAssembler) extractTextsByBoundaryLocked(contextId string) {
 //
 // Example:
 //
-//	for sentence := range tokenizer.Result() {
+//	for sentence := range aggregator.Result() {
 //		fmt.Println(sentence.Text)
 //	}
-func (st *textAssembler) Result() <-chan internal_type.Packet {
+func (st *textAggregator) Result() <-chan internal_type.Packet {
 	return st.result
 }
 
-// Close gracefully shuts down the tokenizer and closes the result channel.
+// Close gracefully shuts down the aggregator and closes the result channel.
 //
-// After Close() is called, the tokenizer cannot be reused. Any subsequent calls
-// to Tokenize() will panic when trying to send on the closed channel.
+// After Close() is called, the aggregator cannot be reused. Any subsequent calls
+// to Aggregate() will panic when trying to send on the closed channel.
 //
 // It is safe to call Close() multiple times; subsequent calls are no-ops.
-func (st *textAssembler) Close() error {
+func (st *textAggregator) Close() error {
 	st.mu.Lock()
 	defer st.mu.Unlock()
 
@@ -247,10 +247,10 @@ func (st *textAssembler) Close() error {
 	return nil
 }
 
-// String returns a string representation of the tokenizer for debugging.
-func (st *textAssembler) String() string {
+// String returns a string representation of the aggregator for debugging.
+func (st *textAggregator) String() string {
 	st.mu.Lock()
 	defer st.mu.Unlock()
 
-	return fmt.Sprintf("TextAssembler{context=%q, bufferLen=%d, hasBoundaries=%v}", st.currentContext, st.buffer.Len(), st.hasBoundaries)
+	return fmt.Sprintf("TextAggregator{context=%q, bufferLen=%d, hasBoundaries=%v}", st.currentContext, st.buffer.Len(), st.hasBoundaries)
 }

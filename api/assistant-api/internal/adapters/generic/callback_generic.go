@@ -31,14 +31,14 @@ func (talking *GenericRequestor) callEndOfSpeech(ctx context.Context, vl interna
 	return errors.New("end of speech analyzer not configured")
 }
 
-func (talking *GenericRequestor) callTextAssembler(ctx context.Context, vl internal_type.Packet) error {
-	if talking.textAssembler != nil {
-		if err := talking.textAssembler.Assemble(ctx, vl); err != nil {
-			talking.logger.Debugf("unable to send packet to assembler %v", err)
+func (talking *GenericRequestor) callTextAggregator(ctx context.Context, vl internal_type.Packet) error {
+	if talking.textAggregator != nil {
+		if err := talking.textAggregator.Aggregate(ctx, vl); err != nil {
+			talking.logger.Debugf("unable to send packet to aggregator %v", err)
 		}
 		return nil
 	}
-	return errors.New("textAssembler not configured")
+	return errors.New("textAggregator not configured")
 }
 
 func (talking *GenericRequestor) callRecording(ctx context.Context, vl internal_type.Packet) error {
@@ -214,15 +214,15 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				talking.logger.Errorf("assistant executor error: %v", err)
 			}
 
-			if err := talking.callTextAssembler(ctx, internal_type.LLMStreamPacket{ContextID: vl.ContextId(), Text: vl.Text}); err != nil {
-				talking.logger.Debugf("unable to send static packet to tokenizer %v", err)
+			if err := talking.callTextAggregator(ctx, internal_type.LLMStreamPacket{ContextID: vl.ContextId(), Text: vl.Text}); err != nil {
+				talking.logger.Debugf("unable to send static packet to aggregator %v", err)
 			}
 
 			if err := talking.messaging.Transition(internal_adapter_request_customizers.LLMGenerated); err != nil {
 				talking.logger.Errorf("messaging transition error: %v", err)
 			}
-			if err := talking.callTextAssembler(ctx, internal_type.LLMMessagePacket{ContextID: vl.ContextId()}); err != nil {
-				talking.logger.Debugf("unable to send static packet to tokenizer %v", err)
+			if err := talking.callTextAggregator(ctx, internal_type.LLMMessagePacket{ContextID: vl.ContextId()}); err != nil {
+				talking.logger.Debugf("unable to send static packet to aggregator %v", err)
 			}
 
 			continue
@@ -341,9 +341,9 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 			if err := talking.messaging.Transition(internal_adapter_request_customizers.LLMGenerating); err != nil {
 				talking.logger.Errorf("messaging transition error: %v", err)
 			}
-			// sending to assembler for assembling sentences
-			if err := talking.callTextAssembler(ctx, vl); err != nil {
-				talking.logger.Errorf("sentence assembler error: %v, calling speak directly", err)
+			// sending to aggregator for assembling sentences
+			if err := talking.callTextAggregator(ctx, vl); err != nil {
+				talking.logger.Errorf("sentence aggregator error: %v, calling speak directly", err)
 				if err := talking.callSpeaking(ctx, vl); err != nil {
 					talking.logger.Errorf("speaking error: %v", err)
 				}
@@ -372,8 +372,8 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				talking.logger.Errorf("error creating message: %v", err)
 			}
 
-			if err := talking.callTextAssembler(ctx, vl); err != nil {
-				talking.logger.Errorf("sentence assembler error: %v calling speak directly", err)
+			if err := talking.callTextAggregator(ctx, vl); err != nil {
+				talking.logger.Errorf("sentence aggregator error: %v calling speak directly", err)
 				if err := talking.callSpeaking(ctx, vl); err != nil {
 					talking.logger.Errorf("speaking error: %v", err)
 				}

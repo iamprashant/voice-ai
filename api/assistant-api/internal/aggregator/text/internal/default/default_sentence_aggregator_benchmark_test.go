@@ -4,7 +4,7 @@
 // Licensed under GPL-2.0 with Rapida Additional Terms.
 // See LICENSE.md or contact sales@rapida.ai for commercial usage.
 
-package internal_default_assembler
+package internal_default_aggregator
 
 import (
 	"context"
@@ -16,8 +16,8 @@ import (
 	"github.com/rapidaai/pkg/utils"
 )
 
-// BenchmarkNewDefaultLLMTextAssembler measures the creation time of a assembler
-func BenchmarkNewDefaultLLMTextAssembler(b *testing.B) {
+// BenchmarkNewDefaultLLMTextAggregator measures the creation time of a aggregator
+func BenchmarkNewDefaultLLMTextAggregator(b *testing.B) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := utils.Option{"speaker.sentence.boundaries": ".,?!"}
 
@@ -25,13 +25,13 @@ func BenchmarkNewDefaultLLMTextAssembler(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
-		assembler.Close()
+		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
+		aggregator.Close()
 	}
 }
 
-// BenchmarkNewDefaultLLMTextAssemblerNoBoundaries measures creation without boundaries
-func BenchmarkNewDefaultLLMTextAssemblerNoBoundaries(b *testing.B) {
+// BenchmarkNewDefaultLLMTextAggregatorNoBoundaries measures creation without boundaries
+func BenchmarkNewDefaultLLMTextAggregatorNoBoundaries(b *testing.B) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := utils.Option{}
 
@@ -39,8 +39,8 @@ func BenchmarkNewDefaultLLMTextAssemblerNoBoundaries(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
-		assembler.Close()
+		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
+		aggregator.Close()
 	}
 }
 
@@ -54,12 +54,12 @@ func BenchmarkSingleTextTokenization(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
-		assembler.Assemble(ctx, internal_type.LLMStreamPacket{
+		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
+		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      "Hello world.",
 		})
-		assembler.Close()
+		aggregator.Close()
 	}
 }
 
@@ -79,11 +79,11 @@ func BenchmarkMultipleTexts(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
+		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
 		for _, s := range sentences {
-			assembler.Assemble(ctx, s)
+			aggregator.Aggregate(ctx, s)
 		}
-		assembler.Close()
+		aggregator.Close()
 	}
 }
 
@@ -104,12 +104,12 @@ func BenchmarkLargeTexts(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
-		assembler.Assemble(ctx, internal_type.LLMStreamPacket{
+		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
+		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      largeText,
 		})
-		assembler.Close()
+		aggregator.Close()
 	}
 }
 
@@ -130,14 +130,14 @@ func BenchmarkMultipleBoundaries(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
+		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
 		for _, s := range testTexts {
-			assembler.Assemble(ctx, internal_type.LLMStreamPacket{
+			aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 				ContextID: "speaker1",
 				Text:      s,
 			})
 		}
-		assembler.Close()
+		aggregator.Close()
 	}
 }
 
@@ -151,16 +151,16 @@ func BenchmarkContextSwitching(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
+		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
 		for speaker := 0; speaker < 5; speaker++ {
 			for j := 0; j < 3; j++ {
-				assembler.Assemble(ctx, internal_type.LLMStreamPacket{
+				aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 					ContextID: fmt.Sprintf("speaker%d", speaker),
 					Text:      fmt.Sprintf("Text %d.", j),
 				})
 			}
 		}
-		assembler.Close()
+		aggregator.Close()
 	}
 }
 
@@ -174,17 +174,17 @@ func BenchmarkResultChannelConsumption(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
+		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
 
 		// Send sentences
 		for j := 0; j < 10; j++ {
-			assembler.Assemble(ctx, internal_type.LLMStreamPacket{
+			aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 				ContextID: "speaker1",
 				Text:      fmt.Sprintf("Text %d.", j),
 			})
 		}
 
-		assembler.Close()
+		aggregator.Close()
 	}
 }
 
@@ -198,15 +198,15 @@ func BenchmarkCompleteFlag(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
-		assembler.Assemble(ctx, internal_type.LLMStreamPacket{
+		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
+		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      "This is a test",
 		}, internal_type.LLMMessagePacket{
 			ContextID: "speaker1",
 		})
 
-		assembler.Close()
+		aggregator.Close()
 	}
 }
 
@@ -220,14 +220,14 @@ func BenchmarkBufferingWithoutBoundaries(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
+		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
 		for j := 0; j < 5; j++ {
-			assembler.Assemble(ctx, internal_type.LLMStreamPacket{
+			aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 				ContextID: "speaker1",
 				Text:      "Text segment",
 			})
 		}
-		assembler.Close()
+		aggregator.Close()
 	}
 }
 
@@ -250,18 +250,18 @@ func BenchmarkStreamingLargeText(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
+		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
 		for _, chunk := range chunks {
-			assembler.Assemble(ctx, internal_type.LLMStreamPacket{
+			aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 				ContextID: "speaker1",
 				Text:      chunk,
 			})
 		}
-		assembler.Close()
+		aggregator.Close()
 	}
 }
 
-// BenchmarkClosing measures the cost of closing a assembler
+// BenchmarkClosing measures the cost of closing a aggregator
 func BenchmarkClosing(b *testing.B) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := utils.Option{"speaker.sentence.boundaries": "."}
@@ -270,8 +270,8 @@ func BenchmarkClosing(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
-		assembler.Close()
+		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
+		aggregator.Close()
 	}
 }
 
@@ -285,15 +285,15 @@ func BenchmarkEmptyAndCompleteFlush(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
+		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
 		// Send empty with complete flag
-		assembler.Assemble(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      "",
 		}, internal_type.LLMMessagePacket{
 			ContextID: "speaker1",
 		})
-		assembler.Close()
+		aggregator.Close()
 	}
 }
 
@@ -307,7 +307,7 @@ func BenchmarkComplexScenario(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
+		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
 
 		// Simulate a realistic conversation
 		conversationTurns := []struct {
@@ -323,21 +323,21 @@ func BenchmarkComplexScenario(b *testing.B) {
 		}
 
 		for _, turn := range conversationTurns {
-			assembler.Assemble(ctx, internal_type.LLMStreamPacket{
+			aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 				ContextID: turn.speaker,
 				Text:      turn.text,
 			})
 		}
 
 		// Flush remaining
-		assembler.Assemble(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 			ContextID: "alice",
 			Text:      "",
 		}, internal_type.LLMMessagePacket{
 			ContextID: "alice",
 		})
 
-		assembler.Close()
+		aggregator.Close()
 	}
 }
 
@@ -349,12 +349,12 @@ func BenchmarkParallelProcessing(b *testing.B) {
 
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
-			assembler.Assemble(ctx, internal_type.LLMStreamPacket{
+			aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
+			aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 				ContextID: "speaker1",
 				Text:      "Hello world.",
 			})
-			assembler.Close()
+			aggregator.Close()
 		}
 	})
 }
@@ -371,11 +371,11 @@ func BenchmarkWhitespaceProcessing(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		assembler, _ := NewDefaultLLMTextAssembler(b.Context(), logger, opts)
-		assembler.Assemble(ctx, internal_type.LLMStreamPacket{
+		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
+		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      textWithWhitespace,
 		})
-		assembler.Close()
+		aggregator.Close()
 	}
 }

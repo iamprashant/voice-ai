@@ -4,7 +4,7 @@
 // Licensed under GPL-2.0 with Rapida Additional Terms.
 // See LICENSE.md or contact sales@rapida.ai for commercial usage.
 
-package internal_default_assembler
+package internal_default_aggregator
 
 import (
 	"context"
@@ -25,7 +25,7 @@ func newMockOptions(boundaries string) utils.Option {
 	opts := utils.Option(make(map[string]interface{}))
 	if boundaries != "" {
 		// Split boundaries into individual characters and join with commons.SEPARATOR
-		// This matches how the tokenizer expects boundaries to be configured
+		// This matches how the aggregator expects boundaries to be configured
 		var parts []string
 		for _, ch := range boundaries {
 			parts = append(parts, string(ch))
@@ -35,7 +35,7 @@ func newMockOptions(boundaries string) utils.Option {
 	return opts
 }
 
-// Helper function to collect results from tokenizer
+// Helper function to collect results from aggregator
 func collectResults(ctx context.Context, resultChan <-chan internal_type.Packet) []internal_type.Packet {
 	var results []internal_type.Packet
 	for {
@@ -55,7 +55,7 @@ func collectResults(ctx context.Context, resultChan <-chan internal_type.Packet)
 
 // Tests
 
-func TestNewDefaultLLMTextAssembler(t *testing.T) {
+func TestNewDefaultLLMTextAggregator(t *testing.T) {
 	tests := []struct {
 		name           string
 		boundaries     string
@@ -93,7 +93,7 @@ func TestNewDefaultLLMTextAssembler(t *testing.T) {
 			logger, _ := commons.NewApplicationLogger()
 			opts := newMockOptions(tt.boundaries)
 
-			tokenizer, err := NewDefaultLLMTextAssembler(t.Context(), logger, opts)
+			aggregator, err := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
 			if tt.shouldError && err != nil {
 				return
 			}
@@ -101,13 +101,13 @@ func TestNewDefaultLLMTextAssembler(t *testing.T) {
 				t.Fatalf("unexpected error: %v", err)
 			}
 
-			if tokenizer == nil {
-				t.Fatal("tokenizer is nil")
+			if aggregator == nil {
+				t.Fatal("aggregator is nil")
 			}
 
-			defer tokenizer.Close()
+			defer aggregator.Close()
 
-			st := tokenizer.(*textAssembler)
+			st := aggregator.(*textAggregator)
 			if st.hasBoundaries != tt.expectedBounds {
 				t.Errorf("expected hasBoundaries=%v, got %v", tt.expectedBounds, st.hasBoundaries)
 			}
@@ -118,11 +118,11 @@ func TestNewDefaultLLMTextAssembler(t *testing.T) {
 func TestSingleText(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	tokenizer, _ := NewDefaultLLMTextAssembler(t.Context(), logger, opts)
-	defer tokenizer.Close()
+	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	defer aggregator.Close()
 
 	ctx := context.Background()
-	err := tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
+	err := aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 		ContextID: "speaker1",
 		Text:      "Hello world.",
 	})
@@ -130,7 +130,7 @@ func TestSingleText(t *testing.T) {
 		t.Fatalf("Assemble failed: %v", err)
 	}
 
-	results := collectResults(ctx, tokenizer.Result())
+	results := collectResults(ctx, aggregator.Result())
 	if len(results) != 1 {
 		t.Errorf("expected 1 result, got %d", len(results))
 		return
@@ -152,8 +152,8 @@ func TestSingleText(t *testing.T) {
 func TestMultipleTexts(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	tokenizer, _ := NewDefaultLLMTextAssembler(t.Context(), logger, opts)
-	defer tokenizer.Close()
+	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	defer aggregator.Close()
 
 	ctx := context.Background()
 
@@ -165,14 +165,14 @@ func TestMultipleTexts(t *testing.T) {
 
 	go func() {
 		for _, s := range sentences {
-			tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
+			aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 				ContextID: "speaker1",
 				Text:      s,
 			})
 		}
 	}()
 
-	results := collectResults(ctx, tokenizer.Result())
+	results := collectResults(ctx, aggregator.Result())
 
 	if len(results) != 3 {
 		t.Errorf("expected 3 results, got %d", len(results))
@@ -205,12 +205,12 @@ func TestMultipleBoundaries(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tokenizer, _ := NewDefaultLLMTextAssembler(t.Context(), logger, opts)
+		aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
 
 		// Count results through channel
 		resultCount := 0
 		go func() {
-			tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
+			aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 				ContextID: "speaker1",
 				Text:      tc.input,
 			})
@@ -220,9 +220,9 @@ func TestMultipleBoundaries(t *testing.T) {
 		time.Sleep(50 * time.Millisecond)
 
 		// Drain channel
-		for len(tokenizer.Result()) > 0 {
+		for len(aggregator.Result()) > 0 {
 			select {
-			case _, ok := <-tokenizer.Result():
+			case _, ok := <-aggregator.Result():
 				if ok {
 					resultCount++
 				}
@@ -235,33 +235,33 @@ func TestMultipleBoundaries(t *testing.T) {
 			t.Logf("input '%s': got %d results (expected %d)", tc.input, resultCount, tc.expected)
 		}
 
-		tokenizer.Close()
+		aggregator.Close()
 	}
 }
 
 func TestContextSwitching(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	tokenizer, _ := NewDefaultLLMTextAssembler(t.Context(), logger, opts)
-	defer tokenizer.Close()
+	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	defer aggregator.Close()
 
 	ctx := context.Background()
 
 	go func() {
 		// Speaker 1 starts with boundary
-		tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      "Hello there.",
 		})
 
 		// Speaker 2 continues with boundary
-		tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker2",
 			Text:      "Goodbye.",
 		})
 	}()
 
-	results := collectResults(ctx, tokenizer.Result())
+	results := collectResults(ctx, aggregator.Result())
 
 	if len(results) < 2 {
 		t.Errorf("expected at least 2 results, got %d", len(results))
@@ -298,24 +298,24 @@ func TestContextSwitching(t *testing.T) {
 func TestIsCompleteFlag(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	tokenizer, _ := NewDefaultLLMTextAssembler(t.Context(), logger, opts)
-	defer tokenizer.Close()
+	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	defer aggregator.Close()
 
 	ctx := context.Background()
 
 	go func() {
 		// Send incomplete sentence without boundary
-		tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      "This is incomplete",
 		})
 		// Force completion with Flush
-		tokenizer.Assemble(ctx, internal_type.LLMMessagePacket{
+		aggregator.Aggregate(ctx, internal_type.LLMMessagePacket{
 			ContextID: "speaker1",
 		})
 	}()
 
-	results := collectResults(ctx, tokenizer.Result())
+	results := collectResults(ctx, aggregator.Result())
 
 	// Should get: AssembledText + Flush message
 	if len(results) != 2 {
@@ -347,12 +347,12 @@ func TestIsCompleteFlag(t *testing.T) {
 func TestEmptyInput(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	tokenizer, _ := NewDefaultLLMTextAssembler(t.Context(), logger, opts)
-	defer tokenizer.Close()
+	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	defer aggregator.Close()
 
 	ctx := context.Background()
 
-	err := tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
+	err := aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 		ContextID: "speaker1",
 		Text:      "",
 	})
@@ -361,7 +361,7 @@ func TestEmptyInput(t *testing.T) {
 		t.Fatalf("Assemble should not error on empty input: %v", err)
 	}
 
-	results := collectResults(ctx, tokenizer.Result())
+	results := collectResults(ctx, aggregator.Result())
 	if len(results) != 0 {
 		t.Errorf("expected 0 results for empty input, got %d", len(results))
 	}
@@ -370,30 +370,30 @@ func TestEmptyInput(t *testing.T) {
 func TestNoBoundariesDefined(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions("")
-	tokenizer, _ := NewDefaultLLMTextAssembler(t.Context(), logger, opts)
-	defer tokenizer.Close()
+	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	defer aggregator.Close()
 
 	ctx := context.Background()
 
 	go func() {
 		// Without boundaries, we can only get output with Flush
-		tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      "Hello world",
 		})
 
-		tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      " this is great",
 		})
 
 		// Flush to trigger output
-		tokenizer.Assemble(ctx, internal_type.LLMMessagePacket{
+		aggregator.Aggregate(ctx, internal_type.LLMMessagePacket{
 			ContextID: "speaker1",
 		})
 	}()
 
-	results := collectResults(ctx, tokenizer.Result())
+	results := collectResults(ctx, aggregator.Result())
 
 	// Should have at least one result (the flushed one)
 	if len(results) < 1 {
@@ -411,15 +411,15 @@ func TestNoBoundariesDefined(t *testing.T) {
 func TestContextCancellation(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	tokenizer, _ := NewDefaultLLMTextAssembler(t.Context(), logger, opts)
-	defer tokenizer.Close()
+	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	defer aggregator.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Cancel context immediately
 	cancel()
 
-	err := tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
+	err := aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 		ContextID: "speaker1",
 		Text:      "Hello.",
 	})
@@ -439,8 +439,8 @@ func TestContextCancellation(t *testing.T) {
 func TestConcurrentContexts(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	tokenizer, _ := NewDefaultLLMTextAssembler(t.Context(), logger, opts)
-	defer tokenizer.Close()
+	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	defer aggregator.Close()
 
 	ctx := context.Background()
 	var wg sync.WaitGroup
@@ -453,7 +453,7 @@ func TestConcurrentContexts(t *testing.T) {
 			defer wg.Done()
 			contextID := fmt.Sprintf("speaker%d", speakerID)
 			for i := 0; i < 3; i++ {
-				tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
+				aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 					ContextID: contextID,
 					Text:      fmt.Sprintf("Text %d.", i),
 				})
@@ -463,11 +463,11 @@ func TestConcurrentContexts(t *testing.T) {
 
 	go func() {
 		wg.Wait()
-		tokenizer.Close()
+		aggregator.Close()
 	}()
 
 	// Collect results
-	for range tokenizer.Result() {
+	for range aggregator.Result() {
 		resultCount.Add(1)
 	}
 
@@ -480,32 +480,32 @@ func TestConcurrentContexts(t *testing.T) {
 func TestBufferStateMaintenance(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	tokenizer, _ := NewDefaultLLMTextAssembler(t.Context(), logger, opts)
-	defer tokenizer.Close()
+	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	defer aggregator.Close()
 
 	ctx := context.Background()
 
 	go func() {
 		// Send partial sentence
-		tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      "Hello",
 		})
 
 		// Continue with no boundary
-		tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      " world",
 		})
 
 		// Now add boundary
-		tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      ".",
 		})
 	}()
 
-	results := collectResults(ctx, tokenizer.Result())
+	results := collectResults(ctx, aggregator.Result())
 
 	if len(results) != 1 {
 		t.Errorf("expected 1 result, got %d", len(results))
@@ -520,23 +520,23 @@ func TestBufferStateMaintenance(t *testing.T) {
 func TestWhitespaceHandling(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	tokenizer, _ := NewDefaultLLMTextAssembler(t.Context(), logger, opts)
-	defer tokenizer.Close()
+	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	defer aggregator.Close()
 
 	ctx := context.Background()
 
 	go func() {
-		tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      "Hello.   \n  ",
 		})
-		tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      "World.",
 		})
 	}()
 
-	results := collectResults(ctx, tokenizer.Result())
+	results := collectResults(ctx, aggregator.Result())
 
 	// Should trim whitespace appropriately
 	if len(results) < 1 {
@@ -553,11 +553,11 @@ func TestWhitespaceHandling(t *testing.T) {
 func TestMultipleClose(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	tokenizer, _ := NewDefaultLLMTextAssembler(t.Context(), logger, opts)
+	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
 
 	// Close multiple times should not panic
-	err1 := tokenizer.Close()
-	err2 := tokenizer.Close()
+	err1 := aggregator.Close()
+	err2 := aggregator.Close()
 
 	if err1 != nil || err2 != nil {
 		t.Errorf("Close should not error on multiple calls: err1=%v, err2=%v", err1, err2)
@@ -567,10 +567,10 @@ func TestMultipleClose(t *testing.T) {
 func TestResultChannelClosure(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	tokenizer, _ := NewDefaultLLMTextAssembler(t.Context(), logger, opts)
+	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
 
-	resultChan := tokenizer.Result()
-	tokenizer.Close()
+	resultChan := aggregator.Result()
+	aggregator.Close()
 
 	// Try to read from closed channel
 	_, ok := <-resultChan
@@ -584,19 +584,19 @@ func TestSpecialCharacterBoundaries(t *testing.T) {
 
 	// Test with regex special characters
 	opts := newMockOptions(".?!*+")
-	tokenizer, _ := NewDefaultLLMTextAssembler(t.Context(), logger, opts)
-	defer tokenizer.Close()
+	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	defer aggregator.Close()
 
 	ctx := context.Background()
 
 	go func() {
-		tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 			ContextID: "speaker1",
 			Text:      "Really?",
 		})
 	}()
 
-	results := collectResults(ctx, tokenizer.Result())
+	results := collectResults(ctx, aggregator.Result())
 	if len(results) > 0 {
 		if ts, ok := results[0].(internal_type.LLMStreamPacket); ok && ts.Text != "Really?" {
 			t.Errorf("special character boundary failed: got '%s'", ts.Text)
@@ -607,22 +607,22 @@ func TestSpecialCharacterBoundaries(t *testing.T) {
 func TestLargeBatch(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	tokenizer, _ := NewDefaultLLMTextAssembler(t.Context(), logger, opts)
-	defer tokenizer.Close()
+	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	defer aggregator.Close()
 
 	ctx := context.Background()
 	const batchSize = 100
 
 	go func() {
 		for i := 0; i < batchSize; i++ {
-			tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
+			aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 				ContextID: "speaker1",
 				Text:      fmt.Sprintf("Text %d.", i),
 			})
 		}
 	}()
 
-	results := collectResults(ctx, tokenizer.Result())
+	results := collectResults(ctx, aggregator.Result())
 
 	if len(results) != batchSize {
 		t.Errorf("expected %d results, got %d", batchSize, len(results))
@@ -632,8 +632,8 @@ func TestLargeBatch(t *testing.T) {
 func TestLLMStreamingInput(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".!?")
-	tokenizer, _ := NewDefaultLLMTextAssembler(t.Context(), logger, opts)
-	defer tokenizer.Close()
+	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	defer aggregator.Close()
 
 	ctx := context.Background()
 
@@ -659,7 +659,7 @@ func TestLLMStreamingInput(t *testing.T) {
 
 	// Start goroutine to collect results WHILE streaming happens
 	go func() {
-		resultChan := tokenizer.Result()
+		resultChan := aggregator.Result()
 		for {
 			select {
 			case result, ok := <-resultChan:
@@ -686,7 +686,7 @@ func TestLLMStreamingInput(t *testing.T) {
 	go func() {
 		for i, chunk := range llmChunks {
 			t.Logf("Sending chunk %d: %q", i, chunk)
-			err := tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
+			err := aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 				ContextID: "llm",
 				Text:      chunk,
 			})
@@ -696,8 +696,8 @@ func TestLLMStreamingInput(t *testing.T) {
 			}
 			time.Sleep(5 * time.Millisecond)
 		}
-		t.Logf("All chunks sent, closing tokenizer...")
-		tokenizer.Close()
+		t.Logf("All chunks sent, closing aggregator...")
+		aggregator.Close()
 	}()
 
 	// Wait for collection to finish
@@ -708,7 +708,7 @@ func TestLLMStreamingInput(t *testing.T) {
 	if len(results) != 2 {
 		t.Logf("WARNING: expected 2 sentences from LLM stream, got %d", len(results))
 		if len(results) == 0 {
-			t.Log("No results received - this indicates the tokenizer is not emitting sentences")
+			t.Log("No results received - this indicates the aggregator is not emitting sentences")
 		}
 		return
 	}
@@ -734,8 +734,8 @@ func TestLLMStreamingInput(t *testing.T) {
 func TestLLMStreamingWithPauses(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".!?")
-	tokenizer, _ := NewDefaultLLMTextAssembler(t.Context(), logger, opts)
-	defer tokenizer.Close()
+	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	defer aggregator.Close()
 
 	ctx := context.Background()
 
@@ -752,15 +752,15 @@ func TestLLMStreamingWithPauses(t *testing.T) {
 	go func() {
 		for _, chunk := range chunks {
 			time.Sleep(50 * time.Millisecond) // simulate slow LLM token stream
-			_ = tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
+			_ = aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 				ContextID: "llm",
 				Text:      chunk,
 			})
 		}
-		tokenizer.Close()
+		aggregator.Close()
 	}()
 
-	for r := range tokenizer.Result() {
+	for r := range aggregator.Result() {
 		results = append(results, r)
 	}
 
@@ -776,29 +776,29 @@ func TestLLMStreamingWithPauses(t *testing.T) {
 func TestLLMStreamingWithContextSwitch(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".!?")
-	tokenizer, _ := NewDefaultLLMTextAssembler(t.Context(), logger, opts)
-	defer tokenizer.Close()
+	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	defer aggregator.Close()
 
 	ctx := context.Background()
 	var results []internal_type.Packet
 
 	go func() {
 		// LLM A starts streaming (with boundary to get output)
-		_ = tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
+		_ = aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 			ContextID: "llm-A",
 			Text:      "LLM A is speaking.",
 		})
 
 		// LLM B interrupts
-		_ = tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
+		_ = aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 			ContextID: "llm-B",
 			Text:      "Hello from B.",
 		})
 
-		tokenizer.Close()
+		aggregator.Close()
 	}()
 
-	for r := range tokenizer.Result() {
+	for r := range aggregator.Result() {
 		results = append(results, r)
 	}
 
@@ -829,28 +829,28 @@ func TestLLMStreamingWithContextSwitch(t *testing.T) {
 func TestLLMStreamingForcedCompletion(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".!?")
-	tokenizer, _ := NewDefaultLLMTextAssembler(t.Context(), logger, opts)
-	defer tokenizer.Close()
+	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	defer aggregator.Close()
 
 	ctx := context.Background()
 	var results []internal_type.Packet
 
 	go func() {
 		// Stream without punctuation
-		_ = tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
+		_ = aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 			ContextID: "llm",
 			Text:      "This sentence never ends",
 		})
 
 		// Force flush to emit the buffered sentence
-		_ = tokenizer.Assemble(ctx, internal_type.LLMMessagePacket{
+		_ = aggregator.Aggregate(ctx, internal_type.LLMMessagePacket{
 			ContextID: "llm",
 		})
 
-		tokenizer.Close()
+		aggregator.Close()
 	}()
 
-	for r := range tokenizer.Result() {
+	for r := range aggregator.Result() {
 		results = append(results, r)
 	}
 
@@ -879,8 +879,8 @@ func TestLLMStreamingForcedCompletion(t *testing.T) {
 func TestLLMStreamingUnformattedButComplete(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".!?") // boundaries exist but are NOT used
-	tokenizer, _ := NewDefaultLLMTextAssembler(t.Context(), logger, opts)
-	defer tokenizer.Close()
+	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	defer aggregator.Close()
 
 	ctx := context.Background()
 	var results []internal_type.Packet
@@ -897,21 +897,21 @@ func TestLLMStreamingUnformattedButComplete(t *testing.T) {
 		}
 
 		for _, chunk := range chunks {
-			_ = tokenizer.Assemble(ctx, internal_type.LLMStreamPacket{
+			_ = aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
 				ContextID: "llm",
 				Text:      chunk,
 			})
 		}
 
 		// End of stream — force completion with Flush
-		_ = tokenizer.Assemble(ctx, internal_type.LLMMessagePacket{
+		_ = aggregator.Aggregate(ctx, internal_type.LLMMessagePacket{
 			ContextID: "llm",
 		})
 
-		tokenizer.Close()
+		aggregator.Close()
 	}()
 
-	for r := range tokenizer.Result() {
+	for r := range aggregator.Result() {
 		results = append(results, r)
 	}
 
@@ -946,18 +946,18 @@ func TestLLMStreamingUnformattedButComplete(t *testing.T) {
 func TestStringRepresentation(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	tokenizer, _ := NewDefaultLLMTextAssembler(t.Context(), logger, opts)
-	defer tokenizer.Close()
+	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	defer aggregator.Close()
 
-	st := tokenizer.(*textAssembler)
+	st := aggregator.(*textAggregator)
 	str := st.String()
 
 	if str == "" {
 		t.Error("String() should return non-empty string")
 	}
 
-	if !contains(str, "TextAssembler") {
-		t.Errorf("String() should contain 'TextAssembler', got '%s'", str)
+	if !contains(str, "TextAggregator") {
+		t.Errorf("String() should contain 'TextAggregator', got '%s'", str)
 	}
 }
 

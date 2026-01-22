@@ -31,6 +31,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.1
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/mitchellh/mapstructure v1.5.0
+	github.com/modelcontextprotocol/go-sdk v1.2.0
 	github.com/openai/openai-go v1.12.0
 	github.com/opensearch-project/opensearch-go/v2 v2.3.0
 	github.com/pkoukk/tiktoken-go v0.1.7
@@ -126,7 +127,6 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-sqlite3 v1.14.22 // indirect
-	github.com/modelcontextprotocol/go-sdk v1.2.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect

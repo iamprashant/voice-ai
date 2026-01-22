@@ -3569,20 +3569,12 @@
     border-top-left-radius: var(--radius-lg);
     border-top-right-radius: var(--radius-lg);
   }
-  .rounded-l-2xl {
-    border-top-left-radius: var(--radius-2xl);
-    border-bottom-left-radius: var(--radius-2xl);
-  }
   .rounded-l-lg {
     border-top-left-radius: var(--radius-lg);
     border-bottom-left-radius: var(--radius-lg);
   }
   .rounded-tl-md {
     border-top-left-radius: var(--radius-md);
-  }
-  .rounded-r-2xl {
-    border-top-right-radius: var(--radius-2xl);
-    border-bottom-right-radius: var(--radius-2xl);
   }
   .rounded-r-lg {
     border-top-right-radius: var(--radius-lg);
@@ -5283,9 +5275,6 @@
   .text-yellow-700 {
     color: var(--color-yellow-700);
   }
-  .text-yellow-800 {
-    color: var(--color-yellow-800);
-  }
   .text-yellow-800\/80 {
     color: color-mix(in srgb, oklch(47.6% 0.114 61.907) 80%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
@@ -5316,9 +5305,6 @@
   }
   .underline-offset-2 {
     text-underline-offset: 2px;
-  }
-  .underline-offset-4 {
-    text-underline-offset: 4px;
   }
   .antialiased {
     -webkit-font-smoothing: antialiased;
@@ -8141,16 +8127,6 @@
       }
     }
   }
-  .dark\:border-yellow-900 {
-    @media (prefers-color-scheme: dark) {
-      &:not(.light *) {
-        border-color: var(--color-yellow-900);
-      }
-    }
-    &:is(.dark *) {
-      border-color: var(--color-yellow-900);
-    }
-  }
   .dark\:border-yellow-900\/20 {
     @media (prefers-color-scheme: dark) {
       &:not(.light *) {
@@ -9083,22 +9059,6 @@
     }
     &:is(.dark *) {
       background-color: var(--color-yellow-400);
-    }
-  }
-  .dark\:bg-yellow-600\/20 {
-    @media (prefers-color-scheme: dark) {
-      &:not(.light *) {
-        background-color: color-mix(in srgb, oklch(68.1% 0.162 75.834) 20%, transparent);
-        @supports (color: color-mix(in lab, red, red)) {
-          background-color: color-mix(in oklab, var(--color-yellow-600) 20%, transparent);
-        }
-      }
-    }
-    &:is(.dark *) {
-      background-color: color-mix(in srgb, oklch(68.1% 0.162 75.834) 20%, transparent);
-      @supports (color: color-mix(in lab, red, red)) {
-        background-color: color-mix(in oklab, var(--color-yellow-600) 20%, transparent);
-      }
     }
   }
   .dark\:bg-yellow-700\/10 {
