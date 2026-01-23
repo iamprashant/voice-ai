@@ -5,10 +5,7 @@ import { FieldSet } from '@/app/components/form/fieldset';
 import { Input } from '@/app/components/form/input';
 import { Textarea } from '@/app/components/form/textarea';
 import { InputGroup } from '@/app/components/input-group';
-import {
-  ConfigureToolProps,
-  useParameterManager,
-} from '../common';
+import { ConfigureToolProps, useParameterManager } from '../common';
 import { BlueNoticeBlock } from '@/app/components/container/message/notice-block';
 
 // ============================================================================
@@ -28,11 +25,9 @@ export const ConfigureMCP: FC<ConfigureToolProps> = ({
   );
 
   const serverUrl = getParamValue('mcp.server_url');
+  const toolName = getParamValue('mcp.tool_name');
 
-  const handleChange = (
-    field: 'name' | 'description',
-    value: string,
-  ) => {
+  const handleChange = (field: 'name' | 'description', value: string) => {
     if (toolDefinition && onChangeToolDefinition) {
       onChangeToolDefinition({ ...toolDefinition, [field]: value });
     }
@@ -77,10 +72,10 @@ export const ConfigureMCP: FC<ConfigureToolProps> = ({
           <BlueNoticeBlock>
             <div className="text-sm text-blue-900 dark:text-blue-100">
               <div className="text-blue-700 dark:text-blue-300">
-                The tool definitions will be automatically fetched from the MCP
-                server when the assistant initializes via Server-Sent Events
-                (SSE). The name and description you provide above will be used
-                to identify this MCP server.
+                This tool will proxy calls to the specified MCP server. If you
+                provide a specific MCP Tool Name, it will call that tool on the
+                server; otherwise, it will use the tool name specified above.
+                The LLM will see the name and description you provide above.
               </div>
             </div>
           </BlueNoticeBlock>

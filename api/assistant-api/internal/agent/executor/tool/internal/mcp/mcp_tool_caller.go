@@ -3,331 +3,316 @@
 //
 // Licensed under GPL-2.0 with Rapida Additional Terms.
 // See LICENSE.md or contact sales@rapida.ai for commercial usage.
-package mcp
+package internal_tool_mcp
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	internal_tool "github.com/rapidaai/api/assistant-api/internal/agent/executor/tool/internal"
-	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/utils"
 	"github.com/rapidaai/protos"
 )
 
-// mcpToolCaller implements the ToolCaller interface for Model Context Protocol (MCP) tools.
-// It allows invoking external MCP-compliant tools through a standardized protocol.
-type mcpToolCaller struct {
-	logger      commons.Logger
-	toolOptions *internal_assistant_entity.AssistantTool
-	mcpClient   MCPClient
-	serverUrl   string
-	toolName    string
+// MCPToolCaller implements the ToolCaller interface for MCP server tools.
+// It acts as a dynamic proxy that forwards tool calls to the connected MCP server.
+type MCPToolCaller struct {
+	logger           commons.Logger
+	client           *Client
+	toolId           uint64
+	toolName         string // The name exposed to the LLM (may be prefixed)
+	originalToolName string // The original name on the MCP server
+	toolDescription  string
+	toolDefinition   *protos.FunctionDefinition
+	serverURL        string
 }
 
-// MCPClient defines the interface for communicating with MCP servers
-type MCPClient interface {
-	// CallTool invokes an MCP tool with the given name and arguments
-	CallTool(ctx context.Context, serverUrl string, toolName string, arguments map[string]interface{}) (*MCPToolResponse, error)
-	// GetToolDefinition retrieves the definition of an MCP tool
-	GetToolDefinition(ctx context.Context, serverUrl string, toolName string) (*protos.FunctionDefinition, error)
-	// ListTools retrieves all available tools from the MCP server
-	ListTools(ctx context.Context, serverUrl string) ([]*protos.FunctionDefinition, error)
-}
-
-// MCPToolResponse represents the response from an MCP tool invocation
-type MCPToolResponse struct {
-	Success bool                   `json:"success"`
-	Result  interface{}            `json:"result,omitempty"`
-	Error   string                 `json:"error,omitempty"`
-	Data    map[string]interface{} `json:"data,omitempty"`
-}
-
-// MCPToolInfo holds information about an MCP tool
-type MCPToolInfo struct {
-	ServerUrl  string
-	Definition *protos.FunctionDefinition
-}
-
-// NewMCPToolCaller creates a new MCP tool caller instance
+// NewMCPToolCaller creates a new MCP tool caller for a specific tool
 func NewMCPToolCaller(
 	logger commons.Logger,
-	toolOptions *internal_assistant_entity.AssistantTool,
-	mcpClient MCPClient,
-	communication internal_type.Communication,
-) (internal_tool.ToolCaller, error) {
-	opts := toolOptions.GetOptions()
-
-	// Extract MCP server URL from tool options
-	serverUrl, err := opts.GetString("mcp.server_url")
-	if err != nil {
-		return nil, fmt.Errorf("mcp.server_url is required for MCP tools: %v", err)
+	client *Client,
+	toolId uint64,
+	toolName string,
+	toolDefinition *protos.FunctionDefinition,
+) internal_tool.ToolCaller {
+	return &MCPToolCaller{
+		logger:           logger,
+		client:           client,
+		toolId:           toolId,
+		toolName:         toolName,
+		originalToolName: toolName, // Same by default
+		toolDescription:  toolDefinition.Description,
+		toolDefinition:   toolDefinition,
+		serverURL:        client.GetServerURL(),
 	}
+}
 
-	// Extract MCP tool name (may differ from assistant tool name)
-	toolName, err := opts.GetString("mcp.tool_name")
-	if err != nil {
-		// Default to assistant tool name if not specified
-		toolName = toolOptions.Name
+// NewMCPToolCallerWithOriginalName creates a new MCP tool caller with a different exposed name
+func NewMCPToolCallerWithOriginalName(
+	logger commons.Logger,
+	client *Client,
+	toolId uint64,
+	exposedName string,
+	originalName string,
+	toolDefinition *protos.FunctionDefinition,
+) internal_tool.ToolCaller {
+	return &MCPToolCaller{
+		logger:           logger,
+		client:           client,
+		toolId:           toolId,
+		toolName:         exposedName,
+		originalToolName: originalName,
+		toolDescription:  toolDefinition.Description,
+		toolDefinition:   toolDefinition,
+		serverURL:        client.GetServerURL(),
 	}
-
-	return &mcpToolCaller{
-		logger:      logger,
-		toolOptions: toolOptions,
-		mcpClient:   mcpClient,
-		serverUrl:   serverUrl,
-		toolName:    toolName,
-	}, nil
 }
 
 // Id returns the unique identifier of the tool
-func (m *mcpToolCaller) Id() uint64 {
-	return m.toolOptions.Id
+func (m *MCPToolCaller) Id() uint64 {
+	return m.toolId
 }
 
 // Name returns the human-readable name of the tool
-func (m *mcpToolCaller) Name() string {
-	return m.toolOptions.Name
+func (m *MCPToolCaller) Name() string {
+	return m.toolName
 }
 
-// ExecutionMethod returns the execution strategy (mcp)
-func (m *mcpToolCaller) ExecutionMethod() string {
-	return m.toolOptions.ExecutionMethod
+// Definition returns the function definition describing the tool's input parameters
+func (m *MCPToolCaller) Definition() (*protos.FunctionDefinition, error) {
+	if m.toolDefinition == nil {
+		return nil, fmt.Errorf("tool definition not available for %s", m.toolName)
+	}
+	return m.toolDefinition, nil
 }
 
-// Definition returns the function definition for the MCP tool
-func (m *mcpToolCaller) Definition() (*protos.FunctionDefinition, error) {
-	// Try to get definition from MCP server if available
-	if m.mcpClient != nil {
-		ctx := context.Background()
-		if def, err := m.mcpClient.GetToolDefinition(ctx, m.serverUrl, m.toolName); err == nil && def != nil {
-			return def, nil
-		}
-		m.logger.Warnf("Failed to get MCP tool definition from server, falling back to local definition")
-	}
-
-	// Fallback to local definition from tool options
-	definition := &protos.FunctionDefinition{
-		Name:       m.toolOptions.Name,
-		Parameters: &protos.FunctionParameter{},
-	}
-	if m.toolOptions.Description != nil && *m.toolOptions.Description != "" {
-		definition.Description = *m.toolOptions.Description
-	}
-	if err := utils.Cast(m.toolOptions.Fields, definition.Parameters); err != nil {
-		return nil, fmt.Errorf("failed to cast tool fields to function parameters: %w", err)
-	}
-	return definition, nil
-}
-
-// Call executes the MCP tool with the given arguments
-func (m *mcpToolCaller) Call(
-	ctx context.Context,
-	pkt internal_type.LLMPacket,
-	toolId string,
-	args string,
-	communication internal_type.Communication,
-) internal_type.LLMToolPacket {
-	m.logger.Debugf("Calling MCP tool: %s with args: %s", m.Name(), args)
-
-	// Parse arguments from JSON string to map
-	var arguments map[string]interface{}
-	if err := json.Unmarshal([]byte(args), &arguments); err != nil {
-		m.logger.Errorf("Failed to parse MCP tool arguments: %v", err)
-		return internal_type.LLMToolPacket{
-			Name:      m.Name(),
-			ContextID: pkt.ContextId(),
-			Action:    protos.AssistantConversationAction_MCP_TOOL_CALL,
-			Result:    m.Result("Invalid arguments format", false),
-		}
-	}
-
-	// Call the MCP server
-	response, err := m.mcpClient.CallTool(ctx, m.serverUrl, m.toolName, arguments)
-	if err != nil {
-		m.logger.Errorf("MCP tool call failed: %v", err)
-		return internal_type.LLMToolPacket{
-			Name:      m.Name(),
-			ContextID: pkt.ContextId(),
-			Action:    protos.AssistantConversationAction_MCP_TOOL_CALL,
-			Result:    m.Result(fmt.Sprintf("Tool execution failed: %v", err), false),
-		}
-	}
-
-	// Check if the MCP call was successful
-	if !response.Success {
-		errorMsg := response.Error
-		if errorMsg == "" {
-			errorMsg = "Unknown error occurred"
-		}
-		return internal_type.LLMToolPacket{
-			Name:      m.Name(),
-			ContextID: pkt.ContextId(),
-			Action:    protos.AssistantConversationAction_MCP_TOOL_CALL,
-			Result:    m.Result(errorMsg, false),
-		}
-	}
-
-	// Build result map from response
-	result := make(map[string]interface{})
-	result["success"] = true
-	result["status"] = "SUCCESS"
-
-	if response.Data != nil && len(response.Data) > 0 {
-		result["data"] = response.Data
-	} else if response.Result != nil {
-		result["data"] = response.Result
-	}
-
-	return internal_type.LLMToolPacket{
-		Name:      m.Name(),
-		ContextID: pkt.ContextId(),
-		Action:    protos.AssistantConversationAction_MCP_TOOL_CALL,
-		Result:    result,
-	}
-}
-
-// Result formats the tool execution result
-func (m *mcpToolCaller) Result(msg string, success bool) map[string]interface{} {
-	if success {
-		return map[string]interface{}{
-			"data":    msg,
-			"success": true,
-			"status":  "SUCCESS",
-		}
-	}
-	return map[string]interface{}{
-		"error":   msg,
-		"success": false,
-		"status":  "FAIL",
-	}
-}
-
-// dynamicMCPToolCaller is used for tools discovered dynamically from MCP servers
-type dynamicMCPToolCaller struct {
-	logger     commons.Logger
-	mcpClient  MCPClient
-	serverUrl  string
-	definition *protos.FunctionDefinition
-}
-
-// NewDynamicMCPToolCaller creates a tool caller for a dynamically discovered MCP tool
-func NewDynamicMCPToolCaller(
-	logger commons.Logger,
-	mcpClient MCPClient,
-	serverUrl string,
-	definition *protos.FunctionDefinition,
-) internal_tool.ToolCaller {
-	return &dynamicMCPToolCaller{
-		logger:     logger,
-		mcpClient:  mcpClient,
-		serverUrl:  serverUrl,
-		definition: definition,
-	}
-}
-
-// Id returns a generated ID (0 for dynamic tools)
-func (d *dynamicMCPToolCaller) Id() uint64 {
-	return 0
-}
-
-// Name returns the tool name
-func (d *dynamicMCPToolCaller) Name() string {
-	return d.definition.Name
-}
-
-// ExecutionMethod returns "mcp"
-func (d *dynamicMCPToolCaller) ExecutionMethod() string {
+// ExecutionMethod returns the execution strategy used by the tool
+func (m *MCPToolCaller) ExecutionMethod() string {
 	return "mcp"
 }
 
-// Definition returns the function definition
-func (d *dynamicMCPToolCaller) Definition() (*protos.FunctionDefinition, error) {
-	return d.definition, nil
-}
-
-// Call executes the MCP tool
-func (d *dynamicMCPToolCaller) Call(
+// Call executes the MCP tool with the given arguments and returns the response
+func (m *MCPToolCaller) Call(
 	ctx context.Context,
 	pkt internal_type.LLMPacket,
 	toolId string,
 	args string,
 	communication internal_type.Communication,
 ) internal_type.LLMToolPacket {
-	d.logger.Debugf("Calling dynamic MCP tool: %s with args: %s", d.Name(), args)
+	m.logger.Debugf("MCP tool call: %s (original: %s) with args: %s", m.toolName, m.originalToolName, args)
 
-	// Parse arguments from JSON string to map
-	var arguments map[string]interface{}
-	if err := json.Unmarshal([]byte(args), &arguments); err != nil {
-		d.logger.Errorf("Failed to parse MCP tool arguments: %v", err)
-		return internal_type.LLMToolPacket{
-			Name:      d.Name(),
-			ContextID: pkt.ContextId(),
-			Action:    protos.AssistantConversationAction_MCP_TOOL_CALL,
-			Result:    d.Result("Invalid arguments format", false),
-		}
-	}
-
-	// Call the MCP server
-	response, err := d.mcpClient.CallTool(ctx, d.serverUrl, d.Name(), arguments)
+	// Parse the arguments from JSON string to map
+	arguments, err := m.parseArguments(args)
 	if err != nil {
-		d.logger.Errorf("MCP tool call failed: %v", err)
-		return internal_type.LLMToolPacket{
-			Name:      d.Name(),
-			ContextID: pkt.ContextId(),
-			Action:    protos.AssistantConversationAction_MCP_TOOL_CALL,
-			Result:    d.Result(fmt.Sprintf("Tool execution failed: %v", err), false),
-		}
+		m.logger.Errorf("failed to parse arguments for MCP tool %s: %v", m.toolName, err)
+		return m.errorPacket(pkt.ContextId(), fmt.Sprintf("failed to parse arguments: %v", err))
 	}
 
-	// Check if the MCP call was successful
-	if !response.Success {
-		errorMsg := response.Error
-		if errorMsg == "" {
-			errorMsg = "Unknown error occurred"
-		}
-		return internal_type.LLMToolPacket{
-			Name:      d.Name(),
-			ContextID: pkt.ContextId(),
-			Action:    protos.AssistantConversationAction_MCP_TOOL_CALL,
-			Result:    d.Result(errorMsg, false),
-		}
+	// Execute the tool call via MCP client using the original tool name
+	response, err := m.client.Execute(ctx, m.serverURL, m.originalToolName, arguments)
+	if err != nil {
+		m.logger.Errorf("MCP tool execution failed for %s: %v", m.toolName, err)
+		return m.errorPacket(pkt.ContextId(), fmt.Sprintf("tool execution failed: %v", err))
 	}
 
-	// Build result map from response
-	result := make(map[string]interface{})
-	result["success"] = true
-	result["status"] = "SUCCESS"
-
-	if response.Data != nil && len(response.Data) > 0 {
-		result["data"] = response.Data
-	} else if response.Result != nil {
-		result["data"] = response.Result
-	}
-
+	// Convert response to LLMToolPacket
 	return internal_type.LLMToolPacket{
-		Name:      d.Name(),
+		Name:      m.toolName,
 		ContextID: pkt.ContextId(),
 		Action:    protos.AssistantConversationAction_MCP_TOOL_CALL,
-		Result:    result,
+		Result:    response.ToMap(),
 	}
 }
 
-// Result formats the tool execution result
-func (d *dynamicMCPToolCaller) Result(msg string, success bool) map[string]interface{} {
-	if success {
-		return map[string]interface{}{
-			"data":    msg,
-			"success": true,
-			"status":  "SUCCESS",
+// parseArguments converts a JSON string to a map of arguments
+func (m *MCPToolCaller) parseArguments(args string) (map[string]any, error) {
+	if args == "" || args == "{}" {
+		return make(map[string]any), nil
+	}
+
+	var arguments map[string]any
+	if err := json.Unmarshal([]byte(args), &arguments); err != nil {
+		// Try to wrap as a single value if it's not valid JSON object
+		return map[string]any{"input": args}, nil
+	}
+	return arguments, nil
+}
+
+// errorPacket creates an error response packet
+func (m *MCPToolCaller) errorPacket(contextId, errorMsg string) internal_type.LLMToolPacket {
+	return internal_type.LLMToolPacket{
+		Name:      m.toolName,
+		ContextID: contextId,
+		Action:    protos.AssistantConversationAction_MCP_TOOL_CALL,
+		Result: map[string]interface{}{
+			"success": false,
+			"status":  "FAIL",
+			"error":   errorMsg,
+		},
+	}
+}
+
+// MCPServerConfig holds configuration for an MCP server connection
+type MCPServerConfig struct {
+	ServerURL  string
+	ToolIdBase uint64
+	Prefix     string // Optional prefix to avoid tool name conflicts
+}
+
+// MCPConnectionResult holds the result of connecting to an MCP server
+type MCPConnectionResult struct {
+	ServerURL   string
+	Definitions []*protos.FunctionDefinition
+	Callers     []internal_tool.ToolCaller
+	Error       error
+}
+
+// MCPToolManager manages multiple MCP server connections and their tools
+type MCPToolManager struct {
+	logger  commons.Logger
+	clients map[string]*Client // serverURL -> client
+	mu      sync.RWMutex
+}
+
+// NewMCPToolManager creates a new MCP tool manager
+func NewMCPToolManager(logger commons.Logger) *MCPToolManager {
+	return &MCPToolManager{
+		logger:  logger,
+		clients: make(map[string]*Client),
+	}
+}
+
+// ConnectServersAsync connects to multiple MCP servers concurrently and returns results via channel
+// This is non-blocking and allows parallel initialization of multiple MCP servers
+func (m *MCPToolManager) ConnectServersAsync(ctx context.Context, configs []MCPServerConfig) <-chan MCPConnectionResult {
+	results := make(chan MCPConnectionResult, len(configs))
+
+	var wg sync.WaitGroup
+	for _, cfg := range configs {
+		wg.Add(1)
+		go func(config MCPServerConfig) {
+			defer wg.Done()
+
+			definitions, callers, err := m.ConnectServer(ctx, config.ServerURL, config.ToolIdBase, config.Prefix)
+			results <- MCPConnectionResult{
+				ServerURL:   config.ServerURL,
+				Definitions: definitions,
+				Callers:     callers,
+				Error:       err,
+			}
+		}(cfg)
+	}
+
+	// Close results channel when all connections complete
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+
+	return results
+}
+
+// ConnectServer connects to an MCP server and returns all available tools as callers
+func (m *MCPToolManager) ConnectServer(
+	ctx context.Context,
+	serverURL string,
+	toolIdBase uint64,
+	prefix string,
+) ([]*protos.FunctionDefinition, []internal_tool.ToolCaller, error) {
+	// Check if already connected
+	m.mu.RLock()
+	client, exists := m.clients[serverURL]
+	m.mu.RUnlock()
+
+	if exists {
+		return m.getToolsFromClient(ctx, client, toolIdBase, prefix)
+	}
+
+	// Create new connection
+	client, err := NewClientWithURL(ctx, m.logger, serverURL)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to connect to MCP server %s: %w", serverURL, err)
+	}
+
+	// Store the client
+	m.mu.Lock()
+	m.clients[serverURL] = client
+	m.mu.Unlock()
+
+	return m.getToolsFromClient(ctx, client, toolIdBase, prefix)
+}
+
+// getToolsFromClient fetches tools from a connected client and creates callers
+func (m *MCPToolManager) getToolsFromClient(
+	ctx context.Context,
+	client *Client,
+	toolIdBase uint64,
+	prefix string,
+) ([]*protos.FunctionDefinition, []internal_tool.ToolCaller, error) {
+	// List available tools from the MCP server
+	definitions, err := client.ListTools(ctx, client.GetServerURL())
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to list tools: %w", err)
+	}
+
+	// Create tool callers for each tool
+	callers := make([]internal_tool.ToolCaller, 0, len(definitions))
+	resultDefs := make([]*protos.FunctionDefinition, 0, len(definitions))
+
+	for i, def := range definitions {
+		toolName := def.Name
+		originalName := def.Name
+
+		// Apply prefix if configured (to avoid naming conflicts between servers)
+		if prefix != "" {
+			toolName = prefix + "_" + def.Name
+			// Update the definition name for LLM
+			def = &protos.FunctionDefinition{
+				Name:        toolName,
+				Description: def.Description,
+				Parameters:  def.Parameters,
+			}
+		}
+
+		caller := NewMCPToolCallerWithOriginalName(
+			m.logger,
+			client,
+			toolIdBase+uint64(i),
+			toolName,
+			originalName,
+			def,
+		)
+		callers = append(callers, caller)
+		resultDefs = append(resultDefs, def)
+		m.logger.Debugf("Created MCP tool caller: %s (original: %s) from server %s", toolName, originalName, client.GetServerURL())
+	}
+
+	return resultDefs, callers, nil
+}
+
+// GetClient returns the MCP client for a server URL
+func (m *MCPToolManager) GetClient(serverURL string) (*Client, bool) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	client, exists := m.clients[serverURL]
+	return client, exists
+}
+
+// Close closes all MCP connections
+func (m *MCPToolManager) Close() error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	var lastErr error
+	for url, client := range m.clients {
+		if err := client.Close(); err != nil {
+			m.logger.Errorf("failed to close MCP client for %s: %v", url, err)
+			lastErr = err
 		}
 	}
-	return map[string]interface{}{
-		"error":   msg,
-		"success": false,
-		"status":  "FAIL",
-	}
+	m.clients = make(map[string]*Client)
+	return lastErr
 }

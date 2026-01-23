@@ -44,8 +44,15 @@ func (llc *largeLanguageCaller) ChatCompletionOptions(
 					if fn.Description != "" {
 						funcDef.Description = openai.String(fn.Description)
 					}
+					// Always set parameters with valid JSON schema format
 					if fn.Parameters != nil {
 						funcDef.Parameters = fn.Parameters.ToMap()
+					} else {
+						// Default empty parameters with properties field for valid schema
+						funcDef.Parameters = map[string]interface{}{
+							"type":       "object",
+							"properties": map[string]interface{}{},
+						}
 					}
 					fns[idx] = openai.ChatCompletionToolParam{
 						Function: funcDef,

@@ -51,21 +51,29 @@ type FunctionParameter struct {
 
 func (fp *FunctionParameter) ToMap() map[string]interface{} {
 	result := make(map[string]interface{})
-	if fp.Required != nil {
-		result["required"] = fp.Required
-	}
 
+	// Type is required for valid JSON schema
 	if fp.Type != "" {
 		result["type"] = fp.Type
+	} else {
+		result["type"] = "object"
 	}
 
+	// Always include properties for valid JSON schema format
+	// Output: {"type": "object", "properties": {}} instead of {"type": "object"}
+	properties := make(map[string]interface{})
 	if fp.Properties != nil {
-		properties := make(map[string]interface{})
 		for key, prop := range fp.Properties {
 			properties[key] = prop.ToMap()
 		}
-		result["properties"] = properties
 	}
+	result["properties"] = properties
+
+	// Only include required if there are required fields
+	if len(fp.Required) > 0 {
+		result["required"] = fp.Required
+	}
+
 	return result
 }
 

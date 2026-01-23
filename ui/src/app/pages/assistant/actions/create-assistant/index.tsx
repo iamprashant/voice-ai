@@ -385,12 +385,35 @@ export function CreateAssistantPage() {
               </IBlueBGArrowButton>,
             ],
           },
-
           {
             code: 'tools',
             name: 'Tools (optional)',
             description:
               'Let your assistant work with given differnt tools on behalf of you',
+            actions: [
+              <ICancelButton
+                className="px-4 rounded-[2px]"
+                onClick={() => showDialog(goBack)}
+              >
+                Cancel
+              </ICancelButton>,
+              <IBlueBGArrowButton
+                type="button"
+                isLoading={loading}
+                onClick={() => {
+                  if (tools.length === 0) {
+                    setTools([]);
+                    setErrorMessage('');
+                    setActiveTab('define-assistant');
+                    return;
+                  }
+                  if (validateTool()) setActiveTab('define-assistant');
+                }}
+                className="px-4 rounded-[2px]"
+              >
+                {tools.length === 0 ? 'Skip for now' : 'Continue'}
+              </IBlueBGArrowButton>,
+            ],
             body: (
               <div className="flex grow flex-col">
                 <div className="flex items-center justify-between pl-4 bg-white dark:bg-gray-900 border-b">
@@ -461,7 +484,6 @@ export function CreateAssistantPage() {
                           <div className="flex-1 mt-3">
                             <CardTitle>{itm.name}</CardTitle>
                             <CardDescription>{itm.description}</CardDescription>
-                            </CardDescription>
                           </div>
                         </Card>
                       );
@@ -479,30 +501,6 @@ export function CreateAssistantPage() {
                 )}
               </div>
             ),
-            actions: [
-              <ICancelButton
-                className="px-4 rounded-[2px]"
-                onClick={() => showDialog(goBack)}
-              >
-                Cancel
-              </ICancelButton>,
-              <IBlueBGArrowButton
-                type="button"
-                isLoading={loading}
-                onClick={() => {
-                  if (tools.length === 0) {
-                    setTools([]);
-                    setErrorMessage('');
-                    setActiveTab('define-assistant');
-                    return;
-                  }
-                  if (validateTool()) setActiveTab('define-assistant');
-                }}
-                className="px-4 rounded-[2px]"
-              >
-                {tools.length === 0 ? 'Skip for now' : 'Continue'}
-              </IBlueBGArrowButton>,
-            ],
           },
           {
             code: 'define-assistant',

@@ -6,7 +6,8 @@ import { SetMetadata } from '@/utils/metadata';
 // ============================================================================
 
 const REQUIRED_KEYS = ['mcp.server_url'];
-const ALL_KEYS = [...REQUIRED_KEYS];
+const OPTIONAL_KEYS = ['mcp.tool_name'];
+const ALL_KEYS = [...REQUIRED_KEYS, ...OPTIONAL_KEYS];
 
 // ============================================================================
 // Default Options
@@ -21,6 +22,7 @@ export const GetMCPDefaultOptions = (current: Metadata[]): Metadata[] => {
   };
 
   addMetadata('mcp.server_url');
+  addMetadata('mcp.tool_name');
 
   return metadata.filter(m => ALL_KEYS.includes(m.getKey()));
 };
