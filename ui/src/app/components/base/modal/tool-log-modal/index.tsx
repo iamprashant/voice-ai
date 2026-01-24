@@ -82,37 +82,12 @@ export function ToolLogDialog(props: ToolLogModalProps) {
       </div>
       <div className="relative overflow-auto h-[calc(100vh-50px)] flex-1 flex flex-col">
         <Tab
-          active="Definition"
+          active="Request"
           className={cn(
             'text-sm',
             'bg-gray-50 border-b dark:bg-gray-900 dark:border-gray-800 sticky top-0 z-1',
           )}
           tabs={[
-            {
-              label: 'Definition',
-              element: (
-                <div className="flex-1 flex space-y-8">
-                  {activity && (
-                    <CodeHighlighting
-                      code={JSON.stringify(
-                        {
-                          name: activity.getAssistanttool()?.getName(),
-                          description: activity
-                            .getAssistanttool()
-                            ?.getDescription(),
-                          parameters: activity
-                            .getAssistanttool()
-                            ?.getFields()
-                            ?.toJavaScript(),
-                        },
-                        null,
-                        2,
-                      )}
-                    />
-                  )}
-                </div>
-              ),
-            },
             {
               label: 'Request',
               element: (
