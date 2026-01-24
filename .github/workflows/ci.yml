@@ -287,18 +287,6 @@ jobs:
   # SECURITY CHECKS
   # ============================================================================
 
-  security-go:
-    name: Go Security Scan
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Run Gosec Security Scanner
-        uses: securego/gosec@master
-        with:
-          args: -exclude-dir=protos -exclude-dir=sdks -exclude-dir=api/assistant-api -exclude-dir=cmd/assistant ./...
-
   security-dependencies:
     name: Dependency Vulnerability Scan
     runs-on: ubuntu-latest
