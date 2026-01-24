@@ -30,7 +30,7 @@ func NewOrganizationAuthenticator(cfg *config.AppConfig, logger commons.Logger, 
 
 func (authenticator *organizationAuthenticator) Claim(ctx context.Context, claimToken string) (*types.PlainClaimPrinciple[*types.OrganizationScope], error) {
 	start := time.Now()
-	ath, err := authenticator.authClient.ScopeAuthorize(ctx, claimToken, "organizaiton")
+	ath, err := authenticator.authClient.ScopeAuthorize(ctx, claimToken, "organization")
 	if err != nil {
 		return nil, err
 	}
@@ -43,5 +43,4 @@ func (authenticator *organizationAuthenticator) Claim(ctx context.Context, claim
 			CurrentToken:   claimToken,
 		},
 	}, nil
-
 }

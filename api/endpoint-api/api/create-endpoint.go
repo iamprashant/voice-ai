@@ -70,7 +70,6 @@ func (endpointGRPCApi *endpointGRPCApi) CreateEndpoint(ctx context.Context, cer 
 				errors.New("unauthenticated request for CreateEndpointProviderModel"),
 				"Unable to configure endpoint retry, please try again later",
 			)
-
 		}
 	}
 	if cer.GetCacheConfiguration() != nil {
@@ -85,7 +84,6 @@ func (endpointGRPCApi *endpointGRPCApi) CreateEndpoint(ctx context.Context, cer 
 				errors.New("unauthenticated request for CreateEndpointProviderModel"),
 				"Unable to configure endpoint retry, please try again later",
 			)
-
 		}
 	}
 	_, err = endpointGRPCApi.endpointService.CreateOrUpdateEndpointTag(ctx, iAuth, endpoint.Id, cer.GetTags())

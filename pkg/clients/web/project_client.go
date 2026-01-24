@@ -8,14 +8,15 @@ package web_client
 import (
 	"context"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
 	"github.com/rapidaai/config"
 	"github.com/rapidaai/pkg/clients"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	"github.com/rapidaai/pkg/types"
 	project_api "github.com/rapidaai/protos"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type ProjectClient interface {

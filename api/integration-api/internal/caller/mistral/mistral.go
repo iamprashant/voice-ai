@@ -137,7 +137,6 @@ func (mistralC *Mistral) Call(ctx context.Context, endpoint, method string, head
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add(API_KEY_HEADER_KEY, fmt.Sprintf("Bearer %s", cx.(string)))
 	return mistralC.do(req)
-
 }
 
 func (mistralC *Mistral) do(req *http.Request) (*string, error) {

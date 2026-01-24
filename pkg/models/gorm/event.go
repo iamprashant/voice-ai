@@ -33,7 +33,7 @@ func (d *Event) SetValue(src interface{}) error {
 	case nil:
 		d.Payload = gorm_types.InterfaceMap{}
 	default:
-		// Use JSON marshalling for all other types
+		// Use JSON marshaling for all other types
 		jsonBytes, err := json.Marshal(v)
 		if err != nil {
 			return fmt.Errorf("failed to marshal Payload: %w", err)

@@ -9,10 +9,11 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
+	"golang.org/x/oauth2"
+
 	config "github.com/rapidaai/api/web-api/config"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
-	"golang.org/x/oauth2"
 )
 
 type AtlassianConnect struct {
@@ -106,7 +107,6 @@ func (gtr *AtlassianTokenResponse) Map() map[string]interface{} {
 }
 
 func (atlassianConnect *AtlassianConnect) Token(c context.Context, code string) (ExternalConnectToken, error) {
-
 	data := url.Values{}
 	data.Set("client_id", atlassianConnect.atlassianOauthConfig.ClientID)
 	data.Set("client_secret", atlassianConnect.atlassianOauthConfig.ClientSecret)
@@ -142,7 +142,6 @@ func (atlassianConnect *AtlassianConnect) ConfluencePages(ctx context.Context,
 	token *oauth2.Token,
 	q *string,
 	pageToken *string) (*ConfluencePages, error) {
-
 	client := atlassianConnect.atlassianOauthConfig.Client(ctx, token)
 	restyClient := atlassianConnect.GetClient(client)
 	restyClient.SetDebug(true)
@@ -208,7 +207,6 @@ type ConfluenceSpaceResponse struct {
 
 // getting all the workspace of confluence which user gave the permission to
 func (atlassianConnect *AtlassianConnect) fetchConfluenceBaseURL(client *resty.Client) (string, error) {
-
 	var resources []ConfluenceAccessibleResource
 	_, err := client.R().
 		SetHeader("Accept", "application/json").
@@ -224,7 +222,7 @@ func (atlassianConnect *AtlassianConnect) fetchConfluenceBaseURL(client *resty.C
 	}
 
 	if len(resources) > 1 {
-		atlassianConnect.log.Warnf("there are multiple resouce url recieved for the user, Will have to do this in future.")
+		atlassianConnect.log.Warnf("there are multiple resource url received for the user, Will have to do this in future.")
 	}
 
 	// Assuming the first resource is the Confluence instance you want to access

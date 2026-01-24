@@ -10,9 +10,10 @@ import (
 	"testing"
 
 	"github.com/opensearch-project/opensearch-go/v2"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/rapidaai/pkg/commons"
 	configs "github.com/rapidaai/pkg/configs"
-	"github.com/stretchr/testify/assert"
 )
 
 // Local config struct for testing - removed since we can use configs package

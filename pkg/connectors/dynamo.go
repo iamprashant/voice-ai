@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	awsSession "github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+
 	commons "github.com/rapidaai/pkg/commons"
 	configs "github.com/rapidaai/pkg/configs"
 )
@@ -49,7 +50,7 @@ func (dynamo *dynamoConnector) Name() string {
 	return "dynamodb"
 }
 func (dynamo *dynamoConnector) IsConnected(ctx context.Context) bool {
-	dynamo.logger.Debugf("Calling info for dynamo, yet to impliment")
+	dynamo.logger.Debugf("Calling info for dynamo, yet to implement")
 	return true
 }
 func (dynamo *dynamoConnector) Disconnect(ctx context.Context) error {

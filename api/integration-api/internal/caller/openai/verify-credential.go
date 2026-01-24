@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/openai/openai-go"
+
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	"github.com/rapidaai/pkg/commons"
 	integration_api "github.com/rapidaai/protos"
@@ -40,5 +41,4 @@ func (stc *verifyCredentialCaller) CredentialVerifier(
 		return nil, err
 	}
 	return nil, err
-
 }

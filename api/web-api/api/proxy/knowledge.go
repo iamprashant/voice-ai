@@ -66,7 +66,6 @@ func (knowledge *webKnowledgeGRPCApi) GetKnowledge(c context.Context, iRequest *
 
 	_knowledge.CreatedUser = knowledge.GetUser(c, iAuth, _knowledge.GetCreatedBy())
 	return utils.Success[protos.GetKnowledgeResponse, *protos.Knowledge](_knowledge)
-
 }
 
 /*

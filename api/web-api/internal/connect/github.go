@@ -11,11 +11,12 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/mitchellh/mapstructure"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/github"
+
 	config "github.com/rapidaai/api/web-api/config"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/github"
 )
 
 type GithubConnect struct {
@@ -28,7 +29,7 @@ type GithubConnect struct {
 
 var (
 	GITHUB_AUTHENTICATION_SCOPE = []string{"user"}
-	GITHUB_AUTHENTICATION_URL   = "/connect-common/github" //"/auth/signin"
+	GITHUB_AUTHENTICATION_URL   = "/connect-common/github" // "/auth/signin"
 
 	GITHUB_CODE_SCOPE   = []string{"read:org"}
 	GITHUB_CODE_CONNECT = "/connect-common/github"
@@ -78,7 +79,6 @@ func (githubConnect *GithubConnect) githubOauthConfig() (*oauth2.Config, error) 
 		}, nil
 	}
 	return nil, fmt.Errorf("oauth2-github is not enabled")
-
 }
 
 func (githubConnect *GithubConnect) AuthCodeURL(state string) (string, error) {
@@ -124,7 +124,7 @@ func (githubConnect *GithubConnect) GithubUserInfo(c context.Context, state stri
 
 	cfg, err := githubConnect.githubOauthConfig()
 	if err != nil {
-		githubConnect.logger.Errorf("github oauth is not configured, check configuraiton for oauth2")
+		githubConnect.logger.Errorf("github oauth is not configured, check configuration for oauth2")
 		return nil, fmt.Errorf("invalid oauth state")
 	}
 
@@ -213,7 +213,7 @@ func (gtr *GithubTokenResponse) Map() map[string]interface{} {
 func (githubConnect *GithubConnect) Token(c context.Context, code string) (ExternalConnectToken, error) {
 	cfg, err := githubConnect.githubOauthConfig()
 	if err != nil {
-		githubConnect.logger.Errorf("github oauth is not configured, check configuraiton for oauth2")
+		githubConnect.logger.Errorf("github oauth is not configured, check configuration for oauth2")
 		return nil, fmt.Errorf("invalid oauth state")
 	}
 
@@ -264,10 +264,9 @@ func (githubConnect *GithubConnect) Repositories(ctx context.Context,
 	token *oauth2.Token,
 	q *string,
 	pageToken *string) ([]GitHubRepository, error) {
-
 	cfg, err := githubConnect.githubOauthConfig()
 	if err != nil {
-		githubConnect.logger.Errorf("github oauth is not configured, check configuraiton for oauth2")
+		githubConnect.logger.Errorf("github oauth is not configured, check configuration for oauth2")
 		return nil, fmt.Errorf("invalid oauth state")
 	}
 
@@ -277,7 +276,7 @@ func (githubConnect *GithubConnect) Repositories(ctx context.Context,
 	var results []GitHubRepository
 	userRepos, err := githubConnect.fetchRepositories(restyClient, "")
 	if err != nil {
-		githubConnect.log.Errorf("there is no personal repository for the user or error occured %+v", err)
+		githubConnect.log.Errorf("there is no personal repository for the user or error occurred %+v", err)
 	}
 
 	for _, rep := range userRepos {

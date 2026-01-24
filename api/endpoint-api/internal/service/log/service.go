@@ -7,6 +7,9 @@ import (
 	"strconv"
 	"time"
 
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"gorm.io/gorm/clause"
+
 	internal_gorm "github.com/rapidaai/api/endpoint-api/internal/entity"
 	internal_service "github.com/rapidaai/api/endpoint-api/internal/service"
 	"github.com/rapidaai/pkg/commons"
@@ -16,8 +19,6 @@ import (
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
 	endpoint_grpc_api "github.com/rapidaai/protos"
-	"google.golang.org/protobuf/types/known/timestamppb"
-	"gorm.io/gorm/clause"
 )
 
 type endpointLogService struct {
@@ -68,11 +69,9 @@ func (els *endpointLogService) CreateEndpointLog(
 	})
 	utils.Go(ctx, func() {
 		els.ApplyOption(ctx, auth, logId, options)
-
 	})
 	utils.Go(ctx, func() {
 		els.ApplyMetadata(ctx, auth, logId, metadata)
-
 	})
 	return endpointLog, nil
 }
@@ -199,7 +198,6 @@ func (els *endpointLogService) ApplyOption(ctx context.Context,
 	}
 	els.logger.Benchmark("els.ApplyOption", time.Since(start))
 	return options, nil
-
 }
 
 func (els *endpointLogService) ApplyArgument(ctx context.Context,
@@ -296,7 +294,7 @@ func (els *endpointLogService) ApplyMetrics(
 func (els *endpointLogService) GetAllEndpointLog(ctx context.Context,
 	auth types.SimplePrinciple,
 	endpointId uint64,
-	criterias []*endpoint_grpc_api.Criteria, paginate *endpoint_grpc_api.Paginate) (int64, []*internal_gorm.EndpointLog, error) {
+	criteria []*endpoint_grpc_api.Criteria, paginate *endpoint_grpc_api.Paginate) (int64, []*internal_gorm.EndpointLog, error) {
 	start := time.Now()
 	db := els.postgres.DB(ctx)
 	var (
@@ -310,7 +308,7 @@ func (els *endpointLogService) GetAllEndpointLog(ctx context.Context,
 		Preload("Options").
 		Preload("Metrics").
 		Where("organization_id = ? AND project_id = ? AND endpoint_id = ?", *auth.GetCurrentOrganizationId(), *auth.GetCurrentProjectId(), endpointId)
-	for _, ct := range criterias {
+	for _, ct := range criteria {
 		qry.Where(fmt.Sprintf("%s %s ?", ct.GetKey(), ct.GetLogic()), ct.GetValue())
 	}
 	tx := qry.
@@ -349,7 +347,7 @@ func (els *endpointLogService) GetEndpointLog(ctx context.Context, auth types.Si
 }
 
 func (els *endpointLogService) GetAggregatedEndpointAnalytics(ctx context.Context, auth types.SimplePrinciple, endpointId uint64) *endpoint_grpc_api.AggregatedEndpointAnalytics {
-	criterias := []*endpoint_grpc_api.Criteria{{
+	criteria := []*endpoint_grpc_api.Criteria{{
 		Key:   "created_date",
 		Logic: ">=",
 		Value: time.Now().AddDate(0, 0, -7).Format("2006-01-02 15:04:05"),
@@ -359,7 +357,7 @@ func (els *endpointLogService) GetAggregatedEndpointAnalytics(ctx context.Contex
 		ctx,
 		auth,
 		endpointId,
-		criterias,
+		criteria,
 		&endpoint_grpc_api.Paginate{
 			Page:     0,
 			PageSize: 100,
@@ -384,7 +382,7 @@ func (els *endpointLogService) GetAggregatedEndpointAnalytics(ctx context.Contex
 				continue
 			}
 
-			switch type_enums.MetricName(metric.Metric.Name) {
+			switch type_enums.MetricName(metric.Name) {
 			case type_enums.INPUT_COST:
 				totalInputCost += float32(value)
 			case type_enums.OUTPUT_COST:
@@ -433,5 +431,4 @@ func (els *endpointLogService) GetAggregatedEndpointAnalytics(ctx context.Contex
 		P99Latency:      p99Latency,
 		LastActivity:    timestamppb.New(lastActivity),
 	}
-
 }

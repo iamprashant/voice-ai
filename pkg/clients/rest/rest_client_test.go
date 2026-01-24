@@ -14,10 +14,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rapidaai/config"
-	"github.com/rapidaai/pkg/commons"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/rapidaai/config"
+	"github.com/rapidaai/pkg/commons"
 )
 
 func TestNewRestClient(t *testing.T) {

@@ -126,7 +126,6 @@ func (wProjectApi *webProjectGRPCApi) UpdateProject(ctx context.Context, irReque
 		return utils.Error[protos.UpdateProjectResponse](
 			errors.New("you cannot update a project when you are not part of any organization"),
 			"Please create organization before updating a project.")
-
 	}
 
 	prj, err := wProjectApi.projectService.Update(ctx, iAuth, irRequest.GetProjectId(), irRequest.ProjectName, irRequest.ProjectDescription)
@@ -143,7 +142,6 @@ func (wProjectApi *webProjectGRPCApi) UpdateProject(ctx context.Context, irReque
 	}
 
 	return utils.Success[protos.UpdateProjectResponse, *protos.Project](ot)
-
 }
 func (wProjectApi *webProjectGRPCApi) GetAllProject(ctx context.Context, irRequest *protos.GetAllProjectRequest) (*protos.GetAllProjectResponse, error) {
 	wProjectApi.logger.Debugf("GetAllProject from grpc with requestPayload %v, %v", irRequest, ctx)
@@ -170,7 +168,6 @@ func (wProjectApi *webProjectGRPCApi) GetAllProject(ctx context.Context, irReque
 			err,
 			"Unable to get the projects, please try again in sometime.",
 		)
-
 	}
 
 	out := []*protos.Project{}
@@ -193,7 +190,6 @@ func (wProjectApi *webProjectGRPCApi) GetAllProject(ctx context.Context, irReque
 				Email: upr.Member.Email,
 			})
 		}
-
 	}
 	return utils.PaginatedSuccess[protos.GetAllProjectResponse, []*protos.Project](uint32(cnt), irRequest.GetPaginate().GetPage(), out)
 }
@@ -211,7 +207,6 @@ func (wProjectApi *webProjectGRPCApi) GetProject(ctx context.Context, irRequest 
 			errors.New("projectid is not getting passed"),
 			"Please select the project to see the details.",
 		)
-
 	}
 
 	prj, err := wProjectApi.projectService.Get(ctx, iAuth, irRequest.GetProjectId())
@@ -244,7 +239,6 @@ func (wProjectApi *webProjectGRPCApi) GetProject(ctx context.Context, irRequest 
 
 	ot.Members = projectMembers
 	return utils.Success[protos.GetProjectResponse, *protos.Project](ot)
-
 }
 
 func (wProjectApi *webProjectGRPCApi) AddUserToProject(ctx context.Context, auth types.Principle, email string, userId uint64, status type_enums.RecordState, role string, projectIds []uint64) (*protos.AddUsersToProjectResponse, error) {
@@ -272,7 +266,7 @@ func (wProjectApi *webProjectGRPCApi) AddUserToProject(ctx context.Context, auth
 		external_emailer_template.INVITE_MEMBER_TEMPLATE,
 		map[string]string{
 			"inviter_name": auth.GetUserInfo().Name,
-			"project_name": strings.Join(projectNames[:], ","),
+			"project_name": strings.Join(projectNames, ","),
 			"invite_url":   fmt.Sprintf("%s/auth/signup?utm_source=invite&utm_param=%d", wProjectApi.cfg.UiHost, auth.GetOrganizationRole().OrganizationId),
 		},
 	)
@@ -285,7 +279,6 @@ func (wProjectApi *webProjectGRPCApi) AddUserToProject(ctx context.Context, auth
 		wProjectApi.logger.Errorf("unable to cast project credential to proto object %v", err)
 	}
 	return utils.Success[protos.AddUsersToProjectResponse, []*protos.Project](out)
-
 }
 
 func (wProjectApi *webProjectGRPCApi) AddUsersToProject(ctx context.Context, irRequest *protos.AddUsersToProjectRequest) (*protos.AddUsersToProjectResponse, error) {
@@ -384,7 +377,6 @@ func (wProjectApi *webProjectGRPCApi) CreateProjectCredential(c context.Context,
 			err,
 			"Unable to create the project credential, please try again in sometime.",
 		)
-
 	}
 
 	out := &protos.ProjectCredential{}
@@ -394,7 +386,6 @@ func (wProjectApi *webProjectGRPCApi) CreateProjectCredential(c context.Context,
 	}
 
 	return utils.Success[protos.CreateProjectCredentialResponse, *protos.ProjectCredential](out)
-
 }
 
 func (wProjectApi *webProjectGRPCApi) GetAllProjectCredential(c context.Context, irRequest *protos.GetAllProjectCredentialRequest) (*protos.GetAllProjectCredentialResponse, error) {
@@ -416,7 +407,6 @@ func (wProjectApi *webProjectGRPCApi) GetAllProjectCredential(c context.Context,
 			err,
 			"Unable to get all the project credentials, please try again in sometime.",
 		)
-
 	}
 
 	out := []*protos.ProjectCredential{}
@@ -429,5 +419,4 @@ func (wProjectApi *webProjectGRPCApi) GetAllProjectCredential(c context.Context,
 		uint32(cnt),
 		irRequest.GetPaginate().GetPage(),
 		out)
-
 }

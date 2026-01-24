@@ -7,6 +7,7 @@ import (
 	"context"
 
 	"github.com/gin-gonic/gin"
+
 	config "github.com/rapidaai/api/integration-api/config"
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	internal_huggingface_callers "github.com/rapidaai/api/integration-api/internal/caller/huggingface"
@@ -69,7 +70,6 @@ func (huggingf *huggingfaceIntegrationGRPCApi) Chat(c context.Context, irRequest
 		"HUGGINGFACE",
 		internal_huggingface_callers.NewLargeLanguageCaller(huggingf.logger, irRequest.GetCredential()),
 	)
-
 }
 
 func (huggingfaceGRPC *huggingfaceIntegrationGRPCApi) VerifyCredential(c context.Context, irRequest *integration_api.VerifyCredentialRequest) (*integration_api.VerifyCredentialResponse, error) {

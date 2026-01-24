@@ -7,6 +7,8 @@ import (
 	"context"
 	"fmt"
 
+	"gorm.io/gorm/clause"
+
 	internal_gorm "github.com/rapidaai/api/integration-api/internal/entity"
 	internal_services "github.com/rapidaai/api/integration-api/internal/service"
 	"github.com/rapidaai/pkg/commons"
@@ -14,7 +16,6 @@ import (
 	gorm_models "github.com/rapidaai/pkg/models/gorm"
 	"github.com/rapidaai/pkg/types"
 	integration_api "github.com/rapidaai/protos"
-	"gorm.io/gorm/clause"
 )
 
 type auditService struct {

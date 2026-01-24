@@ -7,6 +7,7 @@ import (
 	internal_project_service "github.com/rapidaai/api/web-api/internal/service/project"
 
 	"github.com/gin-gonic/gin"
+
 	config "github.com/rapidaai/api/web-api/config"
 	internal_service "github.com/rapidaai/api/web-api/internal/service"
 	internal_organization_service "github.com/rapidaai/api/web-api/internal/service/organization"
@@ -187,7 +188,6 @@ func (orgG *webOrganizationGRPCApi) CreateOrganization(c context.Context, irRequ
 		Data:    org,
 		Role:    orgRole,
 	}, nil
-
 }
 
 func (orgG *webOrganizationGRPCApi) UpdateOrganization(c context.Context, irRequest *protos.UpdateOrganizationRequest) (*protos.UpdateOrganizationResponse, error) {
@@ -216,7 +216,6 @@ func (orgG *webOrganizationGRPCApi) UpdateOrganization(c context.Context, irRequ
 		Code:    200,
 		Success: true,
 	}, nil
-
 }
 
 // getting all the organization

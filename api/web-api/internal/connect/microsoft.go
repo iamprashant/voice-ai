@@ -11,11 +11,12 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/microsoft"
+
 	config "github.com/rapidaai/api/web-api/config"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/microsoft"
 )
 
 type MicrosoftConnect struct {
@@ -217,7 +218,7 @@ func (microsft *MicrosoftConnect) OneDriveFiles(ctx context.Context,
 	return &OneDriveFiles{Value: val}, nil
 }
 
-// One drive implimentation
+// One drive implementation
 func (microsft *MicrosoftConnect) onedriveFetchAllFilesAndFolders(client *resty.Client, folderID, parent string) ([]*OneDriveFile, error) {
 	var allFiles []*OneDriveFile
 

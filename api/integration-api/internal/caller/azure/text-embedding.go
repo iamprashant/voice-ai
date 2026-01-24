@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/openai/openai-go"
+
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	internal_caller_metrics "github.com/rapidaai/api/integration-api/internal/caller/metrics"
 	"github.com/rapidaai/pkg/commons"
@@ -45,11 +46,9 @@ func (ec *embeddingCaller) GetEmbeddingNewParams(opts *internal_callers.Embeddin
 			if dimensions, err := utils.AnyToInt64(value); err == nil {
 				options.Dimensions = openai.Int(dimensions)
 			}
-
 		}
 	}
 	return options
-
 }
 
 // GetText2Speech implements internal_callers.Text2SpeechCaller.
@@ -57,7 +56,6 @@ func (ec *embeddingCaller) GetEmbedding(ctx context.Context,
 	// providerModel string,
 	content map[int32]string,
 	options *internal_callers.EmbeddingOptions) ([]*protos.Embedding, types.Metrics, error) {
-
 	mertics := internal_caller_metrics.NewMetricBuilder(options.RequestId)
 	mertics.OnStart()
 
@@ -82,14 +80,14 @@ func (ec *embeddingCaller) GetEmbedding(ctx context.Context,
 		OfArrayOfStrings: input,
 	}
 
-	options.AIOptions.PreHook(map[string]interface{}{"input": opts})
+	options.PreHook(map[string]interface{}{"input": opts})
 	resp, err := client.Embeddings.New(
 		ctx,
 		opts,
 	)
 
 	if err != nil {
-		options.AIOptions.PostHook(map[string]interface{}{
+		options.PostHook(map[string]interface{}{
 			"result": resp,
 			"error":  err,
 		}, mertics.OnFailure().Build())
@@ -117,7 +115,7 @@ func (ec *embeddingCaller) GetEmbedding(ctx context.Context,
 			// Base64:    embeddingData.EmbeddingBase64,
 		}
 	}
-	options.AIOptions.PostHook(map[string]interface{}{
+	options.PostHook(map[string]interface{}{
 		"result": resp,
 	}, mertics.Build())
 	return output, mertics.Build(), nil

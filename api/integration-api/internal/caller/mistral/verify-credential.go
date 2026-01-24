@@ -23,7 +23,6 @@ func NewVerifyCredentialCaller(logger commons.Logger, credential *integration_ap
 func (stc *verifyCredentialCaller) CredentialVerifier(
 	ctx context.Context,
 	options *internal_callers.CredentialVerifierOptions) (*string, error) {
-
 	headers := map[string]string{}
 	_, err := stc.Call(ctx, "v1/models", "GET", headers, nil)
 	if err != nil {
@@ -36,5 +35,4 @@ func (stc *verifyCredentialCaller) CredentialVerifier(
 		return nil, err
 	}
 	return nil, err
-
 }

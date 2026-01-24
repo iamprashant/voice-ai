@@ -72,7 +72,6 @@ func TestInitConfig(t *testing.T) {
 	if vConfig.GetString("POSTGRES__DB_NAME") != "endpoint_db" {
 		t.Errorf("Expected POSTGRES__DB_NAME to be 'endpoint_db', but got %v", vConfig.GetString("POSTGRES__DB_NAME"))
 	}
-
 }
 
 func TestGetApplicationConfig(t *testing.T) {
@@ -125,5 +124,4 @@ func TestGetApplicationConfig(t *testing.T) {
 	if appConfig.RedisConfig.Host != "localhost" || appConfig.RedisConfig.Port != 6379 {
 		t.Errorf("Redis Config mismatch: Host=%v, Port=%v", appConfig.RedisConfig.Host, appConfig.RedisConfig.Port)
 	}
-
 }

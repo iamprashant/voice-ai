@@ -22,5 +22,4 @@ func (stc *verifyCredentialCaller) CredentialVerifier(
 	ctx context.Context,
 	options *internal_callers.CredentialVerifierOptions) (*string, error) {
 	return nil, nil
-
 }

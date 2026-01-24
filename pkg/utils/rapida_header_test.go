@@ -24,5 +24,4 @@ func TestHeaderConstants(t *testing.T) {
 	if HEADER_REGION_KEY == "" {
 		t.Error("HEADER_REGION_KEY should not be empty")
 	}
-
 }

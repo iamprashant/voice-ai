@@ -8,13 +8,15 @@ import (
 	"strings"
 	"time"
 
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	internal_connects "github.com/rapidaai/api/web-api/internal/connect"
 	internal_services "github.com/rapidaai/api/web-api/internal/service"
 	internal_organization_service "github.com/rapidaai/api/web-api/internal/service/organization"
 	internal_project_service "github.com/rapidaai/api/web-api/internal/service/project"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/gin-gonic/gin"
+
 	config "github.com/rapidaai/api/web-api/config"
 	internal_user_service "github.com/rapidaai/api/web-api/internal/service/user"
 	external_clients "github.com/rapidaai/pkg/clients/external"
@@ -277,7 +279,7 @@ func (wAuthApi *webAuthGRPCApi) Authenticate(c context.Context, irRequest *proto
 
 /*
 Register or activate a user to authenticate into the rapida platform
-will be streamlining the code for better managing and expalining later
+will be streamlining the code for better managing and explaining later
 */
 func (wAuthApi *webAuthGRPCApi) RegisterUser(c context.Context, irRequest *protos.RegisterUserRequest) (*protos.AuthenticateResponse, error) {
 	wAuthApi.logger.Debugf("RegisterUser from grpc with requestPayload %v, %v", irRequest, c)
@@ -327,7 +329,6 @@ func (wAuthApi *webAuthGRPCApi) RegisterUser(c context.Context, irRequest *proto
 				ErrorMessage: "illegal user status",
 				HumanMessage: "Your email is already associated with an existing account, try signin.",
 			}}, nil
-
 	}
 	// if it's invited user then
 	if cUser.Status == type_enums.RECORD_INVITED {
@@ -394,7 +395,6 @@ func (wAuthApi *webAuthGRPCApi) RegisterUser(c context.Context, irRequest *proto
 					ErrorMessage: err.Error(),
 					HumanMessage: "Unable to activate your account, please try again later.",
 				}}, nil
-
 		}
 		return &protos.AuthenticateResponse{Code: 200, Success: true, Data: auth}, nil
 	}
@@ -468,7 +468,6 @@ func (wAuthApi *webAuthGRPCApi) ForgotPassword(c context.Context, irRequest *pro
 		Code:    200,
 		Success: true,
 	}, nil
-
 }
 
 func (wAuthApi *webAuthGRPCApi) ChangePassword(c context.Context, irRequest *protos.ChangePasswordRequest) (*protos.ChangePasswordResponse, error) {
@@ -507,7 +506,6 @@ func (wAuthApi *webAuthGRPCApi) ChangePassword(c context.Context, irRequest *pro
 		Code:    200,
 		Success: true,
 	}, nil
-
 }
 
 func (wAuthApi *webAuthGRPCApi) CreatePassword(c context.Context, irRequest *protos.CreatePasswordRequest) (*protos.CreatePasswordResponse, error) {
@@ -540,7 +538,6 @@ func (wAuthApi *webAuthGRPCApi) CreatePassword(c context.Context, irRequest *pro
 		Code:    200,
 		Success: true,
 	}, nil
-
 }
 
 func (wAuthApi *webAuthGRPCApi) Authorize(c context.Context, irRequest *protos.AuthorizeRequest) (*protos.AuthenticateResponse, error) {
@@ -577,7 +574,6 @@ func (wAuthApi *webAuthGRPCApi) ScopeAuthorize(c context.Context, irRequest *pro
 	auth := &protos.ScopedAuthentication{}
 	utils.Cast(iAuth, auth)
 	return &protos.ScopedAuthenticationResponse{Code: 200, Success: true, Data: auth}, nil
-
 }
 
 func (wAuthApi *webAuthApi) VerifyToken(c context.Context, irRequest *protos.VerifyTokenRequest) (*protos.VerifyTokenResponse, error) {
@@ -590,7 +586,6 @@ func (wAuthApi *webAuthApi) VerifyToken(c context.Context, irRequest *protos.Ver
 	aToken := &protos.Token{}
 	utils.Cast(token, aToken)
 	return &protos.VerifyTokenResponse{Code: 200, Success: true, Data: aToken}, nil
-
 }
 
 func (wAuthApi *webAuthApi) GetUser(c context.Context, irRequest *protos.GetUserRequest) (*protos.GetUserResponse, error) {
@@ -608,7 +603,6 @@ func (wAuthApi *webAuthApi) GetUser(c context.Context, irRequest *protos.GetUser
 	aUser := &protos.User{}
 	utils.Cast(user, aUser)
 	return &protos.GetUserResponse{Code: 200, Success: true, Data: aUser}, nil
-
 }
 
 func (wAuthApi *webAuthApi) UpdateUser(c context.Context, irRequest *protos.UpdateUserRequest) (*protos.UpdateUserResponse, error) {
@@ -633,7 +627,7 @@ func (wAuthApi *webAuthApi) UpdateUser(c context.Context, irRequest *protos.Upda
 }
 
 /**
-Oauth implimentation block that will help us quickly login and sign up in our system from multiple social accounts
+Oauth implementation block that will help us quickly login and sign up in our system from multiple social accounts
 
 **/
 
@@ -690,7 +684,6 @@ func (wAuthApi *webAuthApi) RegisterSocialUser(c context.Context, inf *internal_
 
 	// if it's invited user then
 	if cUser.Status == type_enums.RECORD_INVITED {
-
 		// activate org
 		if err = wAuthApi.userService.ActivateAllOrganizationRole(c, cUser.Id); err != nil {
 			wAuthApi.logger.Errorf("Error while registering user %v", err)
@@ -843,7 +836,6 @@ func (wAuthApi *webAuthGRPCApi) Google(c context.Context, irRequest *protos.Soci
 		return nil, err
 	}
 	return wAuthApi.RegisterSocialUser(c, inf)
-
 }
 
 func (wAuthApi *webAuthGRPCApi) GetAllUser(c context.Context, irRequest *protos.GetAllUserRequest) (*protos.GetAllUserResponse, error) {
@@ -877,7 +869,7 @@ func (wAuthApi *webAuthGRPCApi) GetAllUser(c context.Context, irRequest *protos.
 			Id:          member.Member.Id,
 			Email:       member.Member.Email,
 			Role:        member.Role,
-			Status:      member.Member.Mutable.Status.String(),
+			Status:      member.Member.Status.String(),
 			CreatedDate: timestamppb.New(time.Time(member.Member.CreatedDate)),
 		}
 	}

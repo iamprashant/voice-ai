@@ -8,21 +8,22 @@ package endpoint_client
 import (
 	"context"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
 	"github.com/rapidaai/config"
 	clients "github.com/rapidaai/pkg/clients"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	"github.com/rapidaai/pkg/types"
 	endpoint_api "github.com/rapidaai/protos"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type EndpointServiceClient interface {
-	GetAllEndpoint(c context.Context, auth types.SimplePrinciple, criterias []*endpoint_api.Criteria, paginate *endpoint_api.Paginate) (*endpoint_api.Paginated, []*endpoint_api.Endpoint, error)
+	GetAllEndpoint(c context.Context, auth types.SimplePrinciple, criteria []*endpoint_api.Criteria, paginate *endpoint_api.Paginate) (*endpoint_api.Paginated, []*endpoint_api.Endpoint, error)
 	GetEndpoint(c context.Context, auth types.SimplePrinciple, endpointRequest *endpoint_api.GetEndpointRequest) (*endpoint_api.Endpoint, error)
 	CreateEndpoint(c context.Context, auth types.SimplePrinciple, endpointRequest *endpoint_api.CreateEndpointRequest) (*endpoint_api.CreateEndpointResponse, error)
-	GetAllEndpointProviderModel(c context.Context, auth types.SimplePrinciple, endpointId uint64, criterias []*endpoint_api.Criteria, paginate *endpoint_api.Paginate) (*endpoint_api.Paginated, []*endpoint_api.EndpointProviderModel, error)
+	GetAllEndpointProviderModel(c context.Context, auth types.SimplePrinciple, endpointId uint64, criteria []*endpoint_api.Criteria, paginate *endpoint_api.Paginate) (*endpoint_api.Paginated, []*endpoint_api.EndpointProviderModel, error)
 	UpdateEndpointVersion(c context.Context, auth types.SimplePrinciple, endpointId, endpointProviderModelId uint64) (*endpoint_api.UpdateEndpointVersionResponse, error)
 	CreateEndpointProviderModel(c context.Context, auth types.SimplePrinciple, endpointRequest *endpoint_api.CreateEndpointProviderModelRequest) (*endpoint_api.CreateEndpointProviderModelResponse, error)
 	CreateEndpointCacheConfiguration(c context.Context, auth types.SimplePrinciple, endpointRequest *endpoint_api.CreateEndpointCacheConfigurationRequest) (*endpoint_api.CreateEndpointCacheConfigurationResponse, error)
@@ -31,7 +32,7 @@ type EndpointServiceClient interface {
 	CreateEndpointTag(c context.Context, auth types.SimplePrinciple, endpointRequest *endpoint_api.CreateEndpointTagRequest) (*endpoint_api.GetEndpointResponse, error)
 	UpdateEndpointDetail(c context.Context, auth types.SimplePrinciple, endpointRequest *endpoint_api.UpdateEndpointDetailRequest) (*endpoint_api.GetEndpointResponse, error)
 
-	GetAllEndpointLog(c context.Context, auth types.SimplePrinciple, endpointId uint64, criterias []*endpoint_api.Criteria, paginate *endpoint_api.Paginate) (*endpoint_api.Paginated, []*endpoint_api.EndpointLog, error)
+	GetAllEndpointLog(c context.Context, auth types.SimplePrinciple, endpointId uint64, criteria []*endpoint_api.Criteria, paginate *endpoint_api.Paginate) (*endpoint_api.Paginated, []*endpoint_api.EndpointLog, error)
 	GetEndpointLog(c context.Context, auth types.SimplePrinciple, endpointRequest *endpoint_api.GetEndpointLogRequest) (*endpoint_api.GetEndpointLogResponse, error)
 }
 
@@ -55,11 +56,11 @@ func NewEndpointServiceClientGRPC(config *config.AppConfig, logger commons.Logge
 	}
 }
 
-func (client *endpointServiceClient) GetAllEndpoint(c context.Context, auth types.SimplePrinciple, criterias []*endpoint_api.Criteria, paginate *endpoint_api.Paginate) (*endpoint_api.Paginated, []*endpoint_api.Endpoint, error) {
+func (client *endpointServiceClient) GetAllEndpoint(c context.Context, auth types.SimplePrinciple, criteria []*endpoint_api.Criteria, paginate *endpoint_api.Paginate) (*endpoint_api.Paginated, []*endpoint_api.Endpoint, error) {
 	client.logger.Debugf("get all endpoint request")
 	res, err := client.endpointClient.GetAllEndpoint(client.WithAuth(c, auth), &endpoint_api.GetAllEndpointRequest{
 		Paginate:  paginate,
-		Criterias: criterias,
+		Criterias: criteria,
 	})
 	if err != nil {
 		client.logger.Errorf("error while calling to get all endpoint %v", err)
@@ -97,9 +98,9 @@ func (client *endpointServiceClient) CreateEndpoint(c context.Context, auth type
 	return res, nil
 }
 
-func (client *endpointServiceClient) GetAllEndpointProviderModel(c context.Context, auth types.SimplePrinciple, endpointId uint64, criterias []*endpoint_api.Criteria, paginate *endpoint_api.Paginate) (*endpoint_api.Paginated, []*endpoint_api.EndpointProviderModel, error) {
+func (client *endpointServiceClient) GetAllEndpointProviderModel(c context.Context, auth types.SimplePrinciple, endpointId uint64, criteria []*endpoint_api.Criteria, paginate *endpoint_api.Paginate) (*endpoint_api.Paginated, []*endpoint_api.EndpointProviderModel, error) {
 	res, err := client.endpointClient.GetAllEndpointProviderModel(client.WithAuth(c, auth), &endpoint_api.GetAllEndpointProviderModelRequest{
-		Criterias:  criterias,
+		Criterias:  criteria,
 		Paginate:   paginate,
 		EndpointId: endpointId,
 	})
@@ -177,11 +178,11 @@ func (client *endpointServiceClient) ForkEndpoint(c context.Context, auth types.
 	return res, nil
 }
 
-func (client *endpointServiceClient) GetAllEndpointLog(c context.Context, auth types.SimplePrinciple, endpointId uint64, criterias []*endpoint_api.Criteria, paginate *endpoint_api.Paginate) (*endpoint_api.Paginated, []*endpoint_api.EndpointLog, error) {
+func (client *endpointServiceClient) GetAllEndpointLog(c context.Context, auth types.SimplePrinciple, endpointId uint64, criteria []*endpoint_api.Criteria, paginate *endpoint_api.Paginate) (*endpoint_api.Paginated, []*endpoint_api.EndpointLog, error) {
 	res, err := client.endpointClient.GetAllEndpointLog(client.WithAuth(c, auth), &endpoint_api.GetAllEndpointLogRequest{
 		EndpointId: endpointId,
 		Paginate:   paginate,
-		Criterias:  criterias,
+		Criterias:  criteria,
 	})
 	if err != nil {
 		client.logger.Errorf("error while calling to get all endpoint log %v", err)

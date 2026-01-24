@@ -6,10 +6,11 @@ import (
 	"fmt"
 
 	"github.com/go-resty/resty/v2"
+	"golang.org/x/oauth2"
+
 	config "github.com/rapidaai/api/web-api/config"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
-	"golang.org/x/oauth2"
 )
 
 type NotionConnect struct {
@@ -119,7 +120,6 @@ func (notionConnect *NotionConnect) NotionPages(ctx context.Context,
 	token *oauth2.Token,
 	q *string,
 	pageToken *string) (*NotionSearchResult, error) {
-
 	client := notionConnect.notionOauthConfig.Client(context.Background(), token)
 	restyClient := notionConnect.GetClient(client)
 

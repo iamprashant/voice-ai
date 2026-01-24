@@ -7,6 +7,7 @@ import (
 	"context"
 
 	"github.com/gin-gonic/gin"
+
 	config "github.com/rapidaai/api/integration-api/config"
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	internal_mistral_callers "github.com/rapidaai/api/integration-api/internal/caller/mistral"
@@ -64,7 +65,6 @@ func (mistralRPC *mistralIntegrationRPCApi) Chat(c *gin.Context) {
 // all grpc handler
 func (mistral *mistralIntegrationGRPCApi) Chat(c context.Context, irRequest *integration_api.ChatRequest) (*integration_api.ChatResponse, error) {
 	return mistral.integrationApi.Chat(c, irRequest, "MISTRAL", internal_mistral_callers.NewLargeLanguageCaller(mistral.logger, irRequest.GetCredential()))
-
 }
 
 func (mistralGRPC *mistralIntegrationGRPCApi) VerifyCredential(c context.Context, irRequest *integration_api.VerifyCredentialRequest) (*integration_api.VerifyCredentialResponse, error) {

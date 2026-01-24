@@ -16,6 +16,7 @@ import (
 
 	opensearch "github.com/opensearch-project/opensearch-go/v2"
 	opensearchapi "github.com/opensearch-project/opensearch-go/v2/opensearchapi"
+
 	commons "github.com/rapidaai/pkg/commons"
 	configs "github.com/rapidaai/pkg/configs"
 )
@@ -221,7 +222,6 @@ func (osc *openSearchConnector) TextSearch(ctx context.Context,
 	collectionName string, query string,
 	entities map[string]interface{},
 	opts *VectorSearchOptions) ([]map[string]interface{}, error) {
-
 	opensearchQuery := map[string]interface{}{
 		"bool": map[string]interface{}{
 			"must": []interface{}{
@@ -338,7 +338,6 @@ func (osc *openSearchConnector) VectorSearch(ctx context.Context,
 	queryVector []float64,
 	entities map[string]interface{},
 	opts *VectorSearchOptions) ([]map[string]interface{}, error) {
-
 	// Initial KNN query
 	knnQuery := map[string]interface{}{
 		"vector": map[string]interface{}{
@@ -482,7 +481,6 @@ func (openSearch *openSearchConnector) connectionString() string {
 
 // connecting and setting connection for opensearch
 func (openSearch *openSearchConnector) Connect(ctx context.Context) error {
-
 	openSearch.logger.Debugf("Creating opensearch client %s", openSearch.connectionString())
 	client, err := opensearch.NewClient(opensearch.Config{
 		Transport: &http.Transport{
@@ -526,7 +524,7 @@ func (openSearch *openSearchConnector) IsConnected(ctx context.Context) bool {
 
 	// some case opensearch do not raise any error when using with aws sts and role base IAM authentication
 	if infoResponse.StatusCode != 200 {
-		openSearch.logger.Debugf("Recieve the response from opensearch for INFO %v", infoResponse)
+		openSearch.logger.Debugf("Receive the response from opensearch for INFO %v", infoResponse)
 		return false
 	}
 	openSearch.logger.Debugf("Returning info for opensearch with connected state.")
@@ -613,7 +611,6 @@ func (openSearch *openSearchConnector) Bulk(ctx context.Context, body string) er
 
 // persisting body to index in opensearch
 func (openSearch *openSearchConnector) Persist(ctx context.Context, index string, id string, body string) error {
-
 	openSearch.logger.Debugf("indexing query started executing on index %s", index)
 	req := opensearchapi.IndexRequest{
 		Index:      index,
@@ -661,7 +658,6 @@ func (openSearch *openSearchConnector) Update(ctx context.Context, index string,
 
 // disconnect from opensearch client
 func (c *openSearchConnector) Disconnect(ctx context.Context) error {
-
 	// do somthing to close the connection
 	// defer c.Connection.close()
 	c.logger.Debug("Disconnecting with opensearch client.")

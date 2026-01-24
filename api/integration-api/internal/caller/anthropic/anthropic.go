@@ -7,6 +7,7 @@ import (
 
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/option"
+
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"

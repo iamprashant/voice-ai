@@ -15,10 +15,11 @@ import (
 
 	"github.com/go-gorm/caches/v4"
 	mapstructure "github.com/mitchellh/mapstructure"
+	"github.com/redis/go-redis/v9"
+
 	"github.com/rapidaai/pkg/ciphers"
 	commons "github.com/rapidaai/pkg/commons"
 	configs "github.com/rapidaai/pkg/configs"
-	"github.com/redis/go-redis/v9"
 )
 
 type RedisConnector interface {
@@ -46,7 +47,7 @@ type redisPostgresCacheConnector struct {
 	Prefix             string
 }
 
-// return connector behaviour with redis
+// return connector behavior with redis
 func NewRedisConnector(config *configs.RedisConfig, logger commons.Logger) RedisConnector {
 	return &redisConnector{cfg: config, logger: logger}
 }
@@ -134,9 +135,8 @@ func (redisC *redisConnector) Cmd(ctx context.Context, cmd string, args []string
 }
 
 // For executing single command with multiple different arguments.
-// Pipelined command without TNX as currenty used for only read, multiple write and read may create inconsistent results as its not in TX
+// Pipelined command without TNX as currently used for only read, multiple write and read may create inconsistent results as its not in TX
 func (redisC *redisConnector) Cmds(ctx context.Context, cmd string, args *[]string) *RedisResponse {
-
 	start := time.Now()
 	// pipeline start
 	redisC.logger.Debugf("started executing redis cmds %s in pipeline no of commands %d", cmd, len(*args))
@@ -164,7 +164,6 @@ func (redisC *redisConnector) Cmds(ctx context.Context, cmd string, args *[]stri
 			}
 			result = append(result, val)
 		}
-
 	}
 	redisC.logger.Benchmark("redisConnector.Cmds", time.Since(start))
 	return &RedisResponse{Result: result, Err: err}
@@ -182,7 +181,6 @@ func (redisC *redisConnector) Disconnect(ctx context.Context) error {
 		return err
 	}
 	return err
-
 }
 
 type RedisResponse struct {
@@ -208,7 +206,6 @@ func (rs *RedisResponse) ResultSlice() ([]interface{}, error) {
 	default:
 		return nil, fmt.Errorf("unable to parse the result to []interface{}")
 	}
-
 }
 
 func (rs *RedisResponse) ResultStringSlice() ([]string, error) {
@@ -230,7 +227,6 @@ func (rs *RedisResponse) ResultStringSlice() ([]string, error) {
 	default:
 		return nil, fmt.Errorf("unable to parse the result to []interface{}")
 	}
-
 }
 
 func (rs *RedisResponse) ResultStruct(output interface{}) error {
@@ -349,7 +345,6 @@ func (rs *RedisResponse) ResultStringSlices() ([][]string, error) {
 	default:
 		return nil, fmt.Errorf("unable to parse the result to []interface{}")
 	}
-
 }
 
 // reference https://pkg.go.dev/github.com/mitchellh/mapstructure@v1.5.0?utm_source=gopls

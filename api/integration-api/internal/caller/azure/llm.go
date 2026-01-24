@@ -8,6 +8,7 @@ import (
 
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/shared"
+
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	internal_caller_metrics "github.com/rapidaai/api/integration-api/internal/caller/metrics"
 	"github.com/rapidaai/pkg/commons"
@@ -36,7 +37,7 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 
 	client, err := llc.GetClient()
 	if err != nil {
-		llc.logger.Errorf("chat complition unable to get client for openai %v", err)
+		llc.logger.Errorf("chat completion unable to get client for openai %v", err)
 		return nil, metrics.OnFailure().Build(), err
 	}
 
@@ -45,13 +46,13 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 	llmRequest.Messages = llc.buildHistory(allMessages)
 
 	// prehook
-	options.AIOptions.PreHook(utils.ToJson(llmRequest))
+	options.PreHook(utils.ToJson(llmRequest))
 
-	//chat complitions
+	// chat complitions
 	resp, err := client.Chat.Completions.New(ctx, llmRequest)
 	if err != nil {
-		llc.logger.Errorf("chat complition failed to get response from openai %v", err)
-		options.AIOptions.PostHook(map[string]interface{}{
+		llc.logger.Errorf("chat completion failed to get response from openai %v", err)
+		options.PostHook(map[string]interface{}{
 			"error":  err,
 			"result": resp,
 		}, metrics.OnFailure().Build())
@@ -97,7 +98,7 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 		}
 	}
 
-	options.AIOptions.PostHook(map[string]interface{}{
+	options.PostHook(map[string]interface{}{
 		"result": resp,
 	}, metrics.OnSuccess().Build())
 	return &message, metrics.Build(), nil
@@ -125,14 +126,14 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 
 	completionsOptions := llc.getChatCompleteParameter(options)
 	completionsOptions.Messages = llc.buildHistory(allMessages)
-	options.AIOptions.PreHook(utils.ToJson(completionsOptions))
+	options.PreHook(utils.ToJson(completionsOptions))
 	llc.logger.Benchmark("azure.llm.GetChatCompletion.llmRequestPrepare", time.Since(start))
 
 	// Get streaming response
 	resp := client.Chat.Completions.NewStreaming(ctx, completionsOptions)
 	if resp.Err() != nil {
 		llc.logger.Errorf("Failed to get chat completions stream: %v", resp.Err())
-		options.AIOptions.PostHook(map[string]interface{}{
+		options.PostHook(map[string]interface{}{
 			"result": utils.ToJson(resp),
 			"error":  resp.Err(),
 		}, metrics.Build())
@@ -155,7 +156,7 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 		if _, ok := accumulate.JustFinishedContent(); ok {
 			metrics.OnAddMetrics(llc.GetComplitionUsages(accumulate.Usage)...)
 			metrics.OnSuccess()
-			options.AIOptions.PostHook(map[string]interface{}{
+			options.PostHook(map[string]interface{}{
 				"result": utils.ToJson(accumulate),
 			}, metrics.Build())
 			onMetrics(&completeMsg, metrics.Build())
@@ -178,7 +179,7 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 			}
 
 			metrics.OnAddMetrics(llc.GetComplitionUsages(accumulate.Usage)...)
-			options.AIOptions.PostHook(map[string]interface{}{
+			options.PostHook(map[string]interface{}{
 				"result": utils.ToJson(accumulate),
 			}, metrics.Build())
 			onMetrics(&completeMsg, metrics.Build())
@@ -246,7 +247,6 @@ func (llc *largeLanguageCaller) buildHistory(allMessages []*protos.Message) []op
 								},
 							},
 						})
-
 					}
 				default:
 					llc.logger.Warnf("Unknown content type: %s", ct.ContentType)
@@ -279,7 +279,6 @@ func (llc *largeLanguageCaller) buildHistory(allMessages []*protos.Message) []op
 				msg = append(msg, openai.ChatCompletionMessageParamUnion{
 					OfAssistant: &assistantMessage,
 				})
-
 			}
 
 		case ChatRoleSystem:
@@ -294,7 +293,6 @@ func (llc *largeLanguageCaller) buildHistory(allMessages []*protos.Message) []op
 				msg = append(msg, openai.ToolMessage(string(tcl.GetContent()), toolId))
 			}
 		}
-
 	}
 	return msg
 }
@@ -443,7 +441,6 @@ func (llc *largeLanguageCaller) getChatCompleteParameter(
 					}
 				}
 			}
-
 		}
 	}
 	return options

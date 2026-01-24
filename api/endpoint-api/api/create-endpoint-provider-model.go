@@ -9,12 +9,13 @@ import (
 	"context"
 	"errors"
 
+	"google.golang.org/protobuf/encoding/protojson"
+
 	internal_gorm "github.com/rapidaai/api/endpoint-api/internal/entity"
 	internal_services "github.com/rapidaai/api/endpoint-api/internal/service"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
 	endpoint_grpc_api "github.com/rapidaai/protos"
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
 func (endpointGRPCApi *endpointGRPCApi) CreateEndpointProviderModel(ctx context.Context, iRequest *endpoint_grpc_api.CreateEndpointProviderModelRequest) (*endpoint_grpc_api.CreateEndpointProviderModelResponse, error) {
@@ -27,7 +28,6 @@ func (endpointGRPCApi *endpointGRPCApi) CreateEndpointProviderModel(ctx context.
 			errors.New("unauthenticated request for CreateEndpointProviderModel"),
 			"Please provider valid service credentials to perfom invoke, read docs @ docs.rapida.ai",
 		)
-
 	}
 
 	ep, err := endpointGRPCApi.endpointService.Get(ctx, iAuth, iRequest.GetEndpointId(), nil, internal_services.NewDefaultGetEndpointOption())

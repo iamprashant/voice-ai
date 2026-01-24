@@ -64,7 +64,6 @@ func (cohere *cohereIntegrationGRPCApi) Embedding(c context.Context, irRequest *
 		"COHERE",
 		internal_cohere_callers.NewEmbeddingCaller(cohere.logger, irRequest.GetCredential()),
 	)
-
 }
 
 // all grpc handler
@@ -74,7 +73,6 @@ func (cohere *cohereIntegrationGRPCApi) Chat(ctx context.Context, irRequest *int
 		irRequest,
 		"COHERE",
 		internal_cohere_callers.NewLargeLanguageCaller(cohere.logger, irRequest.GetCredential()))
-
 }
 
 func (cohereGRPC *cohereIntegrationGRPCApi) VerifyCredential(c context.Context, irRequest *integration_api.VerifyCredentialRequest) (*integration_api.VerifyCredentialResponse, error) {

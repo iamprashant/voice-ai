@@ -128,5 +128,4 @@ func TestGetApplicationConfig(t *testing.T) {
 	if appConfig.RedisConfig.Host != "localhost" || appConfig.RedisConfig.Port != 6379 {
 		t.Errorf("Redis Config mismatch: Host=%v, Port=%v", appConfig.RedisConfig.Host, appConfig.RedisConfig.Port)
 	}
-
 }

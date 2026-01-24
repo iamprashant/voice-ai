@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/anthropics/anthropic-sdk-go"
+
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	internal_caller_metrics "github.com/rapidaai/api/integration-api/internal/caller/metrics"
 	"github.com/rapidaai/pkg/commons"
@@ -74,7 +75,6 @@ func (llc *largeLanguageCaller) BuildHistory(allMessages []*protos.Message) ([]a
 							},
 						})
 					}
-
 				}
 			}
 			if len(uContent) > 0 {
@@ -112,7 +112,6 @@ func (llc *largeLanguageCaller) BuildHistory(allMessages []*protos.Message) ([]a
 				}
 			}
 		}
-
 	}
 	return systemPrompt, messages
 }
@@ -137,17 +136,17 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 		llc.logger.Errorf("chat completion unable to get client for anthropic: %v", err)
 		onError(err)
 		onMetrics(nil, metrics.OnFailure().Build())
-		options.AIOptions.PostHook(map[string]interface{}{
+		options.PostHook(map[string]interface{}{
 			"error": err,
 		}, metrics.OnFailure().Build())
 		return err
 	}
-	options.AIOptions.PreHook(utils.ToJson(params))
+	options.PreHook(utils.ToJson(params))
 	stream := client.Messages.NewStreaming(ctx, params)
 	message := anthropic.Message{}
 	if stream.Err() != nil {
 		llc.logger.Errorf("stream error: %v", stream.Err())
-		options.AIOptions.PostHook(map[string]interface{}{
+		options.PostHook(map[string]interface{}{
 			"result": utils.ToJson(message),
 			"error":  stream.Err(),
 		}, metrics.Build())
@@ -227,13 +226,12 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 
 		case anthropic.MessageStopEvent:
 			metrics.OnAddMetrics(llc.UsageMetrics(message.Usage)...)
-			options.AIOptions.PostHook(map[string]interface{}{
+			options.PostHook(map[string]interface{}{
 				"result": utils.ToJson(message),
 			}, metrics.OnSuccess().Build())
 			onMetrics(&completeMessage, metrics.Build())
 			return nil
 		}
-
 	}
 	if stream.Err() != nil {
 		llc.logger.Errorf("Stream error: %v", stream.Err())
@@ -309,9 +307,7 @@ func (llc *largeLanguageCaller) GetMessageNewParams(opts *internal_callers.ChatC
 			if topP, err := utils.AnyToFloat64(value); err == nil {
 				options.TopP = anthropic.Float(topP)
 			}
-
 		}
-
 	}
 	return options
 }
@@ -326,7 +322,7 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 
 	client, err := llc.GetClient()
 	if err != nil {
-		options.AIOptions.PostHook(map[string]interface{}{
+		options.PostHook(map[string]interface{}{
 			"error": err,
 		}, metrics.OnFailure().Build())
 		return nil, metrics.OnFailure().Build(), err
@@ -337,10 +333,10 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 	params.Messages = messages
 	params.System = instruction
 
-	options.AIOptions.PreHook(utils.ToJson(params))
+	options.PreHook(utils.ToJson(params))
 	resp, err := client.Messages.New(ctx, params)
 	if err != nil {
-		options.AIOptions.PostHook(map[string]interface{}{
+		options.PostHook(map[string]interface{}{
 			"error":  err,
 			"result": resp,
 		}, metrics.OnFailure().Build())
@@ -349,7 +345,7 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 
 	internalMessage := llc.convertAnthropicMessageToInternal(*resp)
 	metrics.OnAddMetrics(llc.UsageMetrics(resp.Usage)...)
-	options.AIOptions.PostHook(map[string]interface{}{
+	options.PostHook(map[string]interface{}{
 		"result": resp,
 		"error":  err,
 	}, metrics.OnSuccess().Build())

@@ -23,17 +23,19 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
+
 	"github.com/rapidaai/api/integration-api/config"
 	integration_routers "github.com/rapidaai/api/integration-api/router"
 	web_client "github.com/rapidaai/pkg/clients/web"
 	middlewares "github.com/rapidaai/pkg/middlewares"
 
-	"github.com/rapidaai/pkg/authenticators"
-	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/connectors"
 	"github.com/soheilhy/cmux"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
+
+	"github.com/rapidaai/pkg/authenticators"
+	"github.com/rapidaai/pkg/commons"
+	"github.com/rapidaai/pkg/connectors"
 )
 
 // wrapper for gin engine
@@ -147,7 +149,6 @@ func main() {
 			appRunner.Logger.Errorf("Failed to start grpc server err: %v", err)
 		}
 		return err
-
 	})
 
 	group.Go(func() error {
@@ -157,7 +158,7 @@ func main() {
 		}
 		return err
 	})
-	//serve now
+	// serve now
 	err = cmuxListener.Serve()
 	if err != nil {
 		appRunner.Logger.Errorf("Failed to start grpc server err: %v", err)
@@ -206,12 +207,11 @@ func (app *AppRunner) ResolveConfig() error {
 
 	app.Cfg = cfg
 	gin.SetMode(gin.ReleaseMode)
-	// debug mode of gin when runing log in debug mode.
+	// debug mode of gin when running log in debug mode.
 	if cfg.LogLevel == "debug" {
 		gin.SetMode(gin.DebugMode)
 	}
 	return nil
-
 }
 
 // init for app close
@@ -251,7 +251,6 @@ func (g *AppRunner) AllRouters() {
 	integration_routers.HealthCheckRoutes(g.Cfg, g.E, g.Logger, g.Postgres)
 	integration_routers.ProviderApiRoute(g.Cfg, g.S, g.Logger, g.Postgres)
 	integration_routers.AuditLoggingApiRoute(g.Cfg, g.S, g.Logger, g.Postgres)
-
 }
 
 // all middleware
@@ -282,7 +281,7 @@ func (g *AppRunner) CorsMiddleware() {
 
 // Logger Middleware
 func (g *AppRunner) RequestLoggerMiddleware() {
-	g.Logger.Info("Adding request middleware to the applicaiton.")
+	g.Logger.Info("Adding request middleware to the application.")
 	g.E.Use(middlewares.NewRequestLoggerMiddleware(g.Cfg.Name, g.Logger))
 }
 

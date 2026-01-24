@@ -27,7 +27,7 @@ type UserService interface {
 	//
 	ActivateAllProjectRoles(ctx context.Context, userId uint64) error
 	ActivateAllOrganizationRole(ctx context.Context, userId uint64) error
-	GetAllOrganizationMember(ctx context.Context, organizationId uint64, criterias []*web_api.Criteria, paginate *web_api.Paginate) (int64, *[]internal_entity.UserOrganizationRole, error)
+	GetAllOrganizationMember(ctx context.Context, organizationId uint64, criteria []*web_api.Criteria, paginate *web_api.Paginate) (int64, *[]internal_entity.UserOrganizationRole, error)
 
 	GetProjectRole(ctx context.Context, userId uint64, projectId uint64) (*internal_entity.UserProjectRole, error)
 	GetOrganizationRole(ctx context.Context, userId uint64) (*internal_entity.UserOrganizationRole, error)

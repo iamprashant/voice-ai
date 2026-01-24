@@ -20,7 +20,6 @@ func (iApi *integrationApi) Reranking(
 	tag string,
 	rerankerCaller internal_callers.RerankingCaller,
 ) (*integration_api.RerankingResponse, error) {
-
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(c)
 	if !isAuthenticated || !iAuth.HasProject() {
 		iApi.logger.Errorf("unauthenticated request for invoke")

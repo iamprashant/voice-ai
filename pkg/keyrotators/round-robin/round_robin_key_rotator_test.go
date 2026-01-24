@@ -9,8 +9,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/rapidaai/pkg/commons"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/rapidaai/pkg/commons"
 )
 
 func TestNewRoundRobinKeyRotator(t *testing.T) {

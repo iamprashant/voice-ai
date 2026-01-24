@@ -9,36 +9,37 @@ import (
 	"context"
 	"time"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
 	"github.com/rapidaai/config"
 	clients "github.com/rapidaai/pkg/clients"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	"github.com/rapidaai/pkg/types"
 	protos "github.com/rapidaai/protos"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type AssistantServiceClient interface {
-	GetAllAssistant(c context.Context, auth types.SimplePrinciple, criterias []*protos.Criteria, paginate *protos.Paginate) (*protos.Paginated, []*protos.Assistant, error)
+	GetAllAssistant(c context.Context, auth types.SimplePrinciple, criteria []*protos.Criteria, paginate *protos.Paginate) (*protos.Paginated, []*protos.Assistant, error)
 
 	DeleteAssistant(c context.Context, auth types.SimplePrinciple, assistantRequest *protos.DeleteAssistantRequest) (*protos.GetAssistantResponse, error)
 	GetAssistant(c context.Context, auth types.SimplePrinciple, assistantRequest *protos.GetAssistantRequest) (*protos.GetAssistantResponse, error)
 	CreateAssistant(c context.Context, auth types.SimplePrinciple, assistantRequest *protos.CreateAssistantRequest) (*protos.GetAssistantResponse, error)
 
-	GetAllAssistantProvider(c context.Context, auth types.SimplePrinciple, assistantId uint64, criterias []*protos.Criteria, paginate *protos.Paginate) (*protos.Paginated, []*protos.GetAllAssistantProviderResponse_AssistantProvider, error)
+	GetAllAssistantProvider(c context.Context, auth types.SimplePrinciple, assistantId uint64, criteria []*protos.Criteria, paginate *protos.Paginate) (*protos.Paginated, []*protos.GetAllAssistantProviderResponse_AssistantProvider, error)
 	UpdateAssistantVersion(c context.Context, auth types.SimplePrinciple, iRequest *protos.UpdateAssistantVersionRequest) (*protos.GetAssistantResponse, error)
 	CreateAssistantProvider(c context.Context, auth types.SimplePrinciple, assistantRequest *protos.CreateAssistantProviderRequest) (*protos.GetAssistantProviderResponse, error)
 
 	//
 	GetAllMessage(c context.Context, auth types.SimplePrinciple,
-		criterias []*protos.Criteria, paginate *protos.Paginate,
+		criteria []*protos.Criteria, paginate *protos.Paginate,
 		order *protos.Ordering, selectors []*protos.FieldSelector) (*protos.Paginated, []*protos.AssistantConversationMessage, error)
 	GetAllAssistantMessage(c context.Context, auth types.SimplePrinciple, assistantId uint64,
-		criterias []*protos.Criteria, paginate *protos.Paginate,
+		criteria []*protos.Criteria, paginate *protos.Paginate,
 		order *protos.Ordering, selectors []*protos.FieldSelector) (*protos.Paginated, []*protos.AssistantConversationMessage, error)
-	GetAllAssistantConversation(ctx context.Context, auth types.SimplePrinciple, assistantId uint64, criterias []*protos.Criteria, paginate *protos.Paginate, order *protos.Ordering) (*protos.Paginated, []*protos.AssistantConversation, error)
-	GetAllConversationMessage(ctx context.Context, auth types.SimplePrinciple, assistantId, assistantConversationId uint64, criterias []*protos.Criteria, paginate *protos.Paginate, order *protos.Ordering) (*protos.Paginated, []*protos.AssistantConversationMessage, error)
+	GetAllAssistantConversation(ctx context.Context, auth types.SimplePrinciple, assistantId uint64, criteria []*protos.Criteria, paginate *protos.Paginate, order *protos.Ordering) (*protos.Paginated, []*protos.AssistantConversation, error)
+	GetAllConversationMessage(ctx context.Context, auth types.SimplePrinciple, assistantId, assistantConversationId uint64, criteria []*protos.Criteria, paginate *protos.Paginate, order *protos.Ordering) (*protos.Paginated, []*protos.AssistantConversationMessage, error)
 	GetAssistantConversation(
 		c context.Context,
 		auth types.SimplePrinciple,
@@ -62,31 +63,31 @@ type AssistantServiceClient interface {
 
 	//
 	GetAssistantWebhookLog(ctx context.Context, auth types.SimplePrinciple, req *protos.GetAssistantWebhookLogRequest) (*protos.GetAssistantWebhookLogResponse, error)
-	GetAllAssistantWebhookLog(ctx context.Context, auth types.SimplePrinciple, projectId uint64, criterias []*protos.Criteria, paginate *protos.Paginate, ordering *protos.Ordering) (*protos.Paginated, []*protos.AssistantWebhookLog, error)
+	GetAllAssistantWebhookLog(ctx context.Context, auth types.SimplePrinciple, projectId uint64, criteria []*protos.Criteria, paginate *protos.Paginate, ordering *protos.Ordering) (*protos.Paginated, []*protos.AssistantWebhookLog, error)
 
 	//
-	GetAllAssistantWebhook(c context.Context, auth types.SimplePrinciple, assistantId uint64, criterias []*protos.Criteria, paginate *protos.Paginate) (*protos.Paginated, []*protos.AssistantWebhook, error)
+	GetAllAssistantWebhook(c context.Context, auth types.SimplePrinciple, assistantId uint64, criteria []*protos.Criteria, paginate *protos.Paginate) (*protos.Paginated, []*protos.AssistantWebhook, error)
 	GetAssistantWebhook(c context.Context, auth types.SimplePrinciple, iRequest *protos.GetAssistantWebhookRequest) (*protos.GetAssistantWebhookResponse, error)
 	CreateAssistantWebhook(c context.Context, auth types.SimplePrinciple, iRequest *protos.CreateAssistantWebhookRequest) (*protos.GetAssistantWebhookResponse, error)
 	UpdateAssistantWebhook(c context.Context, auth types.SimplePrinciple, iRequest *protos.UpdateAssistantWebhookRequest) (*protos.GetAssistantWebhookResponse, error)
 	DeleteAssistantWebhook(c context.Context, auth types.SimplePrinciple, iRequest *protos.DeleteAssistantWebhookRequest) (*protos.GetAssistantWebhookResponse, error)
 
 	//
-	GetAllAssistantAnalysis(c context.Context, auth types.SimplePrinciple, assistantId uint64, criterias []*protos.Criteria, paginate *protos.Paginate) (*protos.Paginated, []*protos.AssistantAnalysis, error)
+	GetAllAssistantAnalysis(c context.Context, auth types.SimplePrinciple, assistantId uint64, criteria []*protos.Criteria, paginate *protos.Paginate) (*protos.Paginated, []*protos.AssistantAnalysis, error)
 	GetAssistantAnalysis(c context.Context, auth types.SimplePrinciple, iRequest *protos.GetAssistantAnalysisRequest) (*protos.GetAssistantAnalysisResponse, error)
 	CreateAssistantAnalysis(c context.Context, auth types.SimplePrinciple, iRequest *protos.CreateAssistantAnalysisRequest) (*protos.GetAssistantAnalysisResponse, error)
 	UpdateAssistantAnalysis(c context.Context, auth types.SimplePrinciple, iRequest *protos.UpdateAssistantAnalysisRequest) (*protos.GetAssistantAnalysisResponse, error)
 	DeleteAssistantAnalysis(c context.Context, auth types.SimplePrinciple, iRequest *protos.DeleteAssistantAnalysisRequest) (*protos.GetAssistantAnalysisResponse, error)
 
 	//
-	GetAllAssistantTool(c context.Context, auth types.SimplePrinciple, assistantId uint64, criterias []*protos.Criteria, paginate *protos.Paginate) (*protos.Paginated, []*protos.AssistantTool, error)
+	GetAllAssistantTool(c context.Context, auth types.SimplePrinciple, assistantId uint64, criteria []*protos.Criteria, paginate *protos.Paginate) (*protos.Paginated, []*protos.AssistantTool, error)
 	GetAssistantTool(c context.Context, auth types.SimplePrinciple, iRequest *protos.GetAssistantToolRequest) (*protos.GetAssistantToolResponse, error)
 	CreateAssistantTool(c context.Context, auth types.SimplePrinciple, iRequest *protos.CreateAssistantToolRequest) (*protos.GetAssistantToolResponse, error)
 	UpdateAssistantTool(c context.Context, auth types.SimplePrinciple, iRequest *protos.UpdateAssistantToolRequest) (*protos.GetAssistantToolResponse, error)
 	DeleteAssistantTool(c context.Context, auth types.SimplePrinciple, iRequest *protos.DeleteAssistantToolRequest) (*protos.GetAssistantToolResponse, error)
 
 	//
-	GetAllAssistantKnowledge(c context.Context, auth types.SimplePrinciple, assistantId uint64, criterias []*protos.Criteria, paginate *protos.Paginate) (*protos.Paginated, []*protos.AssistantKnowledge, error)
+	GetAllAssistantKnowledge(c context.Context, auth types.SimplePrinciple, assistantId uint64, criteria []*protos.Criteria, paginate *protos.Paginate) (*protos.Paginated, []*protos.AssistantKnowledge, error)
 	GetAssistantKnowledge(c context.Context, auth types.SimplePrinciple, iRequest *protos.GetAssistantKnowledgeRequest) (*protos.GetAssistantKnowledgeResponse, error)
 	CreateAssistantKnowledge(c context.Context, auth types.SimplePrinciple, iRequest *protos.CreateAssistantKnowledgeRequest) (*protos.GetAssistantKnowledgeResponse, error)
 	UpdateAssistantKnowledge(c context.Context, auth types.SimplePrinciple, iRequest *protos.UpdateAssistantKnowledgeRequest) (*protos.GetAssistantKnowledgeResponse, error)
@@ -130,11 +131,11 @@ func NewAssistantServiceClientGRPC(config *config.AppConfig, logger commons.Logg
 	}
 }
 
-func (client *assistantServiceClient) GetAllAssistant(c context.Context, auth types.SimplePrinciple, criterias []*protos.Criteria, paginate *protos.Paginate) (*protos.Paginated, []*protos.Assistant, error) {
+func (client *assistantServiceClient) GetAllAssistant(c context.Context, auth types.SimplePrinciple, criteria []*protos.Criteria, paginate *protos.Paginate) (*protos.Paginated, []*protos.Assistant, error) {
 	client.logger.Debugf("get all assistant request")
 	res, err := client.assistantClient.GetAllAssistant(client.WithAuth(c, auth), &protos.GetAllAssistantRequest{
 		Paginate:  paginate,
-		Criterias: criterias,
+		Criterias: criteria,
 	})
 	if err != nil {
 		client.logger.Errorf("error while calling to get all assistant %v", err)
@@ -182,10 +183,10 @@ func (client *assistantServiceClient) CreateAssistant(c context.Context, auth ty
 	return res, nil
 }
 
-func (client *assistantServiceClient) GetAllAssistantProvider(c context.Context, auth types.SimplePrinciple, assistantId uint64, criterias []*protos.Criteria, paginate *protos.Paginate) (*protos.Paginated, []*protos.GetAllAssistantProviderResponse_AssistantProvider, error) {
+func (client *assistantServiceClient) GetAllAssistantProvider(c context.Context, auth types.SimplePrinciple, assistantId uint64, criteria []*protos.Criteria, paginate *protos.Paginate) (*protos.Paginated, []*protos.GetAllAssistantProviderResponse_AssistantProvider, error) {
 	start := time.Now()
 	res, err := client.assistantClient.GetAllAssistantProvider(client.WithAuth(c, auth), &protos.GetAllAssistantProviderRequest{
-		Criterias:   criterias,
+		Criterias:   criteria,
 		Paginate:    paginate,
 		AssistantId: assistantId,
 	})
@@ -247,7 +248,7 @@ func (client *assistantServiceClient) UpdateAssistantDetail(c context.Context, a
 
 func (client *assistantServiceClient) GetAllMessage(ctx context.Context,
 	auth types.SimplePrinciple,
-	criterias []*protos.Criteria,
+	criteria []*protos.Criteria,
 	paginate *protos.Paginate,
 	order *protos.Ordering,
 	fieldSelector []*protos.FieldSelector,
@@ -255,7 +256,7 @@ func (client *assistantServiceClient) GetAllMessage(ctx context.Context,
 	start := time.Now()
 	res, err := client.assistantClient.GetAllMessage(client.WithAuth(ctx, auth), &protos.GetAllMessageRequest{
 		Paginate:  paginate,
-		Criterias: criterias,
+		Criterias: criteria,
 		Order:     order,
 		Selectors: fieldSelector,
 	})
@@ -275,7 +276,7 @@ func (client *assistantServiceClient) GetAllMessage(ctx context.Context,
 
 func (client *assistantServiceClient) GetAllAssistantMessage(ctx context.Context,
 	auth types.SimplePrinciple,
-	assistantId uint64, criterias []*protos.Criteria,
+	assistantId uint64, criteria []*protos.Criteria,
 	paginate *protos.Paginate,
 	order *protos.Ordering,
 	fieldSelector []*protos.FieldSelector,
@@ -284,7 +285,7 @@ func (client *assistantServiceClient) GetAllAssistantMessage(ctx context.Context
 	res, err := client.assistantClient.GetAllAssistantMessage(client.WithAuth(ctx, auth), &protos.GetAllAssistantMessageRequest{
 		AssistantId: assistantId,
 		Paginate:    paginate,
-		Criterias:   criterias,
+		Criterias:   criteria,
 		Order:       order,
 		Selectors:   fieldSelector,
 	})
@@ -300,12 +301,12 @@ func (client *assistantServiceClient) GetAllAssistantMessage(ctx context.Context
 	return res.GetPaginated(), res.GetData(), nil
 }
 
-func (client *assistantServiceClient) GetAllAssistantConversation(ctx context.Context, auth types.SimplePrinciple, assistantId uint64, criterias []*protos.Criteria, paginate *protos.Paginate, order *protos.Ordering) (*protos.Paginated, []*protos.AssistantConversation, error) {
+func (client *assistantServiceClient) GetAllAssistantConversation(ctx context.Context, auth types.SimplePrinciple, assistantId uint64, criteria []*protos.Criteria, paginate *protos.Paginate, order *protos.Ordering) (*protos.Paginated, []*protos.AssistantConversation, error) {
 	start := time.Now()
 	res, err := client.assistantClient.GetAllAssistantConversation(client.WithAuth(ctx, auth), &protos.GetAllAssistantConversationRequest{
 		AssistantId: assistantId,
 		Paginate:    paginate,
-		Criterias:   criterias,
+		Criterias:   criteria,
 	})
 	if err != nil {
 		client.logger.Benchmark("Benchmarking: assistantServiceClient.GetAllAssistantConversation", time.Since(start))
@@ -319,13 +320,13 @@ func (client *assistantServiceClient) GetAllAssistantConversation(ctx context.Co
 	return res.GetPaginated(), res.GetData(), nil
 }
 
-func (client *assistantServiceClient) GetAllConversationMessage(ctx context.Context, auth types.SimplePrinciple, assistantId, assistantConversationId uint64, criterias []*protos.Criteria, paginate *protos.Paginate, order *protos.Ordering) (*protos.Paginated, []*protos.AssistantConversationMessage, error) {
+func (client *assistantServiceClient) GetAllConversationMessage(ctx context.Context, auth types.SimplePrinciple, assistantId, assistantConversationId uint64, criteria []*protos.Criteria, paginate *protos.Paginate, order *protos.Ordering) (*protos.Paginated, []*protos.AssistantConversationMessage, error) {
 	start := time.Now()
 	res, err := client.assistantClient.GetAllConversationMessage(client.WithAuth(ctx, auth), &protos.GetAllConversationMessageRequest{
 		AssistantConversationId: assistantConversationId,
 		AssistantId:             assistantId,
 		Paginate:                paginate,
-		Criterias:               criterias,
+		Criterias:               criteria,
 	})
 	if err != nil {
 		client.logger.Benchmark("Benchmarking: assistantServiceClient.GetAllConversationMessage", time.Since(start))
@@ -452,12 +453,12 @@ func (client *assistantServiceClient) GetAssistantDebuggerDeployment(c context.C
 	return res, nil
 }
 
-func (client *assistantServiceClient) GetAllAssistantWebhook(ctx context.Context, auth types.SimplePrinciple, assistantId uint64, criterias []*protos.Criteria, paginate *protos.Paginate) (*protos.Paginated, []*protos.AssistantWebhook, error) {
+func (client *assistantServiceClient) GetAllAssistantWebhook(ctx context.Context, auth types.SimplePrinciple, assistantId uint64, criteria []*protos.Criteria, paginate *protos.Paginate) (*protos.Paginated, []*protos.AssistantWebhook, error) {
 	start := time.Now()
 	res, err := client.assistantClient.GetAllAssistantWebhook(client.WithAuth(ctx, auth), &protos.GetAllAssistantWebhookRequest{
 		AssistantId: assistantId,
 		Paginate:    paginate,
-		Criterias:   criterias,
+		Criterias:   criteria,
 	})
 	if err != nil {
 		client.logger.Benchmark("Benchmarking: assistantClient.GetAllAssistantWebhook", time.Since(start))
@@ -474,12 +475,12 @@ func (client *assistantServiceClient) GetAllAssistantWebhook(ctx context.Context
 
 func (client *assistantServiceClient) GetAllAssistantWebhookLog(ctx context.Context, auth types.SimplePrinciple,
 	projectId uint64,
-	criterias []*protos.Criteria, paginate *protos.Paginate, ordering *protos.Ordering) (*protos.Paginated, []*protos.AssistantWebhookLog, error) {
+	criteria []*protos.Criteria, paginate *protos.Paginate, ordering *protos.Ordering) (*protos.Paginated, []*protos.AssistantWebhookLog, error) {
 	start := time.Now()
 	res, err := client.assistantClient.GetAllAssistantWebhookLog(client.WithAuth(ctx, auth), &protos.GetAllAssistantWebhookLogRequest{
 		ProjectId: projectId,
 		Paginate:  paginate,
-		Criterias: criterias,
+		Criterias: criteria,
 		Order:     ordering,
 	})
 	if err != nil {
@@ -589,12 +590,12 @@ func (client *assistantServiceClient) GetAssistantConversation(
 	return res, nil
 }
 
-func (client *assistantServiceClient) GetAllAssistantAnalysis(ctx context.Context, auth types.SimplePrinciple, assistantId uint64, criterias []*protos.Criteria, paginate *protos.Paginate) (*protos.Paginated, []*protos.AssistantAnalysis, error) {
+func (client *assistantServiceClient) GetAllAssistantAnalysis(ctx context.Context, auth types.SimplePrinciple, assistantId uint64, criteria []*protos.Criteria, paginate *protos.Paginate) (*protos.Paginated, []*protos.AssistantAnalysis, error) {
 	start := time.Now()
 	res, err := client.assistantClient.GetAllAssistantAnalysis(client.WithAuth(ctx, auth), &protos.GetAllAssistantAnalysisRequest{
 		Paginate:    paginate,
 		AssistantId: assistantId,
-		Criterias:   criterias,
+		Criterias:   criteria,
 	})
 	if err != nil {
 		client.logger.Benchmark("Benchmarking: assistantClient.GetAllAssistantAnalysis", time.Since(start))
@@ -670,12 +671,12 @@ func (client *assistantServiceClient) UpdateAssistantAnalysis(c context.Context,
 	return res, nil
 }
 
-func (client *assistantServiceClient) GetAllAssistantTool(c context.Context, auth types.SimplePrinciple, assistantId uint64, criterias []*protos.Criteria, paginate *protos.Paginate) (*protos.Paginated, []*protos.AssistantTool, error) {
+func (client *assistantServiceClient) GetAllAssistantTool(c context.Context, auth types.SimplePrinciple, assistantId uint64, criteria []*protos.Criteria, paginate *protos.Paginate) (*protos.Paginated, []*protos.AssistantTool, error) {
 	start := time.Now()
 	res, err := client.assistantClient.GetAllAssistantTool(client.WithAuth(c, auth), &protos.GetAllAssistantToolRequest{
 		AssistantId: assistantId,
 		Paginate:    paginate,
-		Criterias:   criterias,
+		Criterias:   criteria,
 	})
 	if err != nil {
 		client.logger.Benchmark("Benchmarking: assistantServiceClient.GetAssistantTool", time.Since(start))
@@ -753,12 +754,12 @@ func (client *assistantServiceClient) UpdateAssistantTool(c context.Context, aut
 
 //
 
-func (client *assistantServiceClient) GetAllAssistantKnowledge(c context.Context, auth types.SimplePrinciple, assistantId uint64, criterias []*protos.Criteria, paginate *protos.Paginate) (*protos.Paginated, []*protos.AssistantKnowledge, error) {
+func (client *assistantServiceClient) GetAllAssistantKnowledge(c context.Context, auth types.SimplePrinciple, assistantId uint64, criteria []*protos.Criteria, paginate *protos.Paginate) (*protos.Paginated, []*protos.AssistantKnowledge, error) {
 	start := time.Now()
 	res, err := client.assistantClient.GetAllAssistantKnowledge(client.WithAuth(c, auth), &protos.GetAllAssistantKnowledgeRequest{
 		AssistantId: assistantId,
 		Paginate:    paginate,
-		Criterias:   criterias,
+		Criterias:   criteria,
 	})
 	if err != nil {
 		client.logger.Benchmark("Benchmarking: assistantServiceClient.GetAssistantKnowledge", time.Since(start))

@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"golang.org/x/oauth2"
+
 	config "github.com/rapidaai/api/web-api/config"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
-	"golang.org/x/oauth2"
 )
 
 type SlackConnect struct {

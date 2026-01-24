@@ -70,5 +70,4 @@ func (authenticator *userAuthenticator) Authorize(ctx context.Context, authToken
 		ProjectRoles: _rls,
 		CurrentToken: authToken,
 	}, nil
-
 }

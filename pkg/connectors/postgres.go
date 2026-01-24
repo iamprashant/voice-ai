@@ -11,11 +11,12 @@ import (
 	"time"
 
 	"github.com/go-gorm/caches/v4"
-	commons "github.com/rapidaai/pkg/commons"
-	configs "github.com/rapidaai/pkg/configs"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+
+	commons "github.com/rapidaai/pkg/commons"
+	configs "github.com/rapidaai/pkg/configs"
 )
 
 type PostgresConnector interface {
@@ -76,11 +77,9 @@ func (psql *postgresConnector) Connect(ctx context.Context) error {
 			}}
 			_ = db.Use(cachesPlugin)
 		}
-
 	}
 	psql.db = db
 	return nil
-
 }
 
 func (psql *postgresConnector) Name() string {

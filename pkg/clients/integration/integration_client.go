@@ -10,14 +10,15 @@ import (
 	"errors"
 	"strings"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
 	"github.com/rapidaai/config"
 	"github.com/rapidaai/pkg/clients"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/protos"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type IntegrationServiceClient interface {
@@ -85,7 +86,6 @@ func (client *integrationServiceClient) Embedding(c context.Context,
 	auth types.SimplePrinciple,
 	providerName string,
 	request *protos.EmbeddingRequest) (*protos.EmbeddingResponse, error) {
-
 	switch providerName := strings.ToLower(providerName); providerName {
 	case "cohere":
 		return client.cohereClient.Embedding(client.WithAuth(c, auth), request)
@@ -172,7 +172,6 @@ func (client *integrationServiceClient) VerifyCredential(c context.Context,
 	auth types.SimplePrinciple,
 	providerName string,
 	cr *protos.Credential) (*protos.VerifyCredentialResponse, error) {
-
 	request := &protos.VerifyCredentialRequest{
 		Credential: cr,
 	}

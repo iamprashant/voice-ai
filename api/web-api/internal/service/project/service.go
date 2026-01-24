@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"gorm.io/gorm/clause"
+
 	internal_entity "github.com/rapidaai/api/web-api/internal/entity"
 	internal_services "github.com/rapidaai/api/web-api/internal/service"
 	"github.com/rapidaai/pkg/ciphers"
@@ -14,7 +16,6 @@ import (
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	web_api "github.com/rapidaai/protos"
-	"gorm.io/gorm/clause"
 )
 
 type projectService struct {
@@ -91,13 +92,13 @@ func (pS *projectService) Update(ctx context.Context, auth types.Principle, proj
 	return project, nil
 }
 
-func (pS *projectService) GetAll(ctx context.Context, auth types.SimplePrinciple, organizationId uint64, criterias []*web_api.Criteria, paginate *web_api.Paginate) (int64, []*internal_entity.Project, error) {
+func (pS *projectService) GetAll(ctx context.Context, auth types.SimplePrinciple, organizationId uint64, criteria []*web_api.Criteria, paginate *web_api.Paginate) (int64, []*internal_entity.Project, error) {
 	db := pS.postgres.DB(ctx)
 	var projects []*internal_entity.Project
 	var cnt int64
 	qry := db.Model(internal_entity.Project{}).
 		Where("organization_id = ? AND status = ? ", organizationId, type_enums.RECORD_ACTIVE)
-	for _, ct := range criterias {
+	for _, ct := range criteria {
 		qry.Where(fmt.Sprintf("%s = ?", ct.GetKey()), ct.GetValue())
 	}
 	tx := qry.
@@ -186,7 +187,7 @@ func (pS *projectService) ArchiveCredential(ctx context.Context, auth types.Prin
 	return ct, nil
 }
 
-func (pS *projectService) GetAllCredential(ctx context.Context, auth types.Principle, projectId, organizationId uint64, criterias []*web_api.Criteria, paginate *web_api.Paginate) (int64, []*internal_entity.ProjectCredential, error) {
+func (pS *projectService) GetAllCredential(ctx context.Context, auth types.Principle, projectId, organizationId uint64, criteria []*web_api.Criteria, paginate *web_api.Paginate) (int64, []*internal_entity.ProjectCredential, error) {
 	db := pS.postgres.DB(ctx)
 	var pcs []*internal_entity.ProjectCredential
 	var cnt int64
@@ -194,7 +195,7 @@ func (pS *projectService) GetAllCredential(ctx context.Context, auth types.Princ
 		Model(internal_entity.ProjectCredential{}).
 		Preload("CreatedUser").
 		Where("project_id = ? AND organization_id = ? AND status = ? ", projectId, organizationId, type_enums.RECORD_ACTIVE)
-	for _, ct := range criterias {
+	for _, ct := range criteria {
 		qry.Where(fmt.Sprintf("%s = ?", ct.GetKey()), ct.GetValue())
 	}
 	tx := qry.
@@ -216,5 +217,4 @@ func (pS *projectService) GetAllCredential(ctx context.Context, auth types.Princ
 	}
 
 	return cnt, pcs, nil
-
 }

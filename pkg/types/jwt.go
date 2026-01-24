@@ -77,7 +77,6 @@ func ExtractServiceScope(tokenString string, secretKey string) (*ServiceScope, e
 		if ok {
 			ol.OrganizationId = &organizationId
 		}
-
 	}
 
 	if _, exists := claims["projectId"]; exists {

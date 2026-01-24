@@ -34,7 +34,7 @@ func (localProcessor *localBatchProcessor) Process(ctx context.Context, args map
 	// 		Error:   err,
 	// 	}
 	// } else {
-	// 	lLauncher.Logger.Errorf("Successfull completed test job for testId : %d", lLauncher.Job.TestId)
+	// 	lLauncher.Logger.Errorf("Successful completed test job for testId : %d", lLauncher.Job.TestId)
 	// 	return &jobs.JobResponse{
 	// 		Success: true,
 	// 	}

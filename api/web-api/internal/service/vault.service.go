@@ -16,5 +16,5 @@ type VaultService interface {
 	Get(ctx context.Context, auth types.SimplePrinciple, vltId uint64) (*internal_entity.Vault, error)
 	GetProviderCredential(ctx context.Context, auth types.SimplePrinciple, provider string) (*internal_entity.Vault, error)
 	Delete(ctx context.Context, auth types.Principle, vaultId uint64) (*internal_entity.Vault, error)
-	GetAllOrganizationCredential(ctx context.Context, auth types.SimplePrinciple, criterias []*web_api.Criteria, paginate *web_api.Paginate) (int64, []*internal_entity.Vault, error)
+	GetAllOrganizationCredential(ctx context.Context, auth types.SimplePrinciple, criteria []*web_api.Criteria, paginate *web_api.Paginate) (int64, []*internal_entity.Vault, error)
 }

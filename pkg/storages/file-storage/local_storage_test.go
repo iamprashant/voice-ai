@@ -11,10 +11,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/configs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/rapidaai/pkg/commons"
+	"github.com/rapidaai/pkg/configs"
 )
 
 func TestLocalFileStorage_Name(t *testing.T) {

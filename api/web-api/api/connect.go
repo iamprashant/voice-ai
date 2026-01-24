@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+
 	config "github.com/rapidaai/api/web-api/config"
 	internal_connects "github.com/rapidaai/api/web-api/internal/connect"
 	internal_services "github.com/rapidaai/api/web-api/internal/service"
@@ -103,7 +104,6 @@ func (wConnectApi *webConnectGRPCApi) GeneralConnect(ctx context.Context, kcr *p
 
 	default:
 		return utils.Error[protos.GeneralConnectResponse](err, "Unknown connector request.")
-
 	}
 
 	credential := map[string]interface{}{
@@ -234,7 +234,6 @@ func (connectApi *webConnectRPCApi) buildConnectParameter(c *gin.Context, provid
 		return "", err
 	}
 	return state, nil
-
 }
 func (connectApi *webConnectRPCApi) ConfluenceConnect(c *gin.Context) {
 	state, err := connectApi.buildConnectParameter(c, KN_CONFLUENCE)
@@ -417,7 +416,6 @@ func (connectApi *webConnectGRPCApi) GetConnectorFiles(ctx context.Context,
 		}
 		if x.GetKey() == "page_token" {
 			pageToken = &x.Value
-
 		}
 	}
 

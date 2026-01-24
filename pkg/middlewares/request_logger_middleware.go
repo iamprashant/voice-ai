@@ -14,9 +14,10 @@ import (
 	"github.com/google/uuid"
 	middleware "github.com/grpc-ecosystem/go-grpc-middleware/v2"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/metadata"
+	"google.golang.org/grpc"
+
 	commons "github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
-	"google.golang.org/grpc"
 )
 
 const (
@@ -30,7 +31,6 @@ func NewRequestLoggerMiddleware(serviceName string, logger commons.Logger) gin.H
 		c.Next()
 		logger.Infof("%s %s [status:%v request:%dms]", c.Request.Method, c.Request.URL, c.Writer.Status(), time.Since(start).Milliseconds())
 	}
-
 }
 
 func NewRequestLoggerUnaryServerMiddleware(serviceName string, logger commons.Logger) grpc.UnaryServerInterceptor {
@@ -45,11 +45,9 @@ func NewRequestLoggerUnaryServerMiddleware(serviceName string, logger commons.Lo
 		if err != nil {
 			logger.Errorf("[Unary] %s %s [requestID:%s status:%v request:%dms]", serviceName, info.FullMethod, rqId, "error", duration.Milliseconds())
 			return a, err
-
 		}
 		logger.Infof("[Unary] %s %s [requestID:%s status:%v request:%dms]", serviceName, info.FullMethod, rqId, "success", duration.Milliseconds())
 		return a, err
-
 	}
 }
 
@@ -68,10 +66,8 @@ func NewRequestLoggerStreamServerMiddleware(serviceName string, logger commons.L
 		if err != nil {
 			logger.Errorf("[stream] %s %s [requestID:%s status:%v request:%dms]", serviceName, info.FullMethod, rqId, "error", duration.Milliseconds())
 			return err
-
 		}
 		logger.Infof("[stream] %s %s [requestID:%s status:%v request:%dms]", serviceName, info.FullMethod, rqId, "success", duration.Milliseconds())
 		return err
-
 	}
 }

@@ -32,7 +32,7 @@ type ManualDocumentSource string
 
 const (
 	DOCUMENT_SOURCE_MANUAL DocumentSource = "manual"
-	// all manual upload thigns
+	// all manual upload things
 	DOCUMENT_SOURCE_MANUAL_FILE ManualDocumentSource = "manual-file"
 	DOCUMENT_SOURCE_MANUAL_ZIP  ManualDocumentSource = "manual-zip"
 	DOCUMENT_SOURCE_MANUAL_URL  ManualDocumentSource = "manual-url"

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"gorm.io/gorm/clause"
+
 	internal_entity "github.com/rapidaai/api/web-api/internal/entity"
 	internal_services "github.com/rapidaai/api/web-api/internal/service"
 	"github.com/rapidaai/pkg/commons"
@@ -12,7 +14,6 @@ import (
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	web_api "github.com/rapidaai/protos"
-	"gorm.io/gorm/clause"
 )
 
 type vaultService struct {
@@ -31,7 +32,6 @@ func (vs *vaultService) Create(ctx context.Context,
 	auth types.SimplePrinciple,
 	provider string,
 	name string, credential map[string]interface{}) (*internal_entity.Vault, error) {
-
 	db := vs.postgres.DB(ctx)
 	vlt := &internal_entity.Vault{
 		Mutable: gorm_models.Mutable{
@@ -52,7 +52,6 @@ func (vs *vaultService) Create(ctx context.Context,
 		return nil, err
 	}
 	return vlt, nil
-
 }
 
 func (vS *vaultService) Delete(ctx context.Context, auth types.Principle, vaultId uint64) (*internal_entity.Vault, error) {
@@ -71,7 +70,7 @@ func (vS *vaultService) Delete(ctx context.Context, auth types.Principle, vaultI
 	return vlt, nil
 }
 
-func (vS *vaultService) GetAllOrganizationCredential(ctx context.Context, auth types.SimplePrinciple, criterias []*web_api.Criteria, paginate *web_api.Paginate) (int64, []*internal_entity.Vault, error) {
+func (vS *vaultService) GetAllOrganizationCredential(ctx context.Context, auth types.SimplePrinciple, criteria []*web_api.Criteria, paginate *web_api.Paginate) (int64, []*internal_entity.Vault, error) {
 	db := vS.postgres.DB(ctx)
 	var vaults []*internal_entity.Vault
 	var cnt int64
@@ -81,7 +80,7 @@ func (vS *vaultService) GetAllOrganizationCredential(ctx context.Context, auth t
 		Where("organization_id = ? AND project_id = ? AND status = ?",
 			*auth.GetCurrentOrganizationId(),
 			*auth.GetCurrentProjectId(), type_enums.RECORD_ACTIVE)
-	for _, ct := range criterias {
+	for _, ct := range criteria {
 		switch ct.GetLogic() {
 		case "or":
 			qry.Or(fmt.Sprintf("%s = ?", ct.GetKey()), ct.GetValue())

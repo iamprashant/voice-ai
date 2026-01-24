@@ -44,7 +44,7 @@ type PlainClaimPrinciple[T SimplePrinciple] struct {
 }
 
 /*
-An simple principle that can be used for passing and recieving the data
+An simple principle that can be used for passing and receiving the data
 */
 type SimplePrinciple interface {
 	GetUserId() *uint64
@@ -67,7 +67,7 @@ type SimplePrinciple interface {
 }
 
 /*
- A large priciple
+ A large principle
 */
 
 type Principle interface {

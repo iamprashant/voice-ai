@@ -6,13 +6,14 @@
 package integration_client_builders
 
 import (
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/structpb"
+
 	"github.com/rapidaai/pkg/commons"
 	gorm_types "github.com/rapidaai/pkg/models/gorm/types"
 	"github.com/rapidaai/pkg/parsers"
 	"github.com/rapidaai/pkg/utils"
 	"github.com/rapidaai/protos"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type inputChatBuilder struct {
@@ -41,7 +42,6 @@ func (in *inputChatBuilder) Chat(
 	additionalData map[string]string,
 	conversations ...*protos.Message,
 ) *protos.ChatRequest {
-
 	request := &protos.ChatRequest{
 		Credential:      credential,
 		Conversations:   conversations,
@@ -103,7 +103,6 @@ func (in *inputChatBuilder) PromptArguments(
 func (in *inputChatBuilder) Options(
 	opts map[string]interface{},
 	options map[string]*anypb.Any) map[string]*anypb.Any {
-
 	// If options is nil, initialize it
 	if options == nil {
 		options = make(map[string]*anypb.Any)

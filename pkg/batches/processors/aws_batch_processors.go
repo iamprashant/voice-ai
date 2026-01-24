@@ -6,6 +6,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	awsSession "github.com/aws/aws-sdk-go/aws/session"
+
 	"github.com/rapidaai/pkg/batches"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/configs"

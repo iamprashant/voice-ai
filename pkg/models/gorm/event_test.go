@@ -9,8 +9,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	gorm_types "github.com/rapidaai/pkg/models/gorm/types"
 	"github.com/stretchr/testify/assert"
+
+	gorm_types "github.com/rapidaai/pkg/models/gorm/types"
 )
 
 type badMarshalerEvent struct{}

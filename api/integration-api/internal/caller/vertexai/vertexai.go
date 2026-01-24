@@ -10,12 +10,13 @@ import (
 	"fmt"
 
 	"cloud.google.com/go/auth"
+	"google.golang.org/genai"
+
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/protos"
-	"google.golang.org/genai"
 )
 
 type VertexAi struct {
@@ -83,7 +84,6 @@ func (goog *VertexAi) GetClient() (*genai.Client, error) {
 			TokenProvider: tp,
 			JSON:          serviceCrdJSON}),
 	})
-
 }
 func (goog *VertexAi) UsageMetrics(usages *genai.GenerateContentResponseUsageMetadata) types.Metrics {
 	metrics := make(types.Metrics, 0)

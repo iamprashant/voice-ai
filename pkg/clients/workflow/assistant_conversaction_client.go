@@ -8,19 +8,20 @@ package workflow_client
 import (
 	"context"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
 	"github.com/rapidaai/config"
 	clients "github.com/rapidaai/pkg/clients"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	"github.com/rapidaai/pkg/types"
 	assistant_api "github.com/rapidaai/protos"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type AssistantConversationServiceClient interface {
-	GetAllAssistantConversation(c context.Context, auth types.SimplePrinciple, assistantId uint64, criterias []*assistant_api.Criteria, paginate *assistant_api.Paginate) (*assistant_api.Paginated, []*assistant_api.AssistantConversation, error)
-	GetAllConversationMessage(c context.Context, auth types.SimplePrinciple, assistantId, assistantConversationId uint64, criterias []*assistant_api.Criteria, paginate *assistant_api.Paginate) (*assistant_api.Paginated, []*assistant_api.AssistantConversationMessage, error)
+	GetAllAssistantConversation(c context.Context, auth types.SimplePrinciple, assistantId uint64, criteria []*assistant_api.Criteria, paginate *assistant_api.Paginate) (*assistant_api.Paginated, []*assistant_api.AssistantConversation, error)
+	GetAllConversationMessage(c context.Context, auth types.SimplePrinciple, assistantId, assistantConversationId uint64, criteria []*assistant_api.Criteria, paginate *assistant_api.Paginate) (*assistant_api.Paginated, []*assistant_api.AssistantConversationMessage, error)
 }
 
 type assistantConversationServiceClient struct {
@@ -44,13 +45,13 @@ func NewAssistantConversationServiceClientGRPC(config *config.AppConfig, logger 
 	}
 }
 
-func (client *assistantConversationServiceClient) GetAllAssistantConversation(c context.Context, auth types.SimplePrinciple, assistantId uint64, criterias []*assistant_api.Criteria, paginate *assistant_api.Paginate) (*assistant_api.Paginated, []*assistant_api.AssistantConversation, error) {
+func (client *assistantConversationServiceClient) GetAllAssistantConversation(c context.Context, auth types.SimplePrinciple, assistantId uint64, criteria []*assistant_api.Criteria, paginate *assistant_api.Paginate) (*assistant_api.Paginated, []*assistant_api.AssistantConversation, error) {
 	client.logger.Debugf("get all assistant request")
 	res, err := client.assistantClient.GetAllAssistantConversation(client.WithAuth(c, auth),
 		&assistant_api.GetAllAssistantConversationRequest{
 			AssistantId: assistantId,
 			Paginate:    paginate,
-			Criterias:   criterias,
+			Criterias:   criteria,
 		})
 	if err != nil {
 		client.logger.Errorf("error while calling to get all assistant %v", err)
@@ -63,14 +64,14 @@ func (client *assistantConversationServiceClient) GetAllAssistantConversation(c 
 	return res.GetPaginated(), res.GetData(), nil
 }
 
-func (client *assistantConversationServiceClient) GetAllConversationMessage(c context.Context, auth types.SimplePrinciple, assistantId, assistantConversationId uint64, criterias []*assistant_api.Criteria, paginate *assistant_api.Paginate) (*assistant_api.Paginated, []*assistant_api.AssistantConversationMessage, error) {
+func (client *assistantConversationServiceClient) GetAllConversationMessage(c context.Context, auth types.SimplePrinciple, assistantId, assistantConversationId uint64, criteria []*assistant_api.Criteria, paginate *assistant_api.Paginate) (*assistant_api.Paginated, []*assistant_api.AssistantConversationMessage, error) {
 	client.logger.Debugf("get all assistant request")
 	res, err := client.assistantClient.GetAllConversationMessage(client.WithAuth(c, auth),
 		&assistant_api.GetAllConversationMessageRequest{
 			AssistantId:             assistantId,
 			AssistantConversationId: assistantConversationId,
 			Paginate:                paginate,
-			Criterias:               criterias,
+			Criterias:               criteria,
 		})
 	if err != nil {
 		client.logger.Errorf("error while calling to get all assistant %v", err)

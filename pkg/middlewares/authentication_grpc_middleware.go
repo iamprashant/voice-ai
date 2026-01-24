@@ -11,9 +11,10 @@ import (
 
 	middleware "github.com/grpc-ecosystem/go-grpc-middleware/v2"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/metadata"
+	"google.golang.org/grpc"
+
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
-	"google.golang.org/grpc"
 	// "github.com/rapidaai/pkg/models"
 )
 
@@ -52,7 +53,6 @@ func NewAuthenticationUnaryServerMiddleware(resolver types.Authenticator, logger
 		}
 
 		return handler(context.WithValue(ctx, types.CTX_, auth), req)
-
 	}
 }
 
@@ -65,7 +65,7 @@ func NewAuthenticationStreamServerMiddleware(resolver types.Authenticator, logge
 		authToken := metadata.ExtractIncoming(ctx).Get(types.AUTHORIZATION_KEY)
 		authId := metadata.ExtractIncoming(ctx).Get(types.AUTH_KEY)
 		projectId := metadata.ExtractIncoming(ctx).Get(types.PROJECT_KEY)
-		logger.Debugf("recieved authentication information %v and %v", authId, authToken)
+		logger.Debugf("received authentication information %v and %v", authId, authToken)
 		if authToken == "" {
 			wrapped := middleware.WrapServerStream(stream)
 			wrapped.WrappedContext = ctx

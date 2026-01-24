@@ -10,13 +10,14 @@ import (
 	"strings"
 	"time"
 
+	"google.golang.org/genai"
+
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	internal_caller_metrics "github.com/rapidaai/api/integration-api/internal/caller/metrics"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
 	"github.com/rapidaai/protos"
-	"google.golang.org/genai"
 )
 
 type largeLanguageCaller struct {
@@ -102,7 +103,6 @@ func (llc *largeLanguageCaller) BuildHistory(allMessages []*protos.Message) (*ge
 			llc.logger.Warnf("Unknown role: %s", msg.GetRole())
 			continue
 		}
-
 	}
 
 	var lastPart genai.Part
@@ -242,7 +242,7 @@ func (llc *largeLanguageCaller) GetContentConfig(
 			}
 		}
 	}
-	return
+	return mdl, config
 }
 func (llc *largeLanguageCaller) StreamChatCompletion(
 	ctx context.Context,
@@ -256,7 +256,7 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 	metrics.OnStart()
 	client, err := llc.GetClient()
 	if err != nil {
-		options.AIOptions.PostHook(map[string]interface{}{
+		options.PostHook(map[string]interface{}{
 			"error": err,
 		}, metrics.OnFailure().Build())
 		onMetrics(nil, metrics.OnFailure().Build())
@@ -277,7 +277,7 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 		history,
 	)
 	if err != nil {
-		options.AIOptions.PostHook(map[string]interface{}{
+		options.PostHook(map[string]interface{}{
 			"error": err,
 		}, metrics.OnFailure().Build())
 		onMetrics(nil, metrics.OnFailure().Build())
@@ -285,7 +285,7 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 		return err
 	}
 
-	options.AIOptions.PreHook(llc.MessageJson(model, config, history, current))
+	options.PreHook(llc.MessageJson(model, config, history, current))
 	completeMsg := types.Message{
 		Role: "model",
 	}
@@ -293,7 +293,7 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 	accumlator := &GoogleChatCompletionAccumulator{}
 	for resp, err := range chat.SendMessageStream(ctx, current) {
 		if err != nil {
-			options.AIOptions.PostHook(map[string]interface{}{
+			options.PostHook(map[string]interface{}{
 				"result": utils.ToJson(resp),
 				"error":  err,
 			}, metrics.OnFailure().Build())
@@ -357,7 +357,7 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 			}
 		}
 	}
-	options.AIOptions.PostHook(map[string]interface{}{
+	options.PostHook(map[string]interface{}{
 		"result": accumlator,
 	}, metrics.OnSuccess().Build())
 	metrics.OnAddMetrics(llc.UsageMetrics(accumlator.UsageMetadata)...)
@@ -401,12 +401,12 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 		return nil, metrics.OnFailure().Build(), err
 	}
 
-	options.AIOptions.PreHook(llc.MessageJson(model, config, histories, current))
+	options.PreHook(llc.MessageJson(model, config, histories, current))
 	resp, err := chat.SendMessage(ctx, current)
 	if err != nil {
 		llc.logger.Errorf("getting error for chat completion %+v %+v", err, resp)
 		metrics.OnFailure()
-		options.AIOptions.PostHook(map[string]interface{}{"result": resp, "error": err}, metrics.Build())
+		options.PostHook(map[string]interface{}{"result": resp, "error": err}, metrics.Build())
 		return nil, metrics.Build(), err
 	}
 
@@ -428,7 +428,7 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 			}
 		}
 	}
-	options.AIOptions.PostHook(map[string]interface{}{"result": resp}, metrics.Build())
+	options.PostHook(map[string]interface{}{"result": resp}, metrics.Build())
 	return &types.Message{
 		Role:     "model",
 		Contents: output,

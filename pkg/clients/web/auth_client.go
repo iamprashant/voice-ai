@@ -11,13 +11,14 @@ import (
 	"fmt"
 	"time"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
 	"github.com/rapidaai/config"
 	"github.com/rapidaai/pkg/clients"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	web_api "github.com/rapidaai/protos"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type authServiceClient struct {
@@ -49,7 +50,6 @@ func NewAuthenticator(config *config.AppConfig, logger commons.Logger, redis con
 
 // Authorize implements types.Authenticator.
 func (client *authServiceClient) Authorize(c context.Context, authToken string, userId uint64) (*web_api.Authentication, error) {
-
 	start := time.Now()
 	// Generate cache key
 	cacheKey := client.CacheKey(c, "Authorize", authToken, fmt.Sprintf("%d", userId))
@@ -80,7 +80,6 @@ func (client *authServiceClient) Authorize(c context.Context, authToken string, 
 			}
 			client.logger.Benchmark("Benchmarking: AuthClient.ScopeAuthorize", time.Since(start))
 			return res.GetData(), nil
-
 		}
 
 		// Handle error response from vault service
@@ -94,7 +93,6 @@ func (client *authServiceClient) Authorize(c context.Context, authToken string, 
 	// Log benchmarking information
 	client.logger.Benchmark("Benchmarking: AuthClient.ScopeAuthorize", time.Since(start))
 	return data, nil
-
 }
 
 func (client *authServiceClient) ScopeAuthorize(c context.Context, scopeToken string, scopeType string) (*web_api.ScopedAuthentication, error) {
@@ -143,5 +141,4 @@ func (client *authServiceClient) ScopeAuthorize(c context.Context, scopeToken st
 	// Log benchmarking information
 	client.logger.Benchmark("Benchmarking: AuthClient.ScopeAuthorize", time.Since(start))
 	return data, nil
-
 }

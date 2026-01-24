@@ -6,6 +6,9 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/sync/errgroup"
+	"gorm.io/gorm/clause"
+
 	internal_entity "github.com/rapidaai/api/web-api/internal/entity"
 	internal_services "github.com/rapidaai/api/web-api/internal/service"
 	"github.com/rapidaai/pkg/ciphers"
@@ -15,8 +18,6 @@ import (
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	web_api "github.com/rapidaai/protos"
-	"golang.org/x/sync/errgroup"
-	"gorm.io/gorm/clause"
 )
 
 var DEFAULT_USER_FEATURE_PERMISSION = []string{"/deployment/.*", "/knowledge/.*", "/observability/.*"}
@@ -183,7 +184,6 @@ func (aS *userService) Activate(ctx context.Context, userId uint64, name string,
 
 	prjs := aS.getUserProjectRoles(ctx, userId)
 	return &authPrinciple{user: &ct, userAuthToken: aTh, userOrgRole: &rt, userProjectRoles: prjs}, nil
-
 }
 
 func (aS *userService) CreateNewAuthToken(ctx context.Context, userId uint64) (*internal_entity.UserAuthToken, error) {
@@ -373,7 +373,6 @@ func (aS *userService) AuthPrinciple(ctx context.Context, userId uint64) (types.
 }
 
 func (aS *userService) Authorize(ctx context.Context, token string, userId uint64) (types.Principle, error) {
-
 	db := aS.postgres.DB(ctx)
 	var ct internal_entity.UserAuthToken
 
@@ -550,7 +549,7 @@ func (aS *userService) GetAllActiveProjectMember(ctx context.Context, projectId 
 	return rt, nil
 }
 
-func (aS *userService) GetAllOrganizationMember(ctx context.Context, organizationId uint64, criterias []*web_api.Criteria, paginate *web_api.Paginate) (int64, *[]internal_entity.UserOrganizationRole, error) {
+func (aS *userService) GetAllOrganizationMember(ctx context.Context, organizationId uint64, criteria []*web_api.Criteria, paginate *web_api.Paginate) (int64, *[]internal_entity.UserOrganizationRole, error) {
 	db := aS.postgres.DB(ctx)
 	var rt []internal_entity.UserOrganizationRole
 	var cnt int64
@@ -558,7 +557,7 @@ func (aS *userService) GetAllOrganizationMember(ctx context.Context, organizatio
 	qry := db.Model(internal_entity.UserOrganizationRole{}).
 		Preload("Member").
 		Where("organization_id = ? AND status = ?", organizationId, type_enums.RECORD_ACTIVE.String())
-	for _, ct := range criterias {
+	for _, ct := range criteria {
 		qry.Where(fmt.Sprintf("%s = ?", ct.GetKey()), ct.GetValue())
 	}
 	tx := qry.
@@ -635,5 +634,4 @@ func (service *userService) EnableAllDefaultUserFeaturePermission(ctx context.Co
 		return nil, tx.Error
 	}
 	return allPermission, nil
-
 }

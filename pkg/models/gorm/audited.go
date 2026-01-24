@@ -10,10 +10,11 @@ import (
 	"encoding/json"
 	"time"
 
-	gorm_generator "github.com/rapidaai/pkg/models/gorm/generators"
-	type_enums "github.com/rapidaai/pkg/types/enums"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
+
+	gorm_generator "github.com/rapidaai/pkg/models/gorm/generators"
+	type_enums "github.com/rapidaai/pkg/types/enums"
 )
 
 type TimeWrapper time.Time

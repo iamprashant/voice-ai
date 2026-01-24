@@ -5,6 +5,7 @@ package integration_routers
 
 import (
 	"github.com/gin-gonic/gin"
+
 	healthCheckApi "github.com/rapidaai/api/integration-api/api/health"
 	config "github.com/rapidaai/api/integration-api/config"
 	"github.com/rapidaai/pkg/commons"

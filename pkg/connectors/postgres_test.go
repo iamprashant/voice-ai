@@ -11,11 +11,12 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	commons "github.com/rapidaai/pkg/commons"
-	configs "github.com/rapidaai/pkg/configs"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	commons "github.com/rapidaai/pkg/commons"
+	configs "github.com/rapidaai/pkg/configs"
 )
 
 // Local config struct for testing - removed since we can use configs package

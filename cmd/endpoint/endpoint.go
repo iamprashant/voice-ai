@@ -23,6 +23,10 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
+	"github.com/soheilhy/cmux"
+	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
+
 	"github.com/rapidaai/api/endpoint-api/config"
 	router "github.com/rapidaai/api/endpoint-api/router"
 	authenticators "github.com/rapidaai/pkg/authenticators"
@@ -30,9 +34,6 @@ import (
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	"github.com/rapidaai/pkg/middlewares"
-	"github.com/soheilhy/cmux"
-	"golang.org/x/sync/errgroup"
-	"google.golang.org/grpc"
 )
 
 // wrapper for gin engine
@@ -92,7 +93,7 @@ func main() {
 			),
 		),
 		grpc.ChainUnaryInterceptor(
-			middlewares.NewRequestLoggerUnaryServerMiddleware(appRunner.Cfg.AppConfig.Name, appRunner.Logger),
+			middlewares.NewRequestLoggerUnaryServerMiddleware(appRunner.Cfg.Name, appRunner.Logger),
 			middlewares.NewRecoveryUnaryServerMiddleware(appRunner.Logger),
 			middlewares.NewProjectAuthenticatorUnaryServerMiddleware(
 				authenticators.NewProjectAuthenticator(&appRunner.Cfg.AppConfig, appRunner.Logger, authClient),
@@ -163,7 +164,6 @@ func main() {
 			appRunner.Logger.Errorf("Failed to start grpc server err: %v", err)
 		}
 		return err
-
 	})
 
 	group.Go(func() error {
@@ -173,7 +173,7 @@ func main() {
 		}
 		return err
 	})
-	//serve now
+	// serve now
 	err = cmuxListener.Serve()
 	if err != nil {
 		appRunner.Logger.Errorf("Failed to start grpc server err: %v", err)
@@ -203,7 +203,6 @@ func (app *AppRunner) Logging() error {
 func (g *AppRunner) AllConnectors() {
 	g.Postgres = connectors.NewPostgresConnector(&g.Cfg.PostgresConfig, g.Logger)
 	g.Redis = connectors.NewRedisConnector(&g.Cfg.RedisConfig, g.Logger)
-
 }
 
 // initialize the config of application using viper and return loaded appconfig to be used in
@@ -223,12 +222,11 @@ func (app *AppRunner) ResolveConfig() error {
 
 	app.Cfg = cfg
 	gin.SetMode(gin.ReleaseMode)
-	// debug mode of gin when runing log in debug mode.
+	// debug mode of gin when running log in debug mode.
 	if cfg.LogLevel == "debug" {
 		gin.SetMode(gin.DebugMode)
 	}
 	return nil
-
 }
 
 // init for app close
@@ -267,7 +265,6 @@ func (g *AppRunner) AllRouters() {
 	router.HealthCheckRoutes(g.Cfg, g.E, g.Logger, g.Postgres)
 	router.EndpointReaderApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis)
 	router.InvokeApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis)
-
 } // all router initialize
 
 // all middleware
@@ -296,7 +293,7 @@ func (g *AppRunner) CorsMiddleware() {
 }
 
 func (g *AppRunner) RequestLoggerMiddleware() {
-	g.Logger.Info("Adding request middleware to the applicaiton.")
+	g.Logger.Info("Adding request middleware to the application.")
 	g.E.Use(middlewares.NewRequestLoggerMiddleware(g.Cfg.Name, g.Logger))
 }
 func (app *AppRunner) Migrate() error {

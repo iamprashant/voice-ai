@@ -12,12 +12,13 @@ import (
 	"strconv"
 	"strings"
 
+	"google.golang.org/grpc/metadata"
+
 	"github.com/rapidaai/config"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
-	"google.golang.org/grpc/metadata"
 )
 
 type InternalClient interface {
@@ -143,6 +144,6 @@ func (client *internalClient) CacheKey(c context.Context, funcName string, key .
 	builder.WriteString("INTERNAL::")
 	builder.WriteString(funcName)
 	builder.WriteString("_")
-	builder.WriteString(strings.Join(key[:], "__"))
+	builder.WriteString(strings.Join(key, "__"))
 	return builder.String()
 }

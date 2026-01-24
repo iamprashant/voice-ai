@@ -5,6 +5,7 @@ import (
 	"time"
 
 	cohere "github.com/cohere-ai/cohere-go/v2"
+
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	internal_caller_metrics "github.com/rapidaai/api/integration-api/internal/caller/metrics"
 	"github.com/rapidaai/pkg/commons"
@@ -38,7 +39,6 @@ func (ec *embeddingCaller) GetEmbedRequest(opts *internal_callers.EmbeddingOptio
 			if dimensions, err := utils.AnyToInt(value); err == nil {
 				options.OutputDimension = cohere.Int(dimensions)
 			}
-
 		}
 	}
 	return options
@@ -50,7 +50,7 @@ func (ec *embeddingCaller) GetEmbedding(ctx context.Context,
 	content map[int32]string,
 	options *internal_callers.EmbeddingOptions) ([]*integration_api.Embedding, types.Metrics, error) {
 	//
-	// Working with chat complition with vision
+	// Working with chat completion with vision
 	//
 	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)
 	metrics.OnStart()
@@ -82,7 +82,7 @@ func (ec *embeddingCaller) GetEmbedding(ctx context.Context,
 	)
 
 	if err != nil {
-		options.AIOptions.PostHook(
+		options.PostHook(
 			map[string]interface{}{
 				"result": resp,
 				"error":  err,
@@ -101,7 +101,7 @@ func (ec *embeddingCaller) GetEmbedding(ctx context.Context,
 			Base64:    utils.EmbeddingToBase64(embeddingData),
 		}
 	}
-	options.AIOptions.PostHook(map[string]interface{}{
+	options.PostHook(map[string]interface{}{
 		"result": resp,
 	}, metrics.Build())
 	return output, metrics.Build(), nil

@@ -7,13 +7,14 @@ import (
 	"context"
 	"time"
 
+	"google.golang.org/genai"
+
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	internal_caller_metrics "github.com/rapidaai/api/integration-api/internal/caller/metrics"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
 	integration_api "github.com/rapidaai/protos"
-	"google.golang.org/genai"
 )
 
 type embeddingCaller struct {
@@ -38,7 +39,6 @@ func (ec *embeddingCaller) GetEmbedContentConfig(opts *internal_callers.Embeddin
 			if dimensions, err := utils.AnyToInt32(value); err == nil {
 				cfg.OutputDimensionality = utils.Ptr(dimensions)
 			}
-
 		}
 	}
 	return
@@ -50,7 +50,7 @@ func (ec *embeddingCaller) GetEmbedding(ctx context.Context,
 	content map[int32]string,
 	options *internal_callers.EmbeddingOptions) ([]*integration_api.Embedding, types.Metrics, error) {
 	//
-	// Working with chat complition with vision
+	// Working with chat completion with vision
 	//
 	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)
 	metrics.OnStart()
@@ -59,11 +59,11 @@ func (ec *embeddingCaller) GetEmbedding(ctx context.Context,
 	if err != nil {
 		ec.logger.Errorf("getting error for chat completion %v", err)
 		metrics.OnFailure()
-		options.AIOptions.PostHook(map[string]interface{}{"error": err}, metrics.Build())
+		options.PostHook(map[string]interface{}{"error": err}, metrics.Build())
 		return nil, metrics.Build(), err
 	}
 
-	options.AIOptions.PreHook(map[string]interface{}{
+	options.PreHook(map[string]interface{}{
 		"request": content,
 	})
 	// single minute timeout and cancellable by the client as context will get cancel
@@ -80,7 +80,7 @@ func (ec *embeddingCaller) GetEmbedding(ctx context.Context,
 	resp, err := client.Models.EmbedContent(ctx, mdl, contents, cfg)
 	if err != nil {
 		ec.logger.Errorf("failed to unmarshal", err)
-		options.AIOptions.PostHook(map[string]interface{}{
+		options.PostHook(map[string]interface{}{
 			"result": resp,
 			"error":  err,
 		}, metrics.OnFailure().Build())
@@ -96,6 +96,6 @@ func (ec *embeddingCaller) GetEmbedding(ctx context.Context,
 	}
 
 	metrics.OnSuccess()
-	options.AIOptions.PostHook(map[string]interface{}{"result": output}, metrics.Build())
+	options.PostHook(map[string]interface{}{"result": output}, metrics.Build())
 	return output, metrics.Build(), nil
 }

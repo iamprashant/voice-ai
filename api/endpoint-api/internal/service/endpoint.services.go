@@ -32,11 +32,11 @@ type EndpointService interface {
 
 	GetAll(ctx context.Context,
 		auth types.SimplePrinciple,
-		criterias []*endpoint_grpc_api.Criteria, paginate *endpoint_grpc_api.Paginate) (int64, []*internal_gorm.Endpoint, error)
+		criteria []*endpoint_grpc_api.Criteria, paginate *endpoint_grpc_api.Paginate) (int64, []*internal_gorm.Endpoint, error)
 
 	GetAllEndpointProviderModel(ctx context.Context,
 		auth types.SimplePrinciple,
-		endpointId uint64, criterias []*endpoint_grpc_api.Criteria, paginate *endpoint_grpc_api.Paginate) (int64, []*internal_gorm.EndpointProviderModel, error)
+		endpointId uint64, criteria []*endpoint_grpc_api.Criteria, paginate *endpoint_grpc_api.Paginate) (int64, []*internal_gorm.EndpointProviderModel, error)
 
 	UpdateEndpointVersion(ctx context.Context,
 		auth types.SimplePrinciple,

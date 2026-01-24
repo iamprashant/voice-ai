@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/pkoukk/tiktoken-go"
+
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/tokens"
 	"github.com/rapidaai/pkg/types"
@@ -72,7 +73,6 @@ func (occ *tikTokenCostCalculator) token(name string,
 		inTokenCount += tokensPerMessage
 		inTokenCount += len(tkm.Encode(types.OnlyStringContent(message.GetContents()), nil, nil))
 		inTokenCount += len(tkm.Encode(message.GetRole(), nil, nil))
-
 	}
 	// every reply is primed with <|start|>assistant<|message|>
 	inTokenCount += 3

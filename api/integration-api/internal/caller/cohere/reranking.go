@@ -6,6 +6,7 @@ import (
 	"time"
 
 	cohere "github.com/cohere-ai/cohere-go/v2"
+
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	internal_caller_metrics "github.com/rapidaai/api/integration-api/internal/caller/metrics"
 	"github.com/rapidaai/pkg/commons"
@@ -84,14 +85,14 @@ func (rr *rerankingCaller) GetReranking(ctx context.Context,
 	rerankRequest.Query = query
 	rerankRequest.Documents = input
 
-	options.AIOptions.PreHook(utils.ToJson(rerankRequest))
+	options.PreHook(utils.ToJson(rerankRequest))
 	resp, err := client.Rerank(
 		ctx,
 		rerankRequest,
 	)
 
 	if err != nil {
-		options.AIOptions.PostHook(nil, metrics.OnFailure().Build())
+		options.PostHook(nil, metrics.OnFailure().Build())
 		return nil, metrics.Build(), err
 	}
 	metrics.OnSuccess()
@@ -105,7 +106,7 @@ func (rr *rerankingCaller) GetReranking(ctx context.Context,
 			RelevanceScore: rerankedData.RelevanceScore,
 		}
 	}
-	options.AIOptions.PostHook(map[string]interface{}{
+	options.PostHook(map[string]interface{}{
 		"result": resp,
 	}, metrics.Build())
 	return output, metrics.Build(), nil

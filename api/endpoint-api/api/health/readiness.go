@@ -7,6 +7,7 @@ package endpoint_health_api
 
 import (
 	"github.com/gin-gonic/gin"
+
 	commons "github.com/rapidaai/pkg/commons"
 )
 
@@ -16,7 +17,6 @@ import (
 // @Success 200 {object} app.Response
 // @Failure 500 {object} app.Response
 func (hcApi *healthCheckApi) Readiness(c *gin.Context) {
-
 	c.JSON(200, commons.Response{
 		Code:    200,
 		Success: true,
@@ -24,5 +24,4 @@ func (hcApi *healthCheckApi) Readiness(c *gin.Context) {
 			hcApi.postgres.Name(): hcApi.postgres.IsConnected(c),
 		},
 	})
-
 }

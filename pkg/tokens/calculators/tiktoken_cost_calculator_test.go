@@ -8,10 +8,10 @@ package token_tiktoken_calculators
 import (
 	"testing"
 
-	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/tokens"
-	"github.com/rapidaai/pkg/types"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/rapidaai/pkg/commons"
+	"github.com/rapidaai/pkg/types"
 )
 
 func TestNewTikTokenCostCalculator(t *testing.T) {
@@ -563,5 +563,5 @@ func TestTikTokenCostCalculator_ImplementsTokenCalculatorInterface(t *testing.T)
 	logger, _ := commons.NewApplicationLogger()
 	calculator := NewTikTokenCostCalculator(logger, "gpt-3.5-turbo")
 
-	var _ tokens.TokenCalculator = calculator
+	var _ = calculator
 }

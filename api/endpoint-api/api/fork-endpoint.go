@@ -22,7 +22,6 @@ func (endpointGRPCApi *endpointGRPCApi) ForkEndpoint(ctx context.Context, eReque
 			errors.New("unauthenticated request for CreateEndpointProviderModel"),
 			"Please provider valid service credentials to perfom invoke, read docs @ docs.rapida.ai",
 		)
-
 	}
 	return nil, nil
 }
