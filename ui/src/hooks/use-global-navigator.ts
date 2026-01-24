@@ -84,12 +84,12 @@ export const useGlobalNavigation = () => {
   };
 
   const goToCreateAssistantWebhook = (assistantId: string) =>
-    navigate(`/deployment/assistant/${assistantId}/configure-webhook/create`,);
+    navigate(`/deployment/assistant/${assistantId}/configure-webhook/create`);
 
   const goToConfigureAssistantAnalysis = (assistantId: string) =>
     navigate(`/deployment/assistant/${assistantId}/configure-analysis`);
   const goToCreateAssistantAnalysis = (assistantId: string) =>
-    navigate(`/deployment/assistant/${assistantId}/configure-analysis/create`,);
+    navigate(`/deployment/assistant/${assistantId}/configure-analysis/create`);
   const goToEditAssistantAnalysis = (assistantId: string, analysisId: string) =>
     navigate(
       `/deployment/assistant/${assistantId}/configure-analysis/${analysisId}`,
@@ -124,22 +124,16 @@ export const useGlobalNavigation = () => {
     );
 
   const goToCreateAssistantKnowledge = (assistantId: string) =>
-    navigate(
-      `/deployment/assistant/${assistantId}/configure-knowledge/create`,
-    );
+    navigate(`/deployment/assistant/${assistantId}/configure-knowledge/create`);
 
   const goToConfigureAssistantTool = (assistantId: string) =>
     navigate(`/deployment/assistant/${assistantId}/configure-tool`);
 
   const goToEditAssistantTool = (assistantId: string, toolId: string) =>
-    navigate(
-      `/deployment/assistant/${assistantId}/configure-tool/${toolId}`,
-    );
+    navigate(`/deployment/assistant/${assistantId}/configure-tool/${toolId}`);
 
   const goToCreateAssistantTool = (assistantId: string) =>
-    navigate(
-      `/deployment/assistant/${assistantId}/configure-tool/create`,
-    );
+    navigate(`/deployment/assistant/${assistantId}/configure-tool/create`);
 
   const goToModelInformation = (provider: string) => {
     navigate(`/integration/models/${provider}`);

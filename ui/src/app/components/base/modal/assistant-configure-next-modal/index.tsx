@@ -30,8 +30,6 @@ export const ConfigureAssistantNextDialog: FC<
    * navigation
    */
   const {
-    goBack,
-    goToAssistant,
     goToAssistantPreview,
     goToConfigureDebugger,
     goToConfigureWeb,

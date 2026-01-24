@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, FC, ReactNode, ChangeEvent } from 'react';
+import { useEffect, useRef, useState, FC, ReactNode } from 'react';
 import WaveSurfer from 'wavesurfer.js';
 import TimelinePlugin from 'wavesurfer.js/dist/plugins/timeline.esm.js';
 import { IButton } from '@/app/components/form/button';
@@ -43,8 +43,8 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
   const [playing, setPlaying] = useState<boolean>(false);
   const [volume, setVolume] = useState<number>(1);
   const [muted, setMuted] = useState<boolean>(false);
-  const [currentTime, setCurrentTime] = useState<string>('0:00');
-  const [duration, setDuration] = useState<string>('0:00');
+  const [, setCurrentTime] = useState<string>('0:00');
+  const [, setDuration] = useState<string>('0:00');
   const [playBackSpeed, setPlayBackSpeed] = useState(playbackSpeeds[0]);
 
   useEffect(() => {

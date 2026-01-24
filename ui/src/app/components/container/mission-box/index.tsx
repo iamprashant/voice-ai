@@ -12,7 +12,7 @@ import { SidebarProvider } from '@/context/sidebar-context';
  * @returns
  */
 export function MissionBox(props: { children?: any }) {
-  const {} = useRapidaStore();
+  useRapidaStore();
   return (
     <ProviderContextProvider>
       <SidebarProvider>

@@ -8,7 +8,6 @@ linters:
   default: none
   enable:
     - errcheck
-    - gosimple
     - govet
     - ineffassign
     - staticcheck
@@ -20,8 +19,6 @@ linters:
     - goconst
     - gocritic
     - gocyclo
-    - gofmt
-    - goimports
     - goprintffuncname
     - gosec
     - misspell
@@ -29,8 +26,6 @@ linters:
     - nolintlint
     - prealloc
     - revive
-    - unconvert
-    - unparam
     - whitespace
 
   settings:
@@ -58,10 +53,6 @@ linters:
     misspell:
       locale: US
 
-    goimports:
-      local-prefixes:
-        - github.com/rapidaai
-
     gosec:
       excludes:
         - G104
@@ -87,6 +78,15 @@ linters:
       - path: \.pb\.go
         linters:
           - all
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/rapidaai
 
 issues:
   max-issues-per-linter: 0

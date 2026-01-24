@@ -152,14 +152,11 @@ export const AZURE_TEXT_TO_SPEECH_LANGUAGE = () => {
 
 export const AZURE_SPEECH_TO_TEXT_LANGUAGE = () => {
   return require('./azure-speech-service/speech-to-text-language.json');
-}
+};
 
 export const AZURE_FOUNDRY_TEXT_MODEL = () => {
   return require('./azure-foundry/text-models.json');
 };
-
-
-
 
 /**
  *
@@ -272,14 +269,12 @@ export const GEMINI_MODEL = () => {
   return require('./gemini/models.json');
 };
 
-
 /**
- * 
+ *
  */
 export const VERTEXAI_MODEL = () => {
   return require('./vertexai/models.json');
 };
-
 
 /**
  * sarvam

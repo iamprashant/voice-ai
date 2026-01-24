@@ -212,5 +212,5 @@ TablePagination.defaultProps = {
   columns: [],
   onChangeCurrentPage: () => {},
   onChangePageSize: () => {},
-  onChangeColumns: ([]) => {},
+  onChangeColumns: () => {},
 };

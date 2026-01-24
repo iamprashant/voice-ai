@@ -2,7 +2,7 @@ import * as React from 'react';
 
 const SIDEBAR_COOKIE_NAME = 'sidebar:state';
 
-type SidebarContext = {
+type SidebarContextType = {
   open: boolean;
   setOpen: (open: boolean) => void;
   toggleSidebar: () => void;
@@ -10,8 +10,7 @@ type SidebarContext = {
   setLocked: (locked: boolean) => void;
 };
 
-const SidebarContext = React.createContext<SidebarContext | null>(null);
-
+const SidebarContext = React.createContext<SidebarContextType | null>(null);
 function useSidebar() {
   const context = React.useContext(SidebarContext);
   if (!context) {
@@ -78,7 +77,7 @@ const SidebarProvider = React.forwardRef<
       setOpen(open => !open);
     }, [setOpen]);
 
-    const contextValue = React.useMemo<SidebarContext>(
+    const contextValue = React.useMemo<SidebarContextType>(
       () => ({
         open,
         setOpen,
@@ -99,4 +98,4 @@ const SidebarProvider = React.forwardRef<
 SidebarProvider.displayName = 'SidebarProvider';
 
 export { SidebarProvider, useSidebar };
-export type { SidebarContext };
+export type { SidebarContextType as SidebarContext };
