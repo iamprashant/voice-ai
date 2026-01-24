@@ -179,7 +179,7 @@ func (r *GenericRequestor) Connect(
 // while non-critical operations run as background tasks.
 func (r *GenericRequestor) OnCreateSession(
 	ctx context.Context,
-	inputConfig, outputConfig *protos.StreamConfig,
+	config *protos.AssistantConversationConfiguration,
 	assistant *internal_assistant_entity.Assistant,
 	identifier string,
 	customizer internal_type.Customization,
@@ -203,13 +203,13 @@ func (r *GenericRequestor) OnCreateSession(
 	}
 
 	// Configure audio modes based on stream settings
-	audioInputConfig, audioOutputConfig := r.configureAudioModes(inputConfig, outputConfig)
+	audioInputConfig, audioOutputConfig := r.configureAudioModes(config.GetInputConfig(), config.GetOutputConfig())
 
 	// Initialize critical components concurrently
 	errGroup, _ := errgroup.WithContext(ctx)
 
 	errGroup.Go(func() error {
-		return r.initializeExecutor(ctx)
+		return r.initializeExecutor(ctx, config)
 	})
 
 	errGroup.Go(func() error {
@@ -250,7 +250,7 @@ func (r *GenericRequestor) OnCreateSession(
 // Attempting to resume a completed or cancelled conversation will fail.
 func (r *GenericRequestor) OnResumeSession(
 	ctx context.Context,
-	inputConfig, outputConfig *protos.StreamConfig,
+	config *protos.AssistantConversationConfiguration,
 	assistant *internal_assistant_entity.Assistant,
 	identifier string,
 	conversationID uint64,
@@ -267,13 +267,13 @@ func (r *GenericRequestor) OnResumeSession(
 	}
 
 	// Configure audio modes based on stream settings
-	audioInputConfig, audioOutputConfig := r.configureAudioModes(inputConfig, outputConfig)
+	audioInputConfig, audioOutputConfig := r.configureAudioModes(config.GetInputConfig(), config.GetOutputConfig())
 
 	// Initialize critical components concurrently
 	errGroup, _ := errgroup.WithContext(ctx)
 
 	errGroup.Go(func() error {
-		return r.initializeExecutor(ctx)
+		return r.initializeExecutor(ctx, config)
 	})
 
 	errGroup.Go(func() error {
@@ -421,8 +421,7 @@ func (r *GenericRequestor) resumeSession(
 ) error {
 	return r.OnResumeSession(
 		ctx,
-		config.GetInputConfig(),
-		config.GetOutputConfig(),
+		config,
 		assistant,
 		identifier,
 		config.GetAssistantConversationId(),
@@ -440,8 +439,7 @@ func (r *GenericRequestor) createSession(
 ) error {
 	return r.OnCreateSession(
 		ctx,
-		config.GetInputConfig(),
-		config.GetOutputConfig(),
+		config,
 		assistant,
 		identifier,
 		customizer,
@@ -473,8 +471,8 @@ func (r *GenericRequestor) configureAudioModes(
 }
 
 // initializeExecutor sets up the LLM executor for processing conversation messages.
-func (r *GenericRequestor) initializeExecutor(ctx context.Context) error {
-	if err := r.assistantExecutor.Initialize(ctx, r); err != nil {
+func (r *GenericRequestor) initializeExecutor(ctx context.Context, config *protos.AssistantConversationConfiguration) error {
+	if err := r.assistantExecutor.Initialize(ctx, r, config); err != nil {
 		r.logger.Tracef(ctx, "failed to initialize executor: %+v", err)
 		return err
 	}

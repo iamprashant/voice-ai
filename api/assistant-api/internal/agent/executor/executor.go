@@ -41,7 +41,7 @@ making it easier to maintain and evolve the codebase over time.
 type AssistantExecutor interface {
 
 	// init after creation to intilize all fields
-	Initialize(ctx context.Context, communication internal_type.Communication) error
+	Initialize(ctx context.Context, communication internal_type.Communication, cfg *protos.AssistantConversationConfiguration) error
 
 	// name
 	Name() string

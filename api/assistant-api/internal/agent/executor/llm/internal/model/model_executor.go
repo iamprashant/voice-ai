@@ -46,7 +46,7 @@ func (executor *modelAssistantExecutor) Name() string {
 	return "model"
 }
 
-func (executor *modelAssistantExecutor) Initialize(ctx context.Context, communication internal_type.Communication) error {
+func (executor *modelAssistantExecutor) Initialize(ctx context.Context, communication internal_type.Communication, cfg *protos.AssistantConversationConfiguration) error {
 	start := time.Now()
 	ctx, span, _ := communication.Tracer().StartSpan(ctx, utils.AssistantAgentConnectStage, internal_adapter_telemetry.KV{K: "executor", V: internal_adapter_telemetry.StringValue(executor.Name())})
 	defer span.EndSpan(ctx, utils.AssistantAgentConnectStage)
