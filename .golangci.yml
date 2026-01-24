@@ -72,6 +72,10 @@ linters:
     paths:
       - protos
       - sdks
+      # CGO-dependent packages (require C libraries not available in CI)
+      - api/assistant-api/internal/transformer/azure
+      - api/assistant-api/internal/denoiser
+      - api/assistant-api/internal/telephony
     rules:
       - path: _test\.go
         linters:
