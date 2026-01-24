@@ -128,7 +128,7 @@ export function DeploymentRoute() {
             </AssistantManageLayout>
           }
         >
-          <Route index element={<Navigate to="deployment/" replace />} />
+          {/* <Route index element={<Navigate to="deployment/" replace />} /> */}
           <Route
             key={'/deployment/edit-assistant'}
             path={'edit-assistant/'}
@@ -153,17 +153,6 @@ export function DeploymentRoute() {
             element={<DeploymentUpdateAssistantAnalysisPage />}
           />
 
-          {/* <Route
-            key={'/deployment/content-filter'}
-            path={'configure-content-filter/'}
-            element={<DeploymentConfigureAssistantContentFilterPage />}
-          /> */}
-          {/* <Route
-            key={'/deployment/contextual-grounding'}
-            path={'configure-contextual-grounding/'}
-            element={<DeploymentConfigureAssistantContextualGroundingPage />}
-          /> */}
-
           <Route
             path={'configure-tool'}
             element={<DeploymentConfigureAssistantToolPage />}
@@ -176,21 +165,6 @@ export function DeploymentRoute() {
             path={'configure-tool/:assistantToolId'}
             element={<DeploymentUpdateAssistantToolPage />}
           />
-          {/* <Route
-            key={'/deployment/knowledge'}
-            path={'configure-knowledge/'}
-            element={<DeploymentConfigureAssistantKnowledgePage />}
-          />
-          <Route
-            key={'/deployment/knowledge'}
-            path={'configure-knowledge/create'}
-            element={<DeploymentCreateAssistantKnowledgePage />}
-          />
-          <Route
-            key={'/deployment/knowledge'}
-            path={'configure-knowledge/:assistantKnowledgeId'}
-            element={<DeploymentUpdateAssistantKnowledgePage />}
-          /> */}
 
           <Route
             key={'/deployment/webhook'}

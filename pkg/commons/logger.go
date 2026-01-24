@@ -178,16 +178,7 @@ type applicationLogger struct {
 }
 
 // NewApplicationLogger returns a logger with default options
-func NewApplicationLogger() (Logger, error) {
-	al := &applicationLogger{opts: defaultLoggerOptions}
-	if err := al.init(); err != nil {
-		return nil, err
-	}
-	return al, nil
-}
-
-// NewApplicationLoggerWithOptions returns a logger with custom options
-func NewApplicationLoggerWithOptions(opts ...LoggerOption) (Logger, error) {
+func NewApplicationLogger(opts ...LoggerOption) (Logger, error) {
 	options := defaultLoggerOptions
 	for _, opt := range opts {
 		opt.apply(&options)

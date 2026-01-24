@@ -7,6 +7,9 @@ import { Textarea } from '@/app/components/form/textarea';
 import { InputGroup } from '@/app/components/input-group';
 import { ConfigureToolProps, useParameterManager } from '../common';
 import { BlueNoticeBlock } from '@/app/components/container/message/notice-block';
+import { Select } from '@/app/components/form/select';
+import { APiStringHeader } from '@/app/components/external-api/api-header';
+import { MCP_PROTOCOL_OPTIONS } from './constant';
 
 // ============================================================================
 // Main Component
@@ -25,7 +28,9 @@ export const ConfigureMCP: FC<ConfigureToolProps> = ({
   );
 
   const serverUrl = getParamValue('mcp.server_url');
-  const toolName = getParamValue('mcp.tool_name');
+  const protocol = getParamValue('mcp.protocol') || 'sse';
+  const timeout = getParamValue('mcp.timeout') || '30';
+  const headers = getParamValue('mcp.headers');
 
   const handleChange = (field: 'name' | 'description', value: string) => {
     if (toolDefinition && onChangeToolDefinition) {
@@ -66,6 +71,41 @@ export const ConfigureMCP: FC<ConfigureToolProps> = ({
               onChange={e => updateParameter('mcp.server_url', e.target.value)}
               placeholder="https://your-mcp-server.com"
               type="url"
+            />
+          </FieldSet>
+
+          <div className="grid grid-cols-2 gap-4">
+            <FieldSet>
+              <FormLabel>Protocol</FormLabel>
+              <Select
+                className={cn('bg-light-background', inputClass)}
+                value={protocol}
+                onChange={e => updateParameter('mcp.protocol', e.target.value)}
+                options={MCP_PROTOCOL_OPTIONS}
+                placeholder="Select protocol"
+              />
+            </FieldSet>
+
+            <FieldSet>
+              <FormLabel>Timeout (seconds)</FormLabel>
+              <Input
+                className={cn('bg-light-background', inputClass)}
+                value={timeout}
+                onChange={e => updateParameter('mcp.timeout', e.target.value)}
+                placeholder="30"
+                type="number"
+                min="1"
+                max="300"
+              />
+            </FieldSet>
+          </div>
+
+          <FieldSet>
+            <FormLabel>Headers</FormLabel>
+            <APiStringHeader
+              inputClass={inputClass}
+              headerValue={headers}
+              setHeaderValue={value => updateParameter('mcp.headers', value)}
             />
           </FieldSet>
 

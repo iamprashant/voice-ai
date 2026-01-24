@@ -24,11 +24,6 @@ import {
   GetKnowledgeRetrievalDefaultOptions,
   ValidateKnowledgeRetrievalDefaultOptions,
 } from '@/app/components/tools/knowledge-retrieval/constant';
-import { ConfigurePutOnHold } from '@/app/components/tools/put-on-hold';
-import {
-  GetPutOnHoldDefaultOptions,
-  ValidatePutOnHoldDefaultOptions,
-} from '@/app/components/tools/put-on-hold/constant';
 import { ConfigureMCP } from '@/app/components/tools/mcp';
 import {
   GetMCPDefaultOptions,
@@ -39,7 +34,6 @@ import {
   BUILDIN_TOOLS,
   EndOfConverstaionToolDefintion,
   EndpointToolDefintion,
-  PutOnHoldToolDefintion,
   KnowledgeRetrievalToolDefintion,
 } from '@/llm-tools';
 import { ConfigureToolProps } from './common';
@@ -52,7 +46,6 @@ export type ToolCode =
   | 'knowledge_retrieval'
   | 'api_request'
   | 'endpoint'
-  | 'put_on_hold'
   | 'end_of_conversation'
   | 'mcp';
 
@@ -103,12 +96,6 @@ const TOOL_REGISTRY: Record<ToolCode, ToolConfig> = {
     getDefaultOptions: GetEndpointDefaultOptions,
     validateOptions: ValidateEndpointDefaultOptions,
     Component: ConfigureEndpoint,
-  },
-  put_on_hold: {
-    definition: PutOnHoldToolDefintion,
-    getDefaultOptions: GetPutOnHoldDefaultOptions,
-    validateOptions: ValidatePutOnHoldDefaultOptions,
-    Component: ConfigurePutOnHold,
   },
   end_of_conversation: {
     definition: EndOfConverstaionToolDefintion,

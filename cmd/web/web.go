@@ -175,7 +175,7 @@ func main() {
 }
 
 func (app *AppRunner) Logging() error {
-	aLogger, err := commons.NewApplicationLoggerWithOptions(
+	aLogger, err := commons.NewApplicationLogger(
 		commons.Level(app.Cfg.LogLevel),
 		commons.Name(app.Cfg.Name),
 	)

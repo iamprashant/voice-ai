@@ -23,7 +23,7 @@ import (
 // Benchmark helpers
 
 func newBenchmarkVAD(b *testing.B, threshold float64) *SileroVAD {
-	logger, err := commons.NewApplicationLoggerWithOptions()
+	logger, err := commons.NewApplicationLogger()
 	inputConfig := internal_audio.NewLinear16khzMonoAudioConfig()
 	callback := func(internal_type.InterruptionPacket) error { return nil }
 	opts := newTestOptions(b, threshold)
@@ -204,7 +204,7 @@ func BenchmarkSileroVAD_Process_Threshold_0_9(b *testing.B) {
 // Parallel processing benchmarks
 
 func BenchmarkSileroVAD_Process_Parallel_2Streams(b *testing.B) {
-	logger, _ := commons.NewApplicationLoggerWithOptions()
+	logger, _ := commons.NewApplicationLogger()
 	inputConfig := internal_audio.NewLinear16khzMonoAudioConfig()
 	opts := newTestOptions(b, 0.5)
 
@@ -235,7 +235,7 @@ func BenchmarkSileroVAD_Process_Parallel_2Streams(b *testing.B) {
 }
 
 func BenchmarkSileroVAD_Process_Parallel_4Streams(b *testing.B) {
-	logger, _ := commons.NewApplicationLoggerWithOptions()
+	logger, _ := commons.NewApplicationLogger()
 	inputConfig := internal_audio.NewLinear16khzMonoAudioConfig()
 	opts := newTestOptions(b, 0.5)
 
@@ -266,7 +266,7 @@ func BenchmarkSileroVAD_Process_Parallel_4Streams(b *testing.B) {
 }
 
 func BenchmarkSileroVAD_Process_Parallel_8Streams(b *testing.B) {
-	logger, _ := commons.NewApplicationLoggerWithOptions()
+	logger, _ := commons.NewApplicationLogger()
 	inputConfig := internal_audio.NewLinear16khzMonoAudioConfig()
 	opts := newTestOptions(b, 0.5)
 
@@ -340,7 +340,7 @@ func BenchmarkSileroVAD_Process_SequentialStream_100Chunks(b *testing.B) {
 // Different sample rates (with resampling)
 
 func BenchmarkSileroVAD_Process_Resample_8kHz(b *testing.B) {
-	logger, _ := commons.NewApplicationLoggerWithOptions()
+	logger, _ := commons.NewApplicationLogger()
 	inputConfig := &protos.AudioConfig{
 		SampleRate:  8000,
 		AudioFormat: protos.AudioConfig_LINEAR16,
@@ -362,7 +362,7 @@ func BenchmarkSileroVAD_Process_Resample_8kHz(b *testing.B) {
 }
 
 func BenchmarkSileroVAD_Process_Resample_24kHz(b *testing.B) {
-	logger, _ := commons.NewApplicationLoggerWithOptions()
+	logger, _ := commons.NewApplicationLogger()
 	inputConfig := &protos.AudioConfig{
 		SampleRate:  24000,
 		AudioFormat: protos.AudioConfig_LINEAR16,
@@ -384,7 +384,7 @@ func BenchmarkSileroVAD_Process_Resample_24kHz(b *testing.B) {
 }
 
 func BenchmarkSileroVAD_Process_Resample_48kHz(b *testing.B) {
-	logger, _ := commons.NewApplicationLoggerWithOptions()
+	logger, _ := commons.NewApplicationLogger()
 	inputConfig := &protos.AudioConfig{
 		SampleRate:  48000,
 		AudioFormat: protos.AudioConfig_LINEAR16,
@@ -441,7 +441,7 @@ func BenchmarkSileroVAD_Process_MixedContent_Alternating(b *testing.B) {
 // Initialization benchmark
 
 func BenchmarkSileroVAD_Initialization(b *testing.B) {
-	logger, _ := commons.NewApplicationLoggerWithOptions()
+	logger, _ := commons.NewApplicationLogger()
 	inputConfig := internal_audio.NewLinear16khzMonoAudioConfig()
 	callback := func(internal_type.InterruptionPacket) error { return nil }
 	opts := newTestOptions(b, 0.5)
@@ -486,7 +486,7 @@ func BenchmarkSileroVAD_Process_MemoryPressure_LargeChunks(b *testing.B) {
 // Callback overhead benchmark
 
 func BenchmarkSileroVAD_Process_WithCallback(b *testing.B) {
-	logger, _ := commons.NewApplicationLoggerWithOptions()
+	logger, _ := commons.NewApplicationLogger()
 	inputConfig := internal_audio.NewLinear16khzMonoAudioConfig()
 
 	callbackCount := 0

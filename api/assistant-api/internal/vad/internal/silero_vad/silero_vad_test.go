@@ -44,7 +44,7 @@ func getModelPath() string {
 }
 
 func newSileroOrSkip(t *testing.T, inputCfg *protos.AudioConfig, threshold float64, cb internal_type.VADCallback) *SileroVAD {
-	logger, err := commons.NewApplicationLoggerWithOptions()
+	logger, err := commons.NewApplicationLogger()
 	opts := newTestOptions(t, threshold)
 	vad, err := NewSileroVAD(t.Context(), logger, inputCfg, cb, opts)
 	if err != nil {
@@ -231,7 +231,7 @@ func TestSileroVAD_Process_Concurrent(t *testing.T) {
 }
 
 func TestSileroVAD_Close_Idempotent(t *testing.T) {
-	logger, err := commons.NewApplicationLoggerWithOptions()
+	logger, err := commons.NewApplicationLogger()
 	inputConfig := internal_audio.NewLinear16khzMonoAudioConfig()
 	callback := func(internal_type.InterruptionPacket) error { return nil }
 	opts := newTestOptions(t, 0.5)

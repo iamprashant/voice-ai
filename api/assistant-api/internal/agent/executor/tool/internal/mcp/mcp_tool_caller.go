@@ -9,7 +9,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sync"
 
 	internal_tool "github.com/rapidaai/api/assistant-api/internal/agent/executor/tool/internal"
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
@@ -18,56 +17,24 @@ import (
 )
 
 // MCPToolCaller implements the ToolCaller interface for MCP server tools.
-// It acts as a dynamic proxy that forwards tool calls to the connected MCP server.
+// It forwards tool calls to the connected MCP server.
 type MCPToolCaller struct {
-	logger           commons.Logger
-	client           *Client
-	toolId           uint64
-	toolName         string // The name exposed to the LLM (may be prefixed)
-	originalToolName string // The original name on the MCP server
-	toolDescription  string
-	toolDefinition   *protos.FunctionDefinition
-	serverURL        string
+	logger         commons.Logger
+	client         *Client
+	toolId         uint64
+	toolName       string
+	toolDefinition *protos.FunctionDefinition
 }
 
 // NewMCPToolCaller creates a new MCP tool caller for a specific tool
-func NewMCPToolCaller(
-	logger commons.Logger,
-	client *Client,
-	toolId uint64,
-	toolName string,
-	toolDefinition *protos.FunctionDefinition,
+func NewMCPToolCaller(logger commons.Logger, client *Client, toolId uint64, toolName string, toolDefinition *protos.FunctionDefinition,
 ) internal_tool.ToolCaller {
 	return &MCPToolCaller{
-		logger:           logger,
-		client:           client,
-		toolId:           toolId,
-		toolName:         toolName,
-		originalToolName: toolName, // Same by default
-		toolDescription:  toolDefinition.Description,
-		toolDefinition:   toolDefinition,
-		serverURL:        client.GetServerURL(),
-	}
-}
-
-// NewMCPToolCallerWithOriginalName creates a new MCP tool caller with a different exposed name
-func NewMCPToolCallerWithOriginalName(
-	logger commons.Logger,
-	client *Client,
-	toolId uint64,
-	exposedName string,
-	originalName string,
-	toolDefinition *protos.FunctionDefinition,
-) internal_tool.ToolCaller {
-	return &MCPToolCaller{
-		logger:           logger,
-		client:           client,
-		toolId:           toolId,
-		toolName:         exposedName,
-		originalToolName: originalName,
-		toolDescription:  toolDefinition.Description,
-		toolDefinition:   toolDefinition,
-		serverURL:        client.GetServerURL(),
+		logger:         logger,
+		client:         client,
+		toolId:         toolId,
+		toolName:       toolName,
+		toolDefinition: toolDefinition,
 	}
 }
 
@@ -102,7 +69,7 @@ func (m *MCPToolCaller) Call(
 	args string,
 	communication internal_type.Communication,
 ) internal_type.LLMToolPacket {
-	m.logger.Debugf("MCP tool call: %s (original: %s) with args: %s", m.toolName, m.originalToolName, args)
+	m.logger.Debugf("MCP tool call: %s with args: %s", m.toolName, args)
 
 	// Parse the arguments from JSON string to map
 	arguments, err := m.parseArguments(args)
@@ -111,8 +78,8 @@ func (m *MCPToolCaller) Call(
 		return m.errorPacket(pkt.ContextId(), fmt.Sprintf("failed to parse arguments: %v", err))
 	}
 
-	// Execute the tool call via MCP client using the original tool name
-	response, err := m.client.Execute(ctx, m.serverURL, m.originalToolName, arguments)
+	// Execute the tool call via MCP client
+	response, err := m.client.Execute(ctx, m.toolName, arguments)
 	if err != nil {
 		m.logger.Errorf("MCP tool execution failed for %s: %v", m.toolName, err)
 		return m.errorPacket(pkt.ContextId(), fmt.Sprintf("tool execution failed: %v", err))
@@ -153,166 +120,4 @@ func (m *MCPToolCaller) errorPacket(contextId, errorMsg string) internal_type.LL
 			"error":   errorMsg,
 		},
 	}
-}
-
-// MCPServerConfig holds configuration for an MCP server connection
-type MCPServerConfig struct {
-	ServerURL  string
-	ToolIdBase uint64
-	Prefix     string // Optional prefix to avoid tool name conflicts
-}
-
-// MCPConnectionResult holds the result of connecting to an MCP server
-type MCPConnectionResult struct {
-	ServerURL   string
-	Definitions []*protos.FunctionDefinition
-	Callers     []internal_tool.ToolCaller
-	Error       error
-}
-
-// MCPToolManager manages multiple MCP server connections and their tools
-type MCPToolManager struct {
-	logger  commons.Logger
-	clients map[string]*Client // serverURL -> client
-	mu      sync.RWMutex
-}
-
-// NewMCPToolManager creates a new MCP tool manager
-func NewMCPToolManager(logger commons.Logger) *MCPToolManager {
-	return &MCPToolManager{
-		logger:  logger,
-		clients: make(map[string]*Client),
-	}
-}
-
-// ConnectServersAsync connects to multiple MCP servers concurrently and returns results via channel
-// This is non-blocking and allows parallel initialization of multiple MCP servers
-func (m *MCPToolManager) ConnectServersAsync(ctx context.Context, configs []MCPServerConfig) <-chan MCPConnectionResult {
-	results := make(chan MCPConnectionResult, len(configs))
-
-	var wg sync.WaitGroup
-	for _, cfg := range configs {
-		wg.Add(1)
-		go func(config MCPServerConfig) {
-			defer wg.Done()
-
-			definitions, callers, err := m.ConnectServer(ctx, config.ServerURL, config.ToolIdBase, config.Prefix)
-			results <- MCPConnectionResult{
-				ServerURL:   config.ServerURL,
-				Definitions: definitions,
-				Callers:     callers,
-				Error:       err,
-			}
-		}(cfg)
-	}
-
-	// Close results channel when all connections complete
-	go func() {
-		wg.Wait()
-		close(results)
-	}()
-
-	return results
-}
-
-// ConnectServer connects to an MCP server and returns all available tools as callers
-func (m *MCPToolManager) ConnectServer(
-	ctx context.Context,
-	serverURL string,
-	toolIdBase uint64,
-	prefix string,
-) ([]*protos.FunctionDefinition, []internal_tool.ToolCaller, error) {
-	// Check if already connected
-	m.mu.RLock()
-	client, exists := m.clients[serverURL]
-	m.mu.RUnlock()
-
-	if exists {
-		return m.getToolsFromClient(ctx, client, toolIdBase, prefix)
-	}
-
-	// Create new connection
-	client, err := NewClientWithURL(ctx, m.logger, serverURL)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to connect to MCP server %s: %w", serverURL, err)
-	}
-
-	// Store the client
-	m.mu.Lock()
-	m.clients[serverURL] = client
-	m.mu.Unlock()
-
-	return m.getToolsFromClient(ctx, client, toolIdBase, prefix)
-}
-
-// getToolsFromClient fetches tools from a connected client and creates callers
-func (m *MCPToolManager) getToolsFromClient(
-	ctx context.Context,
-	client *Client,
-	toolIdBase uint64,
-	prefix string,
-) ([]*protos.FunctionDefinition, []internal_tool.ToolCaller, error) {
-	// List available tools from the MCP server
-	definitions, err := client.ListTools(ctx, client.GetServerURL())
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to list tools: %w", err)
-	}
-
-	// Create tool callers for each tool
-	callers := make([]internal_tool.ToolCaller, 0, len(definitions))
-	resultDefs := make([]*protos.FunctionDefinition, 0, len(definitions))
-
-	for i, def := range definitions {
-		toolName := def.Name
-		originalName := def.Name
-
-		// Apply prefix if configured (to avoid naming conflicts between servers)
-		if prefix != "" {
-			toolName = prefix + "_" + def.Name
-			// Update the definition name for LLM
-			def = &protos.FunctionDefinition{
-				Name:        toolName,
-				Description: def.Description,
-				Parameters:  def.Parameters,
-			}
-		}
-
-		caller := NewMCPToolCallerWithOriginalName(
-			m.logger,
-			client,
-			toolIdBase+uint64(i),
-			toolName,
-			originalName,
-			def,
-		)
-		callers = append(callers, caller)
-		resultDefs = append(resultDefs, def)
-		m.logger.Debugf("Created MCP tool caller: %s (original: %s) from server %s", toolName, originalName, client.GetServerURL())
-	}
-
-	return resultDefs, callers, nil
-}
-
-// GetClient returns the MCP client for a server URL
-func (m *MCPToolManager) GetClient(serverURL string) (*Client, bool) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	client, exists := m.clients[serverURL]
-	return client, exists
-}
-
-// Close closes all MCP connections
-func (m *MCPToolManager) Close() error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	var lastErr error
-	for url, client := range m.clients {
-		if err := client.Close(); err != nil {
-			m.logger.Errorf("failed to close MCP client for %s: %v", url, err)
-			lastErr = err
-		}
-	}
-	m.clients = make(map[string]*Client)
-	return lastErr
 }

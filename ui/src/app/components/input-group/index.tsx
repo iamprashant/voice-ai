@@ -18,7 +18,7 @@ export const InputGroup: FC<InputGroupProps> = ({
   return (
     <section
       {...props}
-      className={cn('border m-4 rounded-[2px]', props.className)}
+      className={cn('border m-4 rounded-md', props.className)}
     >
       <div
         onClick={() => {
@@ -28,8 +28,8 @@ export const InputGroup: FC<InputGroupProps> = ({
           'cursor-pointer',
           'outline-solid outline-[1.5px] outline-transparent',
           'focus-within:outline-blue-600 focus:outline-blue-600 outline-offset-[-1.5px]',
-          !isExpanded && 'rounded-b-[2px] !border-b-0',
-          'px-4 group flex justify-between w-full items-center py-3 text-left rounded-t-[2px] border-b hover:bg-white dark:hover:bg-gray-950',
+          !isExpanded && 'rounded-b-md !border-b-0',
+          'px-4 group flex justify-between w-full items-center py-3 text-left rounded-t-md border-b hover:bg-white dark:hover:bg-gray-950',
         )}
       >
         <div className="mr-3.5 flex items-center">

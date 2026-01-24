@@ -200,6 +200,12 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 			// when static packet is received it means that rapida system has something to speak
 			// do not abrupt it just send it to the assembler
 
+			// starting the timer for idle timeout as bot has finished responding
+			if talking.messaging.GetInputMode().Text() {
+				// stop idle timeout as bot has started responding
+				talking.startIdleTimeoutTimer(talking.Context())
+			}
+
 			if err := talking.callCreateMessage(ctx, vl); err != nil {
 				talking.logger.Errorf("unable to create message from static packet %v", err)
 			}
@@ -301,6 +307,10 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				internal_telemetry.KV{K: "speech", V: internal_telemetry.StringValue(vl.Speech)},
 			)
 
+			// stop idle timeout as bot has started responding
+			talking.stopIdleTimeoutTimer()
+
+			//
 			msg, err := talking.messaging.GetMessage()
 			if err != nil {
 				talking.logger.Errorf("the message should have gotten created from speech to text packet or user text packet %v", err)
@@ -325,9 +335,6 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 			}
 		case internal_type.LLMStreamPacket:
 			talking.logger.Debugf("testing packet llmstream-> %+v", vl)
-			// resetting idle timer as bot has sponken
-			talking.resetIdleTimeoutTimer(talking.Context())
-
 			// packet from llm reciecved
 			inputMessage, err := talking.messaging.GetMessage()
 			if err != nil {
@@ -352,11 +359,6 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 
 		case internal_type.LLMMessagePacket:
 
-			talking.logger.Debugf("testing packet llmend->")
-			// resetting idle timer as bot has sponken
-			talking.resetIdleTimeoutTimer(talking.Context())
-
-			//
 			inputMessage, err := talking.messaging.GetMessage()
 			if err != nil {
 				continue
@@ -365,6 +367,13 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 			if vl.ContextID != inputMessage.GetId() {
 				continue
 			}
+
+			// starting the timer for idle timeout as bot has finished responding
+			if talking.messaging.GetInputMode().Text() {
+				// stop idle timeout as bot has started responding
+				talking.startIdleTimeoutTimer(talking.Context())
+			}
+			//
 			if err := talking.messaging.Transition(internal_adapter_request_customizers.LLMGenerated); err != nil {
 				talking.logger.Errorf("messaging transition error: %v", err)
 			}
@@ -392,11 +401,6 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				}
 			}
 		case internal_type.TextToSpeechEndPacket:
-
-			talking.logger.Debugf("testing packet tts end -> %+v", vl)
-			// resetting idle timer as bot has sponken
-			talking.resetIdleTimeoutTimer(talking.Context())
-
 			// notify the user about completion of tts
 			inputMessage, err := talking.messaging.GetMessage()
 			if err != nil {
@@ -415,7 +419,11 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 
 			talking.logger.Debugf("testing packet ttsstream -> audio ")
 			// resetting idle timer as bot has sponken
-			talking.resetIdleTimeoutTimer(talking.Context())
+			// starting the timer for idle timeout as bot has finished responding
+			if talking.messaging.GetInputMode().Audio() {
+				// stop idle timeout as bot has started responding
+				talking.startIdleTimeoutTimer(talking.Context())
+			}
 			// get current input message
 			inputMessage, err := talking.messaging.GetMessage()
 			if err != nil {

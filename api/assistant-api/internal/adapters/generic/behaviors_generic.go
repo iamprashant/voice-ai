@@ -59,11 +59,9 @@ func (r *GenericRequestor) initializeBehavior(ctx context.Context) error {
 		r.logger.Errorf("error while fetching deployment behavior: %v", err)
 		return nil
 	}
-
 	r.initializeGreeting(ctx, behavior)
 	r.initializeIdleTimeout(ctx, behavior)
 	r.initializeMaxSessionDuration(ctx, behavior)
-
 	return nil
 }
 
@@ -195,7 +193,8 @@ func (r *GenericRequestor) getIdleTimeoutMessage(behavior *internal_assistant_en
 
 // StartIdleTimeoutTimer starts a timer that triggers OnIdleTimeout when the bot
 // has spoken but the user hasn't responded within the configured duration.
-func (r *GenericRequestor) startIdleTimeoutTimer(ctx context.Context) {
+// The inputDuration parameter extends the idle timeout to account for user input time.
+func (r *GenericRequestor) startIdleTimeoutTimer(ctx context.Context, inputDuration ...time.Duration) {
 	if r.idleTimeoutTimer != nil {
 		r.idleTimeoutTimer.Stop()
 	}
@@ -210,6 +209,10 @@ func (r *GenericRequestor) startIdleTimeoutTimer(ctx context.Context) {
 	}
 
 	timeoutDuration := time.Duration(*behavior.IdealTimeout) * time.Second
+	if len(inputDuration) > 0 && inputDuration[0] > 0 {
+		timeoutDuration += inputDuration[0]
+	}
+
 	r.idleTimeoutTimer = time.AfterFunc(timeoutDuration, func() {
 		if err := r.onIdleTimeout(ctx); err != nil {
 			r.logger.Errorf("error while handling idle timeout: %v", err)
@@ -219,9 +222,20 @@ func (r *GenericRequestor) startIdleTimeoutTimer(ctx context.Context) {
 
 // ResetIdleTimeoutTimer resets the idle timeout timer when the user responds,
 // indicating they are still engaged in the conversation.
-func (r *GenericRequestor) resetIdleTimeoutTimer(ctx context.Context) {
+// The inputDuration parameter extends the idle timeout to account for user input time.
+func (r *GenericRequestor) resetIdleTimeoutTimer(ctx context.Context, inputDuration ...time.Duration) {
 	if r.idleTimeoutTimer == nil {
 		return
 	}
-	r.startIdleTimeoutTimer(ctx)
+	r.idleTimeoutCount = 0
+	r.startIdleTimeoutTimer(ctx, inputDuration...)
+}
+
+// stopIdleTimeoutTimer stops the idle timeout timer and resets retry count.
+func (r *GenericRequestor) stopIdleTimeoutTimer() {
+	if r.idleTimeoutTimer != nil {
+		r.idleTimeoutTimer.Stop()
+		r.idleTimeoutTimer = nil
+	}
+	r.idleTimeoutCount = 0
 }

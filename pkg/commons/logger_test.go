@@ -13,18 +13,10 @@ import (
 	"time"
 )
 
-// TestNewApplicationLogger tests default logger initialization
-func TestNewApplicationLogger(t *testing.T) {
-	logger, _ := NewApplicationLogger()
-	if logger == nil {
-		t.Fatal("Expected logger, got nil")
-	}
-}
-
 // TestLoggerInitialization tests logger initialization with temp directory
 func TestLoggerInitialization(t *testing.T) {
 	tmpDir := t.TempDir()
-	_, err := NewApplicationLoggerWithOptions(
+	_, err := NewApplicationLogger(
 		Name("test-logger"),
 		Path(tmpDir),
 		Level("info"),
@@ -39,7 +31,7 @@ func TestLoggerInitialization(t *testing.T) {
 // TestDebugLogging tests debug level logging
 func TestDebugLogging(t *testing.T) {
 	tmpDir := t.TempDir()
-	logger, err := NewApplicationLoggerWithOptions(
+	logger, err := NewApplicationLogger(
 		Name("test-debug"),
 		Path(tmpDir),
 		Level("debug"),
@@ -62,7 +54,7 @@ func TestDebugLogging(t *testing.T) {
 // TestInfoLogging tests info level logging
 func TestInfoLogging(t *testing.T) {
 	tmpDir := t.TempDir()
-	logger, err := NewApplicationLoggerWithOptions(
+	logger, err := NewApplicationLogger(
 		Name("test-info"),
 		Path(tmpDir),
 		Level("info"),
@@ -80,7 +72,7 @@ func TestInfoLogging(t *testing.T) {
 // TestWarnLogging tests warn level logging
 func TestWarnLogging(t *testing.T) {
 	tmpDir := t.TempDir()
-	logger, err := NewApplicationLoggerWithOptions(
+	logger, err := NewApplicationLogger(
 		Name("test-warn"),
 		Path(tmpDir),
 		Level("warn"),
@@ -98,7 +90,7 @@ func TestWarnLogging(t *testing.T) {
 // TestErrorLogging tests error level logging
 func TestErrorLogging(t *testing.T) {
 	tmpDir := t.TempDir()
-	logger, err := NewApplicationLoggerWithOptions(
+	logger, err := NewApplicationLogger(
 		Name("test-error"),
 		Path(tmpDir),
 		Level("error"),
@@ -116,7 +108,7 @@ func TestErrorLogging(t *testing.T) {
 // TestDPanicLogging tests DPanic level logging (only in development)
 func TestDPanicLogging(t *testing.T) {
 	tmpDir := t.TempDir()
-	logger, err := NewApplicationLoggerWithOptions(
+	logger, err := NewApplicationLogger(
 		Name("test-dpanic"),
 		Path(tmpDir),
 		Level("debug"),
@@ -134,7 +126,7 @@ func TestDPanicLogging(t *testing.T) {
 // TestBenchmarkLogging tests benchmark logging with different durations
 func TestBenchmarkLogging(t *testing.T) {
 	tmpDir := t.TempDir()
-	logger, err := NewApplicationLoggerWithOptions(
+	logger, err := NewApplicationLogger(
 		Name("test-benchmark"),
 		Path(tmpDir),
 		Level("info"),
@@ -154,7 +146,7 @@ func TestBenchmarkLogging(t *testing.T) {
 // TestTracefLogging tests request tracing with context
 func TestTracefLogging(t *testing.T) {
 	tmpDir := t.TempDir()
-	logger, err := NewApplicationLoggerWithOptions(
+	logger, err := NewApplicationLogger(
 		Name("test-trace"),
 		Path(tmpDir),
 		Level("info"),
@@ -188,7 +180,7 @@ func TestGetLoggerLevel(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		logger, _ := NewApplicationLoggerWithOptions(Level(tt.levelStr))
+		logger, _ := NewApplicationLogger(Level(tt.levelStr))
 		level := logger.Level()
 
 		switch tt.expected {
@@ -214,7 +206,7 @@ func TestGetLoggerLevel(t *testing.T) {
 
 // TestConsoleOnlyLogger tests logger with only console output
 func TestConsoleOnlyLogger(t *testing.T) {
-	logger, err := NewApplicationLoggerWithOptions(
+	logger, err := NewApplicationLogger(
 		Name("test-console-only"),
 		EnableConsole(true),
 		EnableFile(false),
@@ -231,7 +223,7 @@ func TestConsoleOnlyLogger(t *testing.T) {
 // TestFileOnlyLogger tests logger with only file output
 func TestFileOnlyLogger(t *testing.T) {
 	tmpDir := t.TempDir()
-	logger, err := NewApplicationLoggerWithOptions(
+	logger, err := NewApplicationLogger(
 		Name("test-file-only"),
 		Path(tmpDir),
 		EnableConsole(false),
@@ -255,7 +247,7 @@ func TestFileOnlyLogger(t *testing.T) {
 func TestMultipleLoggers(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	logger1, err := NewApplicationLoggerWithOptions(
+	logger1, err := NewApplicationLogger(
 		Name("app1"),
 		Path(tmpDir),
 		Level("info"),
@@ -264,7 +256,7 @@ func TestMultipleLoggers(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to initialize logger2: %v", err)
 	}
-	logger2, err := NewApplicationLoggerWithOptions(
+	logger2, err := NewApplicationLogger(
 		Name("app2"),
 		Path(tmpDir),
 		Level("debug"),

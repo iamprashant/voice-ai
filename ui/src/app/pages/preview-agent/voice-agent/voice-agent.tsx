@@ -91,7 +91,7 @@ export const VoiceAgent: FC<{
                   </div>
                   <a
                     target="_blank"
-                    href={`/deployment/assistant/${assistant?.getId()}/manage/deployment/debugger`}
+                    href={`/deployment/assistant/${assistant?.getId()}/deployment/debugger`}
                     className="h-7 flex items-center font-medium hover:underline ml-auto text-yellow-600"
                     rel="noreferrer"
                   >

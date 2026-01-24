@@ -191,7 +191,7 @@ func (eService *assistantToolService) Update(ctx context.Context, auth types.Sim
 		return nil, tx.Error
 	}
 	//
-	err := eService.MarkAllOptionsAsDeleted(ctx, auth, toolId)
+	err := eService.markAllOptionsAsDeleted(ctx, auth, toolId)
 	if err != nil {
 		eService.logger.Benchmark("AssistantToolService.Update", time.Since(start))
 		eService.logger.Errorf("error while updating tool options %v", tx.Error)
@@ -209,7 +209,7 @@ func (eService *assistantToolService) Update(ctx context.Context, auth types.Sim
 	return aTool, nil
 }
 
-func (eService *assistantToolService) MarkAllOptionsAsDeleted(
+func (eService *assistantToolService) markAllOptionsAsDeleted(
 	ctx context.Context,
 	auth types.SimplePrinciple,
 	assistantToolId uint64,
@@ -226,12 +226,12 @@ func (eService *assistantToolService) MarkAllOptionsAsDeleted(
 		assistantToolId,
 	).Updates(&tOptions)
 	if tx.Error != nil {
-		eService.logger.Benchmark("assistantService.MarkAllOptionsAsDeleted", time.Since(start))
+		eService.logger.Benchmark("assistantService.markAllOptionsAsDeleted", time.Since(start))
 		eService.logger.Errorf("error while marking options as deleted: %v", tx.Error)
 		return tx.Error
 	}
 
-	eService.logger.Benchmark("assistantService.MarkAllOptionsAsDeleted", time.Since(start))
+	eService.logger.Benchmark("assistantService.markAllOptionsAsDeleted", time.Since(start))
 	return nil
 }
 

@@ -146,22 +146,3 @@ export const EndpointToolDefintion = {
   ),
 };
 
-export const PutOnHoldToolDefintion = {
-  name: 'put_on_hold',
-  description:
-    'Use this tool to temporarily pause a process or task. Specify the reason for putting it on hold along with any relevant context.',
-  parameters: JSON.stringify(
-    {
-      properties: {
-        reason: {
-          description: 'The reason for putting the process or task on hold.',
-          type: 'string',
-        },
-      },
-      required: ['reason'],
-      type: 'object',
-    },
-    null,
-    2,
-  ),
-};

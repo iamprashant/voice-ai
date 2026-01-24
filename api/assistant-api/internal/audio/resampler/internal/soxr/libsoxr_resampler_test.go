@@ -19,7 +19,7 @@ import (
 )
 
 func newTestLogger(t testing.TB) commons.Logger {
-	logger, err := commons.NewApplicationLoggerWithOptions(
+	logger, err := commons.NewApplicationLogger(
 		commons.EnableConsole(true),
 		commons.EnableFile(false),
 		commons.Name("resampler-test"),

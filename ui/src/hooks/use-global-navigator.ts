@@ -52,7 +52,7 @@ export const useGlobalNavigation = () => {
     navigate(`/deployment/assistant/${assistantId}/deployment/slack`);
 
   const goToManageAssistant = (assistantId: string) => {
-    navigate(`/deployment/assistant/${assistantId}/manage`);
+    navigate(`/deployment/assistant/${assistantId}/deployment`);
   };
 
   const goToDeploymentAssistant = (assistantId: string) => {

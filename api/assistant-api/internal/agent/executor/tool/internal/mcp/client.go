@@ -7,214 +7,381 @@ package internal_tool_mcp
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"sync"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
 
-	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/mark3labs/mcp-go/client"
+	"github.com/mark3labs/mcp-go/client/transport"
+	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/utils"
 	"github.com/rapidaai/protos"
 )
 
-// ToolResponse represents the response from an MCP tool execution
+// Protocol constants for MCP transports
+const (
+	ProtocolSSE            = "sse"             // Traditional SSE transport
+	ProtocolStreamableHTTP = "streamable_http" // Streamable HTTP transport (default)
+	ProtocolWebSocket      = "websocket"       // WebSocket transport
+)
+
+type Config struct {
+	// MCP server endpoint
+	// Examples:
+	//   SSE:             http://localhost:3000/mcp
+	//   Streamable HTTP: https://mcp.zapier.com/api/v1/connect?token=xxx
+	//   WebSocket:       ws://localhost:3000/mcp or wss://...
+	ServerURL string
+
+	// Transport protocol: "sse" (default), "streamable_http", or "websocket"
+	// - sse: Traditional Server-Sent Events transport (default)
+	// - streamable_http: HTTP-based transport (works with Zapier MCP, etc.)
+	// - websocket: WebSocket transport (ws:// or wss://)
+	Protocol string
+
+	// HTTP timeout in seconds (default: 60)
+	Timeout int
+
+	// Custom headers to include in requests
+	Headers map[string]string
+}
+
 type ToolResponse struct {
 	Success bool           `json:"success"`
 	Result  any            `json:"result,omitempty"`
 	Error   string         `json:"error,omitempty"`
 	Data    map[string]any `json:"data,omitempty"`
-	Meta    map[string]any `json:"meta,omitempty"`
 }
 
-// NewToolResponse creates a new ToolResponse with the given success status
 func NewToolResponse(success bool) *ToolResponse {
 	return &ToolResponse{
 		Success: success,
-		Data:    make(map[string]any),
-		Meta:    make(map[string]any),
+		Data:    map[string]any{},
 	}
 }
 
-// WithResult sets the result of the tool response
 func (r *ToolResponse) WithResult(result any) *ToolResponse {
 	r.Result = result
 	return r
 }
 
-// WithError sets the error message of the tool response
 func (r *ToolResponse) WithError(err string) *ToolResponse {
 	r.Error = err
 	r.Success = false
 	return r
 }
 
-// WithData adds additional data to the tool response
 func (r *ToolResponse) WithData(key string, value any) *ToolResponse {
 	r.Data[key] = value
 	return r
 }
 
-// WithMeta adds metadata to the tool response
-func (r *ToolResponse) WithMeta(key string, value any) *ToolResponse {
-	r.Meta[key] = value
-	return r
-}
-
-// ToMap converts the ToolResponse to a map for use in LLMToolPacket
 func (r *ToolResponse) ToMap() map[string]interface{} {
-	result := map[string]interface{}{
+	out := map[string]interface{}{
 		"success": r.Success,
-	}
-	if r.Result != nil {
-		result["result"] = r.Result
-	}
-	if r.Error != "" {
-		result["error"] = r.Error
-	}
-	if len(r.Data) > 0 {
-		result["data"] = r.Data
-	}
-	if len(r.Meta) > 0 {
-		result["meta"] = r.Meta
+		"status":  "FAIL",
 	}
 	if r.Success {
-		result["status"] = "SUCCESS"
-	} else {
-		result["status"] = "FAIL"
+		out["status"] = "SUCCESS"
 	}
-	return result
+	if r.Result != nil {
+		out["result"] = r.Result
+	}
+	if r.Error != "" {
+		out["error"] = r.Error
+	}
+	if len(r.Data) > 0 {
+		out["data"] = r.Data
+	}
+	return out
 }
 
-// Client manages MCP server connections and tool execution
+// -----------------------------------------------------------------------------
+// Client - MCP Client using mark3labs/mcp-go
+// -----------------------------------------------------------------------------
+
 type Client struct {
 	logger    commons.Logger
-	session   *mcp.ClientSession
+	client    *client.Client
+	tools     map[string]mcp.Tool
 	serverURL string
-	tools     map[string]*protos.FunctionDefinition // toolName -> definition
-	mu        sync.RWMutex
+	config    *Config
 }
 
-// NewClient creates a new MCP client
-func NewClient(ctx context.Context, logger commons.Logger, clientOption utils.Option) (*Client, error) {
-	serverUrl, err := clientOption.GetString("mcp.server_url")
-	if err != nil {
-		return nil, fmt.Errorf("mcp.server_url is required: %w", err)
+func NewClient(ctx context.Context, logger commons.Logger, opts utils.Option) (*Client, error) {
+
+	logger.Debugf("optiopnms => %+v", opts)
+	// ------------------------------------------------------------------
+	// Required option
+	// ------------------------------------------------------------------
+	serverURL, err := opts.GetString("mcp.server_url")
+	if err != nil || serverURL == "" {
+		return nil, fmt.Errorf("mcp.server_url is required")
 	}
 
-	client := mcp.NewClient(&mcp.Implementation{
-		Name:    "rapida-voice-ai",
-		Version: "1.0.0",
-	}, nil)
-
-	session, err := client.Connect(ctx, &mcp.StreamableClientTransport{Endpoint: serverUrl}, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to MCP server: %w", err)
+	// ------------------------------------------------------------------
+	// Defaults
+	// ------------------------------------------------------------------
+	config := &Config{
+		ServerURL: serverURL,
+		Protocol:  ProtocolSSE, // Default to SSE
+		Timeout:   60,
+		Headers:   map[string]string{},
 	}
-	return &Client{
+
+	// Optional protocol - supports: "sse", "SSE", "streamable_http", "Streamable HTTP"
+	if protocol, err := opts.GetString("mcp.protocol"); err == nil && protocol != "" {
+		// Normalize protocol value
+		normalizedProtocol := strings.ToLower(strings.TrimSpace(protocol))
+		normalizedProtocol = strings.ReplaceAll(normalizedProtocol, " ", "_")
+		config.Protocol = normalizedProtocol
+	}
+
+	// Optional timeout
+	if timeout, err := opts.GetString("mcp.timeout"); err == nil && timeout != "" {
+		if t, e := strconv.Atoi(timeout); e == nil {
+			config.Timeout = t
+		}
+	}
+
+	// Optional headers - can be JSON string or map
+	if headersRaw, ok := opts["mcp.headers"]; ok && headersRaw != nil {
+		switch h := headersRaw.(type) {
+		case string:
+			if h != "" && h != "{}" {
+				if err := json.Unmarshal([]byte(h), &config.Headers); err != nil {
+					logger.Warnf("Failed to parse mcp.headers JSON string: %v", err)
+				}
+			}
+		case map[string]string:
+			for k, v := range h {
+				config.Headers[k] = v
+			}
+		case map[string]interface{}:
+			for k, v := range h {
+				if s, ok := v.(string); ok {
+					config.Headers[k] = s
+				}
+			}
+		}
+	}
+
+	// ------------------------------------------------------------------
+	// Create HTTP client with timeout
+	// ------------------------------------------------------------------
+	httpClient := &http.Client{
+		Timeout: time.Duration(config.Timeout) * time.Second,
+	}
+
+	// ------------------------------------------------------------------
+	// Create MCP client based on protocol
+	// ------------------------------------------------------------------
+	var mcpClient *client.Client
+
+	switch config.Protocol {
+	case ProtocolStreamableHTTP:
+		// Streamable HTTP transport (works with Zapier MCP, etc.)
+		// Requires Accept header with both application/json and text/event-stream
+		httpHeaders := map[string]string{
+			"Accept": "application/json, text/event-stream",
+		}
+		for k, v := range config.Headers {
+			httpHeaders[k] = v
+		}
+
+		mcpClient, err = client.NewStreamableHttpClient(config.ServerURL,
+			transport.WithHTTPBasicClient(httpClient),
+			transport.WithHTTPHeaders(httpHeaders),
+		)
+
+	case ProtocolWebSocket:
+		// WebSocket transport using custom implementation
+		wsTransport := NewWebSocketTransport(config.ServerURL,
+			WithWebSocketHeaders(config.Headers),
+		)
+		mcpClient = client.NewClient(wsTransport)
+
+	case ProtocolSSE:
+		// SSE transport for traditional SSE servers
+		sseHeaders := map[string]string{
+			"Accept": "text/event-stream",
+		}
+		for k, v := range config.Headers {
+			sseHeaders[k] = v
+		}
+
+		mcpClient, err = client.NewSSEMCPClient(config.ServerURL,
+			transport.WithHTTPClient(httpClient),
+			transport.WithHeaders(sseHeaders),
+		)
+
+	default:
+		// Unknown protocol - default to SSE
+		logger.Warnf("Unknown protocol %q, defaulting to SSE", config.Protocol)
+		config.Protocol = ProtocolSSE
+		sseHeaders := map[string]string{
+			"Accept": "text/event-stream",
+		}
+		for k, v := range config.Headers {
+			sseHeaders[k] = v
+		}
+
+		mcpClient, err = client.NewSSEMCPClient(config.ServerURL,
+			transport.WithHTTPClient(httpClient),
+			transport.WithHeaders(sseHeaders),
+		)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create MCP client for %s: %w", config.ServerURL, err)
+	}
+
+	c := &Client{
 		logger:    logger,
-		session:   session,
-		serverURL: serverUrl,
-		tools:     make(map[string]*protos.FunctionDefinition),
-	}, nil
-}
-
-// NewClientWithURL creates a new MCP client with direct server URL
-func NewClientWithURL(ctx context.Context, logger commons.Logger, serverURL string) (*Client, error) {
-	client := mcp.NewClient(&mcp.Implementation{
-		Name:    "rapida-voice-ai",
-		Version: "1.0.0",
-	}, nil)
-
-	session, err := client.Connect(ctx, &mcp.StreamableClientTransport{Endpoint: serverURL}, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to MCP server at %s: %w", serverURL, err)
+		client:    mcpClient,
+		tools:     make(map[string]mcp.Tool),
+		serverURL: config.ServerURL,
+		config:    config,
 	}
-	return &Client{
-		logger:    logger,
-		session:   session,
-		serverURL: serverURL,
-		tools:     make(map[string]*protos.FunctionDefinition),
-	}, nil
+
+	// ------------------------------------------------------------------
+	// Connect and initialize
+	// ------------------------------------------------------------------
+	if err := c.connect(ctx); err != nil {
+		mcpClient.Close()
+		return nil, err
+	}
+
+	logger.Infof(
+		"Connected to MCP server: %s (protocol=%s timeout=%ds tools=%d)",
+		config.ServerURL,
+		config.Protocol,
+		config.Timeout,
+		len(c.tools),
+	)
+
+	return c, nil
 }
 
-// GetServerURL returns the server URL for this client
-func (c *Client) GetServerURL() string {
+// connect establishes connection, initializes the client, and loads available tools
+func (c *Client) connect(ctx context.Context) error {
+	// Start the transport
+	if err := c.client.Start(ctx); err != nil {
+		return fmt.Errorf("failed to start client: %w", err)
+	}
+
+	// Initialize the MCP session
+	initRequest := mcp.InitializeRequest{}
+	initRequest.Params.ProtocolVersion = mcp.LATEST_PROTOCOL_VERSION
+	initRequest.Params.ClientInfo = mcp.Implementation{
+		Name:    "Rapida-MCP-Client",
+		Version: "1.0.0",
+	}
+	initRequest.Params.Capabilities = mcp.ClientCapabilities{}
+
+	_, err := c.client.Initialize(ctx, initRequest)
+	if err != nil {
+		return fmt.Errorf("failed to initialize client: %w", err)
+	}
+
+	// Load available tools
+	toolsResp, err := c.client.ListTools(ctx, mcp.ListToolsRequest{})
+	if err != nil {
+		return fmt.Errorf("failed to list tools: %w", err)
+	}
+
+	for _, tool := range toolsResp.Tools {
+		c.tools[tool.Name] = tool
+	}
+
+	return nil
+}
+
+// ServerURL returns the server URL
+func (c *Client) ServerURL() string {
 	return c.serverURL
 }
 
-// GetToolDefinition returns the cached tool definition by name
-func (c *Client) GetToolDefinition(toolName string) (*protos.FunctionDefinition, bool) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	def, ok := c.tools[toolName]
-	return def, ok
-}
-
-// ListTools returns all tool definitions from the MCP server and caches them
-func (c *Client) ListTools(ctx context.Context, serverURL string) ([]*protos.FunctionDefinition, error) {
-	result, err := c.session.ListTools(ctx, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list tools: %w", err)
-	}
-
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	definitions := make([]*protos.FunctionDefinition, 0, len(result.Tools))
-	for _, tool := range result.Tools {
-		c.logger.Debugf("got all tools %+v", *tool)
-		def := convertTool(tool)
+// ListTools fetches all available tools from the MCP server
+func (c *Client) ListTools(ctx context.Context) ([]*protos.FunctionDefinition, error) {
+	definitions := make([]*protos.FunctionDefinition, 0, len(c.tools))
+	for _, tool := range c.tools {
+		def := c.convertTool(tool)
 		definitions = append(definitions, def)
-		// Cache the tool definition for later lookup
-		c.tools[def.Name] = def
 	}
 
 	c.logger.Infof("Found %d tools on MCP server %s", len(definitions), c.serverURL)
 	return definitions, nil
 }
 
-// ListToolNames returns all tool names available on the MCP server
-func (c *Client) ListToolNames(ctx context.Context) ([]string, error) {
-	result, err := c.session.ListTools(ctx, nil)
+// RefreshTools reloads tools from the server
+func (c *Client) RefreshTools(ctx context.Context) error {
+	toolsResp, err := c.client.ListTools(ctx, mcp.ListToolsRequest{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to list tools: %w", err)
+		return fmt.Errorf("failed to list tools: %w", err)
 	}
 
-	names := make([]string, 0, len(result.Tools))
-	for _, tool := range result.Tools {
-		names = append(names, tool.Name)
+	c.tools = make(map[string]mcp.Tool)
+	for _, tool := range toolsResp.Tools {
+		c.tools[tool.Name] = tool
 	}
-	return names, nil
+
+	return nil
 }
 
 // Execute calls an MCP tool and returns the response
-func (c *Client) Execute(ctx context.Context, serverURL, toolName string, args map[string]any) (*ToolResponse, error) {
-	result, err := c.session.CallTool(ctx, &mcp.CallToolParams{
-		Name:      toolName,
-		Arguments: args,
-	})
+func (c *Client) Execute(ctx context.Context, toolName string, args map[string]any) (*ToolResponse, error) {
+	if _, exists := c.tools[toolName]; !exists {
+		return NewToolResponse(false).WithError(fmt.Sprintf("tool %q not found", toolName)), nil
+	}
+
+	request := mcp.CallToolRequest{}
+	request.Params.Name = toolName
+	request.Params.Arguments = args
+
+	result, err := c.client.CallTool(ctx, request)
 	if err != nil {
 		return NewToolResponse(false).WithError(err.Error()), nil
 	}
 
-	return convertResult(result), nil
+	return c.convertResult(result), nil
+}
+
+// ExecuteWithTimeout calls an MCP tool with a timeout
+func (c *Client) ExecuteWithTimeout(toolName string, args map[string]any, timeout time.Duration) (*ToolResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	return c.Execute(ctx, toolName, args)
+}
+
+// Ping checks if the connection is alive
+func (c *Client) Ping(ctx context.Context) error {
+	return c.client.Ping(ctx)
 }
 
 // Close closes all active sessions
 func (c *Client) Close() error {
-	c.session.Close()
-	return nil
+	return c.client.Close()
+}
+
+// GetTool returns a specific tool by name
+func (c *Client) GetTool(name string) (mcp.Tool, bool) {
+	tool, exists := c.tools[name]
+	return tool, exists
 }
 
 // convertTool converts MCP Tool to FunctionDefinition
-func convertTool(tool *mcp.Tool) *protos.FunctionDefinition {
-	params := convertSchema(tool.InputSchema)
+func (c *Client) convertTool(tool mcp.Tool) *protos.FunctionDefinition {
+	params := c.convertSchema(tool.InputSchema)
 
 	// Ensure properties map is never nil - protobuf omitempty will skip empty maps,
 	// but we need {"type": "object", "properties": {}} for valid JSON schema.
 	if len(params.Properties) == 0 {
-		// Initialize with a non-nil map to ensure proper serialization
 		params.Properties = make(map[string]*protos.FunctionParameterProperty)
 	}
 
@@ -227,49 +394,31 @@ func convertTool(tool *mcp.Tool) *protos.FunctionDefinition {
 
 // convertSchema converts MCP inputSchema to FunctionParameter
 // Ensures valid JSON schema format even when no properties exist
-func convertSchema(schema any) *protos.FunctionParameter {
-	// Always initialize with empty properties map to ensure valid JSON schema
-	// Output: {"type": "object", "properties": {}} instead of {"type": "object"}
+func (c *Client) convertSchema(schema mcp.ToolInputSchema) *protos.FunctionParameter {
 	params := &protos.FunctionParameter{
 		Type:       "object",
 		Properties: make(map[string]*protos.FunctionParameterProperty),
 		Required:   make([]string, 0),
 	}
 
-	if schema == nil {
-		return params
+	if schema.Type != "" {
+		params.Type = schema.Type
 	}
 
-	// Convert to map via JSON
-	data, err := json.Marshal(schema)
-	if err != nil {
-		return params
-	}
+	// Copy required fields
+	params.Required = append(params.Required, schema.Required...)
 
-	var schemaMap map[string]any
-	if err := json.Unmarshal(data, &schemaMap); err != nil {
-		return params
-	}
+	// Convert properties
+	if schema.Properties != nil {
+		for name, prop := range schema.Properties {
+			p := &protos.FunctionParameterProperty{}
 
-	if t, ok := schemaMap["type"].(string); ok {
-		params.Type = t
-	}
-
-	if required, ok := schemaMap["required"].([]any); ok {
-		for _, r := range required {
-			if s, ok := r.(string); ok {
-				params.Required = append(params.Required, s)
-			}
-		}
-	}
-
-	if props, ok := schemaMap["properties"].(map[string]any); ok {
-		for name, prop := range props {
+			// Convert property map to struct
 			propMap, ok := prop.(map[string]any)
 			if !ok {
 				continue
 			}
-			p := &protos.FunctionParameterProperty{}
+
 			if t, ok := propMap["type"].(string); ok {
 				p.Type = t
 			}
@@ -291,24 +440,14 @@ func convertSchema(schema any) *protos.FunctionParameter {
 }
 
 // convertResult converts MCP CallToolResult to ToolResponse
-func convertResult(result *mcp.CallToolResult) *ToolResponse {
+func (c *Client) convertResult(result *mcp.CallToolResult) *ToolResponse {
 	resp := NewToolResponse(!result.IsError)
 
 	var texts []string
 	for _, content := range result.Content {
 		switch ct := content.(type) {
-		case *mcp.TextContent:
+		case mcp.TextContent:
 			texts = append(texts, ct.Text)
-		case *mcp.ImageContent:
-			resp.WithData("image", map[string]string{
-				"mimeType": ct.MIMEType,
-				"data":     base64.StdEncoding.EncodeToString(ct.Data),
-			})
-		case *mcp.EmbeddedResource:
-			resp.WithData("resource", map[string]any{
-				"uri":      ct.Resource.URI,
-				"mimeType": ct.Resource.MIMEType,
-			})
 		}
 	}
 
