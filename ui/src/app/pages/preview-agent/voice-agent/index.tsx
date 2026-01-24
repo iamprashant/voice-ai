@@ -337,7 +337,7 @@ export const PreviewPhoneAgent = () => {
     <>
       {assistant ? (
         <div className="h-dvh flex justify-center">
-          <div className="bg-light-background dark:bg-gray-950/50 w-[700px]! mx-auto my-auto shadow-sm border-[0.5px]">
+          <div className="bg-light-background dark:bg-gray-950/50 w-[700px]! mx-auto my-auto shadow-sm border-[0.5px] rounded-md">
             <div className="space-y-6 m-10">
               <div className="space-y-2">
                 <h1 className="text-3xl font-semibold">Hello,</h1>
