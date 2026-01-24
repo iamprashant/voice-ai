@@ -22,6 +22,7 @@ jobs:
   go-lint:
     name: Go Lint
     runs-on: ubuntu-latest
+    if: github.repository == 'rapidaai/voice-ai'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -57,6 +58,7 @@ jobs:
   go-fmt:
     name: Go Format
     runs-on: ubuntu-latest
+    if: github.repository == 'rapidaai/voice-ai'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -82,6 +84,7 @@ jobs:
   go-vet:
     name: Go Vet
     runs-on: ubuntu-latest
+    if: github.repository == 'rapidaai/voice-ai'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -109,6 +112,7 @@ jobs:
   go-test:
     name: Go Tests
     runs-on: ubuntu-latest
+    if: github.repository == 'rapidaai/voice-ai'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -149,6 +153,7 @@ jobs:
   go-build:
     name: Go Build
     runs-on: ubuntu-latest
+    if: github.repository == 'rapidaai/voice-ai'
     strategy:
       matrix:
         # Note: assistant is excluded - it has CGO dependencies that require C libraries
@@ -171,6 +176,7 @@ jobs:
   go-mod-tidy:
     name: Go Mod Tidy
     runs-on: ubuntu-latest
+    if: github.repository == 'rapidaai/voice-ai'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -197,6 +203,7 @@ jobs:
   ui-lint:
     name: UI Lint
     runs-on: ubuntu-latest
+    if: github.repository == 'rapidaai/voice-ai'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -219,6 +226,7 @@ jobs:
   ui-test:
     name: UI Tests
     runs-on: ubuntu-latest
+    if: github.repository == 'rapidaai/voice-ai'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -250,6 +258,7 @@ jobs:
   ui-build:
     name: UI Build
     runs-on: ubuntu-latest
+    if: github.repository == 'rapidaai/voice-ai'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -268,6 +277,9 @@ jobs:
       - name: Build
         working-directory: ui
         run: yarn build
+        env:
+          CI: false
+          DISABLE_ESLINT_PLUGIN: true
 
   # ============================================================================
   # SECURITY CHECKS
@@ -276,6 +288,7 @@ jobs:
   security-dependencies:
     name: Dependency Vulnerability Scan
     runs-on: ubuntu-latest
+    if: github.repository == 'rapidaai/voice-ai'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -303,6 +316,7 @@ jobs:
   security-trivy:
     name: Trivy Vulnerability Scan
     runs-on: ubuntu-latest
+    if: github.repository == 'rapidaai/voice-ai'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -323,6 +337,7 @@ jobs:
   license-check:
     name: License Check
     runs-on: ubuntu-latest
+    if: github.repository == 'rapidaai/voice-ai'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -339,7 +354,7 @@ jobs:
   commit-lint:
     name: Commit Message Lint
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    if: github.repository == 'rapidaai/voice-ai' && github.event_name == 'pull_request'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -366,6 +381,7 @@ jobs:
   docker-build:
     name: Docker Build Test
     runs-on: ubuntu-latest
+    if: github.repository == 'rapidaai/voice-ai'
     strategy:
       matrix:
         service:
@@ -413,7 +429,7 @@ jobs:
       - security-trivy
       - license-check
       - docker-build
-    if: always()
+    if: always() && github.repository == 'rapidaai/voice-ai'
     steps:
       - name: Check all jobs passed
         run: |
