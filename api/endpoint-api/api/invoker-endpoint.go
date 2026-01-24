@@ -185,7 +185,6 @@ func (invokeApi *invokerGRPCApi) Invoke(ctx context.Context, iRequest *invoker_a
 		Data:      output.GetData().GetContents(),
 		Metrics:   output.GetMetrics(),
 	}, nil
-
 }
 
 func (endpoint *invokerGRPCApi) Probe(ctx context.Context, rpv *invoker_api.ProbeRequest) (*invoker_api.ProbeResponse, error) {

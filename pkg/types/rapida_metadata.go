@@ -34,7 +34,7 @@ func (d *Metadata) SetValue(src interface{}) error {
 	case nil:
 		d.Value = ""
 	default:
-		// Use JSON marshalling for all other types, including maps and complex structures
+		// Use JSON marshaling for all other types, including maps and complex structures
 		jsonBytes, err := json.Marshal(v)
 		if err != nil {
 			return fmt.Errorf("failed to marshal value: %w", err)

@@ -23,7 +23,7 @@ type embeddingCaller struct {
 func NewEmbeddingCaller(logger commons.Logger, credential *protos.Credential) internal_callers.EmbeddingCaller {
 	return &embeddingCaller{
 		Huggingface: huggingface(logger,
-			DEFUALT_URL,
+			DEFAULT_URL,
 			credential),
 	}
 }
@@ -32,7 +32,6 @@ func NewEmbeddingCaller(logger commons.Logger, credential *protos.Credential) in
 func (ec *embeddingCaller) GetEmbedding(ctx context.Context,
 	content map[int32]string,
 	options *internal_callers.EmbeddingOptions) ([]*protos.Embedding, types.Metrics, error) {
-
 	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)
 	metrics.OnStart()
 
@@ -57,8 +56,8 @@ func (ec *embeddingCaller) GetEmbedding(ctx context.Context,
 
 	//
 	if err != nil {
-		ec.logger.Errorf("getting error for chat complition %v", err)
-		options.AIOptions.PostHook(map[string]interface{}{
+		ec.logger.Errorf("getting error for chat completion %v", err)
+		options.PostHook(map[string]interface{}{
 			"result": res,
 			"error":  err,
 		}, metrics.OnFailure().Build())
@@ -69,7 +68,7 @@ func (ec *embeddingCaller) GetEmbedding(ctx context.Context,
 	var resp [][]float32
 	if err := json.Unmarshal([]byte(*res), &resp); err != nil {
 		ec.logger.Errorf("error while parsing embedding response %v", err)
-		options.AIOptions.PostHook(map[string]interface{}{
+		options.PostHook(map[string]interface{}{
 			"result": res,
 			"error":  err,
 		}, metrics.Build())
@@ -86,7 +85,7 @@ func (ec *embeddingCaller) GetEmbedding(ctx context.Context,
 			Base64:    utils.EmbeddingToBase64(utils.EmbeddingToFloat64(embeddingData)),
 		}
 	}
-	options.AIOptions.PostHook(map[string]interface{}{
+	options.PostHook(map[string]interface{}{
 		"result": res,
 	}, metrics.Build())
 	return output, metrics.Build(), nil

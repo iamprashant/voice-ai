@@ -7,13 +7,14 @@ import (
 	"context"
 	"errors"
 
+	"google.golang.org/protobuf/types/known/structpb"
+
 	config "github.com/rapidaai/api/integration-api/config"
 	commons "github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
 	integration_api "github.com/rapidaai/protos"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type auditLoggingApi struct {
@@ -113,12 +114,10 @@ func (als *auditLoggingGRPCApi) GetAllAuditLog(c context.Context, ir *integratio
 		uint32(cnt),
 		ir.GetPaginate().GetPage(),
 		out)
-
 }
 
 // CreateMetadata implements protos.AuditLoggingServiceServer.
 func (als *auditLoggingGRPCApi) CreateMetadata(c context.Context, cmr *integration_api.CreateMetadataRequest) (*integration_api.CreateMetadataResponse, error) {
-
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(c)
 	if !isAuthenticated || !iAuth.HasProject() {
 		als.logger.Errorf("unauthenticated request for invoke")

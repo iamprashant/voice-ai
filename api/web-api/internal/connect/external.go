@@ -9,13 +9,14 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/google/uuid"
+	"golang.org/x/oauth2"
+
 	config "github.com/rapidaai/api/web-api/config"
 	internal_entity "github.com/rapidaai/api/web-api/internal/entity"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	gorm_models "github.com/rapidaai/pkg/models/gorm"
 	"github.com/rapidaai/pkg/types"
-	"golang.org/x/oauth2"
 )
 
 type ExternalConnectToken interface {

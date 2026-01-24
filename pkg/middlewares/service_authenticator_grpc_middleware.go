@@ -10,9 +10,10 @@ import (
 
 	middleware "github.com/grpc-ecosystem/go-grpc-middleware/v2"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/metadata"
+	"google.golang.org/grpc"
+
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
-	"google.golang.org/grpc"
 )
 
 func NewServiceAuthenticatorUnaryServerMiddleware(resolver types.ClaimAuthenticator[*types.ServiceScope], logger commons.Logger) grpc.UnaryServerInterceptor {
@@ -51,7 +52,5 @@ func NewServiceAuthenticatorStreamServerMiddleware(resolver types.ClaimAuthentic
 		wrapped := middleware.WrapServerStream(stream)
 		wrapped.WrappedContext = context.WithValue(ctx, types.CTX_, auth)
 		return handler(srv, wrapped)
-
 	}
-
 }

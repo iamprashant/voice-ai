@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	replicate_go "github.com/replicate/replicate-go"
+
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	internal_caller_metrics "github.com/rapidaai/api/integration-api/internal/caller/metrics"
 	"github.com/rapidaai/pkg/commons"
@@ -12,7 +14,6 @@ import (
 	"github.com/rapidaai/pkg/utils"
 	integration_api "github.com/rapidaai/protos"
 	protos "github.com/rapidaai/protos"
-	replicate_go "github.com/replicate/replicate-go"
 )
 
 type largeLanguageCaller struct {
@@ -47,13 +48,13 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 
 	client, err := llc.GetClient()
 	if err != nil {
-		llc.logger.Errorf("complition unable to get client for cohere %v", err)
+		llc.logger.Errorf("completion unable to get client for cohere %v", err)
 		return nil, metrics.OnFailure().Build(), err
 	}
 
 	input := replicate_go.PredictionInput{}
 
-	options.AIOptions.PreHook(utils.ToJson(input))
+	options.PreHook(utils.ToJson(input))
 	// single minute timeout and cancellable by the client as context will get cancel
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
@@ -67,7 +68,7 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 	if err != nil {
 		metrics.OnFailure()
 		llc.logger.Errorf("unable to create replicate prediction %v", err)
-		options.AIOptions.PostHook(map[string]interface{}{
+		options.PostHook(map[string]interface{}{
 			"error":  err,
 			"result": prediction,
 		}, metrics.Build())
@@ -77,7 +78,7 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 	if err != nil {
 		metrics.OnFailure()
 		llc.logger.Errorf("after waiting prediction failed to response %v", err)
-		options.AIOptions.PostHook(map[string]interface{}{
+		options.PostHook(map[string]interface{}{
 			"error":  err,
 			"result": prediction,
 		}, metrics.Build())
@@ -90,7 +91,7 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 	if !ok {
 		metrics.OnFailure()
 		llc.logger.Errorf("response is not string %v", err)
-		options.AIOptions.PostHook(map[string]interface{}{
+		options.PostHook(map[string]interface{}{
 			"error":  err,
 			"result": prediction,
 		}, metrics.Build())
@@ -99,7 +100,7 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 	metrics.OnSuccess()
 
 	// options.AIOptions.PreHook(llc.toString(response))
-	options.AIOptions.PostHook(map[string]interface{}{
+	options.PostHook(map[string]interface{}{
 		"result": prediction,
 	}, metrics.Build())
 

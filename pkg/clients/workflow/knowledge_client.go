@@ -8,18 +8,19 @@ package workflow_client
 import (
 	"context"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
 	"github.com/rapidaai/config"
 	clients "github.com/rapidaai/pkg/clients"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	"github.com/rapidaai/pkg/types"
 	knowledge_api "github.com/rapidaai/protos"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type KnowledgeServiceClient interface {
-	GetAllKnowledge(c context.Context, auth types.SimplePrinciple, criterias []*knowledge_api.Criteria, paginate *knowledge_api.Paginate) (*knowledge_api.Paginated, []*knowledge_api.Knowledge, error)
+	GetAllKnowledge(c context.Context, auth types.SimplePrinciple, criteria []*knowledge_api.Criteria, paginate *knowledge_api.Paginate) (*knowledge_api.Paginated, []*knowledge_api.Knowledge, error)
 	GetKnowledge(c context.Context, auth types.SimplePrinciple, knowledgeRequest *knowledge_api.GetKnowledgeRequest) (*knowledge_api.Knowledge, error)
 	CreateKnowledge(c context.Context, auth types.SimplePrinciple, knowledgeRequest *knowledge_api.CreateKnowledgeRequest) (*knowledge_api.CreateKnowledgeResponse, error)
 	CreateKnowledgeTag(c context.Context, auth types.SimplePrinciple, knowledgeRequest *knowledge_api.CreateKnowledgeTagRequest) (*knowledge_api.GetKnowledgeResponse, error)
@@ -66,11 +67,11 @@ func NewKnowledgeServiceClientGRPC(config *config.AppConfig, logger commons.Logg
 	}
 }
 
-func (client *knowledgeServiceClient) GetAllKnowledge(c context.Context, auth types.SimplePrinciple, criterias []*knowledge_api.Criteria, paginate *knowledge_api.Paginate) (*knowledge_api.Paginated, []*knowledge_api.Knowledge, error) {
+func (client *knowledgeServiceClient) GetAllKnowledge(c context.Context, auth types.SimplePrinciple, criteria []*knowledge_api.Criteria, paginate *knowledge_api.Paginate) (*knowledge_api.Paginated, []*knowledge_api.Knowledge, error) {
 	client.logger.Debugf("get all knowledge request")
 	res, err := client.knowledgeClient.GetAllKnowledge(client.WithAuth(c, auth), &knowledge_api.GetAllKnowledgeRequest{
 		Paginate:  paginate,
-		Criterias: criterias,
+		Criterias: criteria,
 	})
 	if err != nil {
 		client.logger.Errorf("error while calling to get all knowledge %v", err)

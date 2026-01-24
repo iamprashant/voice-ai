@@ -38,8 +38,6 @@ func (a StringArray) Value() (driver.Value, error) {
 // String converts IntArray into a string representation
 func (a StringArray) String() string {
 	str := make([]string, len(a))
-	for i, v := range a {
-		str[i] = v
-	}
+	copy(str, a)
 	return fmt.Sprintf("{%s}", strings.Join(str, ","))
 }

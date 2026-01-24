@@ -7,6 +7,7 @@ package middlewares
 
 import (
 	"github.com/gin-gonic/gin"
+
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
 )

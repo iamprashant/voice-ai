@@ -44,7 +44,9 @@ linters:
       min-complexity: 20
 
     dupl:
-      threshold: 150
+      # Increased threshold to reduce noise from similar boilerplate (gRPC handlers, service methods)
+      # Also covers similar provider implementations (gemini.go, vertexai.go - ~100 lines)
+      threshold: 500
 
     goconst:
       min-len: 3

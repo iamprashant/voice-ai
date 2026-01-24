@@ -33,16 +33,16 @@ import (
 	"context"
 
 	middleware "github.com/grpc-ecosystem/go-grpc-middleware/v2"
+	"google.golang.org/grpc"
+
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
-	"google.golang.org/grpc"
 )
 
 func NewClientInformationUnaryServerMiddleware(logger commons.Logger) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 		clientInfo := types.NewClientInfoFromContext(ctx, logger)
 		return handler(context.WithValue(ctx, types.CLIENT_CTX_KEY, clientInfo), req)
-
 	}
 }
 

@@ -8,14 +8,15 @@ package endpoint_client
 import (
 	"context"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
 	"github.com/rapidaai/config"
 	clients "github.com/rapidaai/pkg/clients"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	"github.com/rapidaai/pkg/types"
 	endpoint_api "github.com/rapidaai/protos"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type DeploymentServiceClient interface {
@@ -30,7 +31,6 @@ type deploymentServiceClient struct {
 }
 
 func NewDeploymentServiceClientGRPC(config *config.AppConfig, logger commons.Logger, redis connectors.RedisConnector) DeploymentServiceClient {
-
 	grpcOpts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithDefaultCallOptions(

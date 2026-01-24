@@ -25,7 +25,7 @@ func NewModerationsCaller(logger commons.Logger, credential *integration_api.Cre
 func (stc *ModerationsCaller) GetModeration(ctx context.Context,
 	content *types.Content, options *internal_callers.ModerationOptions) (*types.Content, types.Metrics, error) {
 	//
-	// Working with chat complition with vision
+	// Working with chat completion with vision
 	//
 	start := time.Now()
 	// client, err := stc.GetClient()

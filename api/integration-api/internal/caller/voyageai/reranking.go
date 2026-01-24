@@ -44,13 +44,13 @@ func (rr *rerankingCaller) GetReranking(ctx context.Context,
 	}
 
 	headers := map[string]string{}
-	options.AIOptions.PreHook(request)
+	options.PreHook(request)
 	res, err := rr.Call(ctx, "rerank", "POST", headers, request)
 
 	//
 	if err != nil {
-		rr.logger.Errorf("getting error for chat complition %v", err)
-		options.AIOptions.PostHook(map[string]interface{}{
+		rr.logger.Errorf("getting error for chat completion %v", err)
+		options.PostHook(map[string]interface{}{
 			"result": res,
 			"error":  err,
 		}, metrics.OnFailure().Build())
@@ -61,7 +61,7 @@ func (rr *rerankingCaller) GetReranking(ctx context.Context,
 	var resp VoyageaiRerankingResponse
 	if err := json.Unmarshal([]byte(*res), &resp); err != nil {
 		rr.logger.Errorf("error while parsing reranking response %v", err)
-		options.AIOptions.PostHook(map[string]interface{}{
+		options.PostHook(map[string]interface{}{
 			"result": res,
 			"error":  err,
 		}, metrics.Build())
@@ -78,7 +78,7 @@ func (rr *rerankingCaller) GetReranking(ctx context.Context,
 			RelevanceScore: rerankedData.RelevanceScore,
 		}
 	}
-	options.AIOptions.PostHook(map[string]interface{}{
+	options.PostHook(map[string]interface{}{
 		"result": res,
 		"error":  err,
 	}, metrics.Build())

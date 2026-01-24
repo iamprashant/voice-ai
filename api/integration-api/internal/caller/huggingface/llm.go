@@ -20,7 +20,7 @@ type largeLanguageCaller struct {
 func NewLargeLanguageCaller(logger commons.Logger, credential *protos.Credential) internal_callers.LargeLanguageCaller {
 	return &largeLanguageCaller{
 		Huggingface: huggingface(logger,
-			DEFUALT_URL, credential),
+			DEFAULT_URL, credential),
 	}
 }
 
@@ -45,7 +45,7 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 ) (*types.Message, types.Metrics, error) {
 	llc.logger.Debugf("getting chat completion from google llc")
 	//
-	// Working with chat complition with vision
+	// Working with chat completion with vision
 	//
 	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)
 	metrics.OnStart()
@@ -101,14 +101,14 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 
 	requestBody["messages"] = msg
 	headers := map[string]string{}
-	options.AIOptions.PreHook(requestBody)
+	options.PreHook(requestBody)
 	res, err := llc.Call(ctx, fmt.Sprintf("models/%s", ""),
 		"POST", headers, requestBody)
 
 	//
 	if err != nil {
-		llc.logger.Errorf("getting error for chat complition %v", err)
-		options.AIOptions.PostHook(map[string]interface{}{
+		llc.logger.Errorf("getting error for chat completion %v", err)
+		options.PostHook(map[string]interface{}{
 			"result": res,
 			"error":  err,
 		}, metrics.OnFailure().Build())
@@ -117,8 +117,8 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 	metrics.OnSuccess()
 	var resp HuggingfaceInferenceResponse
 	if err := json.Unmarshal([]byte(*res), &resp); err != nil {
-		llc.logger.Errorf("error while parsing chat complition response %v", err)
-		options.AIOptions.PostHook(map[string]interface{}{
+		llc.logger.Errorf("error while parsing chat completion response %v", err)
+		options.PostHook(map[string]interface{}{
 			"result": res,
 			"error":  err,
 		}, metrics.Build())
@@ -135,7 +135,7 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 		ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
 		Content:       []byte(resp.Text),
 	})
-	options.AIOptions.PostHook(map[string]interface{}{
+	options.PostHook(map[string]interface{}{
 		"result": res,
 	}, metrics.Build())
 	return &types.Message{
@@ -149,9 +149,8 @@ func (llc *largeLanguageCaller) GetCompletion(
 	prompts []string,
 	options *internal_callers.CompletionOptions,
 ) ([]*types.Content, types.Metrics, error) {
-
 	//
-	// Working with chat complition with vision
+	// Working with chat completion with vision
 	//
 	llc.logger.Debugf("getting for completion for anthropic")
 	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)
@@ -166,13 +165,13 @@ func (llc *largeLanguageCaller) GetCompletion(
 	}
 
 	headers := map[string]string{}
-	options.AIOptions.PreHook(requestBody)
+	options.PreHook(requestBody)
 	res, err := llc.Call(ctx, fmt.Sprintf("models/%s", providerModel), "POST", headers, requestBody)
 	//
 	//
 	if err != nil {
 		llc.logger.Errorf("getting error for completion %v", err)
-		options.AIOptions.PostHook(map[string]interface{}{
+		options.PostHook(map[string]interface{}{
 			"result": res,
 			"error":  err,
 		}, metrics.OnFailure().Build())
@@ -181,15 +180,15 @@ func (llc *largeLanguageCaller) GetCompletion(
 	metrics.OnSuccess()
 	var resp HuggingfaceInferenceResponse
 	if err := json.Unmarshal([]byte(*res), &resp); err != nil {
-		llc.logger.Errorf("error while parsing complition response %v", err)
-		options.AIOptions.PostHook(map[string]interface{}{
+		llc.logger.Errorf("error while parsing completion response %v", err)
+		options.PostHook(map[string]interface{}{
 			"result": res,
 			"error":  err,
 		}, metrics.Build())
 		return nil, metrics.Build(), err
 	}
 
-	options.AIOptions.PostHook(map[string]interface{}{
+	options.PostHook(map[string]interface{}{
 		"result": res,
 	}, metrics.Build())
 	return []*types.Content{{

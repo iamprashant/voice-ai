@@ -6,6 +6,7 @@ import (
 
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
+
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
@@ -19,7 +20,7 @@ type AzureAi struct {
 }
 
 var (
-	DEFUALT_URL         = "https://api.openai.com/v1"
+	DEFAULT_URL         = "https://api.openai.com/v1"
 	API_URL             = "url"
 	API_KEY             = "key"
 	AZ_ENDPOINT_KEY     = "endpoint"
@@ -46,7 +47,6 @@ func azure(logger commons.Logger, credential *integration_api.Credential) AzureA
 		credential: func() map[string]interface{} {
 			return _credential
 		}}
-
 }
 
 func (az *AzureAi) GetClient() (*openai.Client, error) {
@@ -58,7 +58,7 @@ func (az *AzureAi) GetClient() (*openai.Client, error) {
 	}
 	ux, ok := credentials[AZ_ENDPOINT_KEY]
 	if !ok {
-		ux = DEFUALT_URL
+		ux = DEFAULT_URL
 		az.logger.Debugf("Using default client connection url")
 	}
 

@@ -295,17 +295,19 @@ func (m Option) GetBool(key string) (bool, error) {
 		return b, nil
 	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
 		i := reflect.ValueOf(t).Int()
-		if i == 1 {
+		switch i {
+		case 1:
 			return true, nil
-		} else if i == 0 {
+		case 0:
 			return false, nil
 		}
 		return false, fmt.Errorf("integer value %d is not convertible to a bool for %q", i, key)
 	case float64, float32:
 		f := reflect.ValueOf(t).Float()
-		if f == 1.0 {
+		switch f {
+		case 1.0:
 			return true, nil
-		} else if f == 0.0 {
+		case 0.0:
 			return false, nil
 		}
 		return false, fmt.Errorf("float value %f is not convertible to a bool for %q", f, key)

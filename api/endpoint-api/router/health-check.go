@@ -2,6 +2,7 @@ package endpoint_router
 
 import (
 	"github.com/gin-gonic/gin"
+
 	healthCheckApi "github.com/rapidaai/api/endpoint-api/api/health"
 	config "github.com/rapidaai/api/endpoint-api/config"
 	"github.com/rapidaai/pkg/commons"

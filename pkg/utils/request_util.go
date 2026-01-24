@@ -11,10 +11,11 @@ import (
 	"fmt"
 	"strings"
 
-	web_api "github.com/rapidaai/protos"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
+
+	web_api "github.com/rapidaai/protos"
 )
 
 func Error[R any](err error, humanMessage string) (*R, error) {

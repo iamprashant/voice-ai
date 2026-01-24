@@ -1,12 +1,13 @@
 package endpoint_router
 
 import (
+	"google.golang.org/grpc"
+
 	endpoint_api "github.com/rapidaai/api/endpoint-api/api"
 	"github.com/rapidaai/api/endpoint-api/config"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	"github.com/rapidaai/protos"
-	"google.golang.org/grpc"
 )
 
 func EndpointReaderApiRoute(

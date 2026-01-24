@@ -11,6 +11,9 @@ import (
 	"fmt"
 	"time"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
 	"github.com/rapidaai/config"
 	clients "github.com/rapidaai/pkg/clients"
 	commons "github.com/rapidaai/pkg/commons"
@@ -18,8 +21,6 @@ import (
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
 	vault_api "github.com/rapidaai/protos"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type VaultClient interface {
@@ -96,7 +97,7 @@ func (client *vaultServiceClient) GetCredential(c context.Context, auth types.Si
 	err := cachedValue.ResultStruct(data)
 
 	// Start a goroutine to fetch from API and update cache
-	var apiData chan *vault_api.VaultCredential = make(chan *vault_api.VaultCredential, 1)
+	var apiData = make(chan *vault_api.VaultCredential, 1)
 	bgCtx := context.Background()
 	utils.Go(bgCtx, func() {
 		res, err := client.vaultClient.GetCredential(client.WithAuth(bgCtx, auth), &vault_api.GetCredentialRequest{

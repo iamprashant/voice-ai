@@ -74,5 +74,4 @@ func (client *indexerServiceClient) IndexKnowledgeDocument(ctx context.Context, 
 	}
 
 	return &res, nil
-
 }

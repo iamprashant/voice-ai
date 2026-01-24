@@ -2,6 +2,7 @@ package web_router
 
 import (
 	"github.com/gin-gonic/gin"
+
 	healthCheckApi "github.com/rapidaai/api/web-api/api/health"
 	"github.com/rapidaai/api/web-api/config"
 	"github.com/rapidaai/pkg/commons"

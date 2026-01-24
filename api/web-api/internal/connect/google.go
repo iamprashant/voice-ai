@@ -8,13 +8,14 @@ import (
 	"net/http"
 	"time"
 
-	config "github.com/rapidaai/api/web-api/config"
-	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/connectors"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/drive/v2"
 	"google.golang.org/api/option"
+
+	config "github.com/rapidaai/api/web-api/config"
+	"github.com/rapidaai/pkg/commons"
+	"github.com/rapidaai/pkg/connectors"
 )
 
 type GoogleConnect struct {
@@ -93,7 +94,7 @@ func (gConnect *GoogleConnect) googleOauthConfig() (*oauth2.Config, error) {
 /*
 *
 
-Google implimentation
+Google implementation
 */
 
 type GoogleTokenResponse struct {

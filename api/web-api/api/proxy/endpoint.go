@@ -56,7 +56,6 @@ func (endpoint *webEndpointGRPCApi) GetEndpoint(c context.Context, iRequest *pro
 	}
 
 	return utils.Success[protos.GetEndpointResponse, *protos.Endpoint](_endpoint)
-
 }
 
 /*

@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"time"
 
+	replicate_go "github.com/replicate/replicate-go"
+
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	integration_api "github.com/rapidaai/protos"
-	replicate_go "github.com/replicate/replicate-go"
 )
 
 type Replicate struct {
@@ -45,10 +46,8 @@ func (replicate *Replicate) GetClient() (*replicate_go.Client, error) {
 }
 
 func (replicate *Replicate) UsageMetrics(usages *replicate_go.PredictionMetrics) types.Metrics {
-
 	metrics := make(types.Metrics, 0)
 	if usages != nil {
-
 		metrics = append(metrics, &types.Metric{
 			Name:        type_enums.PROVIDER_GENERATE_TIME.String(),
 			Value:       fmt.Sprintf("%f", *usages.PredictTime),

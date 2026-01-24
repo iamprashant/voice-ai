@@ -26,5 +26,4 @@ func (llc *verifyCredentialCaller) CredentialVerifier(
 	ctx context.Context,
 	options *internal_callers.CredentialVerifierOptions) (*string, error) {
 	return utils.Ptr("valid"), nil
-
 }

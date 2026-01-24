@@ -24,7 +24,6 @@ func (aP *authPrinciple) GetAuthToken() *types.AuthToken {
 		TokenType: aP.userAuthToken.TokenType,
 		IsExpired: aP.userAuthToken.IsExpired(),
 	}
-
 }
 
 func (aP *authPrinciple) GetOrganizationRole() *types.OrganizaitonRole {
@@ -99,7 +98,6 @@ func (ap *authPrinciple) PlainAuthPrinciple() types.PlainAuthPrinciple {
 	alt.ProjectRoles = ap.GetProjectRoles()
 	alt.FeaturePermissions = ap.GetFeaturePermission()
 	return alt
-
 }
 
 func (aP *authPrinciple) SwitchProject(projectId uint64) error {

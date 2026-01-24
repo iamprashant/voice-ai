@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"gorm.io/gorm/clause"
+
 	"github.com/rapidaai/api/endpoint-api/config"
 	internal_gorm "github.com/rapidaai/api/endpoint-api/internal/entity"
 	internal_service "github.com/rapidaai/api/endpoint-api/internal/service"
@@ -15,7 +17,6 @@ import (
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
 	endpoint_grpc_api "github.com/rapidaai/protos"
-	"gorm.io/gorm/clause"
 )
 
 type endpointService struct {
@@ -57,7 +58,6 @@ func (eService *endpointService) Get(ctx context.Context,
 			Joins("inner join endpoint_provider_models EndpointProviderModel on EndpointProviderModel.endpoint_id = endpoints.id AND EndpointProviderModel.id = ?", endpointProviderModelId).
 			Preload("EndpointProviderModel").
 			Preload("EndpointProviderModel.EndpointProviderModelOptions")
-
 	} else {
 		tx = tx.
 			Joins("inner join endpoint_provider_models EndpointProviderModel on EndpointProviderModel.endpoint_id = endpoints.id AND EndpointProviderModel.id = endpoints.endpoint_provider_model_id").
@@ -104,7 +104,7 @@ func (eService *endpointService) UpdateEndpointVersion(ctx context.Context,
 	return ed, nil
 }
 
-func (eService *endpointService) GetAll(ctx context.Context, auth types.SimplePrinciple, criterias []*endpoint_grpc_api.Criteria, paginate *endpoint_grpc_api.Paginate) (int64, []*internal_gorm.Endpoint, error) {
+func (eService *endpointService) GetAll(ctx context.Context, auth types.SimplePrinciple, criteria []*endpoint_grpc_api.Criteria, paginate *endpoint_grpc_api.Paginate) (int64, []*internal_gorm.Endpoint, error) {
 	db := eService.postgres.DB(ctx)
 	var (
 		endpoints []*internal_gorm.Endpoint
@@ -117,7 +117,7 @@ func (eService *endpointService) GetAll(ctx context.Context, auth types.SimplePr
 		Preload("EndpointCaching").
 		Preload("EndpointProviderModel").
 		Where("organization_id = ? AND project_id = ? AND status = ?", *auth.GetCurrentOrganizationId(), *auth.GetCurrentProjectId(), type_enums.RECORD_ACTIVE.String())
-	for _, ct := range criterias {
+	for _, ct := range criteria {
 		switch ct.GetLogic() {
 		case "or":
 			qry.Or(fmt.Sprintf("%s = ?", ct.GetKey()), ct.GetValue())
@@ -148,7 +148,7 @@ func (eService *endpointService) GetAll(ctx context.Context, auth types.SimplePr
 
 	return cnt, endpoints, nil
 }
-func (eService *endpointService) GetAllEndpointProviderModel(ctx context.Context, auth types.SimplePrinciple, endpointId uint64, criterias []*endpoint_grpc_api.Criteria, paginate *endpoint_grpc_api.Paginate) (int64, []*internal_gorm.EndpointProviderModel, error) {
+func (eService *endpointService) GetAllEndpointProviderModel(ctx context.Context, auth types.SimplePrinciple, endpointId uint64, criteria []*endpoint_grpc_api.Criteria, paginate *endpoint_grpc_api.Paginate) (int64, []*internal_gorm.EndpointProviderModel, error) {
 	db := eService.postgres.DB(ctx)
 	var (
 		epms []*internal_gorm.EndpointProviderModel
@@ -159,7 +159,7 @@ func (eService *endpointService) GetAllEndpointProviderModel(ctx context.Context
 	qry.
 		Preload("EndpointProviderModelOptions").
 		Where("endpoint_id = ? ", endpointId)
-	for _, ct := range criterias {
+	for _, ct := range criteria {
 		qry.Where(fmt.Sprintf("%s = ?", ct.GetKey()), ct.GetValue())
 	}
 	tx := qry.
@@ -224,7 +224,6 @@ func (eService *endpointService) CreateEndpoint(ctx context.Context,
 		return nil, err
 	}
 	return ep, nil
-
 }
 
 func (eService *endpointService) CreateEndpointProviderModel(
@@ -236,7 +235,6 @@ func (eService *endpointService) CreateEndpointProviderModel(
 	promptRequest string,
 	options []*endpoint_grpc_api.Metadata,
 ) (*internal_gorm.EndpointProviderModel, error) {
-
 	db := eService.postgres.DB(ctx)
 	epm := &internal_gorm.EndpointProviderModel{
 		Mutable: gorm_models.Mutable{
@@ -279,7 +277,7 @@ func (eService *endpointService) CreateEndpointProviderModel(
 			"updated_by"}),
 	}).Create(modelOptions)
 	if tx.Error != nil {
-		eService.logger.Errorf("unable to create deployment audio config metadata for assistant wiht error %v", tx.Error)
+		eService.logger.Errorf("unable to create deployment audio config metadata for assistant with error %v", tx.Error)
 		return nil, tx.Error
 	}
 
@@ -415,7 +413,6 @@ func (eService *endpointService) CreateOrUpdateEndpointTag(ctx context.Context,
 	endpointId uint64,
 	tags []string,
 ) (*internal_gorm.EndpointTag, error) {
-
 	db := eService.postgres.DB(ctx)
 	endpointTag := &internal_gorm.EndpointTag{
 		EndpointId: endpointId,
@@ -460,5 +457,4 @@ func (eService *endpointService) UpdateEndpointDetail(ctx context.Context,
 		return nil, tx.Error
 	}
 	return ed, nil
-
 }

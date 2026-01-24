@@ -6,10 +6,11 @@
 package endpoint_client_builders
 
 import (
+	"google.golang.org/protobuf/types/known/anypb"
+
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/utils"
 	protos "github.com/rapidaai/protos"
-	"google.golang.org/protobuf/types/known/anypb"
 )
 
 type inputInvokeBuilder struct {
@@ -58,7 +59,6 @@ func (in *inputInvokeBuilder) Arguments(
 func (in *inputInvokeBuilder) Options(
 	opts map[string]interface{},
 	options map[string]*anypb.Any) map[string]*anypb.Any {
-
 	// If options is nil, initialize it
 	if options == nil {
 		options = make(map[string]*anypb.Any)
@@ -78,7 +78,6 @@ func (in *inputInvokeBuilder) Options(
 func (in *inputInvokeBuilder) Metadata(
 	opts map[string]interface{},
 	options map[string]*anypb.Any) map[string]*anypb.Any {
-
 	// If options is nil, initialize it
 	if options == nil {
 		options = make(map[string]*anypb.Any)

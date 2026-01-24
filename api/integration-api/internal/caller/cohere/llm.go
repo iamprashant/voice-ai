@@ -6,6 +6,7 @@ import (
 	"time"
 
 	cohere "github.com/cohere-ai/cohere-go/v2"
+
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	internal_caller_metrics "github.com/rapidaai/api/integration-api/internal/caller/metrics"
 	"github.com/rapidaai/pkg/commons"
@@ -47,13 +48,13 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 	chatRequest := llc.GetChatStreamRequest(options)
 	chatRequest.Messages = llc.BuildHistory(allMessages)
 
-	options.AIOptions.PreHook(utils.ToJson(chatRequest))
+	options.PreHook(utils.ToJson(chatRequest))
 	llc.logger.Benchmark("Cohere.llm.GetChatCompletion.llmRequestPrepare", time.Since(start))
 
 	resp, err := client.V2.ChatStream(ctx, chatRequest)
 	if err != nil {
 		llc.logger.Errorf("Failed to get chat completions stream: %v", err)
-		options.AIOptions.PostHook(map[string]interface{}{
+		options.PostHook(map[string]interface{}{
 			"result": utils.ToJson(resp),
 			"error":  err,
 		}, metrics.Build())
@@ -89,7 +90,6 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 							Content:       []byte(*text),
 						}
 					}
-
 				}
 			case rep.ContentDelta != nil:
 				if rep.ContentDelta.Delta != nil && rep.ContentDelta.Delta.Message != nil && rep.ContentDelta.Delta.Message.Content != nil {
@@ -138,7 +138,7 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 			case rep.MessageEnd != nil:
 				metrics.OnAddMetrics(llc.UsageMetrics(rep.MessageEnd.Delta.Usage)...)
 				metrics.OnSuccess()
-				options.AIOptions.PostHook(map[string]interface{}{
+				options.PostHook(map[string]interface{}{
 					"result": msg,
 				}, metrics.Build())
 				onMetrics(&msg, metrics.Build())
@@ -205,7 +205,6 @@ func (llc *largeLanguageCaller) BuildHistory(allMessages []*protos.Message) cohe
 			llc.logger.Warnf("Unknown role: %s and everytihgn", cntn.String())
 			continue
 		}
-
 	}
 	return msgHistory
 }
@@ -323,15 +322,15 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 	allMessages []*protos.Message,
 	options *internal_callers.ChatCompletionOptions,
 ) (*types.Message, types.Metrics, error) {
-	llc.logger.Debugf("chat complition for cohere")
+	llc.logger.Debugf("chat completion for cohere")
 	//
-	// Working with chat complition with vision
+	// Working with chat completion with vision
 	//
 	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)
 	metrics.OnStart()
 	client, err := llc.GetClient()
 	if err != nil {
-		llc.logger.Errorf("chat complition unable to get client for cohere %v", err)
+		llc.logger.Errorf("chat completion unable to get client for cohere %v", err)
 		return nil, metrics.OnFailure().Build(), err
 	}
 
@@ -343,14 +342,14 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 	chatRequest := llc.GetChatRequest(options)
 	chatRequest.Messages = llc.BuildHistory(allMessages)
 
-	options.AIOptions.PreHook(utils.ToJson(*chatRequest))
+	options.PreHook(utils.ToJson(*chatRequest))
 	resp, err := client.V2.Chat(
 		ctx,
 		chatRequest,
 	)
 	if err != nil {
-		llc.logger.Errorf("chat complition unable to get client for cohere %v", err)
-		options.AIOptions.PostHook(map[string]interface{}{
+		llc.logger.Errorf("chat completion unable to get client for cohere %v", err)
+		options.PostHook(map[string]interface{}{
 			"error":  err,
 			"result": resp,
 		}, metrics.OnFailure().Build())
@@ -360,7 +359,7 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 	metrics.OnAddMetrics(llc.UsageMetrics(resp.GetUsage())...)
 
 	// // call when you are done
-	options.AIOptions.PostHook(map[string]interface{}{
+	options.PostHook(map[string]interface{}{
 		"result": resp,
 	}, metrics.Build())
 

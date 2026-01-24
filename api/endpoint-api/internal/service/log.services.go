@@ -30,7 +30,7 @@ type EndpointLogService interface {
 	GetAllEndpointLog(ctx context.Context,
 		auth types.SimplePrinciple,
 		endpointId uint64,
-		criterias []*endpoint_grpc_api.Criteria, paginate *endpoint_grpc_api.Paginate) (int64, []*internal_gorm.EndpointLog, error)
+		criteria []*endpoint_grpc_api.Criteria, paginate *endpoint_grpc_api.Paginate) (int64, []*internal_gorm.EndpointLog, error)
 	GetEndpointLog(ctx context.Context, auth types.SimplePrinciple, logId, endpointId uint64) (*internal_gorm.EndpointLog, error)
 	GetAggregatedEndpointAnalytics(ctx context.Context, auth types.SimplePrinciple, endpointId uint64) *protos.AggregatedEndpointAnalytics
 }

@@ -10,9 +10,10 @@ import (
 	"os"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/spf13/viper"
+
 	"github.com/rapidaai/config"
 	"github.com/rapidaai/pkg/configs"
-	"github.com/spf13/viper"
 )
 
 // Application config structure
@@ -43,7 +44,7 @@ func InitConfig() (*viper.Viper, error) {
 	//
 	setDefault(vConfig)
 	if err := vConfig.ReadInConfig(); err != nil && !os.IsNotExist(err) {
-		log.Printf("Reading from env varaibles.")
+		log.Printf("Reading from env variables.")
 	}
 
 	return vConfig, nil

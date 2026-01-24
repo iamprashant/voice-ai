@@ -2,6 +2,7 @@ package integration_health_api
 
 import (
 	"github.com/gin-gonic/gin"
+
 	config "github.com/rapidaai/api/integration-api/config"
 	commons "github.com/rapidaai/pkg/commons"
 	connectors "github.com/rapidaai/pkg/connectors"

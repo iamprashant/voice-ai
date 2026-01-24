@@ -7,11 +7,12 @@ import (
 	"fmt"
 	"net/http"
 
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/linkedin"
+
 	config "github.com/rapidaai/api/web-api/config"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/linkedin"
 )
 
 type LinkedinConnect struct {
@@ -70,7 +71,6 @@ func (liConnect *LinkedinConnect) linkedinOauthConfig() (*oauth2.Config, error) 
 		Scopes:       liConnect.scopes,
 		Endpoint:     liConnect.endpoint,
 	}, nil
-
 }
 
 func (liConnect *LinkedinConnect) AuthCodeURL(state string) (string, error) {

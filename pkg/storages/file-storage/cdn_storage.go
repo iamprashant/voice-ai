@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	aws_session "github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/configs"
 	gorm_generator "github.com/rapidaai/pkg/models/gorm/generators"

@@ -6,10 +6,11 @@
 package integration_client_builders
 
 import (
-	gorm_types "github.com/rapidaai/pkg/models/gorm/types"
-	"github.com/rapidaai/protos"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
+
+	gorm_types "github.com/rapidaai/pkg/models/gorm/types"
+	"github.com/rapidaai/protos"
 )
 
 type InputChatBuilder interface {

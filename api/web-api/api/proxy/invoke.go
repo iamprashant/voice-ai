@@ -32,7 +32,6 @@ func NewInvokeGRPC(config *config.WebAppConfig, logger commons.Logger, postgres 
 		redis:               redis,
 		deployServiceClient: endpoint_client.NewDeploymentServiceClientGRPC(&config.AppConfig, logger, redis),
 	}
-
 }
 
 // Probe implements protos.DeploymentServer.

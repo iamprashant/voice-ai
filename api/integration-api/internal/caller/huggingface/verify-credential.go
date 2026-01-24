@@ -28,7 +28,7 @@ func (stc *verifyCredentialCaller) CredentialVerifier(
 	headers := map[string]string{}
 	_, err := stc.Call(ctx, "api/whoami-v2", "GET", headers, nil)
 	if err != nil {
-		stc.logger.Errorf("error occured while calling verification api for Huggingface %v", err)
+		stc.logger.Errorf("error occurred while calling verification api for Huggingface %v", err)
 		if ve, ok := err.(HuggingfaceError); ok {
 			if ve.StatusCode == http.StatusForbidden || ve.StatusCode == http.StatusUnauthorized {
 				return nil, err

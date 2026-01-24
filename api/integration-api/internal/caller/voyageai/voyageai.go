@@ -91,7 +91,6 @@ func (AICaller *Voyageai) Do(req *http.Request) (*http.Response, error) {
 }
 
 func (vgAI *Voyageai) Call(ctx context.Context, endpoint, method string, headers map[string]string, payload map[string]interface{}) (*string, error) {
-
 	credentials := vgAI.credential()
 	cx, ok := credentials[API_KEY]
 	if !ok {
@@ -116,7 +115,6 @@ func (vgAI *Voyageai) Call(ctx context.Context, endpoint, method string, headers
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", cx))
 	return vgAI.do(req)
-
 }
 
 func (vgAI *Voyageai) do(req *http.Request) (*string, error) {
@@ -167,7 +165,6 @@ func (vgAI *Voyageai) Unmarshal(resp *http.Response, v interface{}) error {
 func (vgAI *Voyageai) UsageMetrics(usages *VoyageaiUsage) types.Metrics {
 	metrics := make(types.Metrics, 0)
 	if usages != nil {
-
 		metrics = append(metrics, &types.Metric{
 			Name:        type_enums.TOTAL_TOKEN.String(),
 			Value:       fmt.Sprintf("%d", usages.TotalTokens),

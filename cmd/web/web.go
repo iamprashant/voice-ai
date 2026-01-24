@@ -24,6 +24,10 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 
+	"github.com/soheilhy/cmux"
+	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
+
 	web_authenticators "github.com/rapidaai/api/web-api/authenticator"
 	"github.com/rapidaai/api/web-api/config"
 	web_router "github.com/rapidaai/api/web-api/router"
@@ -31,9 +35,6 @@ import (
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	"github.com/rapidaai/pkg/middlewares"
-	"github.com/soheilhy/cmux"
-	"golang.org/x/sync/errgroup"
-	"google.golang.org/grpc"
 )
 
 // wrapper for gin engine
@@ -149,7 +150,6 @@ func main() {
 			appRunner.Logger.Errorf("Failed to start grpc server err: %v", err)
 		}
 		return err
-
 	})
 
 	group.Go(func() error {
@@ -159,7 +159,7 @@ func main() {
 		}
 		return err
 	})
-	//serve now
+	// serve now
 	err = cmuxListener.Serve()
 	if err != nil {
 		appRunner.Logger.Errorf("Failed to start grpc server err: %v", err)
@@ -210,12 +210,11 @@ func (app *AppRunner) ResolveConfig() error {
 
 	app.Cfg = cfg
 	gin.SetMode(gin.ReleaseMode)
-	// debug mode of gin when runing log in debug mode.
+	// debug mode of gin when running log in debug mode.
 	if cfg.LogLevel == "debug" {
 		gin.SetMode(gin.DebugMode)
 	}
 	return nil
-
 }
 
 // init for app close
@@ -252,7 +251,6 @@ func (app *AppRunner) Close(ctx context.Context) {
 func (g *AppRunner) AllRouters() {
 	web_router.HealthCheckRoutes(g.Cfg, g.E, g.Logger, g.Postgres)
 	web_router.WebApiRoute(g.Cfg, g.E, g.S, g.Logger, g.Postgres, g.Redis)
-
 }
 
 func (g *AppRunner) AllProxyRouter() {
@@ -287,7 +285,7 @@ func (g *AppRunner) CorsMiddleware() {
 
 // Logger Middleware
 func (g *AppRunner) RequestLoggerMiddleware() {
-	g.Logger.Info("Adding request middleware to the applicaiton.")
+	g.Logger.Info("Adding request middleware to the application.")
 	g.E.Use(middlewares.NewRequestLoggerMiddleware(g.Cfg.Name, g.Logger))
 }
 

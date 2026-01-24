@@ -143,7 +143,6 @@ func (wVault *webVaultGRPCApi) GetAllOrganizationCredential(c context.Context, i
 		uint32(cnt),
 		irRequest.GetPaginate().GetPage(),
 		out)
-
 }
 
 func (wVault *webVaultGRPCApi) GetOauth2Credential(ctx context.Context, request *protos.GetCredentialRequest) (*protos.GetCredentialResponse, error) {

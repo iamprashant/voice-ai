@@ -78,7 +78,6 @@ func (iApi *integrationApi) preHook(ctx context.Context, auth types.SimplePrinci
 	keyPrefix := iApi.ObjectPrefix(*auth.GetCurrentOrganizationId(), *auth.GetCurrentProjectId(), credentialId)
 	start := time.Now()
 	go func(currentCtx context.Context, requestId uint64, s3Prefix string, additionalData map[string]string, _request map[string]interface{}) {
-
 		nCtx := context.Background()
 		_, err := iApi.auditService.Create(nCtx, requestId, *auth.GetCurrentOrganizationId(), *auth.GetCurrentProjectId(), credentialId, intName, keyPrefix, []*types.Metric{}, "active")
 		if err != nil {
@@ -102,7 +101,6 @@ func (iApi *integrationApi) preHook(ctx context.Context, auth types.SimplePrinci
 			return
 		}
 		iApi.storage.Store(nCtx, key, _str)
-
 	}(ctx, requestId, keyPrefix, extras, request)
 }
 func (iApi *integrationApi) postHook(ctx context.Context, auth types.SimplePrinciple, extras map[string]string, credentialId, requestId uint64, intName string, response map[string]interface{}, metrics []*types.Metric) {
@@ -185,7 +183,6 @@ func (iApi *integrationApi) GetRequestAndResponse(ctx context.Context, organizat
 		}
 		requestChan <- _fileStruct{Key: key, Data: result.Data}
 		close(requestChan)
-
 	}(requestKey)
 
 	// wg.Wait()

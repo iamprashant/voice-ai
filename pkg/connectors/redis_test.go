@@ -10,9 +10,10 @@ import (
 	"testing"
 
 	redismock "github.com/go-redis/redismock/v9"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/configs"
-	"github.com/stretchr/testify/assert"
 )
 
 // Local config struct for testing - removed since we can use configs package
@@ -266,7 +267,6 @@ func TestRedisPostgresCacheConnector_Invalidate(t *testing.T) {
 func TestRedisConnector_EdgeCases(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	t.Run("disconnect with nil connection", func(t *testing.T) {
-
 		cfg := &configs.RedisConfig{
 			Host: "localhost",
 			Port: 6379,

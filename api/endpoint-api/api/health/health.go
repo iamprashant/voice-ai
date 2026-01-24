@@ -7,6 +7,7 @@ package endpoint_health_api
 
 import (
 	"github.com/gin-gonic/gin"
+
 	config "github.com/rapidaai/api/endpoint-api/config"
 	commons "github.com/rapidaai/pkg/commons"
 	connectors "github.com/rapidaai/pkg/connectors"

@@ -6,6 +6,7 @@ import (
 
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
+
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
@@ -19,7 +20,7 @@ type OpenAI struct {
 }
 
 var (
-	DEFUALT_URL         = "https://api.openai.com/v1"
+	DEFAULT_URL         = "https://api.openai.com/v1"
 	API_URL             = "url"
 	API_KEY             = "key"
 	AZ_ENDPOINT_KEY     = "endpoint"

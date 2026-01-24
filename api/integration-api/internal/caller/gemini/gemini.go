@@ -8,12 +8,13 @@ import (
 	"errors"
 	"fmt"
 
+	"google.golang.org/genai"
+
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	integration_api "github.com/rapidaai/protos"
-	"google.golang.org/genai"
 )
 
 type Google struct {
@@ -45,7 +46,6 @@ func (goog *Google) GetClient() (*genai.Client, error) {
 	return genai.NewClient(ctx, &genai.ClientConfig{
 		APIKey: cx.(string),
 	})
-
 }
 func (goog *Google) UsageMetrics(usages *genai.GenerateContentResponseUsageMetadata) types.Metrics {
 	metrics := make(types.Metrics, 0)

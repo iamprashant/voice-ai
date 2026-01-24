@@ -122,7 +122,6 @@ func (s *sesEmailer) EmailRichText(ctx context.Context, to external_clients.Cont
 }
 
 func (s *sesEmailer) EmailTemplate(ctx context.Context, to external_clients.Contact, subject string, templateId string, args map[string]string) error {
-
 	templateData, err := json.Marshal(args)
 	if err != nil {
 		s.logger.Errorf("error marshaling template data: %+v", err)

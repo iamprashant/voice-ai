@@ -64,5 +64,4 @@ func GetLanguageByName(name string) Language {
 		lang = languages["en"]
 	}
 	return lang
-
 }

@@ -30,7 +30,7 @@ func (stc *verifyCredentialCaller) CredentialVerifier(
 	headers := map[string]string{}
 	_, err := stc.Call(ctx, "embeddings", "POST", headers, request)
 	if err != nil {
-		stc.logger.Errorf("error occured while calling verification api for voyageai %v", err)
+		stc.logger.Errorf("error occurred while calling verification api for voyageai %v", err)
 		if ve, ok := err.(VoyageaiError); ok {
 			if ve.StatusCode != http.StatusUnauthorized {
 				return utils.Ptr("valid"), nil

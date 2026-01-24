@@ -48,8 +48,3 @@ func Paginate(r *Paginated) func(db *gorm.DB) *gorm.DB {
 		return result
 	}
 }
-
-func (r *Paginated) count(dx chan bool) {
-	r.DB.Count(r.Count)
-	dx <- true
-}

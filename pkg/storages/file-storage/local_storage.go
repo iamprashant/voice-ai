@@ -77,7 +77,6 @@ func (lfs *localFileStorage) Store(ctx context.Context, key string, fileContent 
 		CompletePath: completePath,
 		StorageType:  configs.LOCAL,
 	}
-
 }
 
 func (lfs *localFileStorage) GetUrl(ctx context.Context, key string) storages.StorageOutput {

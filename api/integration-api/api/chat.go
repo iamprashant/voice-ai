@@ -7,12 +7,13 @@ import (
 	"context"
 	"errors"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
 	protos "github.com/rapidaai/protos"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 // StreamChat handles streaming chat requests to a large language model.
@@ -20,7 +21,7 @@ import (
 // This method:
 // 1. Authenticates the request using the provided context.
 // 2. Initiates a streaming chat completion using the provided LLM caller.
-//utions.
+// utions.
 // 3. Processes the streaming responses, including content, metrics, and errors.
 // 4. Sends formatted responses back to the client using the provided send function.
 //
@@ -43,7 +44,6 @@ func (iApi *integrationApi) StreamChat(
 	providerName string,
 	llmCaller internal_callers.LargeLanguageCaller,
 	send func(*protos.ChatResponse) error) error {
-
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(context)
 	if !isAuthenticated || !iAuth.HasProject() {
 		iApi.logger.Errorf("unauthenticated request for invoke")
@@ -123,7 +123,6 @@ func (iApi *integrationApi) StreamChat(
 			})
 		},
 	)
-
 }
 
 func (iApi *integrationApi) Chat(
@@ -196,5 +195,4 @@ func (iApi *integrationApi) Chat(
 		Data:    completions.ToProto(),
 		Metrics: metrics.ToProto(),
 	}, nil
-
 }

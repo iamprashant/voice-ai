@@ -69,7 +69,6 @@ func (ec *embeddingCaller) GetEmbedRequest(opts *internal_callers.EmbeddingOptio
 func (ec *embeddingCaller) GetEmbedding(ctx context.Context,
 	content map[int32]string,
 	options *internal_callers.EmbeddingOptions) ([]*integration_api.Embedding, types.Metrics, error) {
-
 	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)
 	metrics.OnStart()
 
@@ -86,13 +85,13 @@ func (ec *embeddingCaller) GetEmbedding(ctx context.Context,
 	}
 
 	headers := map[string]string{}
-	options.AIOptions.PreHook(request)
+	options.PreHook(request)
 	res, err := ec.Call(ctx, "embeddings", "POST", headers, request)
 
 	//
 	if err != nil {
-		ec.logger.Errorf("getting error for chat complition %v", err)
-		options.AIOptions.PostHook(map[string]interface{}{
+		ec.logger.Errorf("getting error for chat completion %v", err)
+		options.PostHook(map[string]interface{}{
 			"result": res,
 			"error":  err,
 		}, metrics.OnFailure().Build())
@@ -103,7 +102,7 @@ func (ec *embeddingCaller) GetEmbedding(ctx context.Context,
 	var resp VoyageaiEmbeddingResponse
 	if err := json.Unmarshal([]byte(*res), &resp); err != nil {
 		ec.logger.Errorf("error while parsing embedding response %v", err)
-		options.AIOptions.PostHook(map[string]interface{}{
+		options.PostHook(map[string]interface{}{
 			"result": res,
 			"error":  err,
 		}, metrics.Build())
@@ -116,7 +115,6 @@ func (ec *embeddingCaller) GetEmbedding(ctx context.Context,
 			Value:       fmt.Sprintf("%d", resp.Usage.TotalTokens),
 			Description: "Total Token",
 		})
-
 	}
 	output := make([]*integration_api.Embedding, len(resp.Data))
 	for _, embeddingData := range resp.Data {
@@ -127,7 +125,7 @@ func (ec *embeddingCaller) GetEmbedding(ctx context.Context,
 			Base64:    utils.EmbeddingToBase64(utils.EmbeddingToFloat64(embeddingData.Embedding)),
 		}
 	}
-	options.AIOptions.PostHook(map[string]interface{}{
+	options.PostHook(map[string]interface{}{
 		"result": res,
 	}, metrics.Build())
 	return output, metrics.Build(), nil

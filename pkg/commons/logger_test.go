@@ -25,7 +25,6 @@ func TestLoggerInitialization(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
-
 }
 
 // TestDebugLogging tests debug level logging

@@ -7,10 +7,11 @@ import (
 	"context"
 	"io"
 
+	"google.golang.org/protobuf/types/known/anypb"
+
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/protos"
-	"google.golang.org/protobuf/types/known/anypb"
 )
 
 type AICaller struct {

@@ -62,7 +62,7 @@ type Huggingface struct {
 }
 
 var (
-	DEFUALT_URL = "https://api-inference.huggingface.co"
+	DEFAULT_URL = "https://api-inference.huggingface.co"
 	AUTH_URL    = "https://huggingface.co"
 	API_URL     = "url"
 	TIMEOUT     = 5 * time.Minute
@@ -88,7 +88,6 @@ func (AICaller *Huggingface) Do(req *http.Request) (*http.Response, error) {
 }
 
 func (vgAI *Huggingface) Call(ctx context.Context, endpoint, method string, headers map[string]string, payload map[string]interface{}) (*string, error) {
-
 	credentials := vgAI.credential()
 	cx, ok := credentials[API_KEY]
 	if !ok {
@@ -120,7 +119,6 @@ func (vgAI *Huggingface) Call(ctx context.Context, endpoint, method string, head
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", cx))
 	// Authorization":"Bearer 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"
 	return vgAI.do(req)
-
 }
 
 func (hg *Huggingface) do(req *http.Request) (*string, error) {

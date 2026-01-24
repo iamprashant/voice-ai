@@ -7,6 +7,7 @@ import (
 	"context"
 
 	"github.com/gin-gonic/gin"
+
 	config "github.com/rapidaai/api/integration-api/config"
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	internal_replicate_callers "github.com/rapidaai/api/integration-api/internal/caller/replicate"
@@ -59,7 +60,6 @@ func (replicateRPC *replicateIntegrationRPCApi) Chat(c *gin.Context) {
 // all grpc handler
 func (replicateGRPC *replicateIntegrationGRPCApi) Chat(c context.Context, irRequest *integration_api.ChatRequest) (*integration_api.ChatResponse, error) {
 	return replicateGRPC.integrationApi.Chat(c, irRequest, "REPLICATE", internal_replicate_callers.NewLargeLanguageCaller(replicateGRPC.logger, irRequest.GetCredential()))
-
 }
 
 func (replicateGRPC *replicateIntegrationGRPCApi) VerifyCredential(c context.Context, irRequest *integration_api.VerifyCredentialRequest) (*integration_api.VerifyCredentialResponse, error) {

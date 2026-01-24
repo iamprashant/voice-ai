@@ -49,7 +49,6 @@ func NewDefaultVectorSearchOptions(ots ...SearchOptions) *VectorSearchOptions {
 		Source:   []string{"text", "metadata"},
 	}
 	return so.WithOptions(ots...)
-
 }
 
 func (opts *VectorSearchOptions) WithOptions(options ...SearchOptions) *VectorSearchOptions {

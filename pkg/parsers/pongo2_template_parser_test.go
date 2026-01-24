@@ -8,9 +8,10 @@ package parsers
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/types"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestPongo2MessageTemplateParser_Parse(t *testing.T) {

@@ -4,12 +4,13 @@
 package integration_routers
 
 import (
+	"google.golang.org/grpc"
+
 	integrationApi "github.com/rapidaai/api/integration-api/api"
 	"github.com/rapidaai/api/integration-api/config"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	"github.com/rapidaai/protos"
-	"google.golang.org/grpc"
 )
 
 // all the provider routes

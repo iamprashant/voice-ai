@@ -10,12 +10,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/sendgrid/sendgrid-go"
+	"github.com/sendgrid/sendgrid-go/helpers/mail"
+
 	external_clients "github.com/rapidaai/pkg/clients/external"
 	external_emailer_template "github.com/rapidaai/pkg/clients/external/emailer/template"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/configs"
-	"github.com/sendgrid/sendgrid-go"
-	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
 
 type sendgridEmailer struct {

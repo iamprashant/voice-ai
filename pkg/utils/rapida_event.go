@@ -9,7 +9,7 @@ type RapidaEvent string
 
 const (
 	// signals to stop speaking
-	// what happend is when user unintentionally interrupt the the voice completly stop
+	// what happened is when user unintentionally interrupt the the voice completly stop
 	// pause will make sure that it's not unintentionally interrupted
 	TalkPause        RapidaEvent = "talk.onPause"
 	TalkInterruption RapidaEvent = "talk.onInterrupt"

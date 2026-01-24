@@ -8,9 +8,10 @@ package storage_files
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/configs"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestNewStorage_S3(t *testing.T) {

@@ -3,6 +3,8 @@ package internal_notification_service
 import (
 	"context"
 
+	"gorm.io/gorm/clause"
+
 	internal_entity "github.com/rapidaai/api/web-api/internal/entity"
 	internal_services "github.com/rapidaai/api/web-api/internal/service"
 	"github.com/rapidaai/pkg/commons"
@@ -11,7 +13,6 @@ import (
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/protos"
-	"gorm.io/gorm/clause"
 )
 
 func NewNotificationService(logger commons.Logger, postgres connectors.PostgresConnector) internal_services.NotificationService {

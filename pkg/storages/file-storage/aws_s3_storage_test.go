@@ -9,9 +9,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/configs"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestAwsFileStorage_Name(t *testing.T) {

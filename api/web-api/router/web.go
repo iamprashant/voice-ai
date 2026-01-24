@@ -2,13 +2,14 @@ package web_router
 
 import (
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc"
+
 	webApi "github.com/rapidaai/api/web-api/api"
 	webProxyApi "github.com/rapidaai/api/web-api/api/proxy"
 	"github.com/rapidaai/api/web-api/config"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	"github.com/rapidaai/protos"
-	"google.golang.org/grpc"
 )
 
 func WebApiRoute(
@@ -51,7 +52,6 @@ func WebApiRoute(
 	protos.RegisterProjectServiceServer(S, webApi.NewProjectGRPC(Cfg, Logger, Postgres, Redis))
 	protos.RegisterConnectServiceServer(S, webApi.NewConnectGRPC(Cfg, &Cfg.OAuthConfig, Logger, Postgres))
 	protos.RegisterNotificationServiceServer(S, webApi.NewNotificationGRPC(Cfg, Logger, Postgres, Redis))
-
 }
 
 func ProxyApiRoute(Cfg *config.WebAppConfig,
@@ -66,5 +66,4 @@ func ProxyApiRoute(Cfg *config.WebAppConfig,
 	protos.RegisterAssistantServiceServer(S, webProxyApi.NewAssistantGRPC(Cfg, Logger, Postgres, Redis))
 	protos.RegisterAssistantDeploymentServiceServer(S, webProxyApi.NewAssistantDeploymentGRPCApi(Cfg, Logger, Postgres, Redis))
 	protos.RegisterDocumentServiceServer(S, webProxyApi.NewDocumentGRPCApi(Cfg, Logger, Postgres, Redis))
-
 }

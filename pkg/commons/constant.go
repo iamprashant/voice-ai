@@ -33,32 +33,32 @@ var (
 )
 
 // traceIndex
-func TelemetryIndex(developement bool) string {
-	if developement {
+func TelemetryIndex(development bool) string {
+	if development {
 		return DEVELOPMENT_TELEMETRY_INDEX
 	}
 	return TELEMETRY_INDEX
 }
 
 // endpoint opensearch index
-func EndpointIndex(developement bool) string {
-	if developement {
+func EndpointIndex(development bool) string {
+	if development {
 		return DEVELOPMENT_ENDPOINT_INDEX
 	}
 	return ENDPOINT_INDEX
 }
 
 // assistant opensearch index
-func AssistantIndex(developement bool) string {
-	if developement {
+func AssistantIndex(development bool) string {
+	if development {
 		return DEVELOPMENT_ASSISTANT_INDEX
 	}
 	return ASSISTANT_INDEX
 }
 
 // knowledge opensearch index
-func KnowledgeIndex(developement bool, org, prjm, kn uint64) string {
-	if developement {
+func KnowledgeIndex(development bool, org, prjm, kn uint64) string {
+	if development {
 		return fmt.Sprintf("dev__vs__%d__%d__%d", org, prjm, kn)
 	}
 	return fmt.Sprintf("prod__vs__%d__%d__%d", org, prjm, kn)

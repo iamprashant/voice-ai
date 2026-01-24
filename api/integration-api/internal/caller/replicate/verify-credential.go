@@ -23,7 +23,6 @@ func NewVerifyCredentialCaller(logger commons.Logger, credential *integration_ap
 func (stc *verifyCredentialCaller) CredentialVerifier(
 	ctx context.Context,
 	options *internal_callers.CredentialVerifierOptions) (*string, error) {
-
 	client, err := stc.GetClient()
 	if err != nil {
 		stc.logger.Errorf("validation unable to get client for cohere %v", err)
@@ -38,5 +37,4 @@ func (stc *verifyCredentialCaller) CredentialVerifier(
 		return nil, err
 	}
 	return utils.Ptr("valid"), nil
-
 }

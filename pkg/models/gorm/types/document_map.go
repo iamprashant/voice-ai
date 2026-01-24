@@ -55,5 +55,5 @@ type InternalDocumentStruct struct {
 
 type ExternalDocumentStruct struct {
 	DocumentStruct
-	// keep adding fields depends on what all is needed for document to parse and undersatnd
+	// keep adding fields depends on what all is needed for document to parse and understands
 }

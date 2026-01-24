@@ -6,8 +6,9 @@
 package endpoint_client_builders
 
 import (
-	protos "github.com/rapidaai/protos"
 	"google.golang.org/protobuf/types/known/anypb"
+
+	protos "github.com/rapidaai/protos"
 )
 
 type InputInvokeBuilder interface {

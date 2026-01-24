@@ -145,7 +145,6 @@ func (assistant *webAssistantGRPCApi) GetAssistant(c context.Context, iRequest *
 			websocket.CreatedUser = user
 			_assistant.GetData().AssistantProviderWebsocket = websocket
 		}
-
 	}
 	return _assistant, nil
 }
@@ -243,7 +242,6 @@ func (assistantGRPCApi *webAssistantGRPCApi) GetAllAssistantProvider(ctx context
 		Paginated: _page,
 		Data:      _assistantProviders,
 	}, nil
-
 }
 
 func (assistantGRPCApi *webAssistantGRPCApi) UpdateAssistantVersion(ctx context.Context, iRequest *protos.UpdateAssistantVersionRequest) (*protos.GetAssistantResponse, error) {
@@ -294,7 +292,6 @@ func (assistantGRPCApi *webAssistantGRPCApi) CreateAssistantWebhook(ctx context.
 		return nil, errors.New("unauthenticated request")
 	}
 	return assistantGRPCApi.assistantClient.CreateAssistantWebhook(ctx, iAuth, iRequest)
-
 }
 
 func (assistantGRPCApi *webAssistantGRPCApi) UpdateAssistantWebhook(ctx context.Context, iRequest *protos.UpdateAssistantWebhookRequest) (*protos.GetAssistantWebhookResponse, error) {
@@ -304,7 +301,6 @@ func (assistantGRPCApi *webAssistantGRPCApi) UpdateAssistantWebhook(ctx context.
 		return nil, errors.New("unauthenticated request")
 	}
 	return assistantGRPCApi.assistantClient.UpdateAssistantWebhook(ctx, iAuth, iRequest)
-
 }
 
 func (assistantGRPCApi *webAssistantGRPCApi) DeleteAssistantWebhook(ctx context.Context, iRequest *protos.DeleteAssistantWebhookRequest) (*protos.GetAssistantWebhookResponse, error) {
@@ -314,7 +310,6 @@ func (assistantGRPCApi *webAssistantGRPCApi) DeleteAssistantWebhook(ctx context.
 		return nil, errors.New("unauthenticated request")
 	}
 	return assistantGRPCApi.assistantClient.DeleteAssistantWebhook(ctx, iAuth, iRequest)
-
 }
 
 // GetAllAssistantWebhook implements protos.AssistantServiceServer.
@@ -358,7 +353,6 @@ func (assistantGRPCApi *webAssistantGRPCApi) GetAllAssistantWebhookLog(ctx conte
 	return utils.PaginatedSuccess[protos.GetAllAssistantWebhookLogResponse, []*protos.AssistantWebhookLog](
 		page.GetTotalItem(), page.GetCurrentPage(),
 		tls)
-
 }
 
 func (assistantGRPCApi *webAssistantGRPCApi) GetAssistantWebhookLog(ctx context.Context, iRequest *protos.GetAssistantWebhookLogRequest) (*protos.GetAssistantWebhookLogResponse, error) {
@@ -390,7 +384,6 @@ func (assistantGRPCApi *webAssistantGRPCApi) GetAssistantConversation(ctx contex
 		return nil, errors.New("unauthenticated request")
 	}
 	return assistantGRPCApi.assistantClient.GetAssistantConversation(ctx, iAuth, iRequest)
-
 }
 
 func (assistantGRPCApi *webAssistantGRPCApi) DeleteAssistant(ctx context.Context, iRequest *protos.DeleteAssistantRequest) (*protos.GetAssistantResponse, error) {
@@ -400,7 +393,6 @@ func (assistantGRPCApi *webAssistantGRPCApi) DeleteAssistant(ctx context.Context
 		return nil, errors.New("unauthenticated request")
 	}
 	return assistantGRPCApi.assistantClient.DeleteAssistant(ctx, iAuth, iRequest)
-
 }
 
 // CreateAssistantWebhook implements protos.AssistantServiceServer.
@@ -411,7 +403,6 @@ func (assistantGRPCApi *webAssistantGRPCApi) CreateAssistantKnowledge(ctx contex
 		return nil, errors.New("unauthenticated request")
 	}
 	return assistantGRPCApi.assistantClient.CreateAssistantKnowledge(ctx, iAuth, iRequest)
-
 }
 
 func (assistantGRPCApi *webAssistantGRPCApi) UpdateAssistantKnowledge(ctx context.Context, iRequest *protos.UpdateAssistantKnowledgeRequest) (*protos.GetAssistantKnowledgeResponse, error) {
@@ -421,7 +412,6 @@ func (assistantGRPCApi *webAssistantGRPCApi) UpdateAssistantKnowledge(ctx contex
 		return nil, errors.New("unauthenticated request")
 	}
 	return assistantGRPCApi.assistantClient.UpdateAssistantKnowledge(ctx, iAuth, iRequest)
-
 }
 
 func (assistantGRPCApi *webAssistantGRPCApi) DeleteAssistantKnowledge(ctx context.Context, iRequest *protos.DeleteAssistantKnowledgeRequest) (*protos.GetAssistantKnowledgeResponse, error) {
@@ -431,7 +421,6 @@ func (assistantGRPCApi *webAssistantGRPCApi) DeleteAssistantKnowledge(ctx contex
 		return nil, errors.New("unauthenticated request")
 	}
 	return assistantGRPCApi.assistantClient.DeleteAssistantKnowledge(ctx, iAuth, iRequest)
-
 }
 
 func (assistantGRPCApi *webAssistantGRPCApi) GetAllAssistantKnowledge(ctx context.Context, iRequest *protos.GetAllAssistantKnowledgeRequest) (*protos.GetAllAssistantKnowledgeResponse, error) {
@@ -452,7 +441,6 @@ func (assistantGRPCApi *webAssistantGRPCApi) GetAllAssistantKnowledge(ctx contex
 	return utils.PaginatedSuccess[protos.GetAllAssistantKnowledgeResponse, []*protos.AssistantKnowledge](
 		page.GetTotalItem(), page.GetCurrentPage(),
 		tls)
-
 }
 
 func (assistantGRPCApi *webAssistantGRPCApi) GetAssistantKnowledge(ctx context.Context, iRequest *protos.GetAssistantKnowledgeRequest) (*protos.GetAssistantKnowledgeResponse, error) {
@@ -472,7 +460,6 @@ func (assistantGRPCApi *webAssistantGRPCApi) CreateAssistantTool(ctx context.Con
 		return nil, errors.New("unauthenticated request")
 	}
 	return assistantGRPCApi.assistantClient.CreateAssistantTool(ctx, iAuth, iRequest)
-
 }
 
 func (assistantGRPCApi *webAssistantGRPCApi) UpdateAssistantTool(ctx context.Context, iRequest *protos.UpdateAssistantToolRequest) (*protos.GetAssistantToolResponse, error) {
@@ -482,7 +469,6 @@ func (assistantGRPCApi *webAssistantGRPCApi) UpdateAssistantTool(ctx context.Con
 		return nil, errors.New("unauthenticated request")
 	}
 	return assistantGRPCApi.assistantClient.UpdateAssistantTool(ctx, iAuth, iRequest)
-
 }
 
 func (assistantGRPCApi *webAssistantGRPCApi) DeleteAssistantTool(ctx context.Context, iRequest *protos.DeleteAssistantToolRequest) (*protos.GetAssistantToolResponse, error) {
@@ -492,7 +478,6 @@ func (assistantGRPCApi *webAssistantGRPCApi) DeleteAssistantTool(ctx context.Con
 		return nil, errors.New("unauthenticated request")
 	}
 	return assistantGRPCApi.assistantClient.DeleteAssistantTool(ctx, iAuth, iRequest)
-
 }
 
 func (assistantGRPCApi *webAssistantGRPCApi) GetAllAssistantTool(ctx context.Context, iRequest *protos.GetAllAssistantToolRequest) (*protos.GetAllAssistantToolResponse, error) {
@@ -513,7 +498,6 @@ func (assistantGRPCApi *webAssistantGRPCApi) GetAllAssistantTool(ctx context.Con
 	return utils.PaginatedSuccess[protos.GetAllAssistantToolResponse, []*protos.AssistantTool](
 		page.GetTotalItem(), page.GetCurrentPage(),
 		tls)
-
 }
 
 func (assistantGRPCApi *webAssistantGRPCApi) GetAssistantTool(ctx context.Context, iRequest *protos.GetAssistantToolRequest) (*protos.GetAssistantToolResponse, error) {
@@ -533,7 +517,6 @@ func (assistantGRPCApi *webAssistantGRPCApi) CreateAssistantAnalysis(ctx context
 		return nil, errors.New("unauthenticated request")
 	}
 	return assistantGRPCApi.assistantClient.CreateAssistantAnalysis(ctx, iAuth, iRequest)
-
 }
 
 func (assistantGRPCApi *webAssistantGRPCApi) UpdateAssistantAnalysis(ctx context.Context, iRequest *protos.UpdateAssistantAnalysisRequest) (*protos.GetAssistantAnalysisResponse, error) {
@@ -543,7 +526,6 @@ func (assistantGRPCApi *webAssistantGRPCApi) UpdateAssistantAnalysis(ctx context
 		return nil, errors.New("unauthenticated request")
 	}
 	return assistantGRPCApi.assistantClient.UpdateAssistantAnalysis(ctx, iAuth, iRequest)
-
 }
 
 func (assistantGRPCApi *webAssistantGRPCApi) DeleteAssistantAnalysis(ctx context.Context, iRequest *protos.DeleteAssistantAnalysisRequest) (*protos.GetAssistantAnalysisResponse, error) {
@@ -553,7 +535,6 @@ func (assistantGRPCApi *webAssistantGRPCApi) DeleteAssistantAnalysis(ctx context
 		return nil, errors.New("unauthenticated request")
 	}
 	return assistantGRPCApi.assistantClient.DeleteAssistantAnalysis(ctx, iAuth, iRequest)
-
 }
 
 func (assistantGRPCApi *webAssistantGRPCApi) GetAllAssistantAnalysis(ctx context.Context, iRequest *protos.GetAllAssistantAnalysisRequest) (*protos.GetAllAssistantAnalysisResponse, error) {
@@ -574,7 +555,6 @@ func (assistantGRPCApi *webAssistantGRPCApi) GetAllAssistantAnalysis(ctx context
 	return utils.PaginatedSuccess[protos.GetAllAssistantAnalysisResponse, []*protos.AssistantAnalysis](
 		page.GetTotalItem(), page.GetCurrentPage(),
 		tls)
-
 }
 
 func (assistantGRPCApi *webAssistantGRPCApi) GetAssistantAnalysis(ctx context.Context, iRequest *protos.GetAssistantAnalysisRequest) (*protos.GetAssistantAnalysisResponse, error) {
