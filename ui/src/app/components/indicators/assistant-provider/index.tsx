@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import { Brain, Check, MinusCircle } from 'lucide-react';
+import { Brain, MinusCircle, Rss } from 'lucide-react';
 
 export const AssistantProviderIndicator: FC<{
   provider: 'websocket' | 'agentkit' | 'provider-model';
@@ -11,7 +11,7 @@ export const AssistantProviderIndicator: FC<{
       textColor: 'text-gray-600 dark:text-gray-500',
       iconColor: 'dark:text-gray-400',
       ringColor: 'ring-gray-200 dark:ring-gray-800',
-      Icon: Check,
+      Icon: Rss,
       display: 'Websocket',
     },
     AGENTKIT: {
@@ -60,7 +60,11 @@ export const AssistantProviderIndicator: FC<{
     <span
       className={`shrink-0 gap-3 inline-flex items-center rounded-[2px] ${config.bgColor} ${config.textColor} font-medium ${sizeClass.container} ring-[0.5px] ring-inset ${config.ringColor}`}
     >
-      <Icon size={sizeClass.icon} className={config.iconColor} />
+      <Icon
+        size={sizeClass.icon}
+        className={config.iconColor}
+        strokeWidth={1.5}
+      />
       <span>{config.display}</span>
     </span>
   );

@@ -16,3 +16,6 @@
 [submodule "sdks/python"]
 	path = sdks/python
 	url = git@github.com:rapidaai/rapida-python.git
+[submodule "examples/python"]
+	path = examples/python
+	url = git@github.com:rapidaai/rapida-python-recipes.git

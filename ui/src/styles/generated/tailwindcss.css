@@ -2872,9 +2872,6 @@
   .w-\[160px\] {
     width: 160px;
   }
-  .w-\[200px\] {
-    width: 200px;
-  }
   .w-\[265px\] {
     width: 265px;
   }
@@ -3961,9 +3958,6 @@
       background-color: color-mix(in oklab, var(--color-blue-600) 10%, transparent) !important;
     }
   }
-  .\!bg-light-background {
-    background-color: var(--color-light-background) !important;
-  }
   .bg-amber-100 {
     background-color: var(--color-amber-100);
   }
@@ -4530,9 +4524,6 @@
   }
   .object-cover {
     object-fit: cover;
-  }
-  .\!p-0 {
-    padding: calc(var(--spacing) * 0) !important;
   }
   .p-0 {
     padding: calc(var(--spacing) * 0);
