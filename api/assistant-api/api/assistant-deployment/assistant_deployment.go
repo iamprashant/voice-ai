@@ -14,7 +14,7 @@ import (
 	"github.com/rapidaai/pkg/storages"
 
 	storage_files "github.com/rapidaai/pkg/storages/file-storage"
-	assistant_api "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
 type assistantDeploymentApi struct {
@@ -31,7 +31,7 @@ type assistantDeploymentGrpcApi struct {
 
 func NewAssistantDeploymentGRPCApi(config *config.AssistantConfig, logger commons.Logger,
 	postgres connectors.PostgresConnector,
-) assistant_api.AssistantDeploymentServiceServer {
+) protos.AssistantDeploymentServiceServer {
 	return &assistantDeploymentGrpcApi{
 		assistantDeploymentApi{
 			cfg:               config,

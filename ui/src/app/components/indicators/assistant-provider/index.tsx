@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import { Brain, MinusCircle, Rss } from 'lucide-react';
+import { Brain, EarthLock, Rss } from 'lucide-react';
 
 export const AssistantProviderIndicator: FC<{
   provider: 'websocket' | 'agentkit' | 'provider-model';
@@ -19,7 +19,7 @@ export const AssistantProviderIndicator: FC<{
       textColor: 'text-gray-600 dark:text-gray-500',
       iconColor: 'dark:text-gray-400',
       ringColor: 'ring-gray-200 dark:ring-gray-800',
-      Icon: MinusCircle,
+      Icon: EarthLock,
       display: 'Agentkit',
     },
     PROVIDER_MODEL: {

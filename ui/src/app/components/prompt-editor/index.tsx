@@ -54,7 +54,6 @@ const PromptEditor = ({
   const handleChange: OnChange = newValue => {
     if (onChange && newValue !== undefined) {
       onChange(newValue);
-      console.log('Editor content changed:', newValue);
     }
   };
   return (

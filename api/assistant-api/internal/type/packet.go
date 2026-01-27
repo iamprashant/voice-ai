@@ -63,6 +63,20 @@ func (f InterruptionPacket) ContextId() string {
 }
 
 // =============================================================================
+// Close Packet
+// =============================================================================
+
+// ClosePacket signals that the connection should be closed.
+type ClosePacket struct {
+	// Reason indicates why the connection is being closed.
+	Reason string
+}
+
+func (f ClosePacket) ContextId() string {
+	return ""
+}
+
+// =============================================================================
 // LLM Packets
 // =============================================================================
 
