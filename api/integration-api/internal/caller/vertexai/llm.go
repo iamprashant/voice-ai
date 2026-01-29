@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -48,8 +49,10 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 	onMetrics func(string, *protos.Message, []*protos.Metric) error,
 	onError func(string, error),
 ) error {
+	start := time.Now()
 	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)
 	metrics.OnStart()
+	var firstTokenTime *time.Time
 	client, err := llc.GetClient()
 	if err != nil {
 		options.PostHook(map[string]interface{}{
@@ -144,11 +147,7 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 		}
 	}
 
-	options.PostHook(map[string]interface{}{
-		"result": accumlator,
-	}, metrics.OnSuccess().Build())
 	metrics.OnAddMetrics(llc.UsageMetrics(accumlator.UsageMetadata)...)
-
 	protoMsg := &protos.Message{
 		Role: "assistant",
 		Message: &protos.Message_Assistant{
@@ -163,6 +162,11 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 	if !hasToolCalls {
 		for _, token := range textTokenBuffer {
 			if token != "" {
+				// Record first token received time
+				if firstTokenTime == nil {
+					now := time.Now()
+					firstTokenTime = &now
+				}
 				tokenMsg := &protos.Message{
 					Role: "assistant",
 					Message: &protos.Message_Assistant{
@@ -177,8 +181,23 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 			}
 		}
 	}
+	// Add first token time metric if tokens were streamed
+	if firstTokenTime != nil {
+		metrics.OnAddMetrics(&protos.Metric{
+			Name:        "FIRST_TOKEN_RECIEVED_TIME",
+			Value:       fmt.Sprintf("%d", firstTokenTime.Sub(start)),
+			Description: "Time to receive first token from LLM",
+		})
+	}
+	// Update time taken and status
+	metrics.OnSuccess()
 	// Send metrics with complete message
 	onMetrics(options.Request.GetRequestId(), protoMsg, metrics.Build())
+
+	// Call PostHook after metrics for each message end
+	options.PostHook(map[string]interface{}{
+		"result": accumlator,
+	}, metrics.Build())
 	return nil
 }
 

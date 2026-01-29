@@ -2,6 +2,7 @@ package internal_cohere_callers
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -35,6 +36,7 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 	start := time.Now()
 	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)
 	metrics.OnStart()
+	var firstTokenTime *time.Time
 
 	client, err := llc.GetClient()
 	if err != nil {
@@ -131,7 +133,6 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 
 			case rep.MessageEnd != nil:
 				metrics.OnAddMetrics(llc.UsageMetrics(rep.MessageEnd.Delta.Usage)...)
-				metrics.OnSuccess()
 				protoMsg := &protos.Message{
 					Role: "assistant",
 					Message: &protos.Message_Assistant{
@@ -141,14 +142,16 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 						},
 					},
 				}
-				options.PostHook(map[string]interface{}{
-					"result": protoMsg,
-				}, metrics.Build())
 
 				// Stream text tokens only if no tool calls in response
 				if !hasToolCalls {
 					for _, token := range textTokenBuffer {
 						if token != "" {
+							// Record first token received time
+							if firstTokenTime == nil {
+								now := time.Now()
+								firstTokenTime = &now
+							}
 							tokenMsg := &protos.Message{
 								Role: "assistant",
 								Message: &protos.Message_Assistant{
@@ -163,8 +166,22 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 						}
 					}
 				}
+				// Add first token time metric if tokens were streamed
+				if firstTokenTime != nil {
+					metrics.OnAddMetrics(&protos.Metric{
+						Name:        "FIRST_TOKEN_RECIEVED_TIME",
+						Value:       fmt.Sprintf("%d", firstTokenTime.Sub(start)),
+						Description: "Time to receive first token from LLM",
+					})
+				}
+				// Update time taken and status
+				metrics.OnSuccess()
 				// Send metrics with complete message
 				onMetrics(options.Request.GetRequestId(), protoMsg, metrics.Build())
+				// Call PostHook after metrics for each message end
+				options.PostHook(map[string]interface{}{
+					"result": protoMsg,
+				}, metrics.Build())
 				return nil
 			}
 		}
