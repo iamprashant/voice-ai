@@ -153,13 +153,15 @@ func (t *deepgramTTS) Transform(ctx context.Context, in internal_type.LLMPacket)
 		return fmt.Errorf("deepgram-tts: websocket not initialized")
 	}
 
-	if currentCtx != t.contextId && currentCtx != "" {
-		_ = conn.WriteJSON(map[string]interface{}{
-			"type": "Clear",
-		})
-	}
-
 	switch input := in.(type) {
+	case internal_type.InterruptionPacket:
+		// only stop speaking on word-level interruptions
+		if input.Source == internal_type.InterruptionSourceWord && currentCtx != "" {
+			_ = conn.WriteJSON(map[string]interface{}{
+				"type": "Clear",
+			})
+		}
+		return nil
 	case internal_type.LLMResponseDeltaPacket:
 		if err := conn.WriteJSON(map[string]interface{}{
 			"type": "Speak",

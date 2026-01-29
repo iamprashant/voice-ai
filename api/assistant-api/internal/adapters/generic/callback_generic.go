@@ -84,13 +84,32 @@ func (talking *GenericRequestor) callSpeechToText(ctx context.Context, vl intern
 	return nil
 }
 
+func (spk *GenericRequestor) interruptAllProvider(ctx context.Context, result internal_type.InterruptionPacket) error {
+	if spk.textToSpeechTransformer != nil {
+		// can be done on goroutine
+		utils.Go(ctx, func() {
+			if err := spk.textToSpeechTransformer.Transform(spk.Context(), result); err != nil {
+				spk.logger.Errorf("speak: failed to send interruption: %v", err)
+			}
+		})
+	}
+
+	if spk.assistantExecutor != nil {
+		// can be done on goroutine
+		utils.Go(ctx, func() {
+			if err := spk.assistantExecutor.Execute(spk.Context(), spk, result); err != nil {
+				spk.logger.Errorf("assistant executor interrupt error: %v", err)
+			}
+		})
+	}
+	return nil
+}
+
 func (spk *GenericRequestor) callSpeaking(ctx context.Context, result internal_type.LLMPacket) error {
 	switch res := result.(type) {
 	case internal_type.LLMResponseDonePacket:
 		if spk.textToSpeechTransformer != nil {
-			// might be stale packet
-			spk.logger.Debugf("testing -> got to speak %+v", result)
-			spk.logger.Debugf("testing -> got to speak ID %+v", spk.messaging.GetID())
+
 			if result.ContextId() != spk.messaging.GetID() {
 				return nil
 			}
@@ -236,6 +255,11 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				talking.logger.Errorf("recorder error: %v", err)
 			}
 
+			// let all the providers know about interruption
+			if err := talking.interruptAllProvider(ctx, vl); err != nil {
+				talking.logger.Errorf("interrupt all provider error: %v", err)
+			}
+
 			switch vl.Source {
 			case internal_type.InterruptionSourceWord:
 				span.AddAttributes(ctx, internal_telemetry.KV{K: "activity_type", V: internal_telemetry.StringValue("word_interrupt")})
@@ -244,7 +268,11 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				if err := talking.messaging.Transition(internal_adapter_request_customizers.Interrupted); err != nil {
 					continue
 				}
-				talking.Notify(ctx, &protos.ConversationInterruption{Type: protos.ConversationInterruption_INTERRUPTION_TYPE_WORD, Time: timestamppb.Now()})
+
+				// notify interruption without waiting
+				utils.Go(ctx, func() {
+					talking.Notify(ctx, &protos.ConversationInterruption{Type: protos.ConversationInterruption_INTERRUPTION_TYPE_WORD, Time: timestamppb.Now()})
+				})
 				continue
 			default:
 				// might be noise at first
@@ -255,7 +283,11 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				if err := talking.messaging.Transition(internal_adapter_request_customizers.Interrupt); err != nil {
 					continue
 				}
-				talking.Notify(ctx, &protos.ConversationInterruption{Type: protos.ConversationInterruption_INTERRUPTION_TYPE_VAD, Time: timestamppb.Now()})
+
+				// notify interruption without waiting
+				utils.Go(ctx, func() {
+					talking.Notify(ctx, &protos.ConversationInterruption{Type: protos.ConversationInterruption_INTERRUPTION_TYPE_VAD, Time: timestamppb.Now()})
+				})
 				continue
 			}
 		case internal_type.SpeechToTextPacket:

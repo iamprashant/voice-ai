@@ -140,11 +140,13 @@ func (azure *azureTextToSpeech) Transform(ctx context.Context, in internal_type.
 	azure.contextId = in.ContextId()
 	azure.mu.Unlock()
 
-	if currentCtx != azure.contextId && currentCtx != "" {
-		<-cl.StopSpeakingAsync()
-	}
-
 	switch input := in.(type) {
+	case internal_type.InterruptionPacket:
+		// only stop speaking on word-level interruptions
+		if input.Source == internal_type.InterruptionSourceWord && currentCtx != "" {
+			<-cl.StopSpeakingAsync()
+		}
+		return nil
 	case internal_type.LLMResponseDeltaPacket:
 		res := <-cl.StartSpeakingTextAsync(input.Text)
 		if res.Error != nil {
