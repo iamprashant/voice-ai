@@ -6,11 +6,11 @@ import {
   GetCohereEmbeddingDefaultOptions,
   ValidateCohereEmbeddingDefaultOptions,
 } from '@/app/components/providers/embedding/cohere/constants';
-import { ConfigureGoogleEmbeddingModel } from '@/app/components/providers/embedding/google';
+import { ConfigureGeminiEmbeddingModel } from '@/app/components/providers/embedding/gemini';
 import {
-  GetGoogleEmbeddingDefaultOptions,
-  ValidateGoogleEmbeddingDefaultOptions,
-} from '@/app/components/providers/embedding/google/constants';
+  GetGeminiEmbeddingDefaultOptions,
+  ValidateGeminiEmbeddingDefaultOptions,
+} from '@/app/components/providers/embedding/gemini/constants';
 import { ConfigureOpenaiEmbeddingModel } from '@/app/components/providers/embedding/openai';
 import {
   GetOpenaiEmbeddingDefaultOptions,
@@ -43,8 +43,8 @@ export const GetDefaultEmbeddingConfigIfInvalid = (
       return GetCohereEmbeddingDefaultOptions(parameters);
     case 'openai':
       return GetOpenaiEmbeddingDefaultOptions(parameters);
-    case 'google':
-      return GetGoogleEmbeddingDefaultOptions(parameters);
+    case 'gemini':
+      return GetGeminiEmbeddingDefaultOptions(parameters);
     case 'voyageai':
       return GetVoyageEmbeddingDefaultOptions(parameters);
     default:
@@ -67,8 +67,8 @@ export const ValidateEmbeddingDefaultOptions = (
       return ValidateCohereEmbeddingDefaultOptions(parameters);
     case 'openai':
       return ValidateOpenaiEmbeddingDefaultOptions(parameters);
-    case 'google':
-      return ValidateGoogleEmbeddingDefaultOptions(parameters);
+    case 'gemini':
+      return ValidateGeminiEmbeddingDefaultOptions(parameters);
     case 'voyageai':
       return ValidateVoyageEmbeddingDefaultOptions(parameters);
     default:
@@ -110,7 +110,7 @@ export const EmbeddingConfigComponent: FC<ProviderComponentProps> = ({
       );
     case 'gemini':
       return (
-        <ConfigureGoogleEmbeddingModel
+        <ConfigureGeminiEmbeddingModel
           parameters={parameters}
           onParameterChange={onChangeParameter}
         />
