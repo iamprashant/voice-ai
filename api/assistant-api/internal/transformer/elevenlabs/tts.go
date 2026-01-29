@@ -135,6 +135,11 @@ func (t *elevenlabsTTS) Transform(ctx context.Context, in internal_type.LLMPacke
 	}
 
 	switch input := in.(type) {
+	case internal_type.InterruptionPacket:
+		// only stop speaking on word-level interruptions
+		if input.Source == internal_type.InterruptionSourceWord && currentCtx != "" {
+		}
+		return nil
 	case internal_type.LLMResponseDeltaPacket:
 		if err := cnn.WriteJSON(map[string]interface{}{
 			"text":       input.Text,
