@@ -153,9 +153,7 @@ func (listening *GenericRequestor) initializeEndOfSpeech(ctx context.Context, op
 
 	endOfSpeech, err := internal_end_of_speech.GetEndOfSpeech(ctx,
 		listening.logger,
-		func(_ctx context.Context, act internal_type.EndOfSpeechPacket) error {
-			return listening.OnPacket(_ctx, act)
-		},
+		listening.OnPacket,
 		options)
 	if err != nil {
 		listening.logger.Warnf("unable to initialize text analyzer %+v", err)

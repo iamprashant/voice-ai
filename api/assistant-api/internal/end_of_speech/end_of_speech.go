@@ -23,7 +23,7 @@ const (
 	EndOfSpeechOptionsKeyProvider                       = "microphone.eos.provider"
 )
 
-func GetEndOfSpeech(ctx context.Context, logger commons.Logger, onCallback internal_type.EndOfSpeechCallback, opts utils.Option) (internal_type.EndOfSpeech, error) {
+func GetEndOfSpeech(ctx context.Context, logger commons.Logger, onCallback func(context.Context, ...internal_type.Packet) error, opts utils.Option) (internal_type.EndOfSpeech, error) {
 	provider, _ := opts.GetString(EndOfSpeechOptionsKeyProvider)
 	switch EndOfSpeechIdentifier(provider) {
 	case SilenceBasedEndOfSpeech:

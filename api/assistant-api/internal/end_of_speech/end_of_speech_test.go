@@ -18,7 +18,7 @@ import (
 )
 
 // MockEndOfSpeechCallback is a simple callback function for testing
-var mockCallback internal_type.EndOfSpeechCallback = func(ctx context.Context, result internal_type.EndOfSpeechPacket) error {
+var mockCallback = func(ctx context.Context, result ...internal_type.Packet) error {
 	return nil
 }
 

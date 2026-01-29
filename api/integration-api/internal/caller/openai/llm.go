@@ -289,6 +289,7 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 		ToolCalls: make([]*protos.ToolCall, 0),
 	}
 	contentBuffer := make([]string, 0) // Buffer for accumulating content per choice
+	hasToolCalls := false              // Flag to track if response contains tool calls
 
 	accumulate := openai.ChatCompletionAccumulator{}
 	for resp.Next() {
@@ -298,9 +299,6 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 		if _, ok := accumulate.JustFinishedContent(); ok {
 			metrics.OnAddMetrics(llc.GetComplitionUsages(accumulate.Usage)...)
 			metrics.OnSuccess()
-			options.PostHook(map[string]interface{}{
-				"result": utils.ToJson(accumulate),
-			}, metrics.Build())
 
 			// Finalize content from buffer
 			assistantMsg.Contents = contentBuffer
@@ -310,17 +308,36 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 					Assistant: assistantMsg,
 				},
 			}
-			// Stream if no tool calls
-			if len(assistantMsg.ToolCalls) == 0 {
-				if err := onStream(options.Request.GetRequestId(), protoMsg); err != nil {
-					llc.logger.Warnf("error streaming complete message: %v", err)
+			// Stream tokens only if no tool calls in response
+			if !hasToolCalls {
+				for _, content := range contentBuffer {
+					if content != "" {
+						tokenMsg := &protos.Message{
+							Role: "assistant",
+							Message: &protos.Message_Assistant{
+								Assistant: &protos.AssistantMessage{
+									Contents: []string{content},
+								},
+							},
+						}
+						if err := onStream(options.Request.GetRequestId(), tokenMsg); err != nil {
+							llc.logger.Warnf("error streaming token: %v", err)
+						}
+					}
 				}
 			}
+			// Send metrics with complete message
 			onMetrics(options.Request.GetRequestId(), protoMsg, metrics.Build())
+
+			// Call PostHook only at the end of response
+			options.PostHook(map[string]interface{}{
+				"result": utils.ToJson(accumulate),
+			}, metrics.Build())
 			return nil
 		}
 
 		if tool, ok := accumulate.JustFinishedToolCall(); ok {
+			hasToolCalls = true
 			assistantMsg.ToolCalls = append(assistantMsg.ToolCalls, &protos.ToolCall{
 				Id: tool.ID,
 				Function: &protos.FunctionCall{
@@ -329,9 +346,6 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 				},
 			})
 			metrics.OnAddMetrics(llc.GetComplitionUsages(accumulate.Usage)...)
-			options.PostHook(map[string]interface{}{
-				"result": utils.ToJson(accumulate),
-			}, metrics.Build())
 
 			// Don't stream if tool calls are present
 			assistantMsg.Contents = contentBuffer
@@ -342,9 +356,15 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 				},
 			}
 			onMetrics(options.Request.GetRequestId(), protoMsg, metrics.Build())
+
+			// Call PostHook only at the end of response
+			options.PostHook(map[string]interface{}{
+				"result": utils.ToJson(accumulate),
+			}, metrics.Build())
 			return nil
 		}
 
+		// Accumulate content but don't stream yet - check if tool calls will come
 		for i, choice := range chatCompletions.Choices {
 			content := choice.Delta.Content
 			if content != "" {
@@ -354,6 +374,10 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 				} else {
 					contentBuffer[i] += content
 				}
+			}
+			// Check if this chunk has tool calls
+			if len(choice.Delta.ToolCalls) > 0 {
+				hasToolCalls = true
 			}
 		}
 	}

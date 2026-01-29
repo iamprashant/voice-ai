@@ -140,7 +140,9 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 	completeMessage := &protos.AssistantMessage{}
 	var currentToolCall *protos.ToolCall
 	var currentContent string
+	var textTokenBuffer []string // Buffer to hold text tokens temporarily
 	isToolCall := false
+	hasToolCalls := false // Flag to track if response contains tool calls
 	for stream.Next() {
 		event := stream.Current()
 		err := message.Accumulate(event)
@@ -155,6 +157,7 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 			switch event.ContentBlock.Type {
 			case "tool_use":
 				isToolCall = true
+				hasToolCalls = true
 				currentToolCall = &protos.ToolCall{
 					Id:   event.ContentBlock.ID,
 					Type: "function",
@@ -172,6 +175,8 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 				content := event.Delta.Text
 				if content != "" && !isToolCall {
 					currentContent += content
+					// Buffer the token instead of streaming immediately
+					textTokenBuffer = append(textTokenBuffer, content)
 				}
 			case "input_json_delta":
 				if currentToolCall != nil {
@@ -201,10 +206,22 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 					Assistant: completeMessage,
 				},
 			}
-			// Stream the complete message only if there are no tool calls
-			if len(completeMessage.ToolCalls) == 0 {
-				if err := onStream(options.Request.GetRequestId(), finalMsg); err != nil {
-					llc.logger.Warnf("error streaming complete message: %v", err)
+			// Stream text tokens only if no tool calls in response
+			if !hasToolCalls {
+				for _, token := range textTokenBuffer {
+					if token != "" {
+						tokenMsg := &protos.Message{
+							Role: "assistant",
+							Message: &protos.Message_Assistant{
+								Assistant: &protos.AssistantMessage{
+									Contents: []string{token},
+								},
+							},
+						}
+						if err := onStream(options.Request.GetRequestId(), tokenMsg); err != nil {
+							llc.logger.Warnf("error streaming token: %v", err)
+						}
+					}
 				}
 			}
 			// Send metrics with complete message

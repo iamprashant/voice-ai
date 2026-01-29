@@ -68,6 +68,8 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 	toolCalls := make([]*protos.ToolCall, 0)
 	var currentToolCall *protos.ToolCall
 	var currentContent string
+	var textTokenBuffer []string // Buffer to hold text tokens temporarily
+	hasToolCalls := false        // Flag to track if response contains tool calls
 	for {
 		select {
 		case <-ctx.Done():
@@ -88,6 +90,8 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 				if rep.ContentDelta.Delta != nil && rep.ContentDelta.Delta.Message != nil && rep.ContentDelta.Delta.Message.Content != nil {
 					if text := rep.ContentDelta.Delta.Message.Content.GetText(); text != nil {
 						currentContent += *text
+						// Buffer the token instead of streaming immediately
+						textTokenBuffer = append(textTokenBuffer, *text)
 					}
 				}
 			case rep.ContentEnd != nil:
@@ -96,6 +100,7 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 					currentContent = ""
 				}
 			case rep.ToolCallStart != nil:
+				hasToolCalls = true
 				if rep.ToolCallStart.Delta != nil && rep.ToolCallStart.Delta.Message != nil && rep.ToolCallStart.Delta.Message.ToolCalls != nil {
 					tc := rep.ToolCallStart.Delta.Message.ToolCalls
 					var name, args string
@@ -140,12 +145,25 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 					"result": protoMsg,
 				}, metrics.Build())
 
-				// Stream complete message only if no tool calls
-				if len(toolCalls) == 0 {
-					if err := onStream(options.Request.GetRequestId(), protoMsg); err != nil {
-						llc.logger.Warnf("error streaming complete message: %v", err)
+				// Stream text tokens only if no tool calls in response
+				if !hasToolCalls {
+					for _, token := range textTokenBuffer {
+						if token != "" {
+							tokenMsg := &protos.Message{
+								Role: "assistant",
+								Message: &protos.Message_Assistant{
+									Assistant: &protos.AssistantMessage{
+										Contents: []string{token},
+									},
+								},
+							}
+							if err := onStream(options.Request.GetRequestId(), tokenMsg); err != nil {
+								llc.logger.Warnf("error streaming token: %v", err)
+							}
+						}
 					}
 				}
+				// Send metrics with complete message
 				onMetrics(options.Request.GetRequestId(), protoMsg, metrics.Build())
 				return nil
 			}

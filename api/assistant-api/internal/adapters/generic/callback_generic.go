@@ -50,7 +50,7 @@ func (talking *GenericRequestor) callRecording(ctx context.Context, vl internal_
 		})
 		return nil
 	}
-	return errors.New("recording not configured")
+	return nil
 }
 
 func (talking *GenericRequestor) callCreateMessage(ctx context.Context, vl internal_type.MessagePacket) error {
@@ -88,12 +88,8 @@ func (spk *GenericRequestor) callSpeaking(ctx context.Context, result internal_t
 	switch res := result.(type) {
 	case internal_type.LLMResponseDonePacket:
 		if spk.textToSpeechTransformer != nil {
-			inputMessage, err := spk.messaging.GetMessage()
-			if err != nil {
-				return nil
-			}
 			// might be stale packet
-			if result.ContextId() != inputMessage.GetId() {
+			if result.ContextId() != spk.messaging.GetID() {
 				return nil
 			}
 			ctx, span, _ := spk.Tracer().StartSpan(spk.Context(), utils.AssistantSpeakingStage)
@@ -107,12 +103,7 @@ func (spk *GenericRequestor) callSpeaking(ctx context.Context, result internal_t
 			}
 		}
 	case internal_type.LLMResponseDeltaPacket:
-		inputMessage, err := spk.messaging.GetMessage()
-		if err != nil {
-			return nil
-		}
-		// might be stale packet
-		if result.ContextId() != inputMessage.GetId() {
+		if result.ContextId() != spk.messaging.GetID() {
 			return nil
 		}
 		if spk.textToSpeechTransformer != nil {
@@ -156,18 +147,13 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 			// interrupting
 			talking.OnPacket(ctx, internal_type.InterruptionPacket{ContextID: vl.ContextID, Source: internal_type.InterruptionSourceWord})
 
-			// creating interim message
-			interim := talking.messaging.Create(vl.Text)
-			if err := talking.Notify(talking.Context(), &protos.ConversationUserMessage{Id: interim.GetId(), Completed: false, Message: &protos.ConversationUserMessage_Text{Text: interim.String()}, Time: timestamppb.Now()}); err != nil {
+			if err := talking.Notify(talking.Context(), &protos.ConversationUserMessage{Id: talking.messaging.GetID(), Completed: false, Message: &protos.ConversationUserMessage_Text{Text: vl.Text}, Time: timestamppb.Now()}); err != nil {
 				talking.logger.Tracef(talking.Context(), "error while notifying the text input from user: %w", err)
 			}
 
-			// send to end of speech analyzer
-			vl.ContextID = interim.GetId()
 			if err := talking.callEndOfSpeech(ctx, vl); err != nil {
-				talking.OnPacket(ctx, internal_type.EndOfSpeechPacket{ContextID: vl.ContextID, Speech: vl.Text})
+				talking.OnPacket(ctx, internal_type.EndOfSpeechPacket{ContextID: talking.messaging.GetID(), Speech: vl.Text})
 			}
-			// end of speech not configured so directly send end of speech packet
 			continue
 
 		case internal_type.UserAudioPacket:
@@ -269,7 +255,6 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				continue
 			}
 		case internal_type.SpeechToTextPacket:
-
 			ctx, span, _ := talking.Tracer().StartSpan(talking.Context(), utils.AssistantListeningStage,
 				internal_telemetry.KV{
 					K: "transcript",
@@ -285,17 +270,14 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 			//
 			if err := talking.callEndOfSpeech(ctx, vl); err != nil {
 				if !vl.Interim {
-					msi := talking.messaging.Create(vl.Script)
-					talking.OnPacket(ctx, internal_type.EndOfSpeechPacket{ContextID: msi.Id, Speech: msi.String()})
+					talking.OnPacket(ctx, internal_type.EndOfSpeechPacket{ContextID: talking.messaging.GetID(), Speech: vl.Script})
 				}
-			}
-
-			if !vl.Interim {
-				msi := talking.messaging.Create(vl.Script)
-				talking.Notify(ctx, &protos.ConversationUserMessage{Id: msi.GetId(), Message: &protos.ConversationUserMessage_Text{Text: msi.String()}, Completed: false, Time: timestamppb.New(time.Now())})
 			}
 			continue
 
+		case internal_type.InterimSpeechPacket:
+			talking.Notify(ctx, &protos.ConversationUserMessage{Id: vl.ContextID, Message: &protos.ConversationUserMessage_Text{Text: vl.Speech}, Completed: false, Time: timestamppb.New(time.Now())})
+			continue
 		case internal_type.EndOfSpeechPacket:
 			ctx, span, _ := talking.Tracer().StartSpan(talking.Context(), utils.AssistantUtteranceStage)
 			span.EndSpan(ctx,
@@ -307,38 +289,27 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 			// stop idle timeout as bot has started responding
 			talking.stopIdleTimeoutTimer()
 
-			//
-			msg, err := talking.messaging.GetMessage()
-			if err != nil {
-				talking.logger.Errorf("the message should have gotten created from speech to text packet or user text packet %v", err)
-				continue
-			}
 			if err := talking.Notify(ctx,
-				&protos.ConversationUserMessage{Id: msg.GetId(), Message: &protos.ConversationUserMessage_Text{Text: msg.String()}, Completed: true, Time: timestamppb.New(time.Now())}); err != nil {
+				&protos.ConversationUserMessage{Id: talking.messaging.GetID(), Message: &protos.ConversationUserMessage_Text{Text: vl.Speech}, Completed: true, Time: timestamppb.New(time.Now())}); err != nil {
 				talking.logger.Tracef(ctx, "might be returing processing the duplicate message so cut it out.")
 				continue
 			}
 			utils.Go(ctx, func() {
-				if err := talking.onCreateMessage(ctx, internal_type.UserTextPacket{ContextID: msg.GetId(), Text: msg.String()}); err != nil {
+				if err := talking.onCreateMessage(ctx, internal_type.UserTextPacket{ContextID: talking.messaging.GetID(), Text: vl.Speech}); err != nil {
 					talking.logger.Errorf("Error in onCreateMessage: %v", err)
 				}
 			})
 
 			//
-			if err := talking.assistantExecutor.Execute(ctx, talking, internal_type.UserTextPacket{ContextID: msg.GetId(), Text: msg.String()}); err != nil {
+			if err := talking.assistantExecutor.Execute(ctx, talking, internal_type.UserTextPacket{ContextID: talking.messaging.GetID(), Text: vl.Speech}); err != nil {
 				talking.logger.Errorf("assistant executor error: %v", err)
 				talking.OnError(ctx)
 				continue
 			}
 		case internal_type.LLMResponseDeltaPacket:
 
-			// packet from llm reciecved
-			inputMessage, err := talking.messaging.GetMessage()
-			if err != nil {
-				continue
-			}
 			// might be stale packet
-			if vl.ContextID != inputMessage.GetId() {
+			if vl.ContextID != talking.messaging.GetID() {
 				continue
 			}
 
@@ -356,12 +327,8 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 
 		case internal_type.LLMResponseDonePacket:
 
-			inputMessage, err := talking.messaging.GetMessage()
-			if err != nil {
-				continue
-			}
 			// might be stale packet
-			if vl.ContextID != inputMessage.GetId() {
+			if vl.ContextID != talking.messaging.GetID() {
 				continue
 			}
 
@@ -399,13 +366,8 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				}
 			}
 		case internal_type.TextToSpeechEndPacket:
-			// notify the user about completion of tts
-			inputMessage, err := talking.messaging.GetMessage()
-			if err != nil {
-				continue
-			}
 			// might be stale packet
-			if vl.ContextID != inputMessage.GetId() {
+			if vl.ContextID != talking.messaging.GetID() {
 				continue
 			}
 			if err := talking.Notify(talking.Context(), &protos.ConversationAssistantMessage{Time: timestamppb.Now(), Id: vl.ContextID, Completed: true}); err != nil {
@@ -421,13 +383,9 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				// stop idle timeout as bot has started responding
 				talking.startIdleTimeoutTimer(talking.Context())
 			}
-			// get current input message
-			inputMessage, err := talking.messaging.GetMessage()
-			if err != nil {
-				continue
-			}
+
 			// might be stale packet
-			if vl.ContextID != inputMessage.GetId() {
+			if vl.ContextID != talking.messaging.GetID() {
 				continue
 			}
 

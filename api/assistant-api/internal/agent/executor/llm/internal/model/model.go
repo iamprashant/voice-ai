@@ -217,6 +217,7 @@ func (executor *modelAssistantExecutor) handleResponse(ctx context.Context, comm
 	output := resp.GetData()
 	metrics := resp.GetMetrics()
 
+	executor.logger.Debugf("reponse %+v and lenth %d", resp.String(), len(resp.GetData().GetAssistant().GetContents()))
 	// Handle error responses
 	if !resp.GetSuccess() && resp.GetError() != nil {
 		communication.OnPacket(ctx, internal_type.LLMErrorPacket{
@@ -239,8 +240,9 @@ func (executor *modelAssistantExecutor) handleResponse(ctx context.Context, comm
 		})
 		if len(output.GetAssistant().GetToolCalls()) > 0 {
 			executor.executeToolCalls(ctx, communication, resp.GetRequestId(), output, executor.history)
-			return
 		}
+		return
+
 	}
 	if len(output.GetAssistant().GetContents()) > 0 {
 		communication.OnPacket(ctx, internal_type.LLMResponseDeltaPacket{

@@ -83,6 +83,8 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 	contents := make([]string, 0)
 	toolCalls := make([]*protos.ToolCall, 0)
 	contentBuilders := make([]strings.Builder, 0)
+	var textTokenBuffer []string // Buffer to hold text tokens temporarily
+	hasToolCalls := false        // Flag to track if response contains tool calls
 	accumlator := &GoogleChatCompletionAccumulator{}
 	for resp, err := range chat.SendMessageStream(ctx, current) {
 		if err != nil {
@@ -98,6 +100,7 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 			if choice.Content != nil {
 				for _, part := range choice.Content.Parts {
 					if part.FunctionCall != nil {
+						hasToolCalls = true
 						for len(toolCalls) <= int(choice.Index) {
 							toolCalls = append(toolCalls, nil)
 						}
@@ -120,6 +123,8 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 							contentBuilders = append(contentBuilders, strings.Builder{})
 						}
 						contentBuilders[int(choice.Index)].WriteString(part.Text)
+						// Buffer the token instead of streaming immediately
+						textTokenBuffer = append(textTokenBuffer, part.Text)
 					}
 				}
 			}
@@ -153,11 +158,26 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 			},
 		},
 	}
-	if len(filteredToolCalls) == 0 {
-		if err := onStream(options.Request.GetRequestId(), protoMsg); err != nil {
-			llc.logger.Warnf("error streaming complete message: %v", err)
+
+	// Stream text tokens only if no tool calls in response
+	if !hasToolCalls {
+		for _, token := range textTokenBuffer {
+			if token != "" {
+				tokenMsg := &protos.Message{
+					Role: "assistant",
+					Message: &protos.Message_Assistant{
+						Assistant: &protos.AssistantMessage{
+							Contents: []string{token},
+						},
+					},
+				}
+				if err := onStream(options.Request.GetRequestId(), tokenMsg); err != nil {
+					llc.logger.Warnf("error streaming token: %v", err)
+				}
+			}
 		}
 	}
+	// Send metrics with complete message
 	onMetrics(options.Request.GetRequestId(), protoMsg, metrics.Build())
 	return nil
 }

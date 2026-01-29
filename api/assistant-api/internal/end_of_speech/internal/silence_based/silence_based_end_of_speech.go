@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	internaltype "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/utils"
@@ -35,7 +36,7 @@ type command struct {
 // SilenceBasedEOS detects end-of-speech based on silence duration
 type SilenceBasedEOS struct {
 	logger         commons.Logger
-	callback       internaltype.EndOfSpeechCallback
+	callback       func(context.Context, ...internaltype.Packet) error
 	silenceTimeout time.Duration
 
 	// worker orchestration
@@ -55,7 +56,7 @@ type eosState struct {
 }
 
 // NewSilenceBasedEOS creates a new silence-based end-of-speech detector
-func NewSilenceBasedEndOfSpeech(logger commons.Logger, callback internaltype.EndOfSpeechCallback, opts utils.Option,
+func NewSilenceBasedEndOfSpeech(logger commons.Logger, callback func(context.Context, ...internaltype.Packet) error, opts utils.Option,
 ) (internaltype.EndOfSpeech, error) {
 	threshold := 1000 * time.Millisecond
 	if v, err := opts.GetFloat64("microphone.eos.timeout"); err == nil {
@@ -122,6 +123,7 @@ func (eos *SilenceBasedEOS) Analyze(ctx context.Context, pkt internaltype.Packet
 			if seg.Text == "" {
 				return nil
 			}
+			//
 			eos.send(command{
 				ctx:     ctx,
 				segment: seg,
@@ -143,6 +145,10 @@ func (eos *SilenceBasedEOS) Analyze(ctx context.Context, pkt internaltype.Packet
 		}
 		eos.state.segment = newSeg
 		eos.mu.Unlock()
+		eos.callback(ctx, internal_type.InterimSpeechPacket{
+			Speech:    newSeg.Text,
+			ContextID: newSeg.ContextID,
+		})
 		eos.send(command{
 			ctx:     ctx,
 			segment: newSeg,

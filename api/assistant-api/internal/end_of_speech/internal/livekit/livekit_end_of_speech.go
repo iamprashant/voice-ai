@@ -6,13 +6,15 @@
 package internal_livekit
 
 import (
+	"context"
+
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/utils"
 )
 
 func NewLivekitEndOfSpeech(
-	logger commons.Logger, onCallback internal_type.EndOfSpeechCallback, opts utils.Option,
+	logger commons.Logger, onCallback func(context.Context, ...internal_type.Packet) error, opts utils.Option,
 ) (internal_type.EndOfSpeech, error) {
 	return nil, nil
 }

@@ -4,15 +4,12 @@
 package internal_vertexai_callers
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
-	"time"
 
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/protos"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap/zapcore"
 )
 
 func TestBuildHistory_UserMessage(t *testing.T) {
@@ -464,26 +461,6 @@ func TestBuildHistory_LastPartExtraction(t *testing.T) {
 
 // Helper function to create a test logger
 func newTestLogger() commons.Logger {
-	return &testLogger{}
+	lgr, _ := commons.NewApplicationLogger()
+	return lgr
 }
-
-type testLogger struct{}
-
-func (t *testLogger) Level() zapcore.Level                                           { return zapcore.InfoLevel }
-func (t *testLogger) Debug(args ...interface{})                                      {}
-func (t *testLogger) Debugf(template string, args ...interface{})                    {}
-func (t *testLogger) Info(args ...interface{})                                       {}
-func (t *testLogger) Infof(template string, args ...interface{})                     {}
-func (t *testLogger) Warn(args ...interface{})                                       {}
-func (t *testLogger) Warnf(template string, args ...interface{})                     {}
-func (t *testLogger) Error(args ...interface{})                                      {}
-func (t *testLogger) Errorf(template string, args ...interface{})                    {}
-func (t *testLogger) DPanic(args ...interface{})                                     {}
-func (t *testLogger) DPanicf(template string, args ...interface{})                   {}
-func (t *testLogger) Panic(args ...interface{})                                      {}
-func (t *testLogger) Panicf(template string, args ...interface{})                    {}
-func (t *testLogger) Fatal(args ...interface{})                                      {}
-func (t *testLogger) Fatalf(template string, args ...interface{})                    {}
-func (t *testLogger) Benchmark(functionName string, duration time.Duration)          {}
-func (t *testLogger) Tracef(ctx context.Context, format string, args ...interface{}) {}
-func (t *testLogger) Sync() error                                                    { return nil }
