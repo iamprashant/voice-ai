@@ -217,7 +217,6 @@ func (executor *modelAssistantExecutor) handleResponse(ctx context.Context, comm
 	output := resp.GetData()
 	metrics := resp.GetMetrics()
 
-	executor.logger.Debugf("reponse %+v and lenth %d", resp.String(), len(resp.GetData().GetAssistant().GetContents()))
 	// Handle error responses
 	if !resp.GetSuccess() && resp.GetError() != nil {
 		communication.OnPacket(ctx, internal_type.LLMErrorPacket{

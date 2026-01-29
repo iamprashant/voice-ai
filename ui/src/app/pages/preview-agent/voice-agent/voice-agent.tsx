@@ -588,6 +588,7 @@ export const VoiceAgentDebugger: FC<{
                     return (
                       <div
                         key={idx}
+                        data-key={event.payload.id}
                         className="p-2 text-xs flex flex-col space-y-1"
                       >
                         <div className="flex space-x-1 items-center">
@@ -610,6 +611,7 @@ export const VoiceAgentDebugger: FC<{
                     return (
                       <div
                         key={idx}
+                        data-key={event.payload.id}
                         className="p-2 text-xs flex flex-col space-y-1"
                       >
                         <div className="flex space-x-1 items-center">

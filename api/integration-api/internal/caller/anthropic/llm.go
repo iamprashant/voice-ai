@@ -3,7 +3,9 @@ package internal_anthropic_callers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
+	"time"
 
 	"github.com/anthropics/anthropic-sdk-go"
 
@@ -108,8 +110,10 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 	onMetrics func(string, *protos.Message, []*protos.Metric) error,
 	onError func(string, error),
 ) error {
+	start := time.Now()
 	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)
 	metrics.OnStart()
+	var firstTokenTime *time.Time
 
 	instruction, messages := llc.BuildHistory(allMessages)
 	params := llc.GetMessageNewParams(options)
@@ -196,9 +200,6 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 
 		case anthropic.MessageStopEvent:
 			metrics.OnAddMetrics(llc.UsageMetrics(message.Usage)...)
-			options.PostHook(map[string]interface{}{
-				"result": utils.ToJson(message),
-			}, metrics.Build())
 
 			finalMsg := &protos.Message{
 				Role: "assistant",
@@ -210,6 +211,11 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 			if !hasToolCalls {
 				for _, token := range textTokenBuffer {
 					if token != "" {
+						// Record first token received time
+						if firstTokenTime == nil {
+							now := time.Now()
+							firstTokenTime = &now
+						}
 						tokenMsg := &protos.Message{
 							Role: "assistant",
 							Message: &protos.Message_Assistant{
@@ -224,8 +230,22 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 					}
 				}
 			}
+			// Add first token time metric if tokens were streamed
+			if firstTokenTime != nil {
+				metrics.OnAddMetrics(&protos.Metric{
+					Name:        "FIRST_TOKEN_RECIEVED_TIME",
+					Value:       fmt.Sprintf("%d", firstTokenTime.Sub(start)),
+					Description: "Time to receive first token from LLM",
+				})
+			}
+			// Update time taken and status
+			metrics.OnSuccess()
 			// Send metrics with complete message
 			onMetrics(options.Request.GetRequestId(), finalMsg, metrics.Build())
+			// Call PostHook after metrics for each message end
+			options.PostHook(map[string]interface{}{
+				"result": utils.ToJson(message),
+			}, metrics.Build())
 			return nil
 		}
 	}

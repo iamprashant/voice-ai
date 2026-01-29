@@ -146,7 +146,11 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 		case internal_type.UserTextPacket:
 			// interrupting
 			talking.OnPacket(ctx, internal_type.InterruptionPacket{ContextID: vl.ContextID, Source: internal_type.InterruptionSourceWord})
-			//
+
+			// add new ID for user text message
+			vl.ContextID = talking.messaging.GetID()
+
+			// calling end of speech analyzer
 			if err := talking.callEndOfSpeech(ctx, vl); err != nil {
 				talking.OnPacket(ctx, internal_type.EndOfSpeechPacket{ContextID: talking.messaging.GetID(), Speech: vl.Text})
 			}

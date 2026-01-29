@@ -109,10 +109,9 @@ func (iApi *integrationApi) postHook(ctx context.Context, auth types.SimplePrinc
 	iApi.logger.Debugf("Executing posthook for auditId %d", requestId)
 	start := time.Now()
 	keyPrefix := iApi.ObjectPrefix(*auth.GetCurrentOrganizationId(), *auth.GetCurrentProjectId(), credentialId)
-	go func(currentContext context.Context, _auditId uint64, s3Prefix string, _response map[string]interface{}) {
-		<-currentContext.Done()
-		nCtx := context.Background()
 
+	go func(currentContext context.Context, _auditId uint64, s3Prefix string, _response map[string]interface{}) {
+		nCtx := context.Background()
 		_, err := iApi.auditService.UpdateMetadata(nCtx, requestId, extras)
 		if err != nil {
 			iApi.logger.Errorf("unable to update the external audit metadata table for audit Id %d", _auditId)

@@ -326,13 +326,13 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 					}
 				}
 			}
-			// Send metrics with complete message
-			onMetrics(options.Request.GetRequestId(), protoMsg, metrics.Build())
 
-			// Call PostHook only at the end of response
+			// Call PostHook after metrics for each message end
 			options.PostHook(map[string]interface{}{
 				"result": utils.ToJson(accumulate),
 			}, metrics.Build())
+			// Send metrics with complete message
+			onMetrics(options.Request.GetRequestId(), protoMsg, metrics.Build())
 			return nil
 		}
 
@@ -346,6 +346,7 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 				},
 			})
 			metrics.OnAddMetrics(llc.GetComplitionUsages(accumulate.Usage)...)
+			metrics.OnSuccess()
 
 			// Don't stream if tool calls are present
 			assistantMsg.Contents = contentBuffer
@@ -355,12 +356,11 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 					Assistant: assistantMsg,
 				},
 			}
-			onMetrics(options.Request.GetRequestId(), protoMsg, metrics.Build())
-
 			// Call PostHook only at the end of response
 			options.PostHook(map[string]interface{}{
 				"result": utils.ToJson(accumulate),
 			}, metrics.Build())
+			onMetrics(options.Request.GetRequestId(), protoMsg, metrics.Build())
 			return nil
 		}
 
