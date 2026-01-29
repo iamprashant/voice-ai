@@ -1,8 +1,8 @@
 import { Metadata } from '@rapidaai/react';
 import { Dropdown } from '@/app/components/dropdown';
-import { GOOGLE_EMBEDDING_MODEL } from '@/app/components/providers/embedding/google/constants';
+import { GEMINI_EMBEDDING_MODEL } from '@/providers';
 
-export const ConfigureGoogleEmbeddingModel: React.FC<{
+export const ConfigureGeminiEmbeddingModel: React.FC<{
   onParameterChange: (parameters: Metadata[]) => void;
   parameters: Metadata[] | null;
 }> = ({ onParameterChange, parameters }) => {
@@ -12,7 +12,7 @@ export const ConfigureGoogleEmbeddingModel: React.FC<{
   return (
     <Dropdown
       className="bg-light-background max-w-full dark:bg-gray-950 focus-within:border-none! focus-within:outline-hidden! border-none!"
-      currentValue={GOOGLE_EMBEDDING_MODEL.find(
+      currentValue={GEMINI_EMBEDDING_MODEL().find(
         x =>
           x.id === getParamValue('model.id') &&
           getParamValue('model.name') === x.name,
@@ -34,7 +34,7 @@ export const ConfigureGoogleEmbeddingModel: React.FC<{
         filteredParams.push(newIdParam, newNameParam);
         onParameterChange(filteredParams);
       }}
-      allValue={GOOGLE_EMBEDDING_MODEL}
+      allValue={GEMINI_EMBEDDING_MODEL()}
       placeholder="Select embedding model"
       option={c => {
         return (
