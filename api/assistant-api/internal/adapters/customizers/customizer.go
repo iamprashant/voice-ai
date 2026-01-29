@@ -17,7 +17,7 @@ type customizer struct {
 	metadata map[string]interface{}
 }
 
-func NewRequestBaseCustomizer(req *protos.AssistantConversationConfiguration) (internal_type.Customization, error) {
+func NewRequestBaseCustomizer(req *protos.ConversationConfiguration) (internal_type.Customization, error) {
 	arg, err := utils.AnyMapToInterfaceMap(req.GetArgs())
 	if err != nil {
 		return nil, err

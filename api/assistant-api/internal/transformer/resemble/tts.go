@@ -161,14 +161,14 @@ func (rt *resembleTTS) Transform(ctx context.Context, in internal_type.LLMPacket
 	}
 
 	switch input := in.(type) {
-	case internal_type.LLMStreamPacket:
+	case internal_type.LLMResponseDeltaPacket:
 		if err := connection.WriteJSON(rt.GetTextToSpeechRequest(currentCtx, input.Text)); err != nil {
 			rt.logger.Errorf("resemble-tts: error while writing request to websocket: %v", err)
 			return err
 		}
 
 		return nil
-	case internal_type.LLMMessagePacket:
+	case internal_type.LLMResponseDonePacket:
 		return nil
 	default:
 		return fmt.Errorf("deepgram-tts: unsupported input type %T", in)

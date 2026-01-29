@@ -10,7 +10,6 @@ import (
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	internal_caller_metrics "github.com/rapidaai/api/integration-api/internal/caller/metrics"
 	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
 	protos "github.com/rapidaai/protos"
 )
@@ -29,9 +28,9 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 	ctx context.Context,
 	allMessages []*protos.Message,
 	options *internal_callers.ChatCompletionOptions,
-	onStream func(types.Message) error,
-	onMetrics func(*types.Message, types.Metrics) error,
-	onError func(err error),
+	onStream func(string, *protos.Message) error,
+	onMetrics func(string, *protos.Message, []*protos.Metric) error,
+	onError func(string, error),
 ) error {
 	start := time.Now()
 	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)
@@ -40,8 +39,10 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 	client, err := llc.GetClient()
 	if err != nil {
 		llc.logger.Errorf("chat completion unable to get client for cohere: %v", err)
-		onError(err)
-		onMetrics(nil, metrics.OnFailure().Build())
+		onError(options.Request.GetRequestId(), err)
+		options.PostHook(map[string]interface{}{
+			"error": err,
+		}, metrics.OnFailure().Build())
 		return err
 	}
 
@@ -58,19 +59,15 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 			"result": utils.ToJson(resp),
 			"error":  err,
 		}, metrics.Build())
-		onMetrics(nil, metrics.OnFailure().Build())
-		onError(err)
+		onError(options.Request.GetRequestId(), err)
 		return err
 	}
 
 	defer resp.Close()
-	msg := types.Message{
-		Contents: make([]*types.Content, 0),
-		Role:     "assistant",
-	}
-	var currentToolCall *types.ToolCall
-	var currentContent *types.Content
-	isToolCall := false
+	contents := make([]string, 0)
+	toolCalls := make([]*protos.ToolCall, 0)
+	var currentToolCall *protos.ToolCall
+	var currentContent string
 	for {
 		select {
 		case <-ctx.Done():
@@ -84,64 +81,72 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 			case rep.ContentStart != nil:
 				if rep.ContentStart.Delta != nil && rep.ContentStart.Delta.Message != nil && rep.ContentStart.Delta.Message.Content != nil {
 					if text := rep.ContentStart.Delta.Message.Content.GetText(); text != nil {
-						currentContent = &types.Content{
-							ContentType:   commons.TEXT_CONTENT.String(),
-							ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
-							Content:       []byte(*text),
-						}
+						currentContent = *text
 					}
 				}
 			case rep.ContentDelta != nil:
 				if rep.ContentDelta.Delta != nil && rep.ContentDelta.Delta.Message != nil && rep.ContentDelta.Delta.Message.Content != nil {
 					if text := rep.ContentDelta.Delta.Message.Content.GetText(); text != nil {
-						if !isToolCall {
-							if err := onStream(types.Message{
-								Contents: []*types.Content{{
-									ContentType:   commons.TEXT_CONTENT.String(),
-									ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
-									Content:       []byte(*text),
-								}},
-								Role: "assistant",
-							}); err != nil {
-								return err
-							}
-						}
-						currentContent.Content = append([]byte(currentContent.Content), []byte(*text)...)
+						currentContent += *text
 					}
 				}
 			case rep.ContentEnd != nil:
-				msg.Contents = append(msg.Contents, currentContent)
-				currentContent = nil
+				if currentContent != "" {
+					contents = append(contents, currentContent)
+					currentContent = ""
+				}
 			case rep.ToolCallStart != nil:
-				isToolCall = true
 				if rep.ToolCallStart.Delta != nil && rep.ToolCallStart.Delta.Message != nil && rep.ToolCallStart.Delta.Message.ToolCalls != nil {
-					currentToolCall = &types.ToolCall{
-						Id:   utils.Ptr(rep.ToolCallStart.Delta.Message.ToolCalls.Id),
-						Type: utils.Ptr(rep.ToolCallStart.Delta.Message.ToolCalls.Type()),
-						Function: &types.FunctionCall{
-							Name:      rep.ToolCallStart.Delta.Message.ToolCalls.Function.Name,
-							Arguments: rep.ToolCallStart.Delta.Message.ToolCalls.Function.Arguments,
+					tc := rep.ToolCallStart.Delta.Message.ToolCalls
+					var name, args string
+					if tc.Function.Name != nil {
+						name = *tc.Function.Name
+					}
+					if tc.Function.Arguments != nil {
+						args = *tc.Function.Arguments
+					}
+					currentToolCall = &protos.ToolCall{
+						Id:   tc.Id,
+						Type: tc.Type(),
+						Function: &protos.FunctionCall{
+							Name:      name,
+							Arguments: args,
 						},
 					}
 				}
 			case rep.ToolCallDelta != nil:
 				if currentToolCall != nil && rep.ToolCallDelta.Delta != nil && rep.ToolCallDelta.Delta.Message != nil && rep.ToolCallDelta.Delta.Message.ToolCalls != nil {
-					currentToolCall.Function.MergeArguments(rep.ToolCallDelta.Delta.Message.ToolCalls.Function.Arguments)
+					if rep.ToolCallDelta.Delta.Message.ToolCalls.Function.Arguments != nil {
+						currentToolCall.Function.Arguments += *rep.ToolCallDelta.Delta.Message.ToolCalls.Function.Arguments
+					}
 				}
 			case rep.ToolCallEnd != nil:
-				if msg.ToolCalls == nil {
-					msg.ToolCalls = make([]*types.ToolCall, 0)
-				}
-				msg.ToolCalls = append(msg.ToolCalls, currentToolCall)
+				toolCalls = append(toolCalls, currentToolCall)
 				currentToolCall = nil
 
 			case rep.MessageEnd != nil:
 				metrics.OnAddMetrics(llc.UsageMetrics(rep.MessageEnd.Delta.Usage)...)
 				metrics.OnSuccess()
+				protoMsg := &protos.Message{
+					Role: "assistant",
+					Message: &protos.Message_Assistant{
+						Assistant: &protos.AssistantMessage{
+							Contents:  contents,
+							ToolCalls: toolCalls,
+						},
+					},
+				}
 				options.PostHook(map[string]interface{}{
-					"result": msg,
+					"result": protoMsg,
 				}, metrics.Build())
-				onMetrics(&msg, metrics.Build())
+
+				// Stream complete message only if no tool calls
+				if len(toolCalls) == 0 {
+					if err := onStream(options.Request.GetRequestId(), protoMsg); err != nil {
+						llc.logger.Warnf("error streaming complete message: %v", err)
+					}
+				}
+				onMetrics(options.Request.GetRequestId(), protoMsg, metrics.Build())
 				return nil
 			}
 		}
@@ -154,52 +159,60 @@ func (llc *largeLanguageCaller) BuildHistory(allMessages []*protos.Message) cohe
 		switch cntn.GetRole() {
 		case "chatbot":
 		case "assistant":
-			_msg := &cohere.ChatMessageV2{
-				Role:      "assistant",
-				Assistant: &cohere.AssistantMessage{},
-			}
+			if assistant := cntn.GetAssistant(); assistant != nil {
+				_msg := &cohere.ChatMessageV2{
+					Role:      "assistant",
+					Assistant: &cohere.AssistantMessage{},
+				}
 
-			if len(cntn.GetContents()) > 0 {
-				_msg.Assistant.Content = &cohere.AssistantMessageV2Content{
-					String: types.OnlyStringProtoContent(cntn.GetContents()),
+				if len(assistant.GetContents()) > 0 {
+					_msg.Assistant.Content = &cohere.AssistantMessageV2Content{
+						String: strings.Join(assistant.GetContents(), ""),
+					}
 				}
-			}
-			if len(cntn.GetToolCalls()) > 0 {
-				fctCall := make([]*cohere.ToolCallV2, 0)
-				err := utils.Cast(cntn.ToolCalls, &fctCall)
-				if err != nil {
-					llc.logger.Errorf("unable to cast the to function tool call %v", err)
+				if len(assistant.GetToolCalls()) > 0 {
+					fctCall := make([]*cohere.ToolCallV2, 0)
+					err := utils.Cast(assistant.GetToolCalls(), &fctCall)
+					if err != nil {
+						llc.logger.Errorf("unable to cast the to function tool call %v", err)
+					}
+					_msg.Assistant.ToolCalls = fctCall
 				}
-				_msg.Assistant.ToolCalls = fctCall
+				msgHistory = append(msgHistory, _msg)
 			}
-			msgHistory = append(msgHistory, _msg)
 		case "system":
-			msgHistory = append(msgHistory, &cohere.ChatMessageV2{
-				Role: "system",
-				System: &cohere.SystemMessageV2{
-					Content: &cohere.SystemMessageV2Content{
-						String: types.OnlyStringProtoContent(cntn.GetContents()),
+			if system := cntn.GetSystem(); system != nil {
+				msgHistory = append(msgHistory, &cohere.ChatMessageV2{
+					Role: "system",
+					System: &cohere.SystemMessageV2{
+						Content: &cohere.SystemMessageV2Content{
+							String: system.GetContent(),
+						},
 					},
-				},
-			})
+				})
+			}
 		case "user":
-			msgHistory = append(msgHistory, &cohere.ChatMessageV2{
-				Role: "user",
-				User: &cohere.UserMessageV2{Content: &cohere.UserMessageV2Content{
-					String: types.OnlyStringProtoContent(cntn.GetContents()),
-				}},
-			})
+			if user := cntn.GetUser(); user != nil {
+				msgHistory = append(msgHistory, &cohere.ChatMessageV2{
+					Role: "user",
+					User: &cohere.UserMessageV2{Content: &cohere.UserMessageV2Content{
+						String: user.GetContent(),
+					}},
+				})
+			}
 		case "tool":
-			for _, tcl := range cntn.GetContents() {
-				msgHistory = append(msgHistory,
-					&cohere.ChatMessageV2{
-						Role: "tool",
-						Tool: &cohere.ToolMessageV2{
-							ToolCallId: tcl.GetContentType(),
-							Content: &cohere.ToolMessageV2Content{
-								String: string(tcl.GetContent()),
-							}},
-					})
+			if tool := cntn.GetTool(); tool != nil {
+				for _, t := range tool.GetTools() {
+					msgHistory = append(msgHistory,
+						&cohere.ChatMessageV2{
+							Role: "tool",
+							Tool: &cohere.ToolMessageV2{
+								ToolCallId: t.GetId(),
+								Content: &cohere.ToolMessageV2Content{
+									String: t.GetContent(),
+								}},
+						})
+				}
 			}
 		default:
 			llc.logger.Warnf("Unknown role: %s and everytihgn", cntn.String())
@@ -321,7 +334,7 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 	ctx context.Context,
 	allMessages []*protos.Message,
 	options *internal_callers.ChatCompletionOptions,
-) (*types.Message, types.Metrics, error) {
+) (*protos.Message, []*protos.Metric, error) {
 	llc.logger.Debugf("chat completion for cohere")
 	//
 	// Working with chat completion with vision
@@ -356,36 +369,45 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 		return nil, metrics.Build(), err
 	}
 	metrics.OnSuccess()
-	metrics.OnAddMetrics(llc.UsageMetrics(resp.GetUsage())...)
 
 	// // call when you are done
 	options.PostHook(map[string]interface{}{
 		"result": resp,
 	}, metrics.Build())
 
-	message := &types.Message{
-		Role:      resp.GetMessage().Role(),
-		Contents:  make([]*types.Content, 0),
-		ToolCalls: make([]*types.ToolCall, 0),
-	}
+	contents := make([]string, 0)
+	toolCalls := make([]*protos.ToolCall, 0)
 
 	for _, msg := range resp.GetMessage().GetContent() {
-		message.Contents = append(message.Contents, &types.Content{
-			ContentType:   commons.TEXT_CONTENT.String(),
-			ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
-			Content:       []byte(msg.Text.Text),
-		})
+		contents = append(contents, msg.Text.Text)
 	}
 
 	for _, tl := range resp.GetMessage().GetToolCalls() {
-		message.ToolCalls = append(message.ToolCalls, &types.ToolCall{
-			Id:   utils.Ptr(tl.GetId()),
-			Type: utils.Ptr(tl.Type()),
-			Function: &types.FunctionCall{
-				Name:      tl.GetFunction().GetName(),
-				Arguments: tl.GetFunction().GetArguments(),
+		var name, args string
+		if n := tl.GetFunction().GetName(); n != nil {
+			name = *n
+		}
+		if a := tl.GetFunction().GetArguments(); a != nil {
+			args = *a
+		}
+		toolCalls = append(toolCalls, &protos.ToolCall{
+			Id:   tl.GetId(),
+			Type: tl.Type(),
+			Function: &protos.FunctionCall{
+				Name:      name,
+				Arguments: args,
 			},
 		})
+	}
+
+	message := &protos.Message{
+		Role: "assistant",
+		Message: &protos.Message_Assistant{
+			Assistant: &protos.AssistantMessage{
+				Contents:  contents,
+				ToolCalls: toolCalls,
+			},
+		},
 	}
 	return message, metrics.Build(), nil
 }

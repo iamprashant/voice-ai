@@ -28,9 +28,17 @@ type mistralIntegrationGRPCApi struct {
 	mistralIntegrationApi
 }
 
-// StreamChat implements protos.MistralServiceServer.
-func (*mistralIntegrationGRPCApi) StreamChat(*integration_api.ChatRequest, integration_api.MistralService_StreamChatServer) error {
-	panic("unimplemented")
+// StreamChat implements protos.MistralServiceServer (bidirectional streaming).
+func (mistral *mistralIntegrationGRPCApi) StreamChat(stream integration_api.MistralService_StreamChatServer) error {
+	mistral.logger.Debugf("Bidirectional stream chat opened for mistral")
+	return mistral.integrationApi.StreamChatBidirectional(
+		stream.Context(),
+		"MISTRAL",
+		func(cred *integration_api.Credential) internal_callers.LargeLanguageCaller {
+			return internal_mistral_callers.NewLargeLanguageCaller(mistral.logger, cred)
+		},
+		stream,
+	)
 }
 
 // Embedding implements protos.mistralServiceServer.

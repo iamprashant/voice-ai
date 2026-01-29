@@ -8,7 +8,6 @@ package internal_conversation_entity
 import (
 	gorm_model "github.com/rapidaai/pkg/models/gorm"
 	gorm_types "github.com/rapidaai/pkg/models/gorm/types"
-	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
 	protos "github.com/rapidaai/protos"
@@ -55,21 +54,19 @@ func (acm *AssistantConversationAction) ResponseMessage() *protos.Message {
 	return out
 }
 
-func (acm *AssistantConversationAction) SetLLMCall(in, out *types.Message) {
+func (acm *AssistantConversationAction) SetLLMCall(in, out *protos.Message) {
 	acm.ActionType = type_enums.ACTION_LLM_CALL
 	if in != nil {
 		acm.Request = map[string]interface{}{
-			"role":      in.GetRole(),
-			"contents":  in.GetContents(),
-			"toolCalls": in.GetToolCalls(),
+			"role":    in.GetRole(),
+			"message": in.GetMessage(),
 		}
 	}
 
 	if out != nil {
 		acm.Response = map[string]interface{}{
-			"role":      out.GetRole(),
-			"contents":  out.GetContents(),
-			"toolCalls": out.GetToolCalls(),
+			"role":    out.GetRole(),
+			"message": out.GetMessage(),
 		}
 	}
 }

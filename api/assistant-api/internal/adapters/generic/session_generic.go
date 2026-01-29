@@ -109,14 +109,14 @@ func (r *GenericRequestor) Disconnect() {
 //
 // Example:
 //
-//	err := requestor.Connect(ctx, auth, "user-123", &protos.AssistantConversationConfiguration{
+//	err := requestor.Connect(ctx, auth, "user-123", &protos.ConversationConfiguration{
 //	    Assistant: &protos.AssistantDefinition{AssistantId: 1},
 //	})
 func (r *GenericRequestor) Connect(
 	ctx context.Context,
 	auth types.SimplePrinciple,
 	identifier string,
-	config *protos.AssistantConversationConfiguration,
+	config *protos.ConversationConfiguration,
 ) error {
 	ctx, span, _ := r.Tracer().StartSpan(ctx, utils.AssistantConnectStage)
 	defer span.EndSpan(ctx, utils.AssistantConnectStage)
@@ -179,7 +179,7 @@ func (r *GenericRequestor) Connect(
 // while non-critical operations run as background tasks.
 func (r *GenericRequestor) OnCreateSession(
 	ctx context.Context,
-	config *protos.AssistantConversationConfiguration,
+	config *protos.ConversationConfiguration,
 	assistant *internal_assistant_entity.Assistant,
 	identifier string,
 	customizer internal_type.Customization,
@@ -250,7 +250,7 @@ func (r *GenericRequestor) OnCreateSession(
 // Attempting to resume a completed or cancelled conversation will fail.
 func (r *GenericRequestor) OnResumeSession(
 	ctx context.Context,
-	config *protos.AssistantConversationConfiguration,
+	config *protos.ConversationConfiguration,
 	assistant *internal_assistant_entity.Assistant,
 	identifier string,
 	conversationID uint64,
@@ -392,7 +392,7 @@ func (r *GenericRequestor) exportTelemetry(ctx context.Context) {
 
 // closeExecutor shuts down the assistant executor and releases its resources.
 func (r *GenericRequestor) closeExecutor(ctx context.Context) {
-	if err := r.assistantExecutor.Close(ctx, r); err != nil {
+	if err := r.assistantExecutor.Close(ctx); err != nil {
 		r.logger.Errorf("failed to close assistant executor: %v", err)
 	}
 }
@@ -414,7 +414,7 @@ func (r *GenericRequestor) stopTimers() {
 // resumeSession delegates to OnResumeSession with extracted configuration values.
 func (r *GenericRequestor) resumeSession(
 	ctx context.Context,
-	config *protos.AssistantConversationConfiguration,
+	config *protos.ConversationConfiguration,
 	assistant *internal_assistant_entity.Assistant,
 	identifier string,
 	customizer internal_type.Customization,
@@ -432,7 +432,7 @@ func (r *GenericRequestor) resumeSession(
 // createSession delegates to OnCreateSession with extracted configuration values.
 func (r *GenericRequestor) createSession(
 	ctx context.Context,
-	config *protos.AssistantConversationConfiguration,
+	config *protos.ConversationConfiguration,
 	assistant *internal_assistant_entity.Assistant,
 	identifier string,
 	customizer internal_type.Customization,
@@ -471,7 +471,7 @@ func (r *GenericRequestor) configureAudioModes(
 }
 
 // initializeExecutor sets up the LLM executor for processing conversation messages.
-func (r *GenericRequestor) initializeExecutor(ctx context.Context, config *protos.AssistantConversationConfiguration) error {
+func (r *GenericRequestor) initializeExecutor(ctx context.Context, config *protos.ConversationConfiguration) error {
 	if err := r.assistantExecutor.Initialize(ctx, r, config); err != nil {
 		r.logger.Tracef(ctx, "failed to initialize executor: %+v", err)
 		return err
@@ -488,7 +488,7 @@ func (r *GenericRequestor) notifyConfiguration(
 	conversation *internal_conversation_entity.AssistantConversation,
 	assistant *internal_assistant_entity.Assistant,
 ) {
-	configNotification := &protos.AssistantConversationConfiguration{
+	configNotification := &protos.ConversationConfiguration{
 		AssistantConversationId: conversation.Id,
 		Assistant: &protos.AssistantDefinition{
 			AssistantId: assistant.Id,

@@ -4,7 +4,6 @@
 package internal_callers
 
 import (
-	"github.com/rapidaai/pkg/types"
 	protos "github.com/rapidaai/protos"
 )
 
@@ -13,14 +12,14 @@ type RerankerOptions struct {
 }
 
 func NewRerankerOptions(
-	requestId uint64,
+	uuID uint64,
 	irRequest *protos.RerankingRequest,
 	preHook func(rst map[string]interface{}),
-	postHook func(rst map[string]interface{}, metrics types.Metrics),
+	postHook func(rst map[string]interface{}, metrics []*protos.Metric),
 ) *RerankerOptions {
 	cc := &RerankerOptions{
 		AIOptions: AIOptions{
-			RequestId:      requestId,
+			RequestId:      uuID,
 			PreHook:        preHook,
 			PostHook:       postHook,
 			ModelParameter: irRequest.GetModelParameters(),

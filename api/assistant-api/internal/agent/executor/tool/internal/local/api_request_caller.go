@@ -7,7 +7,6 @@ package internal_tool_local
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -16,7 +15,6 @@ import (
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/clients/rest"
 	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/protos"
 )
 
 type apiRequestToolCaller struct {
@@ -27,12 +25,12 @@ type apiRequestToolCaller struct {
 	apiEndpoint         string
 }
 
-func (afkTool *apiRequestToolCaller) Call(ctx context.Context, pkt internal_type.LLMPacket, toolId string, args string, communication internal_type.Communication) internal_type.LLMToolPacket {
+func (afkTool *apiRequestToolCaller) Call(ctx context.Context, contextID, toolId string, args map[string]interface{}, communication internal_type.Communication) internal_tool.ToolCallResult {
 	client := rest.NewRestClientWithConfig(afkTool.apiEndpoint, afkTool.apiRequestHeader, 15)
 	var output *rest.APIResponse
 	var err error
 
-	body := afkTool.Parse(
+	body := afkTool.parse(
 		afkTool.apiRequestParameter,
 		args,
 		communication,
@@ -50,12 +48,9 @@ func (afkTool *apiRequestToolCaller) Call(ctx context.Context, pkt internal_type
 
 	v, err := output.ToMap()
 	if err != nil {
-		return internal_type.LLMToolPacket{Name: afkTool.Name(), ContextID: pkt.ContextId(), Action: protos.AssistantConversationAction_API_REQUEST, Result: map[string]interface{}{
-			"request":  body,
-			"response": output.ToString(),
-		}}
+		return internal_tool.Result("Unable to get result", true)
 	}
-	return internal_type.LLMToolPacket{Name: afkTool.Name(), ContextID: pkt.ContextId(), Action: protos.AssistantConversationAction_API_REQUEST, Result: v}
+	return internal_tool.JustResult(v)
 }
 
 func NewApiRequestToolCaller(logger commons.Logger, toolOptions *internal_assistant_entity.AssistantTool, communcation internal_type.Communication) (internal_tool.ToolCaller, error) {
@@ -88,7 +83,7 @@ func NewApiRequestToolCaller(logger commons.Logger, toolOptions *internal_assist
 	}, nil
 }
 
-func (md *apiRequestToolCaller) Parse(mapping map[string]string, args string, communication internal_type.Communication) map[string]interface{} {
+func (md *apiRequestToolCaller) parse(mapping map[string]string, args map[string]interface{}, communication internal_type.Communication) map[string]interface{} {
 	arguments := make(map[string]interface{})
 	for key, value := range mapping {
 		if k, ok := strings.CutPrefix(key, "tool."); ok {
@@ -96,14 +91,7 @@ func (md *apiRequestToolCaller) Parse(mapping map[string]string, args string, co
 			case "name":
 				arguments[value] = md.Name()
 			case "argument":
-				var argMap map[string]interface{}
-				err := json.Unmarshal([]byte(args), &argMap)
-				if err != nil {
-					md.logger.Debugf("the arugment might be string")
-					arguments[value] = args
-				} else {
-					arguments[value] = argMap
-				}
+				arguments[value] = args
 			}
 		}
 		if k, ok := strings.CutPrefix(key, "assistant."); ok {
@@ -119,7 +107,7 @@ func (md *apiRequestToolCaller) Parse(mapping map[string]string, args string, co
 			case "id":
 				arguments[value] = fmt.Sprintf("%d", communication.Conversation().Id)
 			case "messages":
-				arguments[value] = md.SimplifyHistory(communication.GetHistories())
+				arguments[value] = md.simplifyHistory(communication.GetHistories())
 			}
 		}
 		if k, ok := strings.CutPrefix(key, "argument."); ok {
@@ -145,7 +133,7 @@ func (md *apiRequestToolCaller) Parse(mapping map[string]string, args string, co
 	return arguments
 }
 
-func (md *apiRequestToolCaller) SimplifyHistory(msgs []internal_type.MessagePacket) []map[string]string {
+func (md *apiRequestToolCaller) simplifyHistory(msgs []internal_type.MessagePacket) []map[string]string {
 	out := make([]map[string]string, 0)
 	for _, msg := range msgs {
 		out = append(out, map[string]string{

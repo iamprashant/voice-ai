@@ -73,14 +73,14 @@ func (talking *phoneTalking) Talk(ctx context.Context, auth types.SimplePrincipl
 			return fmt.Errorf("stream.Recv error: %w", err)
 		}
 		switch msg := req.GetRequest().(type) {
-		case *protos.AssistantMessagingRequest_Message:
+		case *protos.AssistantTalkInput_Message:
 			if initialized {
 				// talking.logger.Benchmark("accepting input after", time.Since(talking.StartedAt))
 				if err := talking.Input(req.GetMessage()); err != nil {
 					talking.logger.Errorf("error while accepting input %v", err)
 				}
 			}
-		case *protos.AssistantMessagingRequest_Configuration:
+		case *protos.AssistantTalkInput_Configuration:
 			// talking.logger.Debugf("connection changed for assistant")
 			initialized = false
 			if err := talking.Connect(ctx, auth, identifier, msg.Configuration); err != nil {

@@ -61,14 +61,16 @@ func (vertexaiRPC *vertexaiIntegrationRPCApi) Chat(c *gin.Context) {
 	vertexaiRPC.logger.Debugf("Chat from rpc with gin context %v", c)
 }
 
-// StreamChat implements protos.VertexaiServiceServer.
-func (vertexaiGRPc *vertexaiIntegrationGRPCApi) StreamChat(irRequest *protos.ChatRequest, stream protos.VertexAiService_StreamChatServer) error {
-	return vertexaiGRPc.integrationApi.StreamChat(
-		irRequest,
+// StreamChat implements protos.VertexaiServiceServer (bidirectional streaming).
+func (vertexaiGRPc *vertexaiIntegrationGRPCApi) StreamChat(stream protos.VertexAiService_StreamChatServer) error {
+	vertexaiGRPc.logger.Debugf("Bidirectional stream chat opened for vertexai")
+	return vertexaiGRPc.integrationApi.StreamChatBidirectional(
 		stream.Context(),
 		"VERTEXAI",
-		internal_vertexai_callers.NewLargeLanguageCaller(vertexaiGRPc.logger, irRequest.GetCredential()),
-		stream.Send,
+		func(cred *protos.Credential) internal_callers.LargeLanguageCaller {
+			return internal_vertexai_callers.NewLargeLanguageCaller(vertexaiGRPc.logger, cred)
+		},
+		stream,
 	)
 }
 

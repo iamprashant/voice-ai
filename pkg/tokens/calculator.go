@@ -5,10 +5,8 @@
 // See LICENSE.md or contact sales@rapida.ai for commercial usage.
 package tokens
 
-import (
-	"github.com/rapidaai/pkg/types"
-)
+import "github.com/rapidaai/protos"
 
 type TokenCalculator interface {
-	Token(in []*types.Message, out *types.Message) []*types.Metric
+	Token(in []*protos.Message, out *protos.Message) []*protos.Metric
 }

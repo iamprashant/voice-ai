@@ -9,8 +9,8 @@ import (
 
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
+	"github.com/rapidaai/protos"
 	integration_api "github.com/rapidaai/protos"
 )
 
@@ -45,46 +45,46 @@ func (replicate *Replicate) GetClient() (*replicate_go.Client, error) {
 	return replicate_go.NewClient(replicate_go.WithToken(cx.(string)))
 }
 
-func (replicate *Replicate) UsageMetrics(usages *replicate_go.PredictionMetrics) types.Metrics {
-	metrics := make(types.Metrics, 0)
+func (replicate *Replicate) UsageMetrics(usages *replicate_go.PredictionMetrics) []*protos.Metric {
+	metrics := make([]*protos.Metric, 0)
 	if usages != nil {
-		metrics = append(metrics, &types.Metric{
+		metrics = append(metrics, &protos.Metric{
 			Name:        type_enums.PROVIDER_GENERATE_TIME.String(),
 			Value:       fmt.Sprintf("%f", *usages.PredictTime),
 			Description: "Time taken to generate by provider",
 		})
 
-		metrics = append(metrics, &types.Metric{
+		metrics = append(metrics, &protos.Metric{
 			Name:        type_enums.PROVIDER_TOTAL_TIME.String(),
 			Value:       fmt.Sprintf("%f", *usages.TotalTime),
 			Description: "Total time taken by provider",
 		})
 
-		metrics = append(metrics, &types.Metric{
+		metrics = append(metrics, &protos.Metric{
 			Name:        type_enums.TIME_TO_FIRST_TOKEN.String(),
 			Value:       fmt.Sprintf("%f", *usages.TimeToFirstToken),
 			Description: "Time to First Token",
 		})
 
-		metrics = append(metrics, &types.Metric{
+		metrics = append(metrics, &protos.Metric{
 			Name:        type_enums.TOKEN_PRE_SECOND.String(),
 			Value:       fmt.Sprintf("%f", *usages.TokensPerSecond),
 			Description: "Token Per second",
 		})
 
-		metrics = append(metrics, &types.Metric{
+		metrics = append(metrics, &protos.Metric{
 			Name:        type_enums.OUTPUT_TOKEN.String(),
 			Value:       fmt.Sprintf("%d", *usages.InputTokenCount),
 			Description: "Input token",
 		})
 
-		metrics = append(metrics, &types.Metric{
+		metrics = append(metrics, &protos.Metric{
 			Name:        type_enums.INPUT_TOKEN.String(),
 			Value:       fmt.Sprintf("%d", *usages.OutputTokenCount),
 			Description: "Output Token",
 		})
 
-		metrics = append(metrics, &types.Metric{
+		metrics = append(metrics, &protos.Metric{
 			Name:        type_enums.TOTAL_TOKEN.String(),
 			Value:       fmt.Sprintf("%d", *usages.InputTokenCount+*usages.OutputTokenCount),
 			Description: "Total Token",

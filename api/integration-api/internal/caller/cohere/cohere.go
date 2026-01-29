@@ -11,8 +11,8 @@ import (
 
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
+	"github.com/rapidaai/protos"
 	integration_api "github.com/rapidaai/protos"
 )
 
@@ -50,11 +50,11 @@ func (cohere *Cohere) GetClient() (*cohereclient.Client, error) {
 		),
 	), nil
 }
-func (cohere *Cohere) UsageMetrics(usages *cohereV2.Usage) types.Metrics {
-	metrics := make(types.Metrics, 0)
+func (cohere *Cohere) UsageMetrics(usages *cohereV2.Usage) []*protos.Metric {
+	metrics := make([]*protos.Metric, 0)
 	if usages != nil {
 		if usages.Tokens.InputTokens != nil {
-			metrics = append(metrics, &types.Metric{
+			metrics = append(metrics, &protos.Metric{
 				Name:        type_enums.OUTPUT_TOKEN.String(),
 				Value:       fmt.Sprintf("%f", *usages.Tokens.InputTokens),
 				Description: "Input token",
@@ -62,14 +62,14 @@ func (cohere *Cohere) UsageMetrics(usages *cohereV2.Usage) types.Metrics {
 		}
 
 		if usages.Tokens.OutputTokens != nil {
-			metrics = append(metrics, &types.Metric{
+			metrics = append(metrics, &protos.Metric{
 				Name:        type_enums.INPUT_TOKEN.String(),
 				Value:       fmt.Sprintf("%f", *usages.Tokens.OutputTokens),
 				Description: "Output Token",
 			})
 		}
 		if usages.Tokens.OutputTokens != nil && usages.Tokens.InputTokens != nil {
-			metrics = append(metrics, &types.Metric{
+			metrics = append(metrics, &protos.Metric{
 				Name:        type_enums.TOTAL_TOKEN.String(),
 				Value:       fmt.Sprintf("%f", *usages.Tokens.InputTokens+*usages.Tokens.OutputTokens),
 				Description: "Total Token",

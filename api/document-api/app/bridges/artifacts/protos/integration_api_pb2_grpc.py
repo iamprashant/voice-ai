@@ -202,7 +202,7 @@ class OpenAiServiceStub(object):
                 request_serializer=integration__api__pb2.ChatRequest.SerializeToString,
                 response_deserializer=integration__api__pb2.ChatResponse.FromString,
                 _registered_method=True)
-        self.StreamChat = channel.unary_stream(
+        self.StreamChat = channel.stream_stream(
                 '/integration_api.OpenAiService/StreamChat',
                 request_serializer=integration__api__pb2.ChatRequest.SerializeToString,
                 response_deserializer=integration__api__pb2.ChatResponse.FromString,
@@ -234,7 +234,7 @@ class OpenAiServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def StreamChat(self, request, context):
+    def StreamChat(self, request_iterator, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -265,7 +265,7 @@ def add_OpenAiServiceServicer_to_server(servicer, server):
                     request_deserializer=integration__api__pb2.ChatRequest.FromString,
                     response_serializer=integration__api__pb2.ChatResponse.SerializeToString,
             ),
-            'StreamChat': grpc.unary_stream_rpc_method_handler(
+            'StreamChat': grpc.stream_stream_rpc_method_handler(
                     servicer.StreamChat,
                     request_deserializer=integration__api__pb2.ChatRequest.FromString,
                     response_serializer=integration__api__pb2.ChatResponse.SerializeToString,
@@ -346,7 +346,7 @@ class OpenAiService(object):
             _registered_method=True)
 
     @staticmethod
-    def StreamChat(request,
+    def StreamChat(request_iterator,
             target,
             options=(),
             channel_credentials=None,
@@ -356,8 +356,8 @@ class OpenAiService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_stream(
-            request,
+        return grpc.experimental.stream_stream(
+            request_iterator,
             target,
             '/integration_api.OpenAiService/StreamChat',
             integration__api__pb2.ChatRequest.SerializeToString,
@@ -446,7 +446,7 @@ class AzureServiceStub(object):
                 request_serializer=integration__api__pb2.ChatRequest.SerializeToString,
                 response_deserializer=integration__api__pb2.ChatResponse.FromString,
                 _registered_method=True)
-        self.StreamChat = channel.unary_stream(
+        self.StreamChat = channel.stream_stream(
                 '/integration_api.AzureService/StreamChat',
                 request_serializer=integration__api__pb2.ChatRequest.SerializeToString,
                 response_deserializer=integration__api__pb2.ChatResponse.FromString,
@@ -478,7 +478,7 @@ class AzureServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def StreamChat(self, request, context):
+    def StreamChat(self, request_iterator, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -509,7 +509,7 @@ def add_AzureServiceServicer_to_server(servicer, server):
                     request_deserializer=integration__api__pb2.ChatRequest.FromString,
                     response_serializer=integration__api__pb2.ChatResponse.SerializeToString,
             ),
-            'StreamChat': grpc.unary_stream_rpc_method_handler(
+            'StreamChat': grpc.stream_stream_rpc_method_handler(
                     servicer.StreamChat,
                     request_deserializer=integration__api__pb2.ChatRequest.FromString,
                     response_serializer=integration__api__pb2.ChatResponse.SerializeToString,
@@ -590,7 +590,7 @@ class AzureService(object):
             _registered_method=True)
 
     @staticmethod
-    def StreamChat(request,
+    def StreamChat(request_iterator,
             target,
             options=(),
             channel_credentials=None,
@@ -600,8 +600,8 @@ class AzureService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_stream(
-            request,
+        return grpc.experimental.stream_stream(
+            request_iterator,
             target,
             '/integration_api.AzureService/StreamChat',
             integration__api__pb2.ChatRequest.SerializeToString,
@@ -690,7 +690,7 @@ class GeminiServiceStub(object):
                 request_serializer=integration__api__pb2.ChatRequest.SerializeToString,
                 response_deserializer=integration__api__pb2.ChatResponse.FromString,
                 _registered_method=True)
-        self.StreamChat = channel.unary_stream(
+        self.StreamChat = channel.stream_stream(
                 '/integration_api.GeminiService/StreamChat',
                 request_serializer=integration__api__pb2.ChatRequest.SerializeToString,
                 response_deserializer=integration__api__pb2.ChatResponse.FromString,
@@ -717,7 +717,7 @@ class GeminiServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def StreamChat(self, request, context):
+    def StreamChat(self, request_iterator, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -742,7 +742,7 @@ def add_GeminiServiceServicer_to_server(servicer, server):
                     request_deserializer=integration__api__pb2.ChatRequest.FromString,
                     response_serializer=integration__api__pb2.ChatResponse.SerializeToString,
             ),
-            'StreamChat': grpc.unary_stream_rpc_method_handler(
+            'StreamChat': grpc.stream_stream_rpc_method_handler(
                     servicer.StreamChat,
                     request_deserializer=integration__api__pb2.ChatRequest.FromString,
                     response_serializer=integration__api__pb2.ChatResponse.SerializeToString,
@@ -818,7 +818,7 @@ class GeminiService(object):
             _registered_method=True)
 
     @staticmethod
-    def StreamChat(request,
+    def StreamChat(request_iterator,
             target,
             options=(),
             channel_credentials=None,
@@ -828,8 +828,8 @@ class GeminiService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_stream(
-            request,
+        return grpc.experimental.stream_stream(
+            request_iterator,
             target,
             '/integration_api.GeminiService/StreamChat',
             integration__api__pb2.ChatRequest.SerializeToString,
@@ -891,7 +891,7 @@ class VertexAiServiceStub(object):
                 request_serializer=integration__api__pb2.ChatRequest.SerializeToString,
                 response_deserializer=integration__api__pb2.ChatResponse.FromString,
                 _registered_method=True)
-        self.StreamChat = channel.unary_stream(
+        self.StreamChat = channel.stream_stream(
                 '/integration_api.VertexAiService/StreamChat',
                 request_serializer=integration__api__pb2.ChatRequest.SerializeToString,
                 response_deserializer=integration__api__pb2.ChatResponse.FromString,
@@ -918,7 +918,7 @@ class VertexAiServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def StreamChat(self, request, context):
+    def StreamChat(self, request_iterator, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -943,7 +943,7 @@ def add_VertexAiServiceServicer_to_server(servicer, server):
                     request_deserializer=integration__api__pb2.ChatRequest.FromString,
                     response_serializer=integration__api__pb2.ChatResponse.SerializeToString,
             ),
-            'StreamChat': grpc.unary_stream_rpc_method_handler(
+            'StreamChat': grpc.stream_stream_rpc_method_handler(
                     servicer.StreamChat,
                     request_deserializer=integration__api__pb2.ChatRequest.FromString,
                     response_serializer=integration__api__pb2.ChatResponse.SerializeToString,
@@ -1019,7 +1019,7 @@ class VertexAiService(object):
             _registered_method=True)
 
     @staticmethod
-    def StreamChat(request,
+    def StreamChat(request_iterator,
             target,
             options=(),
             channel_credentials=None,
@@ -1029,8 +1029,8 @@ class VertexAiService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_stream(
-            request,
+        return grpc.experimental.stream_stream(
+            request_iterator,
             target,
             '/integration_api.VertexAiService/StreamChat',
             integration__api__pb2.ChatRequest.SerializeToString,
@@ -1087,7 +1087,7 @@ class ReplicateServiceStub(object):
                 request_serializer=integration__api__pb2.ChatRequest.SerializeToString,
                 response_deserializer=integration__api__pb2.ChatResponse.FromString,
                 _registered_method=True)
-        self.StreamChat = channel.unary_stream(
+        self.StreamChat = channel.stream_stream(
                 '/integration_api.ReplicateService/StreamChat',
                 request_serializer=integration__api__pb2.ChatRequest.SerializeToString,
                 response_deserializer=integration__api__pb2.ChatResponse.FromString,
@@ -1108,7 +1108,7 @@ class ReplicateServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def StreamChat(self, request, context):
+    def StreamChat(self, request_iterator, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -1128,7 +1128,7 @@ def add_ReplicateServiceServicer_to_server(servicer, server):
                     request_deserializer=integration__api__pb2.ChatRequest.FromString,
                     response_serializer=integration__api__pb2.ChatResponse.SerializeToString,
             ),
-            'StreamChat': grpc.unary_stream_rpc_method_handler(
+            'StreamChat': grpc.stream_stream_rpc_method_handler(
                     servicer.StreamChat,
                     request_deserializer=integration__api__pb2.ChatRequest.FromString,
                     response_serializer=integration__api__pb2.ChatResponse.SerializeToString,
@@ -1177,7 +1177,7 @@ class ReplicateService(object):
             _registered_method=True)
 
     @staticmethod
-    def StreamChat(request,
+    def StreamChat(request_iterator,
             target,
             options=(),
             channel_credentials=None,
@@ -1187,8 +1187,8 @@ class ReplicateService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_stream(
-            request,
+        return grpc.experimental.stream_stream(
+            request_iterator,
             target,
             '/integration_api.ReplicateService/StreamChat',
             integration__api__pb2.ChatRequest.SerializeToString,
@@ -1245,7 +1245,7 @@ class AnthropicServiceStub(object):
                 request_serializer=integration__api__pb2.ChatRequest.SerializeToString,
                 response_deserializer=integration__api__pb2.ChatResponse.FromString,
                 _registered_method=True)
-        self.StreamChat = channel.unary_stream(
+        self.StreamChat = channel.stream_stream(
                 '/integration_api.AnthropicService/StreamChat',
                 request_serializer=integration__api__pb2.ChatRequest.SerializeToString,
                 response_deserializer=integration__api__pb2.ChatResponse.FromString,
@@ -1266,7 +1266,7 @@ class AnthropicServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def StreamChat(self, request, context):
+    def StreamChat(self, request_iterator, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -1286,7 +1286,7 @@ def add_AnthropicServiceServicer_to_server(servicer, server):
                     request_deserializer=integration__api__pb2.ChatRequest.FromString,
                     response_serializer=integration__api__pb2.ChatResponse.SerializeToString,
             ),
-            'StreamChat': grpc.unary_stream_rpc_method_handler(
+            'StreamChat': grpc.stream_stream_rpc_method_handler(
                     servicer.StreamChat,
                     request_deserializer=integration__api__pb2.ChatRequest.FromString,
                     response_serializer=integration__api__pb2.ChatResponse.SerializeToString,
@@ -1335,7 +1335,7 @@ class AnthropicService(object):
             _registered_method=True)
 
     @staticmethod
-    def StreamChat(request,
+    def StreamChat(request_iterator,
             target,
             options=(),
             channel_credentials=None,
@@ -1345,8 +1345,8 @@ class AnthropicService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_stream(
-            request,
+        return grpc.experimental.stream_stream(
+            request_iterator,
             target,
             '/integration_api.AnthropicService/StreamChat',
             integration__api__pb2.ChatRequest.SerializeToString,
@@ -1413,7 +1413,7 @@ class CohereServiceStub(object):
                 request_serializer=integration__api__pb2.ChatRequest.SerializeToString,
                 response_deserializer=integration__api__pb2.ChatResponse.FromString,
                 _registered_method=True)
-        self.StreamChat = channel.unary_stream(
+        self.StreamChat = channel.stream_stream(
                 '/integration_api.CohereService/StreamChat',
                 request_serializer=integration__api__pb2.ChatRequest.SerializeToString,
                 response_deserializer=integration__api__pb2.ChatResponse.FromString,
@@ -1446,7 +1446,7 @@ class CohereServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def StreamChat(self, request, context):
+    def StreamChat(self, request_iterator, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -1476,7 +1476,7 @@ def add_CohereServiceServicer_to_server(servicer, server):
                     request_deserializer=integration__api__pb2.ChatRequest.FromString,
                     response_serializer=integration__api__pb2.ChatResponse.SerializeToString,
             ),
-            'StreamChat': grpc.unary_stream_rpc_method_handler(
+            'StreamChat': grpc.stream_stream_rpc_method_handler(
                     servicer.StreamChat,
                     request_deserializer=integration__api__pb2.ChatRequest.FromString,
                     response_serializer=integration__api__pb2.ChatResponse.SerializeToString,
@@ -1579,7 +1579,7 @@ class CohereService(object):
             _registered_method=True)
 
     @staticmethod
-    def StreamChat(request,
+    def StreamChat(request_iterator,
             target,
             options=(),
             channel_credentials=None,
@@ -1589,8 +1589,8 @@ class CohereService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_stream(
-            request,
+        return grpc.experimental.stream_stream(
+            request_iterator,
             target,
             '/integration_api.CohereService/StreamChat',
             integration__api__pb2.ChatRequest.SerializeToString,
@@ -1762,7 +1762,7 @@ class MistralServiceStub(object):
                 request_serializer=integration__api__pb2.ChatRequest.SerializeToString,
                 response_deserializer=integration__api__pb2.ChatResponse.FromString,
                 _registered_method=True)
-        self.StreamChat = channel.unary_stream(
+        self.StreamChat = channel.stream_stream(
                 '/integration_api.MistralService/StreamChat',
                 request_serializer=integration__api__pb2.ChatRequest.SerializeToString,
                 response_deserializer=integration__api__pb2.ChatResponse.FromString,
@@ -1783,7 +1783,7 @@ class MistralServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def StreamChat(self, request, context):
+    def StreamChat(self, request_iterator, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -1803,7 +1803,7 @@ def add_MistralServiceServicer_to_server(servicer, server):
                     request_deserializer=integration__api__pb2.ChatRequest.FromString,
                     response_serializer=integration__api__pb2.ChatResponse.SerializeToString,
             ),
-            'StreamChat': grpc.unary_stream_rpc_method_handler(
+            'StreamChat': grpc.stream_stream_rpc_method_handler(
                     servicer.StreamChat,
                     request_deserializer=integration__api__pb2.ChatRequest.FromString,
                     response_serializer=integration__api__pb2.ChatResponse.SerializeToString,
@@ -1852,7 +1852,7 @@ class MistralService(object):
             _registered_method=True)
 
     @staticmethod
-    def StreamChat(request,
+    def StreamChat(request_iterator,
             target,
             options=(),
             channel_credentials=None,
@@ -1862,8 +1862,8 @@ class MistralService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_stream(
-            request,
+        return grpc.experimental.stream_stream(
+            request_iterator,
             target,
             '/integration_api.MistralService/StreamChat',
             integration__api__pb2.ChatRequest.SerializeToString,

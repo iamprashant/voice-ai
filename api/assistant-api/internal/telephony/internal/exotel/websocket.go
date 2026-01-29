@@ -40,7 +40,7 @@ func (exotel *exotelWebsocketStreamer) Context() context.Context {
 	return exotel.streamer.Context()
 }
 
-func (exotel *exotelWebsocketStreamer) Recv() (*protos.AssistantMessagingRequest, error) {
+func (exotel *exotelWebsocketStreamer) Recv() (*protos.AssistantTalkInput, error) {
 	if exotel.streamer.Connection() == nil {
 		return nil, io.EOF
 	}
@@ -76,17 +76,17 @@ func (exotel *exotelWebsocketStreamer) Recv() (*protos.AssistantMessagingRequest
 	}
 }
 
-func (exotel *exotelWebsocketStreamer) Send(response *protos.AssistantMessagingResponse) error {
+func (exotel *exotelWebsocketStreamer) Send(response *protos.AssistantTalkOutput) error {
 	switch data := response.GetData().(type) {
-	case *protos.AssistantMessagingResponse_Assistant:
+	case *protos.AssistantTalkOutput_Assistant:
 		switch content := data.Assistant.Message.(type) {
-		case *protos.AssistantConversationAssistantMessage_Audio:
+		case *protos.ConversationAssistantMessage_Audio:
 			//1ms 32  10ms 320byte @ 16000Hz, 16-bit mono PCM = 640 bytes
 			// Each message needs to be a 20ms sample of audio.
 			// At 8kHz the message should be 320 bytes.
 			// At 16kHz the message should be 640 bytes.
 			bufferSizeThreshold := 32 * 20
-			audioData := content.Audio.GetContent()
+			audioData := content.Audio
 
 			// Use vng.audioBuffer to handle pending data across calls
 			exotel.streamer.LockOutputAudioBuffer()
@@ -117,9 +117,9 @@ func (exotel *exotelWebsocketStreamer) Send(response *protos.AssistantMessagingR
 				exotel.streamer.OutputBuffer().Reset() // Clear the buffer after flushing
 			}
 		}
-	case *protos.AssistantMessagingResponse_Interruption:
+	case *protos.AssistantTalkOutput_Interruption:
 		// interrupt on word given by stt
-		if data.Interruption.Type == protos.AssistantConversationInterruption_INTERRUPTION_TYPE_WORD {
+		if data.Interruption.Type == protos.ConversationInterruption_INTERRUPTION_TYPE_WORD {
 			exotel.streamer.LockInputAudioBuffer()
 			exotel.streamer.OutputBuffer().Reset()
 			exotel.streamer.UnlockInputAudioBuffer()
@@ -129,8 +129,8 @@ func (exotel *exotelWebsocketStreamer) Send(response *protos.AssistantMessagingR
 				exotel.logger.Errorf("Error sending clear command:", err)
 			}
 		}
-	case *protos.AssistantMessagingResponse_Action:
-		if data.Action.GetAction() == protos.AssistantConversationAction_END_CONVERSATION {
+	case *protos.AssistantTalkOutput_Directive:
+		if data.Directive.GetType() == protos.ConversationDirective_END_CONVERSATION {
 			if err := exotel.streamer.Connection().Close(); err != nil {
 				// terminate the conversation as end tool call is triggered
 				exotel.logger.Errorf("Error disconnecting command:", err)
@@ -147,7 +147,7 @@ func (exotel *exotelWebsocketStreamer) handleStartEvent(mediaEvent internal_exot
 
 // when exotel is connected then connect the assistant
 
-func (exotel *exotelWebsocketStreamer) handleMediaEvent(mediaEvent internal_exotel.ExotelMediaEvent) (*protos.AssistantMessagingRequest, error) {
+func (exotel *exotelWebsocketStreamer) handleMediaEvent(mediaEvent internal_exotel.ExotelMediaEvent) (*protos.AssistantTalkInput, error) {
 	payloadBytes, err := exotel.streamer.Encoder().DecodeString(mediaEvent.Media.Payload)
 	if err != nil {
 		exotel.logger.Warn("Failed to decode media payload", "error", err.Error())

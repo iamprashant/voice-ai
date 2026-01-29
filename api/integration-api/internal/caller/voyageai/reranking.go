@@ -7,9 +7,8 @@ import (
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	internal_caller_metrics "github.com/rapidaai/api/integration-api/internal/caller/metrics"
 	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/types"
+	"github.com/rapidaai/protos"
 	integration_api "github.com/rapidaai/protos"
-	protos "github.com/rapidaai/protos"
 )
 
 type rerankingCaller struct {
@@ -24,9 +23,9 @@ func NewRerankingCaller(logger commons.Logger, credential *integration_api.Crede
 
 func (rr *rerankingCaller) GetReranking(ctx context.Context,
 	query string,
-	content map[int32]*protos.Content,
+	content map[int32]string,
 	options *internal_callers.RerankerOptions,
-) ([]*integration_api.Reranking, types.Metrics, error) {
+) ([]*integration_api.Reranking, []*protos.Metric, error) {
 	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)
 	metrics.OnStart()
 
@@ -34,7 +33,7 @@ func (rr *rerankingCaller) GetReranking(ctx context.Context,
 
 	input := make([]string, len(content))
 	for k, v := range content {
-		input[k] = string(v.Content)
+		input[k] = v
 	}
 
 	request := map[string]interface{}{

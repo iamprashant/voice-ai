@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/utils"
 	"github.com/rapidaai/protos"

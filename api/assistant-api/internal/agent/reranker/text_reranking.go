@@ -14,7 +14,6 @@ import (
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	"github.com/rapidaai/pkg/types"
-	protos "github.com/rapidaai/protos"
 )
 
 type textReranker struct {
@@ -36,13 +35,9 @@ func (qe *textReranker) Rerank(ctx context.Context,
 	config *RerankingOption,
 	in []string, query string, additionalData map[string]string) (map[int32]string, error) {
 
-	contents := make(map[int32]*protos.Content)
+	contents := make(map[int32]string)
 	for idx, s := range in {
-		contents[int32(idx)] = &protos.Content{
-			ContentType:   commons.TEXT_CONTENT.String(),
-			ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
-			Content:       []byte(s),
-		}
+		contents[int32(idx)] = s
 	}
 
 	res, err := qe.integrationCaller.Reranking(ctx,
@@ -66,7 +61,7 @@ func (qe *textReranker) Rerank(ctx context.Context,
 	reranked := res.GetData()
 	output := make(map[int32]string, len(reranked))
 	for _, rk := range reranked {
-		output[rk.GetIndex()] = types.ContentString(rk.GetContent())
+		output[rk.GetIndex()] = rk.GetContent()
 	}
 	return output, nil
 }

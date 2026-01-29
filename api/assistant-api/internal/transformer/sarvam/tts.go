@@ -161,7 +161,7 @@ func (rt *sarvamTextToSpeech) Transform(ctx context.Context, in internal_type.LL
 	}
 
 	switch input := in.(type) {
-	case internal_type.LLMStreamPacket:
+	case internal_type.LLMResponseDeltaPacket:
 		if err := connection.WriteJSON(map[string]interface{}{
 			"type": "text",
 			"data": map[string]interface{}{
@@ -171,7 +171,7 @@ func (rt *sarvamTextToSpeech) Transform(ctx context.Context, in internal_type.LL
 			rt.logger.Errorf("sarvam-tts: error writing text message to websocket: %v", err)
 			return err
 		}
-	case internal_type.LLMMessagePacket:
+	case internal_type.LLMResponseDonePacket:
 		if err := connection.WriteJSON(map[string]interface{}{
 			"type": "flush",
 		}); err != nil {

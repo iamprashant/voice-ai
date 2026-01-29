@@ -77,7 +77,7 @@ func (iApi *integrationApi) Embedding(c context.Context,
 			Code:    200,
 			Success: true,
 			Data:    embeddings,
-			Metrics: metrics.ToProto(),
+			Metrics: metrics,
 		}, nil
 	}
 	return utils.Error[integration_api.EmbeddingResponse](errors.New("illegal token while processing request"), "Illegal request, please try again")

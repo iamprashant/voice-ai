@@ -29,7 +29,7 @@ func (in *rerankingInputBuilder) Reranking(
 	credential *protos.Credential,
 	modelOpts map[string]*anypb.Any,
 	additionalData map[string]string,
-	contents map[int32]*protos.Content,
+	contents map[int32]string,
 ) *protos.RerankingRequest {
 	return &protos.RerankingRequest{
 		Credential:      credential,

@@ -102,9 +102,12 @@ func (r *GenericRequestor) initializeMaxSessionDuration(ctx context.Context, beh
 		if err != nil {
 			inputMessage = r.messaging.Create("")
 		}
-		r.OnPacket(ctx, internal_type.LLMToolPacket{
+		r.OnPacket(ctx, internal_type.DirectivePacket{
 			ContextID: inputMessage.GetId(),
-			Action:    protos.AssistantConversationAction_END_CONVERSATION,
+			Directive: protos.ConversationDirective_END_CONVERSATION,
+			Arguments: map[string]interface{}{
+				"reason": "max session duration reached",
+			},
 		})
 	})
 }
@@ -158,9 +161,12 @@ func (r *GenericRequestor) onIdleTimeout(ctx context.Context) error {
 	// Check if max backoff retries reached
 	if behavior.IdealTimeoutBackoff != nil && *behavior.IdealTimeoutBackoff > 0 {
 		if r.idleTimeoutCount >= *behavior.IdealTimeoutBackoff {
-			r.OnPacket(ctx, internal_type.LLMToolPacket{
+			r.OnPacket(ctx, internal_type.DirectivePacket{
 				ContextID: inputMessage.GetId(),
-				Action:    protos.AssistantConversationAction_END_CONVERSATION,
+				Directive: protos.ConversationDirective_END_CONVERSATION,
+				Arguments: map[string]interface{}{
+					"reason": "max session duration reached",
+				},
 			})
 			return nil
 		}

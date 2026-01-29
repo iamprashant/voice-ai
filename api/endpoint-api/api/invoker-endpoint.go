@@ -128,6 +128,7 @@ func (invokeApi *invokerGRPCApi) Invoke(ctx context.Context, iRequest *invoker_a
 			invokeApi.
 				inputBuilder.
 				Chat(
+					fmt.Sprintf("%d", requestID),
 					&invoker_api.Credential{
 						Id:    vlt.GetId(),
 						Value: vlt.GetValue(),
@@ -177,12 +178,16 @@ func (invokeApi *invokerGRPCApi) Invoke(ctx context.Context, iRequest *invoker_a
 		return utils.ErrorWithCode[invoker_api.InvokeResponse](400, err, "Unable to execute the endpoint, please check and try again.")
 	}
 
+	var data []string
+	if output.GetData() != nil && output.GetData().GetAssistant() != nil {
+		data = output.GetData().GetAssistant().GetContents()
+	}
 	return &invoker_api.InvokeResponse{
 		RequestId: requestID,
 		Code:      200,
 		Success:   true,
 		TimeTaken: uint64(time.Since(start).Microseconds()),
-		Data:      output.GetData().GetContents(),
+		Data:      data,
 		Metrics:   output.GetMetrics(),
 	}, nil
 }

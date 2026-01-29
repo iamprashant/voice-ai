@@ -145,14 +145,13 @@ func (azure *azureTextToSpeech) Transform(ctx context.Context, in internal_type.
 	}
 
 	switch input := in.(type) {
-	case internal_type.LLMStreamPacket:
+	case internal_type.LLMResponseDeltaPacket:
 		res := <-cl.StartSpeakingTextAsync(input.Text)
 		if res.Error != nil {
 			return res.Error
 		}
-
 		return nil
-	case internal_type.LLMMessagePacket:
+	case internal_type.LLMResponseDonePacket:
 		return nil
 	default:
 		return fmt.Errorf("azure-tts: unsupported input type %T", in)

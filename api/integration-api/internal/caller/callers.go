@@ -10,7 +10,6 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/protos"
 )
 
@@ -31,7 +30,7 @@ type CredentialResolver = func() map[string]interface{}
 type AIOptions struct {
 	RequestId      uint64
 	PreHook        func(rst map[string]interface{})
-	PostHook       func(rst map[string]interface{}, metrics types.Metrics)
+	PostHook       func(rst map[string]interface{}, metrics []*protos.Metric)
 	ModelParameter map[string]*anypb.Any
 }
 
@@ -76,15 +75,15 @@ type LargeLanguageCaller interface {
 		ctx context.Context,
 		allMessages []*protos.Message,
 		options *ChatCompletionOptions,
-	) (*types.Message, types.Metrics, error)
+	) (*protos.Message, []*protos.Metric, error)
 
 	StreamChatCompletion(
 		ctx context.Context,
 		allMessages []*protos.Message,
 		options *ChatCompletionOptions,
-		onStream func(types.Message) error,
-		onMetrics func(*types.Message, types.Metrics) error,
-		onError func(err error),
+		onStream func(rID string, msg *protos.Message) error,
+		onMetrics func(rID string, msg *protos.Message, mtrx []*protos.Metric) error,
+		onError func(rID string, err error),
 	) error
 }
 
@@ -92,14 +91,7 @@ type LargeLanguageCaller interface {
 // - GetEmbedding: Generates embeddings for the supplied content and options.
 type EmbeddingCaller interface {
 	GetEmbedding(ctx context.Context,
-		content map[int32]string, options *EmbeddingOptions) ([]*protos.Embedding, types.Metrics, error)
-}
-
-// ModerationsCaller is an interface for content moderation tasks.
-// - GetModeration: Processes content moderation for given content and options, returning moderated content and metrics.
-type ModerationsCaller interface {
-	GetModeration(ctx context.Context,
-		content *types.Content, options *ModerationOptions) (*types.Content, types.Metrics, error)
+		content map[int32]string, options *EmbeddingOptions) ([]*protos.Embedding, []*protos.Metric, error)
 }
 
 // RerankingCaller is an interface for reranking models.
@@ -107,7 +99,7 @@ type ModerationsCaller interface {
 type RerankingCaller interface {
 	GetReranking(ctx context.Context,
 		query string,
-		content map[int32]*protos.Content,
+		content map[int32]string,
 		options *RerankerOptions,
-	) ([]*protos.Reranking, types.Metrics, error)
+	) ([]*protos.Reranking, []*protos.Metric, error)
 }

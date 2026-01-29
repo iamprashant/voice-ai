@@ -160,7 +160,7 @@ func (t *deepgramTTS) Transform(ctx context.Context, in internal_type.LLMPacket)
 	}
 
 	switch input := in.(type) {
-	case internal_type.LLMStreamPacket:
+	case internal_type.LLMResponseDeltaPacket:
 		if err := conn.WriteJSON(map[string]interface{}{
 			"type": "Speak",
 			"text": t.normalizer.Normalize(ctx, input.Text),
@@ -169,7 +169,7 @@ func (t *deepgramTTS) Transform(ctx context.Context, in internal_type.LLMPacket)
 		}
 
 		return nil
-	case internal_type.LLMMessagePacket:
+	case internal_type.LLMResponseDonePacket:
 		if err := conn.WriteJSON(map[string]string{"type": "Flush"}); err != nil {
 			t.logger.Errorf("deepgram-tts: failed to send Flush %v", err)
 			return err

@@ -8,8 +8,8 @@ import (
 
 	gorm_model "github.com/rapidaai/pkg/models/gorm"
 	gorm_types "github.com/rapidaai/pkg/models/gorm/types"
-	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
+	"github.com/rapidaai/protos"
 )
 
 type ExternalAudit struct {
@@ -18,7 +18,7 @@ type ExternalAudit struct {
 	AssetPrefix            string                  `json:"assetPrefix" gorm:"type:string;size:200;not null"`
 	ResponseStatus         int64                   `json:"responseStatus" gorm:"type:bigint;size:10"`
 	TimeTaken              int64                   `json:"timeTaken" gorm:"type:bigint;size:20"`
-	Status                 string                  `json:"status" gorm:"type:string;size:50;not null;default:active"`
+	Status                 type_enums.RecordState  `json:"status" gorm:"type:string;size:50;not null;default:active"`
 	ProjectId              uint64                  `json:"projectId" gorm:"type:bigint"`
 	OrganizationId         uint64                  `json:"organizationId" gorm:"type:bigint;not null"`
 	CredentialId           uint64                  `json:"credentialId" gorm:"type:bigint;not null"`
@@ -26,7 +26,7 @@ type ExternalAudit struct {
 	Metrics                gorm_types.MapArray     `json:"metrics" gorm:"type:string"`
 }
 
-func (epm *ExternalAudit) SetMetrics(metrics types.Metrics) {
+func (epm *ExternalAudit) SetMetrics(metrics []*protos.Metric) {
 	var result []map[string]string
 	epm.ResponseStatus = 200
 	for _, metric := range metrics {

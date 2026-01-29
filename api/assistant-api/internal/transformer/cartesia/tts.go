@@ -134,12 +134,12 @@ func (ct *cartesiaTTS) Transform(ctx context.Context, in internal_type.LLMPacket
 	}
 
 	switch input := in.(type) {
-	case internal_type.LLMStreamPacket:
+	case internal_type.LLMResponseDeltaPacket:
 		message := ct.GetTextToSpeechInput(input.Text, map[string]interface{}{"continue": true, "context_id": ct.contextId, "max_buffer_delay_ms": "0ms"})
 		if err := conn.WriteJSON(message); err != nil {
 			return err
 		}
-	case internal_type.LLMMessagePacket:
+	case internal_type.LLMResponseDonePacket:
 		message := ct.GetTextToSpeechInput("", map[string]interface{}{"continue": false, "flush": true, "context_id": ct.contextId})
 		if err := conn.WriteJSON(message); err != nil {
 			return err

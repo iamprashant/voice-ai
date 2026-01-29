@@ -28,7 +28,7 @@ func (iApi *integrationApi) Reranking(
 			"Please provider valid service credentials to perfom invoke, read docs @ docs.rapida.ai",
 		)
 	}
-	requestId := iApi.RequestId()
+	uuID := iApi.RequestId()
 
 	irRequest.AdditionalData["provider_name"] = tag
 	model, ok := irRequest.ModelParameters["model.name"]
@@ -62,10 +62,10 @@ func (iApi *integrationApi) Reranking(
 		irRequest.GetQuery(),
 		irRequest.GetContent(),
 		internal_callers.NewRerankerOptions(
-			requestId,
+			uuID,
 			irRequest,
-			iApi.PreHook(c, iAuth, irRequest, requestId, tag),
-			iApi.PostHook(c, iAuth, irRequest, requestId, tag),
+			iApi.PreHook(c, iAuth, irRequest, uuID, tag),
+			iApi.PostHook(c, iAuth, irRequest, uuID, tag),
 		),
 	)
 	if err == nil {
@@ -76,6 +76,6 @@ func (iApi *integrationApi) Reranking(
 		Code:    200,
 		Success: true,
 		Data:    complitions,
-		Metrics: metrics.ToProto(),
+		Metrics: metrics,
 	}, nil
 }

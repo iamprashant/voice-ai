@@ -58,14 +58,12 @@ func NewBaseTelephonyStreamer(logger commons.Logger, conn *websocket.Conn, assis
 	}
 }
 
-func (base *BaseTelephonyStreamer) CreateVoiceRequest(audioData []byte) *protos.AssistantMessagingRequest {
-	return &protos.AssistantMessagingRequest{
-		Request: &protos.AssistantMessagingRequest_Message{
-			Message: &protos.AssistantConversationUserMessage{
-				Message: &protos.AssistantConversationUserMessage_Audio{
-					Audio: &protos.AssistantConversationMessageAudioContent{
-						Content: audioData,
-					},
+func (base *BaseTelephonyStreamer) CreateVoiceRequest(audioData []byte) *protos.AssistantTalkInput {
+	return &protos.AssistantTalkInput{
+		Request: &protos.AssistantTalkInput_Message{
+			Message: &protos.ConversationUserMessage{
+				Message: &protos.ConversationUserMessage_Audio{
+					Audio: audioData,
 				},
 			},
 		},
@@ -151,10 +149,10 @@ func (base *BaseTelephonyStreamer) GetUuid() string {
 	return v
 }
 
-func (base *BaseTelephonyStreamer) CreateConnectionRequest(in, out *protos.AudioConfig) (*protos.AssistantMessagingRequest, error) {
-	return &protos.AssistantMessagingRequest{
-		Request: &protos.AssistantMessagingRequest_Configuration{
-			Configuration: &protos.AssistantConversationConfiguration{
+func (base *BaseTelephonyStreamer) CreateConnectionRequest(in, out *protos.AudioConfig) (*protos.AssistantTalkInput, error) {
+	return &protos.AssistantTalkInput{
+		Request: &protos.AssistantTalkInput_Configuration{
+			Configuration: &protos.ConversationConfiguration{
 				AssistantConversationId: base.GetConversationId(),
 				Assistant:               base.GetAssistantDefinition(),
 				InputConfig: &protos.StreamConfig{

@@ -125,7 +125,7 @@ func (knowledgeDocument *knowledgeDocumentService) CreateToolDocument(ctx contex
 	knowledge *internal_knowledge_gorm.Knowledge,
 	datasource string,
 	documentStructure string,
-	contents []*protos.Content,
+	contents []*protos.DocumentContent,
 ) ([]*internal_knowledge_gorm.KnowledgeDocument, error) {
 	db := knowledgeDocument.postgres.DB(ctx)
 	allKnowledge := make([]*internal_knowledge_gorm.KnowledgeDocument, 0)
@@ -164,7 +164,7 @@ func (knowledgeDocument *knowledgeDocumentService) CreateManualDocument(
 	knowledge *internal_knowledge_gorm.Knowledge,
 	datasource string,
 	documentStructure string,
-	contents []*protos.Content,
+	contents []*protos.DocumentContent,
 ) ([]*internal_knowledge_gorm.KnowledgeDocument, error) {
 
 	db := knowledgeDocument.postgres.DB(ctx)

@@ -8,7 +8,6 @@ import (
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	internal_caller_metrics "github.com/rapidaai/api/integration-api/internal/caller/metrics"
 	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/types"
 	integration_api "github.com/rapidaai/protos"
 	protos "github.com/rapidaai/protos"
 )
@@ -29,9 +28,9 @@ func (*largeLanguageCaller) StreamChatCompletion(
 	// providerModel string,
 	allMessages []*protos.Message,
 	options *internal_callers.ChatCompletionOptions,
-	onStream func(types.Message) error,
-	onMetrics func(*types.Message, types.Metrics) error,
-	onError func(err error),
+	onStream func(string, *protos.Message) error,
+	onMetrics func(string, *protos.Message, []*protos.Metric) error,
+	onError func(string, error),
 ) error {
 	panic("unimplemented")
 }
@@ -41,7 +40,7 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 	// providerModel string,
 	allMessages []*protos.Message,
 	options *internal_callers.ChatCompletionOptions,
-) (*types.Message, types.Metrics, error) {
+) (*protos.Message, []*protos.Metric, error) {
 	llc.logger.Debugf("getting chat completion from google llc")
 	//
 	// Working with chat completion with vision
@@ -56,11 +55,6 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 	var lastRole string
 
 	for _, cntn := range allMessages {
-		if len(cntn.GetContents()) == 0 {
-			// there might be problem in initiator
-			continue
-		}
-
 		currentRole := cntn.GetRole()
 		if currentRole == "user" || currentRole == "system" {
 			if lastRole == "user" {
@@ -68,12 +62,14 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 				continue
 			}
 
-			txt := cntn.Contents[0].GetContent()
-			msg = append(msg, map[string]string{
-				"role":    "user",
-				"content": string(txt),
-			})
-			lastRole = "user"
+			if user := cntn.GetUser(); user != nil {
+				txt := user.GetContent()
+				msg = append(msg, map[string]string{
+					"role":    "user",
+					"content": txt,
+				})
+				lastRole = "user"
+			}
 		}
 
 		if currentRole == "assistant" {
@@ -81,12 +77,14 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 				// Skip this message to ensure alternation
 				continue
 			}
-			txt := cntn.Contents[0].GetContent()
-			msg = append(msg, map[string]string{
-				"role":    "assistant",
-				"content": string(txt),
-			})
-			lastRole = "assistant"
+			if assistant := cntn.GetAssistant(); assistant != nil && len(assistant.GetContents()) > 0 {
+				txt := assistant.GetContents()[0]
+				msg = append(msg, map[string]string{
+					"role":    "assistant",
+					"content": txt,
+				})
+				lastRole = "assistant"
+			}
 		}
 	}
 
@@ -118,22 +116,24 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 
 	//
 	//
-	output := make([]*types.Content, len(resp.Choices))
+	contents := make([]string, len(resp.Choices))
 	metrics.OnAddMetrics(llc.UsageMetrics(resp.Usage)...)
 
 	for idx, choice := range resp.Choices {
-		output[idx] = &types.Content{
-			ContentType:   commons.TEXT_CONTENT.String(),
-			ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
-			Content:       []byte(choice.Message.Content),
-		}
+		contents[idx] = choice.Message.Content
+	}
+	message := &protos.Message{
+		Role: "assistant",
+		Message: &protos.Message_Assistant{
+			Assistant: &protos.AssistantMessage{
+				Contents: contents,
+			},
+		},
 	}
 	options.PostHook(map[string]interface{}{
 		"result": res,
 	}, metrics.Build())
-	return &types.Message{
-		Contents: output,
-	}, metrics.Build(), nil
+	return message, metrics.Build(), nil
 }
 
 func (llc *largeLanguageCaller) GetCompletion(
@@ -141,11 +141,11 @@ func (llc *largeLanguageCaller) GetCompletion(
 	providerModel string,
 	prompts []string,
 	options *internal_callers.CompletionOptions,
-) ([]*types.Content, types.Metrics, error) {
+) ([]string, []*protos.Metric, error) {
 	//
 	// Working with chat completion with vision
 	//
-	llc.logger.Debugf("getting for completion for anthropic")
+	llc.logger.Debugf("getting for completion for mistral")
 	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)
 	metrics.OnStart()
 

@@ -136,7 +136,7 @@ func (google *googleTextToSpeech) Transform(ctx context.Context, in internal_typ
 	}
 
 	switch input := in.(type) {
-	case internal_type.LLMStreamPacket:
+	case internal_type.LLMResponseDeltaPacket:
 		if err := sCli.Send(&texttospeechpb.StreamingSynthesizeRequest{
 			StreamingRequest: &texttospeechpb.StreamingSynthesizeRequest_Input{
 				Input: &texttospeechpb.StreamingSynthesisInput{
@@ -148,7 +148,7 @@ func (google *googleTextToSpeech) Transform(ctx context.Context, in internal_typ
 			return fmt.Errorf("failed to synthesize text: %w", err)
 		}
 		return nil
-	case internal_type.LLMMessagePacket:
+	case internal_type.LLMResponseDonePacket:
 		return nil
 	default:
 		return fmt.Errorf("google-tts: unsupported input type %T", in)

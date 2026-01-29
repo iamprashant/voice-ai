@@ -7,7 +7,6 @@ package internal_tool_local
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -29,13 +28,7 @@ type knowledgeRetrievalToolCaller struct {
 	providerCredential *protos.VaultCredential
 }
 
-func (tc *knowledgeRetrievalToolCaller) argument(args string) (*string, map[string]interface{}, error) {
-	var input map[string]interface{}
-	err := json.Unmarshal([]byte(args), &input)
-	if err != nil {
-		tc.logger.Debugf("illegal input from llm check and pushing the llm response as incomplete %v", args)
-		return nil, nil, err
-	}
+func (tc *knowledgeRetrievalToolCaller) argument(input map[string]interface{}) (*string, map[string]interface{}, error) {
 	var queryOrContext string
 	if query, ok := input["query"].(string); ok {
 		queryOrContext = query
@@ -46,14 +39,14 @@ func (tc *knowledgeRetrievalToolCaller) argument(args string) (*string, map[stri
 	}
 	return utils.Ptr(queryOrContext), input, nil
 }
-func (afkTool *knowledgeRetrievalToolCaller) Call(ctx context.Context, pkt internal_type.LLMPacket, toolId string, args string, communication internal_type.Communication) internal_type.LLMToolPacket {
+
+func (afkTool *knowledgeRetrievalToolCaller) Call(ctx context.Context, contextID, toolId string, args map[string]interface{}, communication internal_type.Communication) internal_tool.ToolCallResult {
 	in, v, err := afkTool.argument(args)
-	var contextString string
 
 	if err != nil || in == nil {
-		return internal_type.LLMToolPacket{Name: afkTool.Name(), ContextID: pkt.ContextId(), Action: protos.AssistantConversationAction_KNOWLEDGE_RETRIEVAL, Result: afkTool.Result("Required argument is missing or query, context is missing from argument list", false)}
+		return internal_tool.Result("Required argument is missing or query, context is missing from argument list", false)
 	} else {
-		knowledges, err := communication.RetrieveToolKnowledge(afkTool.knowledge, pkt.ContextId(), *in, v, &internal_type.KnowledgeRetrieveOption{
+		knowledges, err := communication.RetrieveToolKnowledge(afkTool.knowledge, contextID, *in, v, &internal_type.KnowledgeRetrieveOption{
 			EmbeddingProviderCredential: afkTool.providerCredential,
 			RetrievalMethod:             afkTool.searchType,
 			TopK:                        afkTool.topK,
@@ -61,15 +54,15 @@ func (afkTool *knowledgeRetrievalToolCaller) Call(ctx context.Context, pkt inter
 		})
 
 		if len(knowledges) == 0 || err != nil {
-			return internal_type.LLMToolPacket{Name: afkTool.Name(), ContextID: pkt.ContextId(), Action: protos.AssistantConversationAction_KNOWLEDGE_RETRIEVAL, Result: afkTool.Result("Not able to find anything in knowledge from given documents.", true)}
+			return internal_tool.Result("Not able to find anything in knowledge from given documents.", true)
 		} else {
 			var contextTemplateBuilder strings.Builder
 			for _, knowledge := range knowledges {
 				contextTemplateBuilder.WriteString(knowledge.Content)
 				contextTemplateBuilder.WriteString("\n")
 			}
-			contextString = contextTemplateBuilder.String()
-			return internal_type.LLMToolPacket{Name: afkTool.Name(), ContextID: pkt.ContextId(), Action: protos.AssistantConversationAction_KNOWLEDGE_RETRIEVAL, Result: afkTool.Result(contextString, true)}
+			contextString := contextTemplateBuilder.String()
+			return internal_tool.Result(contextString, true)
 		}
 	}
 

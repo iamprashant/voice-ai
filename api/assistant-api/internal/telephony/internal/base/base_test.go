@@ -59,7 +59,7 @@ func TestCreateVoiceRequest(t *testing.T) {
 
 			// Verify audio content matches
 			if tt.audioData != nil {
-				assert.Equal(t, tt.audioData, request.GetMessage().GetAudio().Content)
+				assert.Equal(t, tt.audioData, request.GetMessage().GetAudio())
 			}
 		})
 	}

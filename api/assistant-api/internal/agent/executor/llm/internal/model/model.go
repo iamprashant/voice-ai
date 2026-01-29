@@ -10,6 +10,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
+	"sync"
 	"time"
 
 	internal_agent_executor "github.com/rapidaai/api/assistant-api/internal/agent/executor"
@@ -18,10 +20,12 @@ import (
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	integration_client_builders "github.com/rapidaai/pkg/clients/integration/builders"
 	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
 	"github.com/rapidaai/protos"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type modelAssistantExecutor struct {
@@ -30,6 +34,8 @@ type modelAssistantExecutor struct {
 	providerCredential *protos.VaultCredential
 	inputBuilder       integration_client_builders.InputChatBuilder
 	history            []*protos.Message
+	stream             grpc.BidiStreamingClient[protos.ChatRequest, protos.ChatResponse]
+	mu                 sync.RWMutex
 }
 
 func NewModelAssistantExecutor(logger commons.Logger) internal_agent_executor.AssistantExecutor {
@@ -46,7 +52,7 @@ func (executor *modelAssistantExecutor) Name() string {
 	return "model"
 }
 
-func (executor *modelAssistantExecutor) Initialize(ctx context.Context, communication internal_type.Communication, cfg *protos.AssistantConversationConfiguration) error {
+func (executor *modelAssistantExecutor) Initialize(ctx context.Context, communication internal_type.Communication, cfg *protos.ConversationConfiguration) error {
 	start := time.Now()
 	ctx, span, _ := communication.Tracer().StartSpan(ctx, utils.AssistantAgentConnectStage, internal_adapter_telemetry.KV{K: "executor", V: internal_adapter_telemetry.StringValue(executor.Name())})
 	defer span.EndSpan(ctx, utils.AssistantAgentConnectStage)
@@ -100,6 +106,28 @@ func (executor *modelAssistantExecutor) Initialize(ctx context.Context, communic
 	executor.history = append(executor.history, conversationLogs...)
 	span.AddAttributes(ctx, internal_adapter_telemetry.KV{K: "history_length", V: internal_adapter_telemetry.IntValue(len(executor.history))})
 
+	// Open bidirectional stream for persistent connection
+	stream, err := communication.IntegrationCaller().StreamChat(
+		ctx,
+		communication.Auth(),
+		communication.Assistant().AssistantProviderModel.ModelProviderName,
+	)
+	if err != nil {
+		executor.logger.Errorf("Failed to open stream: %v", err)
+		return fmt.Errorf("failed to open stream: %w", err)
+	}
+	executor.stream = stream
+
+	// Start listener goroutine - handles server responses and connection close
+	utils.Go(ctx, func() {
+		if err := executor.listen(ctx, communication); err != nil && ctx.Err() == nil {
+			communication.OnPacket(ctx, internal_type.DirectivePacket{
+				Directive: protos.ConversationDirective_END_CONVERSATION,
+				Arguments: map[string]interface{}{"reason": err.Error()},
+			})
+		}
+	})
+
 	executor.logger.Benchmark("DefaultAssistantExecutor.Init", time.Since(start))
 	return nil
 }
@@ -107,151 +135,170 @@ func (executor *modelAssistantExecutor) Initialize(ctx context.Context, communic
 func (executor *modelAssistantExecutor) chat(
 	ctx context.Context,
 	communication internal_type.Communication,
-	packet internal_type.LLMMessagePacket,
+	contextID string,
+	in *protos.Message,
 	histories ...*protos.Message,
 ) error {
-	request := executor.buildChatRequest(communication, packet, histories...)
-	res, err := communication.IntegrationCaller().StreamChat(
-		ctx,
-		communication.Auth(),
-		communication.Assistant().AssistantProviderModel.ModelProviderName,
-		request,
-	)
-	if err != nil {
-		executor.logger.Errorf("error while streaming chat request: %v", err)
-		return fmt.Errorf("failed to stream chat: %w", err)
+	// Build and send the chat request over persistent stream
+	request := executor.buildChatRequest(communication, contextID, in, histories...)
+	executor.history = append(executor.history, in)
+	if err := executor.send(request); err != nil {
+		executor.logger.Errorf("error sending chat request: %v", err)
+		return fmt.Errorf("failed to send chat request: %w", err)
+	}
+	return nil
+}
+
+// send writes a message to the gRPC stream (thread-safe).
+func (executor *modelAssistantExecutor) send(req *protos.ChatRequest) error {
+	executor.mu.Lock()
+	defer executor.mu.Unlock()
+	if executor.stream == nil {
+		return fmt.Errorf("stream not connected")
+	}
+	return executor.stream.Send(req)
+}
+
+// listen reads messages from the stream until context is cancelled or connection closes.
+func (executor *modelAssistantExecutor) listen(ctx context.Context, communication internal_type.Communication) error {
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+		}
+
+		executor.mu.RLock()
+		stream := executor.stream
+		executor.mu.RUnlock()
+
+		if stream == nil {
+			return nil
+		}
+
+		resp, err := stream.Recv()
+		if err != nil {
+			executor.logger.Debugf("Listener received error: %v", err)
+			code := status.Code(err)
+			switch {
+			case errors.Is(err, io.EOF):
+				// Server gracefully closed
+				communication.OnPacket(ctx, internal_type.DirectivePacket{
+					Directive: protos.ConversationDirective_END_CONVERSATION,
+					Arguments: map[string]interface{}{"reason": "server closed connection"},
+				})
+			case code == codes.Canceled:
+				// RPC canceled (client or server)
+				communication.OnPacket(ctx, internal_type.DirectivePacket{
+					Directive: protos.ConversationDirective_END_CONVERSATION,
+					Arguments: map[string]interface{}{"reason": "connection canceled"},
+				})
+			case code == codes.Unavailable:
+				// Server went down
+				communication.OnPacket(ctx, internal_type.DirectivePacket{
+					Directive: protos.ConversationDirective_END_CONVERSATION,
+					Arguments: map[string]interface{}{"reason": "server unavailable"},
+				})
+			default:
+				// Other errors
+				communication.OnPacket(ctx, internal_type.DirectivePacket{
+					Directive: protos.ConversationDirective_END_CONVERSATION,
+					Arguments: map[string]interface{}{"reason": err.Error()},
+				})
+			}
+			return nil
+		}
+		executor.handleResponse(ctx, communication, resp)
+	}
+}
+
+// handleResponse processes a single response from the server.
+func (executor *modelAssistantExecutor) handleResponse(ctx context.Context, communication internal_type.Communication, resp *protos.ChatResponse) {
+	output := resp.GetData()
+	metrics := resp.GetMetrics()
+
+	// Handle error responses
+	if !resp.GetSuccess() && resp.GetError() != nil {
+		communication.OnPacket(ctx, internal_type.LLMErrorPacket{
+			ContextID: resp.GetRequestId(),
+			Error:     errors.New(resp.GetError().GetErrorMessage()),
+		})
+		return
+	}
+	//
+	if output == nil {
+		return
 	}
 
-	return executor.processStream(ctx, communication, packet, res, histories)
+	// Check if this is the final message (has metrics)
+	if len(metrics) > 0 {
+		executor.history = append(executor.history, output)
+		communication.OnPacket(ctx, internal_type.LLMResponseDonePacket{
+			ContextID: resp.GetRequestId(),
+			Text:      strings.Join(output.GetAssistant().GetContents(), ""),
+		})
+		if len(output.GetAssistant().GetToolCalls()) > 0 {
+			executor.executeToolCalls(ctx, communication, resp.GetRequestId(), output, executor.history)
+			return
+		}
+	}
+	if len(output.GetAssistant().GetContents()) > 0 {
+		communication.OnPacket(ctx, internal_type.LLMResponseDeltaPacket{
+			ContextID: resp.GetRequestId(),
+			Text:      strings.Join(output.GetAssistant().GetContents(), ""),
+		})
+	}
 }
 
 // buildChatRequest constructs the chat request with all necessary parameters
-func (executor *modelAssistantExecutor) buildChatRequest(communication internal_type.Communication, packet internal_type.LLMMessagePacket, histories ...*protos.Message) *protos.ChatRequest {
+func (executor *modelAssistantExecutor) buildChatRequest(communication internal_type.Communication, contextID string, in *protos.Message, histories ...*protos.Message) *protos.ChatRequest {
 	assistant := communication.Assistant()
 	template := assistant.AssistantProviderModel.Template.GetTextChatCompleteTemplate()
 	messages := executor.inputBuilder.Message(
 		template.Prompt,
 		utils.MergeMaps(executor.inputBuilder.PromptArguments(template.Variables), communication.GetArgs()),
 	)
-	messages = append(messages, histories...)
-	messages = append(messages, packet.Message.ToProto())
-
 	return executor.inputBuilder.Chat(
+		contextID,
 		&protos.Credential{
 			Id:    executor.providerCredential.GetId(),
 			Value: executor.providerCredential.GetValue(),
 		},
-		executor.inputBuilder.Options(
-			utils.MergeMaps(assistant.AssistantProviderModel.GetOptions(), communication.GetOptions()),
-			nil,
-		),
+		executor.inputBuilder.Options(utils.MergeMaps(assistant.AssistantProviderModel.GetOptions(), communication.GetOptions()), nil),
 		executor.toolExecutor.GetFunctionDefinitions(),
 		map[string]string{
 			"assistant_id":                fmt.Sprintf("%d", assistant.Id),
+			"message_id":                  contextID,
 			"assistant_provider_model_id": fmt.Sprintf("%d", assistant.AssistantProviderModel.Id),
 		},
-		messages...,
+		append(append(messages, histories...), in)...,
 	)
-}
-
-// processStream handles the streaming response from the LLM
-func (executor *modelAssistantExecutor) processStream(
-	ctx context.Context,
-	communication internal_type.Communication,
-	packet internal_type.LLMMessagePacket,
-	res protos.OpenAiService_StreamChatClient,
-	histories []*protos.Message,
-) error {
-	var (
-		output  *protos.Message
-		metrics []*protos.Metric
-	)
-
-	for {
-		msg, err := res.Recv()
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				return executor.handleStreamComplete(ctx, communication, packet, output, metrics, histories)
-			}
-			return fmt.Errorf("failed to receive stream message: %w", err)
-		}
-
-		metrics = msg.GetMetrics()
-		output = msg.GetData()
-
-		if metrics != nil {
-			// Metrics available means end of generation
-			communication.OnPacket(ctx, internal_type.MetricPacket{
-				ContextID: packet.ContextID,
-				Metrics:   types.ToMetrics(metrics),
-			})
-			continue
-		}
-
-		if output != nil && len(output.GetContents()) > 0 {
-			communication.OnPacket(ctx, internal_type.LLMStreamPacket{
-				ContextID: packet.ContextID,
-				Text:      types.ToMessage(output).String(),
-			})
-		}
-	}
-}
-
-// handleStreamComplete processes the final output when stream ends
-func (executor *modelAssistantExecutor) handleStreamComplete(
-	ctx context.Context,
-	communication internal_type.Communication,
-	packet internal_type.LLMMessagePacket,
-	output *protos.Message,
-	metrics []*protos.Metric,
-	histories []*protos.Message,
-) error {
-	outputMessage := types.ToMessage(output)
-	outPacket := internal_type.LLMMessagePacket{
-		ContextID: packet.ContextID,
-		Message:   outputMessage,
-	}
-	metricPacket := internal_type.MetricPacket{
-		ContextID: packet.ContextID,
-		Metrics:   types.ToMetrics(metrics),
-	}
-
-	executor.recordLLMInteraction(communication, packet, outPacket, metricPacket)
-	communication.OnPacket(ctx, outPacket)
-
-	// Handle tool calls if present
-	if output != nil && len(output.GetToolCalls()) > 0 {
-		return executor.executeToolCalls(ctx, communication, packet, output, histories)
-	}
-
-	return nil
 }
 
 // executeToolCalls handles tool execution and recursive chat
-func (executor *modelAssistantExecutor) executeToolCalls(ctx context.Context, communication internal_type.Communication, packet internal_type.LLMMessagePacket, output *protos.Message, histories []*protos.Message,
+func (executor *modelAssistantExecutor) executeToolCalls(ctx context.Context, communication internal_type.Communication, contextID string, output *protos.Message, histories []*protos.Message,
 ) error {
-	toolExecution, toolContents := executor.toolExecutor.ExecuteAll(ctx, packet, output.GetToolCalls(), communication)
-	updatedHistories := append(histories, packet.Message.ToProto(), output)
-	communication.OnPacket(ctx, toolExecution...)
-	err := executor.chat(ctx, communication, internal_type.LLMMessagePacket{ContextID: packet.ContextID, Message: &types.Message{Contents: toolContents, Role: "tool"}}, updatedHistories...)
+	toolExecution := executor.toolExecutor.ExecuteAll(ctx, contextID, output.GetAssistant().GetToolCalls(), communication)
+	// histories = append(histories, output, toolExecution)
+	err := executor.chat(ctx, communication, contextID, toolExecution, histories...)
 	return err
 }
 
 // recordLLMInteraction appends messages to history and persists to storage
-func (executor *modelAssistantExecutor) recordLLMInteraction(communication internal_type.Communication, in, out internal_type.LLMMessagePacket, metrics internal_type.MetricPacket,
-) {
-	if in.Message != nil {
-		executor.history = append(executor.history, in.Message.ToProto())
-	}
-	if out.Message != nil {
-		executor.history = append(executor.history, out.Message.ToProto())
-	}
+// func (executor *modelAssistantExecutor) recordLLMInteraction(communication internal_type.Communication, contextID string, in, out *protos.Message, metrics []*protos.Metric,
+// ) {
+// 	if in != nil {
+// 		executor.history = append(executor.history, in)
+// 	}
+// 	if out != nil {
+// 		executor.history = append(executor.history, out)
+// 	}
 
-	// Persist to storage asynchronously
-	utils.Go(context.Background(), func() {
-		communication.CreateConversationMessageLog(in.ContextID, in.Message, out.Message, metrics.Metrics)
-	})
-}
+// 	// Persist to storage asynchronously
+// 	utils.Go(context.Background(), func() {
+// 		communication.CreateConversationMessageLog(contextID, in, out, metrics)
+// 	})
+// }
 
 // Execute processes incoming packets when user triggers a message
 func (executor *modelAssistantExecutor) Execute(ctx context.Context, communication internal_type.Communication, pctk internal_type.Packet) error {
@@ -270,26 +317,31 @@ func (executor *modelAssistantExecutor) Execute(ctx context.Context, communicati
 // handleUserTextPacket processes user text input
 func (executor *modelAssistantExecutor) handleUserTextPacket(ctx context.Context, communication internal_type.Communication, packet internal_type.UserTextPacket,
 ) error {
-	message := types.NewMessage("user", &types.Content{ContentType: commons.TEXT_CONTENT.String(), ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(), Content: []byte(packet.Text)})
-	return executor.chat(ctx, communication, internal_type.LLMMessagePacket{ContextID: packet.ContextId(), Message: message}, executor.history...)
+	return executor.chat(ctx, communication, packet.ContextID, &protos.Message{Role: "user", Message: &protos.Message_User{User: &protos.UserMessage{Content: packet.Text}}}, executor.history...)
 }
 
 // handleStaticPacket appends static assistant response to history
 func (executor *modelAssistantExecutor) handleStaticPacket(packet internal_type.StaticPacket) error {
 	executor.history = append(executor.history, &protos.Message{
 		Role: "assistant",
-		Contents: []*protos.Content{
-			{
-				ContentType:   commons.TEXT_CONTENT.String(),
-				ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
-				Content:       []byte(packet.Text),
-			},
-		},
+		Message: &protos.Message_Assistant{Assistant: &protos.AssistantMessage{
+			Contents: []string{packet.Text},
+		}},
 	})
 	return nil
 }
 
-func (executor *modelAssistantExecutor) Close(ctx context.Context, communication internal_type.Communication) error {
+func (executor *modelAssistantExecutor) Close(ctx context.Context) error {
+	executor.mu.Lock()
+	defer executor.mu.Unlock()
+
+	// Close the stream
+	if executor.stream != nil {
+		executor.stream.CloseSend()
+		executor.stream = nil
+	}
+
+	// Clear history
 	executor.history = make([]*protos.Message, 0)
 	return nil
 }

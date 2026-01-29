@@ -149,7 +149,7 @@ func (st *textAggregator) Aggregate(ctx context.Context, sentences ...internal_t
 // MUST be called with lock held. Appends results to st.toEmitBuffer.
 func (st *textAggregator) extractAndQueueLocked(sentence internal_type.LLMPacket) {
 	switch input := sentence.(type) {
-	case internal_type.LLMStreamPacket:
+	case internal_type.LLMResponseDeltaPacket:
 		// Handle context switch - just clean buffer, do NOT emit
 		if input.ContextID != st.currentContext && st.currentContext != "" {
 			st.buffer.Reset()
@@ -162,12 +162,12 @@ func (st *textAggregator) extractAndQueueLocked(sentence internal_type.LLMPacket
 		if st.hasBoundaries {
 			st.extractTextsByBoundaryLocked(input.ContextID)
 		}
-	case internal_type.LLMMessagePacket:
+	case internal_type.LLMResponseDonePacket:
 		// Flush remaining buffer
 		if st.buffer.Len() > 0 {
 			content := st.buffer.String()
 			if content != "" {
-				st.toEmitBuffer = append(st.toEmitBuffer, internal_type.LLMStreamPacket{
+				st.toEmitBuffer = append(st.toEmitBuffer, internal_type.LLMResponseDeltaPacket{
 					ContextID: st.currentContext,
 					Text:      content,
 				})
@@ -196,7 +196,7 @@ func (st *textAggregator) extractTextsByBoundaryLocked(contextId string) {
 	if lastBoundary > 0 {
 		completeText := strings.TrimSpace(text[:lastBoundary])
 		if completeText != "" {
-			st.toEmitBuffer = append(st.toEmitBuffer, internal_type.LLMStreamPacket{
+			st.toEmitBuffer = append(st.toEmitBuffer, internal_type.LLMResponseDeltaPacket{
 				ContextID: contextId,
 				Text:      completeText,
 			})

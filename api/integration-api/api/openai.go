@@ -59,15 +59,16 @@ only supported for text prompt
 
 */
 
-// StreamChat implements protos.GoogleServiceServer.
-func (oiGRPC *openaiIntegrationGRPCApi) StreamChat(irRequest *integration_api.ChatRequest, stream integration_api.OpenAiService_StreamChatServer) error {
-	return oiGRPC.integrationApi.StreamChat(
-		irRequest,
-
+// StreamChat implements protos.OpenAiServiceServer (bidirectional streaming).
+func (oiGRPC *openaiIntegrationGRPCApi) StreamChat(stream integration_api.OpenAiService_StreamChatServer) error {
+	oiGRPC.logger.Debugf("Bidirectional stream chat opened for openai")
+	return oiGRPC.integrationApi.StreamChatBidirectional(
 		stream.Context(),
 		"OPENAI",
-		internal_openai_callers.NewLargeLanguageCaller(oiGRPC.logger, irRequest.GetCredential()),
-		stream.Send,
+		func(cred *integration_api.Credential) internal_callers.LargeLanguageCaller {
+			return internal_openai_callers.NewLargeLanguageCaller(oiGRPC.logger, cred)
+		},
+		stream,
 	)
 }
 

@@ -9,8 +9,8 @@ import (
 
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
+	"github.com/rapidaai/protos"
 	integration_api "github.com/rapidaai/protos"
 )
 
@@ -62,21 +62,21 @@ func (openAI *OpenAI) GetClient() (*openai.Client, error) {
 	return &clt, nil
 }
 
-func (openAI *OpenAI) GetComplitionUsages(usages openai.CompletionUsage) types.Metrics {
-	metrics := make(types.Metrics, 0)
-	metrics = append(metrics, &types.Metric{
+func (openAI *OpenAI) GetComplitionUsages(usages openai.CompletionUsage) []*protos.Metric {
+	metrics := make([]*protos.Metric, 0)
+	metrics = append(metrics, &protos.Metric{
 		Name:        type_enums.OUTPUT_TOKEN.String(),
 		Value:       fmt.Sprintf("%d", usages.CompletionTokens),
 		Description: "Input token",
 	})
 
-	metrics = append(metrics, &types.Metric{
+	metrics = append(metrics, &protos.Metric{
 		Name:        type_enums.INPUT_TOKEN.String(),
 		Value:       fmt.Sprintf("%d", usages.PromptTokens),
 		Description: "Output Token",
 	})
 
-	metrics = append(metrics, &types.Metric{
+	metrics = append(metrics, &protos.Metric{
 		Name:        type_enums.TOTAL_TOKEN.String(),
 		Value:       fmt.Sprintf("%d", usages.TotalTokens),
 		Description: "Total Token",

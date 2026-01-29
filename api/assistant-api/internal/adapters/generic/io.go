@@ -25,12 +25,12 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-func (io *GenericRequestor) Input(message *protos.AssistantConversationUserMessage) error {
+func (io *GenericRequestor) Input(message *protos.ConversationUserMessage) error {
 	switch msg := message.GetMessage().(type) {
-	case *protos.AssistantConversationUserMessage_Audio:
-		return io.OnPacket(io.Context(), internal_type.UserAudioPacket{Audio: msg.Audio.GetContent()})
-	case *protos.AssistantConversationUserMessage_Text:
-		return io.OnPacket(io.Context(), internal_type.UserTextPacket{Text: msg.Text.GetContent()})
+	case *protos.ConversationUserMessage_Audio:
+		return io.OnPacket(io.Context(), internal_type.UserAudioPacket{Audio: msg.Audio})
+	case *protos.ConversationUserMessage_Text:
+		return io.OnPacket(io.Context(), internal_type.UserTextPacket{Text: msg.Text})
 	default:
 		return fmt.Errorf("illegal input from the user %+v", msg)
 	}

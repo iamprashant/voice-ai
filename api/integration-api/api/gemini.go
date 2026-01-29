@@ -61,15 +61,16 @@ func (geminiRPC *geminiIntegrationRPCApi) Chat(c *gin.Context) {
 	geminiRPC.logger.Debugf("Chat from rpc with gin context %v", c)
 }
 
-// StreamChat implements protos.GoogleServiceServer.
-func (geminiGRPc *geminiIntegrationGRPCApi) StreamChat(irRequest *integration_api.ChatRequest, stream integration_api.GeminiService_StreamChatServer) error {
-	return geminiGRPc.integrationApi.StreamChat(
-		irRequest,
-
+// StreamChat implements protos.GeminiServiceServer (bidirectional streaming).
+func (geminiGRPc *geminiIntegrationGRPCApi) StreamChat(stream integration_api.GeminiService_StreamChatServer) error {
+	geminiGRPc.logger.Debugf("Bidirectional stream chat opened for gemini")
+	return geminiGRPc.integrationApi.StreamChatBidirectional(
 		stream.Context(),
 		"GEMINI",
-		internal_gemini_callers.NewLargeLanguageCaller(geminiGRPc.logger, irRequest.GetCredential()),
-		stream.Send,
+		func(cred *integration_api.Credential) internal_callers.LargeLanguageCaller {
+			return internal_gemini_callers.NewLargeLanguageCaller(geminiGRPc.logger, cred)
+		},
+		stream,
 	)
 }
 

@@ -55,7 +55,7 @@ func (talking *GenericRequestor) callRecording(ctx context.Context, vl internal_
 
 func (talking *GenericRequestor) callCreateMessage(ctx context.Context, vl internal_type.MessagePacket) error {
 	utils.Go(ctx, func() {
-		if err := talking.onCreateMessage(ctx, vl); err != nil {
+		if err := talking.onCreateMessage(talking.Context(), vl); err != nil {
 			talking.logger.Errorf("Error in onCreateMessage: %v", err)
 		}
 	})
@@ -86,7 +86,7 @@ func (talking *GenericRequestor) callSpeechToText(ctx context.Context, vl intern
 
 func (spk *GenericRequestor) callSpeaking(ctx context.Context, result internal_type.LLMPacket) error {
 	switch res := result.(type) {
-	case internal_type.LLMMessagePacket:
+	case internal_type.LLMResponseDonePacket:
 		if spk.textToSpeechTransformer != nil {
 			inputMessage, err := spk.messaging.GetMessage()
 			if err != nil {
@@ -106,7 +106,7 @@ func (spk *GenericRequestor) callSpeaking(ctx context.Context, result internal_t
 				spk.logger.Errorf("speak: failed to send flush to text to speech transformer error: %v", err)
 			}
 		}
-	case internal_type.LLMStreamPacket:
+	case internal_type.LLMResponseDeltaPacket:
 		inputMessage, err := spk.messaging.GetMessage()
 		if err != nil {
 			return nil
@@ -127,7 +127,7 @@ func (spk *GenericRequestor) callSpeaking(ctx context.Context, result internal_t
 				spk.logger.Errorf("speak: failed to send flush to text to speech transformer error: %v", err)
 			}
 		}
-		if err := spk.Notify(ctx, &protos.AssistantConversationAssistantMessage{Time: timestamppb.Now(), Id: res.ContextId(), Completed: true, Message: &protos.AssistantConversationAssistantMessage_Text{Text: &protos.AssistantConversationMessageTextContent{Content: res.Text}}}); err != nil {
+		if err := spk.Notify(ctx, &protos.ConversationAssistantMessage{Time: timestamppb.Now(), Id: res.ContextId(), Completed: true, Message: &protos.ConversationAssistantMessage_Text{Text: res.Text}}); err != nil {
 			spk.logger.Tracef(ctx, "error while outputting chunk to the user: %w", err)
 		}
 	default:
@@ -135,11 +135,11 @@ func (spk *GenericRequestor) callSpeaking(ctx context.Context, result internal_t
 	return nil
 }
 
-func (talking *GenericRequestor) callTool(ctx context.Context, vl internal_type.LLMToolPacket) error {
-	anyArgs, _ := utils.InterfaceMapToAnyMap(vl.Result)
-	switch vl.Action {
-	case protos.AssistantConversationAction_END_CONVERSATION:
-		if err := talking.Notify(ctx, &protos.AssistantMessagingResponse_Action{Action: &protos.AssistantConversationAction{Name: vl.Name, Action: vl.Action, Args: anyArgs}}); err != nil {
+func (talking *GenericRequestor) callDirective(ctx context.Context, vl internal_type.DirectivePacket) error {
+	anyArgs, _ := utils.InterfaceMapToAnyMap(vl.Arguments)
+	switch vl.Directive {
+	case protos.ConversationDirective_END_CONVERSATION:
+		if err := talking.Notify(ctx, &protos.AssistantTalkOutput_Directive{Directive: &protos.ConversationDirective{Id: vl.ContextID, Type: vl.Directive, Args: anyArgs, Time: timestamppb.Now()}}); err != nil {
 			talking.logger.Errorf("error notifying end conversation action: %v", err)
 		}
 		return nil
@@ -158,7 +158,7 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 
 			// creating interim message
 			interim := talking.messaging.Create(vl.Text)
-			if err := talking.Notify(talking.Context(), &protos.AssistantConversationUserMessage{Id: interim.GetId(), Completed: false, Message: &protos.AssistantConversationUserMessage_Text{Text: &protos.AssistantConversationMessageTextContent{Content: interim.String()}}, Time: timestamppb.Now()}); err != nil {
+			if err := talking.Notify(talking.Context(), &protos.ConversationUserMessage{Id: interim.GetId(), Completed: false, Message: &protos.ConversationUserMessage_Text{Text: interim.String()}, Time: timestamppb.Now()}); err != nil {
 				talking.logger.Tracef(talking.Context(), "error while notifying the text input from user: %w", err)
 			}
 
@@ -220,14 +220,14 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				talking.logger.Errorf("assistant executor error: %v", err)
 			}
 
-			if err := talking.callTextAggregator(ctx, internal_type.LLMStreamPacket{ContextID: vl.ContextId(), Text: vl.Text}); err != nil {
+			if err := talking.callTextAggregator(ctx, internal_type.LLMResponseDeltaPacket{ContextID: vl.ContextId(), Text: vl.Text}); err != nil {
 				talking.logger.Debugf("unable to send static packet to aggregator %v", err)
 			}
 
 			if err := talking.messaging.Transition(internal_adapter_request_customizers.LLMGenerated); err != nil {
 				talking.logger.Errorf("messaging transition error: %v", err)
 			}
-			if err := talking.callTextAggregator(ctx, internal_type.LLMMessagePacket{ContextID: vl.ContextId()}); err != nil {
+			if err := talking.callTextAggregator(ctx, internal_type.LLMResponseDonePacket{ContextID: vl.ContextId()}); err != nil {
 				talking.logger.Debugf("unable to send static packet to aggregator %v", err)
 			}
 
@@ -254,7 +254,7 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				if err := talking.messaging.Transition(internal_adapter_request_customizers.Interrupted); err != nil {
 					continue
 				}
-				talking.Notify(ctx, &protos.AssistantConversationInterruption{Type: protos.AssistantConversationInterruption_INTERRUPTION_TYPE_WORD, Time: timestamppb.Now()})
+				talking.Notify(ctx, &protos.ConversationInterruption{Type: protos.ConversationInterruption_INTERRUPTION_TYPE_WORD, Time: timestamppb.Now()})
 				continue
 			default:
 				// might be noise at first
@@ -265,7 +265,7 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				if err := talking.messaging.Transition(internal_adapter_request_customizers.Interrupt); err != nil {
 					continue
 				}
-				talking.Notify(ctx, &protos.AssistantConversationInterruption{Type: protos.AssistantConversationInterruption_INTERRUPTION_TYPE_VAD, Time: timestamppb.Now()})
+				talking.Notify(ctx, &protos.ConversationInterruption{Type: protos.ConversationInterruption_INTERRUPTION_TYPE_VAD, Time: timestamppb.Now()})
 				continue
 			}
 		case internal_type.SpeechToTextPacket:
@@ -292,13 +292,11 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 
 			if !vl.Interim {
 				msi := talking.messaging.Create(vl.Script)
-				talking.Notify(ctx, &protos.AssistantConversationUserMessage{Id: msi.GetId(), Message: &protos.AssistantConversationUserMessage_Text{Text: &protos.AssistantConversationMessageTextContent{Content: msi.String()}}, Completed: false, Time: timestamppb.New(time.Now())})
+				talking.Notify(ctx, &protos.ConversationUserMessage{Id: msi.GetId(), Message: &protos.ConversationUserMessage_Text{Text: msi.String()}, Completed: false, Time: timestamppb.New(time.Now())})
 			}
 			continue
 
 		case internal_type.EndOfSpeechPacket:
-
-			//
 			ctx, span, _ := talking.Tracer().StartSpan(talking.Context(), utils.AssistantUtteranceStage)
 			span.EndSpan(ctx,
 				utils.AssistantUtteranceStage,
@@ -316,7 +314,7 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				continue
 			}
 			if err := talking.Notify(ctx,
-				&protos.AssistantConversationUserMessage{Id: msg.GetId(), Message: &protos.AssistantConversationUserMessage_Text{Text: &protos.AssistantConversationMessageTextContent{Content: msg.String()}}, Completed: true, Time: timestamppb.New(time.Now())}); err != nil {
+				&protos.ConversationUserMessage{Id: msg.GetId(), Message: &protos.ConversationUserMessage_Text{Text: msg.String()}, Completed: true, Time: timestamppb.New(time.Now())}); err != nil {
 				talking.logger.Tracef(ctx, "might be returing processing the duplicate message so cut it out.")
 				continue
 			}
@@ -332,7 +330,7 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				talking.OnError(ctx)
 				continue
 			}
-		case internal_type.LLMStreamPacket:
+		case internal_type.LLMResponseDeltaPacket:
 
 			// packet from llm reciecved
 			inputMessage, err := talking.messaging.GetMessage()
@@ -356,7 +354,7 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 			}
 			// end of speech analyzer in case histoyrical data is to be used
 
-		case internal_type.LLMMessagePacket:
+		case internal_type.LLMResponseDonePacket:
 
 			inputMessage, err := talking.messaging.GetMessage()
 			if err != nil {
@@ -388,8 +386,9 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 			}
 
 			continue
-		case internal_type.LLMToolPacket:
-			talking.callTool(ctx, vl)
+
+		case internal_type.DirectivePacket:
+			talking.callDirective(ctx, vl)
 			continue
 		case internal_type.MetricPacket:
 			// metrics update for the message
@@ -409,7 +408,7 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 			if vl.ContextID != inputMessage.GetId() {
 				continue
 			}
-			if err := talking.Notify(talking.Context(), &protos.AssistantConversationAssistantMessage{Time: timestamppb.Now(), Id: vl.ContextID, Completed: true}); err != nil {
+			if err := talking.Notify(talking.Context(), &protos.ConversationAssistantMessage{Time: timestamppb.Now(), Id: vl.ContextID, Completed: true}); err != nil {
 				talking.logger.Tracef(talking.ctx, "error while outputing chunk to the user: %w", err)
 			}
 
@@ -433,7 +432,7 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 			}
 
 			// notify the user about audio chunk
-			if err := talking.Notify(talking.Context(), &protos.AssistantConversationAssistantMessage{Time: timestamppb.Now(), Id: vl.ContextID, Message: &protos.AssistantConversationAssistantMessage_Audio{Audio: &protos.AssistantConversationMessageAudioContent{Content: vl.AudioChunk}}, Completed: false}); err != nil {
+			if err := talking.Notify(talking.Context(), &protos.ConversationAssistantMessage{Time: timestamppb.Now(), Id: vl.ContextID, Message: &protos.ConversationAssistantMessage_Audio{Audio: vl.AudioChunk}, Completed: false}); err != nil {
 				talking.logger.Tracef(talking.ctx, "error while outputing chunk to the user: %w", err)
 			}
 
