@@ -17,9 +17,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-//
-// /v1/talk/twilio/call/2263072539095859200?x-api-key=3dd5c2eef53d27942bccd892750fda23ea0b92965d4699e73d8e754ab882955f&Called=%2B13345895552&ToState=AL&CallerCountry=US&Direction=inbound&CallerState=PA&ToZip=36303&CallSid=CAf64ab88f90f35581dcb16e60f875ea4a&To=%2B13345895552&CallerZip=16901&ToCountry=US&StirVerstat=TN-Validation-Passed-B&CalledZip=36303&ApiVersion=2010-04-01&CalledCity=DOTHAN&CallStatus=ringing&From=%2B15703768754&AccountSid=546789087657890876DFGHJKASHDFBJK&CalledCountry=US&CallerCity=MIDDLEBURY+CENTER&ToCity=DOTHAN&FromCountry=US&Caller=%2B15703768754&FromCity=MIDDLEBURY+CENTER&CalledState=AL&FromZip=16901&FromState=PA [status:400 request:3ms]
-
 // TestReceiveCall tests the ReceiveCall method with Twilio webhook parameters
 func TestReceiveCall(t *testing.T) {
 	gin.SetMode(gin.TestMode)

@@ -49,6 +49,8 @@ func TestTimerFiresAndCallbackCalled(t *testing.T) {
 
 				default:
 				}
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
 			}
 		}
 		return nil
@@ -86,6 +88,8 @@ func TestSystemInputTriggersTimer(t *testing.T) {
 				case called <- res:
 				default:
 				}
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
 			}
 		}
 		return nil
@@ -124,6 +128,8 @@ func TestEmptySpeechIgnored(t *testing.T) {
 				default:
 				}
 				return nil
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
 			}
 		}
 		return nil
@@ -175,6 +181,8 @@ func TestConcurrentAnalyze(t *testing.T) {
 				case calls <- res:
 				default:
 				}
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
 			}
 		}
 		return nil
@@ -211,6 +219,8 @@ func TestContextCancelPreventsCallback(t *testing.T) {
 				case called <- res:
 				default:
 				}
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
 			}
 		}
 		return nil
@@ -240,7 +250,17 @@ func TestHandleSTTInput_IncompleteSTT(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	callbackTime := make(chan time.Time, 1)
 	callback := func(ctx context.Context, res ...internal_type.Packet) error {
-		callbackTime <- time.Now()
+		for _, r := range res {
+			switch r.(type) {
+			case internal_type.EndOfSpeechPacket:
+				select {
+				case callbackTime <- time.Now():
+				default:
+				}
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
+			}
+		}
 		return nil
 	}
 
@@ -284,7 +304,17 @@ func TestHandleSTTInput_CompleteSTTNoActivity(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	callbackTime := make(chan time.Time, 1)
 	callback := func(ctx context.Context, res ...internal_type.Packet) error {
-		callbackTime <- time.Now()
+		for _, r := range res {
+			switch r.(type) {
+			case internal_type.EndOfSpeechPacket:
+				select {
+				case callbackTime <- time.Now():
+				default:
+				}
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
+			}
+		}
 		return nil
 	}
 
@@ -324,7 +354,17 @@ func TestHandleSTTInput_DifferentTextCompleteSTT(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	callbackTime := make(chan time.Time, 1)
 	callback := func(ctx context.Context, res ...internal_type.Packet) error {
-		callbackTime <- time.Now()
+		for _, r := range res {
+			switch r.(type) {
+			case internal_type.EndOfSpeechPacket:
+				select {
+				case callbackTime <- time.Now():
+				default:
+				}
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
+			}
+		}
 		return nil
 	}
 
@@ -369,7 +409,17 @@ func TestHandleSTTInput_ActivityAfterUserInput(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	callbackTime := make(chan time.Time, 1)
 	callback := func(ctx context.Context, res ...internal_type.Packet) error {
-		callbackTime <- time.Now()
+		for _, r := range res {
+			switch r.(type) {
+			case internal_type.EndOfSpeechPacket:
+				select {
+				case callbackTime <- time.Now():
+				default:
+				}
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
+			}
+		}
 		return nil
 	}
 
@@ -418,9 +468,16 @@ func TestCallbackFiresOnlyOnce(t *testing.T) {
 	callCount := 0
 	var mu sync.Mutex
 	callback := func(ctx context.Context, res ...internal_type.Packet) error {
-		mu.Lock()
-		callCount++
-		mu.Unlock()
+		for _, r := range res {
+			switch r.(type) {
+			case internal_type.EndOfSpeechPacket:
+				mu.Lock()
+				callCount++
+				mu.Unlock()
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
+			}
+		}
 		return nil
 	}
 
@@ -477,9 +534,16 @@ func TestNewInputInvalidatesPreviousCallback(t *testing.T) {
 	callCount := 0
 	var mu sync.Mutex
 	callback := func(ctx context.Context, res ...internal_type.Packet) error {
-		mu.Lock()
-		callCount++
-		mu.Unlock()
+		for _, r := range res {
+			switch r.(type) {
+			case internal_type.EndOfSpeechPacket:
+				mu.Lock()
+				callCount++
+				mu.Unlock()
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
+			}
+		}
 		return nil
 	}
 
@@ -541,9 +605,16 @@ func TestUserInputImmediateTrigger(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	callTime := make(chan time.Time, 1)
 	callback := func(ctx context.Context, res ...internal_type.Packet) error {
-		select {
-		case callTime <- time.Now():
-		default:
+		for _, r := range res {
+			switch r.(type) {
+			case internal_type.EndOfSpeechPacket:
+				select {
+				case callTime <- time.Now():
+				default:
+				}
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
+			}
 		}
 		return nil
 	}
@@ -578,9 +649,16 @@ func TestSystemInputExtendsTimer(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	callTime := make(chan time.Time, 1)
 	callback := func(ctx context.Context, res ...internal_type.Packet) error {
-		select {
-		case callTime <- time.Now():
-		default:
+		for _, r := range res {
+			switch r.(type) {
+			case internal_type.EndOfSpeechPacket:
+				select {
+				case callTime <- time.Now():
+				default:
+				}
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
+			}
 		}
 		return nil
 	}
@@ -625,9 +703,16 @@ func TestSTTInputExtendsTimer(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	callTime := make(chan time.Time, 1)
 	callback := func(ctx context.Context, res ...internal_type.Packet) error {
-		select {
-		case callTime <- time.Now():
-		default:
+		for _, r := range res {
+			switch r.(type) {
+			case internal_type.EndOfSpeechPacket:
+				select {
+				case callTime <- time.Now():
+				default:
+				}
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
+			}
 		}
 		return nil
 	}
@@ -666,9 +751,16 @@ func TestGenerationInvalidation(t *testing.T) {
 	callCount := 0
 	var mu sync.Mutex
 	callback := func(ctx context.Context, res ...internal_type.Packet) error {
-		mu.Lock()
-		callCount++
-		mu.Unlock()
+		for _, r := range res {
+			switch r.(type) {
+			case internal_type.EndOfSpeechPacket:
+				mu.Lock()
+				callCount++
+				mu.Unlock()
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
+			}
+		}
 		return nil
 	}
 
@@ -719,8 +811,17 @@ func TestContextCancellation(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	called := make(chan bool, 1)
 	callback := func(ctx context.Context, res ...internal_type.Packet) error {
-		called <- true
+		for _, r := range res {
+			switch r.(type) {
+			case internal_type.EndOfSpeechPacket:
+				called <- true
+				return nil
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
+			}
+		}
 		return nil
+
 	}
 
 	opts := newTestOpts(map[string]any{"microphone.eos.timeout": 200.0})
@@ -762,6 +863,8 @@ func TestCallbackReceivesCorrectData(t *testing.T) {
 				case results <- res:
 				default:
 				}
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
 			}
 		}
 		return nil
@@ -890,6 +993,8 @@ func TestConcurrentMixedInputTypes(t *testing.T) {
 					callbackMu.Unlock()
 				default:
 				}
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
 			}
 		}
 		return nil
@@ -945,9 +1050,14 @@ func TestHighFrequencySTTUpdates(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	callTime := make(chan time.Time, 1)
 	callback := func(ctx context.Context, res ...internal_type.Packet) error {
-		select {
-		case callTime <- time.Now():
-		default:
+		for _, r := range res {
+			switch r.(type) {
+			case internal_type.EndOfSpeechPacket:
+				callTime <- time.Now()
+				return nil
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
+			}
 		}
 		return nil
 	}
@@ -993,14 +1103,21 @@ func TestUserInputInterruptsActiveSTT(t *testing.T) {
 	callTime := make(chan time.Time, 1)
 
 	callback := func(ctx context.Context, res ...internal_type.Packet) error {
-		callMu.Lock()
-		callCount++
-		callMu.Unlock()
-		select {
-		case callTime <- time.Now():
-		default:
+
+		for _, r := range res {
+			switch r.(type) {
+			case internal_type.EndOfSpeechPacket:
+				callMu.Lock()
+				callCount++
+				callMu.Unlock()
+				callTime <- time.Now()
+				return nil
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
+			}
 		}
 		return nil
+
 	}
 
 	opts := newTestOpts(map[string]any{"microphone.eos.timeout": 500.0})
@@ -1049,10 +1166,9 @@ func TestMultipleUtteranceSequence(t *testing.T) {
 		for _, r := range res {
 			switch res := r.(type) {
 			case internal_type.EndOfSpeechPacket:
-				select {
-				case callbacks <- res:
-				default:
-				}
+				callbacks <- res
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
 			}
 		}
 		return nil
@@ -1115,10 +1231,9 @@ func TestConcurrentUtterancesRapid(t *testing.T) {
 		for _, r := range res {
 			switch res := r.(type) {
 			case internal_type.EndOfSpeechPacket:
-				select {
-				case callbacks <- res:
-				default:
-				}
+				callbacks <- res
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
 			}
 		}
 		return nil
@@ -1171,10 +1286,9 @@ func TestConcurrentInputsDuringReset(t *testing.T) {
 		for _, r := range res {
 			switch res := r.(type) {
 			case internal_type.EndOfSpeechPacket:
-				select {
-				case callbacks <- res:
-				default:
-				}
+				callbacks <- res
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
 			}
 		}
 		return nil
@@ -1229,10 +1343,20 @@ func TestStressLoadWithManyInputs(t *testing.T) {
 	callCount := 0
 	callMu := sync.Mutex{}
 	callback := func(ctx context.Context, res ...internal_type.Packet) error {
-		callMu.Lock()
-		callCount++
-		callMu.Unlock()
+
+		for _, r := range res {
+			switch r.(type) {
+			case internal_type.EndOfSpeechPacket:
+				callMu.Lock()
+				callCount++
+				callMu.Unlock()
+				return nil
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
+			}
+		}
 		return nil
+
 	}
 
 	opts := newTestOpts(map[string]any{"microphone.eos.timeout": 50.0})
@@ -1285,9 +1409,17 @@ func TestContextCancellationUnderConcurrentLoad(t *testing.T) {
 	callCount := 0
 	callMu := sync.Mutex{}
 	callback := func(ctx context.Context, res ...internal_type.Packet) error {
-		callMu.Lock()
-		callCount++
-		callMu.Unlock()
+		for _, r := range res {
+			switch r.(type) {
+			case internal_type.EndOfSpeechPacket:
+				callMu.Lock()
+				callCount++
+				callMu.Unlock()
+				return nil
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
+			}
+		}
 		return nil
 	}
 
@@ -1334,9 +1466,14 @@ func TestFormattedTextOptimizationUnderConcurrency(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	callTimes := make(chan time.Time, 5)
 	callback := func(ctx context.Context, res ...internal_type.Packet) error {
-		select {
-		case callTimes <- time.Now():
-		default:
+		for _, r := range res {
+			switch r.(type) {
+			case internal_type.EndOfSpeechPacket:
+				callTimes <- time.Now()
+				return nil
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
+			}
 		}
 		return nil
 	}
@@ -1418,9 +1555,17 @@ func TestGenerationCounterPreventsStaleCallbacks(t *testing.T) {
 	callCount := 0
 	callMu := sync.Mutex{}
 	callback := func(ctx context.Context, res ...internal_type.Packet) error {
-		callMu.Lock()
-		callCount++
-		callMu.Unlock()
+		for _, r := range res {
+			switch r.(type) {
+			case internal_type.EndOfSpeechPacket:
+				callMu.Lock()
+				callCount++
+				callMu.Unlock()
+				return nil
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
+			}
+		}
 		return nil
 	}
 
@@ -1516,9 +1661,17 @@ func TestEdgeCaseRapidResetCycles(t *testing.T) {
 	callCount := 0
 	callMu := sync.Mutex{}
 	callback := func(ctx context.Context, res ...internal_type.Packet) error {
-		callMu.Lock()
-		callCount++
-		callMu.Unlock()
+		for _, r := range res {
+			switch r.(type) {
+			case internal_type.EndOfSpeechPacket:
+				callMu.Lock()
+				callCount++
+				callMu.Unlock()
+				return nil
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
+			}
+		}
 		return nil
 	}
 
@@ -1566,6 +1719,8 @@ func TestSingleCallbackForContinuousSpeechWithInterimAndFinal(t *testing.T) {
 				callMu.Lock()
 				callbackResults = append(callbackResults, res)
 				callMu.Unlock()
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
 			}
 		}
 		return nil
@@ -1640,9 +1795,14 @@ func TestInterimPacketsOnlyExtendTimer(t *testing.T) {
 
 	called := make(chan struct{}, 1)
 	callback := func(ctx context.Context, res ...internal_type.Packet) error {
-		select {
-		case called <- struct{}{}:
-		default:
+
+		for _, r := range res {
+			switch r.(type) {
+			case internal_type.EndOfSpeechPacket:
+				called <- struct{}{}
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are received but don't signal end-of-speech
+			}
 		}
 		return nil
 	}
@@ -1682,9 +1842,17 @@ func TestInterimPacketsResetTimerContinuously(t *testing.T) {
 	callCount := 0
 	callMu := sync.Mutex{}
 	callback := func(ctx context.Context, res ...internal_type.Packet) error {
-		callMu.Lock()
-		callCount++
-		callMu.Unlock()
+		for _, r := range res {
+			switch r.(type) {
+			case internal_type.EndOfSpeechPacket:
+				callMu.Lock()
+				callCount++
+				callMu.Unlock()
+				return nil
+			case internal_type.InterimEndOfSpeechPacket:
+				// Interim packets are expected, ignore for this test
+			}
+		}
 		return nil
 	}
 

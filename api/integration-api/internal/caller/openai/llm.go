@@ -234,6 +234,9 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 		}
 	}
 
+	// Add usage metrics from response
+	metrics.OnAddMetrics(llc.GetComplitionUsages(resp.Usage)...)
+
 	options.PostHook(map[string]interface{}{
 		"result": resp,
 	}, metrics.Build())

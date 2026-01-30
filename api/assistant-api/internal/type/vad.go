@@ -9,10 +9,6 @@ import (
 	"context"
 )
 
-// Activity represents a detected Audio segment.
-
-type VADCallback func(InterruptionPacket) error
-
 type Vad interface {
 	Name() string
 	Process(ctx context.Context, frame UserAudioPacket) error

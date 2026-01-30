@@ -7,6 +7,7 @@
 package internal_vad
 
 import (
+	"context"
 	"testing"
 
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
@@ -17,7 +18,7 @@ import (
 )
 
 // MockVADCallback implements the VADCallback interface for testing
-func MockVADCallback(result internal_type.InterruptionPacket) error {
+func MockVADCallback(ctx context.Context, p ...internal_type.Packet) error {
 	return nil
 }
 
@@ -30,7 +31,7 @@ func TestGetVAD_SILERO_VAD(t *testing.T) {
 		Channels:    1,
 	}
 
-	vad, err := GetVAD(t.Context(), logger, audioConfig, MockVADCallback, map[string]interface{}{
+	vad, err := GetVAD(t.Context(), logger, audioConfig, func(ctx context.Context, p ...internal_type.Packet) error { return nil }, map[string]interface{}{
 		OptionsKeyVadProvider: "invalid_vad",
 	})
 

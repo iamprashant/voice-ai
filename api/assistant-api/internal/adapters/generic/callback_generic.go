@@ -66,7 +66,7 @@ func (talking *GenericRequestor) callVadProcess(ctx context.Context, vl internal
 	if talking.vad != nil {
 		utils.Go(ctx, func() {
 			if err := talking.vad.Process(ctx, vl); err != nil {
-				talking.logger.Warnf("error while processing with vad %s", err.Error())
+				// talking.logger.Warnf("error while processing with vad %s", err.Error())
 			}
 		})
 	}
@@ -98,7 +98,6 @@ func (spk *GenericRequestor) interruptAllProvider(ctx context.Context, result in
 		// can be done on goroutine
 		utils.Go(ctx, func() {
 			if err := spk.assistantExecutor.Execute(spk.Context(), spk, result); err != nil {
-				spk.logger.Errorf("assistant executor interrupt error: %v", err)
 			}
 		})
 	}
@@ -240,28 +239,29 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 
 			continue
 		case internal_type.InterruptionPacket:
+			talking.logger.Infof("testing -> interruption received from source %+v", vl)
 			ctx, span, _ := talking.Tracer().StartSpan(talking.Context(), utils.AssistantUtteranceStage)
 			defer span.EndSpan(ctx, utils.AssistantUtteranceStage)
-
-			// calling end of speech analyzer
-			if err := talking.callEndOfSpeech(ctx, vl); err != nil {
-				talking.logger.Errorf("end of speech error: %v", err)
-			}
-			//
-			// recorder interrupted
-			if err := talking.callRecording(ctx, vl); err != nil {
-				talking.logger.Errorf("recorder error: %v", err)
-			}
-
-			// let all the providers know about interruption
-			if err := talking.interruptAllProvider(ctx, vl); err != nil {
-				talking.logger.Errorf("interrupt all provider error: %v", err)
-			}
 
 			switch vl.Source {
 			case internal_type.InterruptionSourceWord:
 				span.AddAttributes(ctx, internal_telemetry.KV{K: "activity_type", V: internal_telemetry.StringValue("word_interrupt")})
 				talking.resetIdleTimeoutTimer(talking.Context())
+
+				// calling end of speech analyzer
+				if err := talking.callEndOfSpeech(ctx, vl); err != nil {
+					talking.logger.Errorf("end of speech error: %v", err)
+				}
+				//
+				// recorder interrupted
+				if err := talking.callRecording(ctx, vl); err != nil {
+					talking.logger.Errorf("recorder error: %v", err)
+				}
+
+				// let all the providers know about interruption
+				if err := talking.interruptAllProvider(ctx, vl); err != nil {
+					talking.logger.Errorf("interrupt all provider error: %v", err)
+				}
 				//
 				if err := talking.messaging.Transition(internal_adapter_request_customizers.Interrupted); err != nil {
 					continue
@@ -274,9 +274,25 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				continue
 			default:
 				// might be noise at first
-				if vl.StartAt < 3 {
+				if vl.StartAt < 5 {
 					continue
 				}
+
+				// calling end of speech analyzer
+				if err := talking.callEndOfSpeech(ctx, vl); err != nil {
+					talking.logger.Errorf("end of speech error: %v", err)
+				}
+				//
+				// recorder interrupted
+				if err := talking.callRecording(ctx, vl); err != nil {
+					talking.logger.Errorf("recorder error: %v", err)
+				}
+
+				// let all the providers know about interruption
+				if err := talking.interruptAllProvider(ctx, vl); err != nil {
+					talking.logger.Errorf("interrupt all provider error: %v", err)
+				}
+
 				span.AddAttributes(ctx, internal_telemetry.KV{K: "activity_type", V: internal_telemetry.StringValue("vad_interrupt")})
 				if err := talking.messaging.Transition(internal_adapter_request_customizers.Interrupt); err != nil {
 					continue
@@ -314,6 +330,7 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 			talking.Notify(ctx, &protos.ConversationUserMessage{Id: vl.ContextID, Message: &protos.ConversationUserMessage_Text{Text: vl.Speech}, Completed: false, Time: timestamppb.New(time.Now())})
 			continue
 		case internal_type.EndOfSpeechPacket:
+			talking.logger.Infof("testing ->  end of speech received from source %+v", vl)
 			ctx, span, _ := talking.Tracer().StartSpan(talking.Context(), utils.AssistantUtteranceStage)
 			span.EndSpan(ctx,
 				utils.AssistantUtteranceStage,

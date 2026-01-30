@@ -176,7 +176,7 @@ func (listening *GenericRequestor) initializeDenoiser(ctx context.Context, audio
 func (listening *GenericRequestor) initializeVAD(ctx context.Context, audioConfig *protos.AudioConfig, options utils.Option,
 ) error {
 	start := time.Now()
-	vad, err := internal_vad.GetVAD(listening.Context(), listening.logger, audioConfig, func(vr internal_type.InterruptionPacket) error { return listening.OnPacket(listening.Context(), vr) }, options)
+	vad, err := internal_vad.GetVAD(listening.Context(), listening.logger, audioConfig, listening.OnPacket, options)
 	if err != nil {
 		listening.logger.Errorf("error wile intializing vad %+v", err)
 		return err

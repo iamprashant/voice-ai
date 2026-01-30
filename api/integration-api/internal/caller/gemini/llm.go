@@ -464,6 +464,12 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 			},
 		},
 	}
+
+	// Add usage metrics from response
+	if resp.UsageMetadata != nil {
+		metrics.OnAddMetrics(llc.UsageMetrics(resp.UsageMetadata)...)
+	}
+
 	options.PostHook(map[string]interface{}{"result": resp}, metrics.Build())
 	return message, metrics.Build(), nil
 }
