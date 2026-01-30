@@ -24,7 +24,7 @@ const (
 )
 
 // logger, audioConfig, opts
-func GetVAD(ctx context.Context, logger commons.Logger, intputAudio *protos.AudioConfig, callback internal_type.VADCallback, options utils.Option) (internal_type.Vad, error) {
+func GetVAD(ctx context.Context, logger commons.Logger, intputAudio *protos.AudioConfig, callback func(context.Context, ...internal_type.Packet) error, options utils.Option) (internal_type.Vad, error) {
 	typ, _ := options.GetString(OptionsKeyVadProvider)
 	switch VADIdentifier(typ) {
 	case SILERO_VAD:

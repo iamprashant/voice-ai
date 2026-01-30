@@ -17,8 +17,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-//  GET /v1/talk/vonage/call/2263072539095859200?x-api-key=3dd5c2eef53d27942bccd892750fda23ea0b92965d4699e73d8e754ab882955f&to=12019868532&endpoint_type=phone&from=15703768754&conversation_uuid=CON-3d4ae1dd-5e14-4131-be3d-0247cb19a28a&uuid=bccbc3faaf864e1641fe0cdb1921b6aa&region_url=https%3A%2F%2Fapi-ap-3.vonage.com [status:200 request:61ms]
-
 // TestReceiveCall tests the ReceiveCall method with Vonage webhook parameters
 func TestReceiveCall(t *testing.T) {
 	gin.SetMode(gin.TestMode)

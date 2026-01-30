@@ -444,5 +444,11 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 			},
 		},
 	}
+
+	// Add usage metrics from response
+	if resp.Usage != nil {
+		metrics.OnAddMetrics(llc.UsageMetrics(resp.Usage)...)
+	}
+
 	return message, metrics.Build(), nil
 }

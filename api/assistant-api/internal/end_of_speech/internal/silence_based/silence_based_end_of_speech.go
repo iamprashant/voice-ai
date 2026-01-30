@@ -83,16 +83,15 @@ func (eos *SilenceBasedEOS) Name() string {
 
 // Analyze processes incoming speech packets
 func (eos *SilenceBasedEOS) Analyze(ctx context.Context, pkt internal_type.Packet) error {
-	// eos.logger.Debugf("testing -> SilenceBasedEOS Analyze: received packet of type %T and %+v", pkt, pkt)
 	switch p := pkt.(type) {
 	case internal_type.UserTextPacket:
 		if p.Text == "" {
 			return nil
 		}
-		eos.mu.RLock()
+		eos.mu.Lock()
 		seg := SpeechSegment{ContextID: p.ContextId(), Text: p.Text, Timestamp: time.Now()}
 		eos.state.segment = seg
-		eos.mu.RUnlock()
+		eos.mu.Unlock()
 		// let the client know about interim speech
 		eos.callback(ctx, internal_type.InterimEndOfSpeechPacket{
 			Speech:    seg.Text,
@@ -119,7 +118,6 @@ func (eos *SilenceBasedEOS) Analyze(ctx context.Context, pkt internal_type.Packe
 		})
 
 	case internal_type.SpeechToTextPacket:
-		eos.logger.Debugf("context ID %+v", p)
 		eos.mu.Lock()
 		if p.Interim {
 			seg := eos.state.segment

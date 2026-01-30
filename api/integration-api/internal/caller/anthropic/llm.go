@@ -323,6 +323,16 @@ func (llc *largeLanguageCaller) GetMessageNewParams(opts *internal_callers.ChatC
 			if topP, err := utils.AnyToFloat64(value); err == nil {
 				options.TopP = anthropic.Float(topP)
 			}
+		case "model.response_format":
+			if format, err := utils.AnyToJSON(value); err == nil {
+
+				jsonSchemaParam := anthropic.OutputConfigParam{}
+				jsonData, err := json.Marshal(format)
+				if err == nil {
+					json.Unmarshal(jsonData, &jsonSchemaParam)
+				}
+				options.OutputConfig = jsonSchemaParam
+			}
 		}
 	}
 	return options

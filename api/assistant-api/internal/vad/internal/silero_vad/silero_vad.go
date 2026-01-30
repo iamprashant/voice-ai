@@ -52,8 +52,8 @@ const (
 // on context cancellation.
 type SileroVAD struct {
 	// Core dependencies
-	logger     commons.Logger
-	onActivity internal_type.VADCallback
+	logger   commons.Logger
+	onPacket func(ctx context.Context, pkt ...internal_type.Packet) error
 
 	// Audio processing pipeline
 	audioSampler   internal_type.AudioResampler
@@ -82,7 +82,7 @@ func NewSileroVAD(
 	ctx context.Context,
 	logger commons.Logger,
 	inputAudio *protos.AudioConfig,
-	callback internal_type.VADCallback,
+	onPacket func(ctx context.Context, pkt ...internal_type.Packet) error,
 	options utils.Option,
 ) (internal_type.Vad, error) {
 	// Initialize detector
@@ -100,7 +100,7 @@ func NewSileroVAD(
 
 	svad := &SileroVAD{
 		logger:         logger,
-		onActivity:     callback,
+		onPacket:       onPacket,
 		audioSampler:   resampler,
 		audioConverter: converter,
 		inputConfig:    inputAudio,
@@ -147,7 +147,7 @@ func (s *SileroVAD) Process(ctx context.Context, pkt internal_type.UserAudioPack
 
 	// Notify callback if speech detected
 	if len(segments) > 0 {
-		s.notifyActivity(segments)
+		s.notifyActivity(ctx, segments)
 	}
 
 	return nil
@@ -295,7 +295,7 @@ func (s *SileroVAD) detectSafely(samples []float32) ([]speech.Segment, error) {
 }
 
 // notifyActivity calculates speech boundaries and invokes the callback.
-func (s *SileroVAD) notifyActivity(segments []speech.Segment) {
+func (s *SileroVAD) notifyActivity(ctx context.Context, segments []speech.Segment) {
 	minStart := math.MaxFloat64
 	maxEnd := -math.MaxFloat64
 
@@ -311,7 +311,7 @@ func (s *SileroVAD) notifyActivity(segments []speech.Segment) {
 		}
 	}
 
-	s.onActivity(internal_type.InterruptionPacket{
+	s.onPacket(ctx, internal_type.InterruptionPacket{
 		Source:  internal_type.InterruptionSourceVad,
 		StartAt: minStart,
 		EndAt:   maxEnd,

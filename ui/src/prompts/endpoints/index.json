@@ -1,0 +1,178 @@
+[
+    {
+        "name": "Churn Risk Detection",
+        "description": "Automatically identify conversations that indicate a customer may be at risk of churning.",
+        "provider": "openai",
+        "model": "gpt-4o",
+        "parameters": {
+            "temperature": 0.7,
+            "response_format": "{\"type\":\"json_schema\",\"json_schema\":{\"name\":\"churn_risk_detection\",\"schema\":{\"type\":\"object\",\"properties\":{\"churn_risk_detected\":{\"type\":\"boolean\"},\"confidence\":{\"type\":\"number\",\"minimum\":0,\"maximum\":1},\"risk_level\":{\"type\":[\"string\",\"null\"],\"enum\":[\"high\",\"medium\",\"low\",null]},\"indicators\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"direct_cancellation_threat\":{\"type\":\"boolean\"},\"competitor_mentioned\":{\"type\":\"boolean\"},\"competitor_names\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"unresolved_issues\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"summary\":{\"type\":\"string\"}},\"required\":[\"churn_risk_detected\",\"confidence\",\"risk_level\",\"indicators\",\"direct_cancellation_threat\",\"competitor_mentioned\",\"competitor_names\",\"unresolved_issues\",\"summary\"],\"additionalProperties\":false},\"strict\":true}}"
+        },
+        "instruction": [
+            {
+                "role": "system",
+                "content": "Evaluate if this conversation indicates a risk of customer churn.\n\nKey churn risk indicators:\n1. Direct threats to cancel or leave\n2. Comparisons with competitors\n3. Expressions of disappointment with service/product\n4. Requests for refunds\n5. Mentions of alternatives or switching\n6. History of unresolved issues\n\nConsider:\n- Explicit statements about leaving\n- Level of customer frustration\n- Unresolved complaints\n- Mentions of competitor services\n- Overall satisfaction level\n\nRate confidence higher for explicit churn signals and lower for implicit indicators.\n\nHere is the full transcript of the conversation:\n{% for message in messages %}\n{{ message[\"role\"] }}: {{ message[\"message\"] }}\n{% endfor %}\n\nReturn ONLY valid JSON matching the schema. Do not include explanations."
+            }
+        ]
+    },
+    {
+        "name": "Upsell Opportunity",
+        "description": "Identify conversations where customers express needs that could be addressed by premium features or higher-tier plans. ",
+        "provider": "openai",
+        "model": "gpt-4o",
+        "parameters": {
+            "temperature": 0.7,
+            "response_format": "{\"type\":\"json_schema\",\"json_schema\":{\"name\":\"upsell_opportunity\",\"schema\":{\"type\":\"object\",\"properties\":{\"upsell_opportunity_detected\":{\"type\":\"boolean\"},\"confidence\":{\"type\":\"number\",\"minimum\":0,\"maximum\":1},\"opportunity_type\":{\"type\":[\"string\",\"null\"],\"enum\":[\"premium_feature\",\"higher_tier\",\"addon\",\"expansion\",null]},\"customer_needs\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"mentioned_limitations\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"growth_indicators\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"budget_signals\":{\"type\":[\"string\",\"null\"]},\"recommended_action\":{\"type\":\"string\"},\"summary\":{\"type\":\"string\"}},\"required\":[\"upsell_opportunity_detected\",\"confidence\",\"opportunity_type\",\"customer_needs\",\"mentioned_limitations\",\"growth_indicators\",\"budget_signals\",\"recommended_action\",\"summary\"],\"additionalProperties\":false},\"strict\":true}}"
+        },
+        "instruction": [
+            {
+                "role": "system",
+                "content": "Review this conversation for potential upsell opportunities.\n\nLook for moments where customers:\n- Express needs that align with premium features\n- Discuss growth challenges our higher tiers could solve\n- Hit limitations in their current plan\n\nPay attention to:\n- Positive sentiment combined with 'wish list' items\n- Questions about advanced capabilities\n- Discussions about expanding usage\n- Timing within their buying cycle\n- Mentions of budget processes\n\nThe strongest signals include direct questions about features in higher tiers, while more subtle indicators might include descriptions of manual workarounds for processes our premium features automate.\n\nHere is the full transcript of the conversation:\n{% for message in messages %}\n{{ message[\"role\"] }}: {{ message[\"message\"] }}\n{% endfor %}\n\nReturn ONLY valid JSON matching the schema. Do not include explanations."
+            }
+        ]
+    },
+    {
+        "name": "Resolved First Contact",
+        "description": "Track your first-contact resolution rate by identifying conversations where customer issues are fully resolved without requiring additional follow-ups or escalations.",
+        "provider": "openai",
+        "model": "gpt-4o",
+        "parameters": {
+            "temperature": 0.5,
+            "response_format": "{\"type\":\"json_schema\",\"json_schema\":{\"name\":\"resolved_first_contact\",\"schema\":{\"type\":\"object\",\"properties\":{\"resolved_first_contact\":{\"type\":\"boolean\"},\"confidence\":{\"type\":\"number\",\"minimum\":0,\"maximum\":1},\"customer_confirmed_resolution\":{\"type\":\"boolean\"},\"issues_raised\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"issues_resolved\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"pending_items\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"escalation_required\":{\"type\":\"boolean\"},\"follow_up_promised\":{\"type\":\"boolean\"},\"customer_satisfaction_indicators\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"summary\":{\"type\":\"string\"}},\"required\":[\"resolved_first_contact\",\"confidence\",\"customer_confirmed_resolution\",\"issues_raised\",\"issues_resolved\",\"pending_items\",\"escalation_required\",\"follow_up_promised\",\"customer_satisfaction_indicators\",\"summary\"],\"additionalProperties\":false},\"strict\":true}}"
+        },
+        "instruction": [
+            {
+                "role": "system",
+                "content": "Determine whether this customer interaction achieved complete resolution during the first contact without requiring follow-up or escalation.\n\nFocus on the conversation conclusion:\n- Did the customer explicitly confirm their issue was resolved?\n- Watch for clear problem statements followed by effective solutions\n- Customer expressions of gratitude or satisfaction\n- Proper closure of all raised topics\n\nStrong indicators of first-contact resolution:\n- Absence of pending items\n- No follow-up promises\n- No lingering questions\n\nConsider the customer's tone throughout, especially at the conversation's end, as their satisfaction level often indicates resolution quality.\n\nHere is the full transcript of the conversation:\n{% for message in messages %}\n{{ message[\"role\"] }}: {{ message[\"message\"] }}\n{% endfor %}\n\nReturn ONLY valid JSON matching the schema. Do not include explanations."
+            }
+        ]
+    },
+    {
+        "name": "Competitor Mentions",
+        "description": "Capture competitive intelligence by flagging conversations where customers mention or compare your product to competitors. Gain insights into competitive threats and opportunities.",
+        "provider": "openai",
+        "model": "gpt-4o",
+        "parameters": {
+            "temperature": 0.7,
+            "response_format": "{\"type\":\"json_schema\",\"json_schema\":{\"name\":\"competitor_mentions\",\"schema\":{\"type\":\"object\",\"properties\":{\"competitor_mentioned\":{\"type\":\"boolean\"},\"confidence\":{\"type\":\"number\",\"minimum\":0,\"maximum\":1},\"competitors\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"context\":{\"type\":\"string\"},\"sentiment\":{\"type\":\"string\",\"enum\":[\"positive\",\"negative\",\"neutral\"]}},\"required\":[\"name\",\"context\",\"sentiment\"],\"additionalProperties\":false}},\"mention_context\":{\"type\":[\"string\",\"null\"],\"enum\":[\"active_evaluation\",\"negotiation_leverage\",\"feature_comparison\",\"general_reference\",null]},\"feature_comparisons\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"customer_research_level\":{\"type\":[\"string\",\"null\"],\"enum\":[\"high\",\"medium\",\"low\",null]},\"competitive_threat_level\":{\"type\":[\"string\",\"null\"],\"enum\":[\"high\",\"medium\",\"low\",null]},\"summary\":{\"type\":\"string\"}},\"required\":[\"competitor_mentioned\",\"confidence\",\"competitors\",\"mention_context\",\"feature_comparisons\",\"customer_research_level\",\"competitive_threat_level\",\"summary\"],\"additionalProperties\":false},\"strict\":true}}"
+        },
+        "instruction": [
+            {
+                "role": "system",
+                "content": "Identify any references to competitor products, services, or companies within this conversation.\n\nBeyond direct competitor names, watch for:\n- Veiled references\n- Feature comparisons without naming competitors\n- Mentions of 'other solutions' in the market\n\nAnalyze the context of competitive mentions:\n- Are they actively evaluating alternatives?\n- Using competitors as negotiation leverage?\n- Simply making feature comparisons?\n\nPay special attention to:\n- Statements about features available 'elsewhere'\n- Questions about how we differentiate from specific market players\n- Customer familiarity with the competitive landscape (indicates research level)\n\nHere is the full transcript of the conversation:\n{% for message in messages %}\n{{ message[\"role\"] }}: {{ message[\"message\"] }}\n{% endfor %}\n\nReturn ONLY valid JSON matching the schema. Do not include explanations."
+            }
+        ]
+    },
+    {
+        "name": "Feature Request Tracking",
+        "description": "Automatically identify when customers request new features or suggest improvements to existing functionality. Feed this data directly to your product team to inform roadmap decisions.",
+        "provider": "openai",
+        "model": "gpt-4o",
+        "parameters": {
+            "temperature": 0.7,
+            "response_format": "{\"type\":\"json_schema\",\"json_schema\":{\"name\":\"feature_request_tracking\",\"schema\":{\"type\":\"object\",\"properties\":{\"feature_request_detected\":{\"type\":\"boolean\"},\"confidence\":{\"type\":\"number\",\"minimum\":0,\"maximum\":1},\"requests\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"feature\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"business_impact\":{\"type\":[\"string\",\"null\"]},\"priority_signal\":{\"type\":\"string\",\"enum\":[\"high\",\"medium\",\"low\"]}},\"required\":[\"feature\",\"description\",\"business_impact\",\"priority_signal\"],\"additionalProperties\":false}},\"workarounds_mentioned\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"competitor_feature_references\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"summary\":{\"type\":\"string\"}},\"required\":[\"feature_request_detected\",\"confidence\",\"requests\",\"workarounds_mentioned\",\"competitor_feature_references\",\"summary\"],\"additionalProperties\":false},\"strict\":true}}"
+        },
+        "instruction": [
+            {
+                "role": "system",
+                "content": "Analyze this conversation for both explicit and implicit feature requests or product enhancement suggestions.\n\nFocus on identifying:\n- Specific functionality customers are requesting\n- Workarounds they've created for missing features\n- Manual processes they wish to automate\n\nStrong indicators include:\n- 'It would be nice if' statements\n- Descriptions of ideal workflows not currently supported\n- Comparisons to capabilities available in other products\n\nPay attention to the business impact customers associate with requested features:\n- Time savings\n- Error reduction\n- Improved reporting\n- etc.\n\nConsider whether similar requests appear frequently across multiple customers.\n\nHere is the full transcript of the conversation:\n{% for message in messages %}\n{{ message[\"role\"] }}: {{ message[\"message\"] }}\n{% endfor %}\n\nReturn ONLY valid JSON matching the schema. Do not include explanations."
+            }
+        ]
+    },
+    {
+        "name": "Positive Sentiment",
+        "description": "Identify conversations with positive sentiment to track customer satisfaction, gather testimonials, and recognize excellent agent performance.",
+        "provider": "openai",
+        "model": "gpt-4o",
+        "parameters": {
+            "temperature": 0.5,
+            "response_format": "{\"type\":\"json_schema\",\"json_schema\":{\"name\":\"positive_sentiment\",\"schema\":{\"type\":\"object\",\"properties\":{\"positive_sentiment_detected\":{\"type\":\"boolean\"},\"confidence\":{\"type\":\"number\",\"minimum\":0,\"maximum\":1},\"sentiment_strength\":{\"type\":[\"string\",\"null\"],\"enum\":[\"strong\",\"moderate\",\"mild\",null]},\"positive_indicators\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"spontaneous_praise\":{\"type\":\"boolean\"},\"specific_features_praised\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"testimonial_potential\":{\"type\":\"boolean\"},\"expansion_intent\":{\"type\":\"boolean\"},\"advocacy_signals\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"summary\":{\"type\":\"string\"}},\"required\":[\"positive_sentiment_detected\",\"confidence\",\"sentiment_strength\",\"positive_indicators\",\"spontaneous_praise\",\"specific_features_praised\",\"testimonial_potential\",\"expansion_intent\",\"advocacy_signals\",\"summary\"],\"additionalProperties\":false},\"strict\":true}}"
+        },
+        "instruction": [
+            {
+                "role": "system",
+                "content": "Evaluate the presence and strength of positive sentiment throughout this conversation.\n\nWatch for language expressing:\n- Satisfaction\n- Appreciation\n- Delight with any aspect of the product or service experience\n\nThe most valuable positive feedback includes:\n- Specific details about which features provide value\n- How the product solves real problems\n- Measurable outcomes achieved\n\nNote spontaneous praise (unprompted positive comments) as particularly significant.\n\nConsider:\n- Whether positive sentiment relates to core product value or peripheral aspects\n- Whether the customer expresses intentions to expand usage, renew, or advocate for your solution\n\nHere is the full transcript of the conversation:\n{% for message in messages %}\n{{ message[\"role\"] }}: {{ message[\"message\"] }}\n{% endfor %}\n\nReturn ONLY valid JSON matching the schema. Do not include explanations."
+            }
+        ]
+    },
+    {
+        "name": "Negative Sentiment",
+        "description": "Proactively identify customer frustration, disappointment, or anger to address issues before they lead to churn. ",
+        "provider": "openai",
+        "model": "gpt-4o",
+        "parameters": {
+            "temperature": 0.5,
+            "response_format": "{\"type\":\"json_schema\",\"json_schema\":{\"name\":\"negative_sentiment\",\"schema\":{\"type\":\"object\",\"properties\":{\"negative_sentiment_detected\":{\"type\":\"boolean\"},\"confidence\":{\"type\":\"number\",\"minimum\":0,\"maximum\":1},\"sentiment_intensity\":{\"type\":[\"string\",\"null\"],\"enum\":[\"high\",\"medium\",\"low\",null]},\"emotion_type\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"enum\":[\"frustration\",\"disappointment\",\"confusion\",\"anger\"]}},\"negative_triggers\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"trigger\":{\"type\":\"string\"},\"category\":{\"type\":\"string\",\"enum\":[\"product_functionality\",\"service_quality\",\"expectation_mismatch\",\"pricing\",\"other\"]}},\"required\":[\"trigger\",\"category\"],\"additionalProperties\":false}},\"dealbreaker_issues\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"renewal_risk\":{\"type\":\"boolean\"},\"immediate_attention_required\":{\"type\":\"boolean\"},\"summary\":{\"type\":\"string\"}},\"required\":[\"negative_sentiment_detected\",\"confidence\",\"sentiment_intensity\",\"emotion_type\",\"negative_triggers\",\"dealbreaker_issues\",\"renewal_risk\",\"immediate_attention_required\",\"summary\"],\"additionalProperties\":false},\"strict\":true}}"
+        },
+        "instruction": [
+            {
+                "role": "system",
+                "content": "Determine if this conversation contains significant negative sentiment.\n\nLook beyond obvious complaints to identify:\n- Tone shifts\n- Expressions of surprise at limitations\n- Descriptions of workarounds needed due to product gaps\n\nAssess the emotional intensity:\n- Frustration\n- Disappointment\n- Confusion\n- Anger\n\nDetermine whether issues are presented as dealbreakers or minor inconveniences.\n\nConsider the specific triggers of negative sentiment:\n- Is it about product functionality?\n- Service quality?\n- Expectation misalignment?\n\nPay attention to comparisons that unfavorably position your product against alternatives or customer expectations, particularly when tied to renewal decisions.\n\nHere is the full transcript of the conversation:\n{% for message in messages %}\n{{ message[\"role\"] }}: {{ message[\"message\"] }}\n{% endfor %}\n\nReturn ONLY valid JSON matching the schema. Do not include explanations."
+            }
+        ]
+    },
+    {
+        "name": "Pricing Concerns",
+        "description": "Identify conversations where customers express concerns about pricing, request discounts, or compare your cost to competitors. Helps sales and marketing teams understand price sensitivity.",
+        "provider": "openai",
+        "model": "gpt-4o",
+        "parameters": {
+            "temperature": 0.7,
+            "response_format": "{\"type\":\"json_schema\",\"json_schema\":{\"name\":\"pricing_concerns\",\"schema\":{\"type\":\"object\",\"properties\":{\"pricing_concern_detected\":{\"type\":\"boolean\"},\"confidence\":{\"type\":\"number\",\"minimum\":0,\"maximum\":1},\"concern_type\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"enum\":[\"too_expensive\",\"discount_request\",\"competitor_comparison\",\"budget_constraint\",\"value_questioning\",\"price_increase_objection\"]}},\"specific_price_points_mentioned\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"discount_requested\":{\"type\":\"boolean\"},\"discount_percentage_mentioned\":{\"type\":[\"string\",\"null\"]},\"pricing_as_blocker\":{\"type\":\"boolean\"},\"negotiation_signals\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"budget_timeline\":{\"type\":[\"string\",\"null\"]},\"summary\":{\"type\":\"string\"}},\"required\":[\"pricing_concern_detected\",\"confidence\",\"concern_type\",\"specific_price_points_mentioned\",\"discount_requested\",\"discount_percentage_mentioned\",\"pricing_as_blocker\",\"negotiation_signals\",\"budget_timeline\",\"summary\"],\"additionalProperties\":false},\"strict\":true}}"
+        },
+        "instruction": [
+            {
+                "role": "system",
+                "content": "Identify conversations where pricing is a significant topic or concern.\n\nLook for:\n- Direct price discussions\n- Requests for discounts\n- Pricing comparisons with competitors\n- Expressions that your product is too expensive for the value provided\n\nPay attention to how customers frame pricing discussions:\n- As a blocker to purchase/renewal\n- A negotiation starting point\n- A value comparison\n\nNote:\n- Specific price points or discount percentages mentioned\n- Objections to recent price changes\n- References to budgetary constraints\n\nConsider whether pricing concerns appear to be dealbreakers or simply information gathering.\n\nHere is the full transcript of the conversation:\n{% for message in messages %}\n{{ message[\"role\"] }}: {{ message[\"message\"] }}\n{% endfor %}\n\nReturn ONLY valid JSON matching the schema. Do not include explanations."
+            }
+        ]
+    },
+    {
+        "name": "Business Process Integration",
+        "description": "Track conversations about implementing your product into existing workflows and business processes. Helps identify adoption barriers and integration challenges.",
+        "provider": "openai",
+        "model": "gpt-4o",
+        "parameters": {
+            "temperature": 0.7,
+            "response_format": "{\"type\":\"json_schema\",\"json_schema\":{\"name\":\"business_process_integration\",\"schema\":{\"type\":\"object\",\"properties\":{\"integration_discussion_detected\":{\"type\":\"boolean\"},\"confidence\":{\"type\":\"number\",\"minimum\":0,\"maximum\":1},\"integration_topics\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"enum\":[\"workflow_integration\",\"data_migration\",\"api_usage\",\"automation\",\"change_management\",\"third_party_tools\"]}},\"tools_mentioned\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"friction_points\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"technical_requirements\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"adoption_blockers\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"implementation_stage\":{\"type\":[\"string\",\"null\"],\"enum\":[\"planning\",\"in_progress\",\"completed\",\"blocked\",null]},\"summary\":{\"type\":\"string\"}},\"required\":[\"integration_discussion_detected\",\"confidence\",\"integration_topics\",\"tools_mentioned\",\"friction_points\",\"technical_requirements\",\"adoption_blockers\",\"implementation_stage\",\"summary\"],\"additionalProperties\":false},\"strict\":true}}"
+        },
+        "instruction": [
+            {
+                "role": "system",
+                "content": "Evaluate whether this conversation discusses integration of our product into the customer's business processes or workflows.\n\nLook for discussions about:\n- How the customer plans to use our product within their organization\n- Questions about connecting with other tools they use\n- Challenges in adopting our solution into existing workflows\n\nKey indicators include mentions of:\n- Data migration\n- API usage\n- Automation needs\n- Organizational change management\n\nPay special attention to:\n- Any friction points in implementation\n- Specific technical requirements for successful integration with their tech stack\n\nNote whether integration complexity is presented as a potential adoption blocker.\n\nHere is the full transcript of the conversation:\n{% for message in messages %}\n{{ message[\"role\"] }}: {{ message[\"message\"] }}\n{% endfor %}\n\nReturn ONLY valid JSON matching the schema. Do not include explanations."
+            }
+        ]
+    },
+    {
+        "name": "Escalation Needed",
+        "description": "Identify conversations that require manager attention or specialized support. Helps ensure critical issues are addressed quickly by the right people.",
+        "provider": "openai",
+        "model": "gpt-4o",
+        "parameters": {
+            "temperature": 0.5,
+            "response_format": "{\"type\":\"json_schema\",\"json_schema\":{\"name\":\"escalation_needed\",\"schema\":{\"type\":\"object\",\"properties\":{\"escalation_needed\":{\"type\":\"boolean\"},\"confidence\":{\"type\":\"number\",\"minimum\":0,\"maximum\":1},\"escalation_reasons\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"enum\":[\"customer_requested\",\"technical_complexity\",\"account_risk\",\"compliance_legal\",\"billing_dispute\",\"unresolved_technical\",\"sales_promise_issue\",\"sla_violation\",\"previous_support_complaint\"]}},\"urgency_level\":{\"type\":[\"string\",\"null\"],\"enum\":[\"immediate\",\"high\",\"medium\",\"low\",null]},\"escalation_explicit\":{\"type\":\"boolean\"},\"recommended_escalation_path\":{\"type\":[\"string\",\"null\"],\"enum\":[\"manager\",\"technical_specialist\",\"billing\",\"legal\",\"account_executive\",null]},\"issue_details\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"summary\":{\"type\":\"string\"}},\"required\":[\"escalation_needed\",\"confidence\",\"escalation_reasons\",\"urgency_level\",\"escalation_explicit\",\"recommended_escalation_path\",\"issue_details\",\"summary\"],\"additionalProperties\":false},\"strict\":true}}"
+        },
+        "instruction": [
+            {
+                "role": "system",
+                "content": "Analyze if this conversation requires escalation to a manager or specialist.\n\nLook for:\n1. Customer explicitly asking for a manager or escalation\n2. Issues beyond the current agent's technical knowledge or authority\n3. Major account risks like threats to cancel or leave\n4. Compliance or legal concerns\n5. Billing disputes beyond standard policy\n6. Technical issues unresolved after multiple troubleshooting attempts\n7. Features promised by sales that don't exist or work as described\n8. SLA violations or complaints about previous support interactions\n\nRate confidence higher when escalation needs are explicit rather than implied.\n\nHere is the full transcript of the conversation:\n{% for message in messages %}\n{{ message[\"role\"] }}: {{ message[\"message\"] }}\n{% endfor %}\n\nReturn ONLY valid JSON matching the schema. Do not include explanations."
+            }
+        ]
+    },
+    {
+        "name": "Legal/Compliance Risk",
+        "description": "Identify conversations that mention legal issues, regulatory compliance, or data privacy concerns. Helps mitigate risk and ensure proper handling of sensitive situations.",
+        "provider": "openai",
+        "model": "gpt-4o",
+        "parameters": {
+            "temperature": 0.5,
+            "response_format": "{\"type\":\"json_schema\",\"json_schema\":{\"name\":\"legal_compliance_risk\",\"schema\":{\"type\":\"object\",\"properties\":{\"legal_compliance_risk_detected\":{\"type\":\"boolean\"},\"confidence\":{\"type\":\"number\",\"minimum\":0,\"maximum\":1},\"risk_categories\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"enum\":[\"data_privacy\",\"gdpr_ccpa\",\"legal_threat\",\"industry_regulation\",\"security_breach\",\"intellectual_property\",\"contractual\",\"representative_commitment\"]}},\"specific_regulations_mentioned\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"legal_terminology_used\":{\"type\":\"boolean\"},\"attorney_mentioned\":{\"type\":\"boolean\"},\"data_requests\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"potential_liability_statements\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"urgency_level\":{\"type\":[\"string\",\"null\"],\"enum\":[\"immediate\",\"high\",\"medium\",\"low\",null]},\"recommended_action\":{\"type\":\"string\"},\"summary\":{\"type\":\"string\"}},\"required\":[\"legal_compliance_risk_detected\",\"confidence\",\"risk_categories\",\"specific_regulations_mentioned\",\"legal_terminology_used\",\"attorney_mentioned\",\"data_requests\",\"potential_liability_statements\",\"urgency_level\",\"recommended_action\",\"summary\"],\"additionalProperties\":false},\"strict\":true}}"
+        },
+        "instruction": [
+            {
+                "role": "system",
+                "content": "Determine if this conversation contains legal or compliance risks that require special handling.\n\nFocus on identifying mentions of:\n1. Data privacy concerns or GDPR/CCPA requests\n2. Legal threats or mentions of attorneys/lawyers\n3. References to regulations specific to the customer's industry\n4. Compliance requirements the customer needs to meet using our product\n5. Security breaches or data exposure concerns\n6. Intellectual property issues\n7. Requests for contractual changes or liability questions\n8. Statements that could constitute contractual commitments by our representatives\n\nFlag with higher confidence when legal terminology is explicitly used versus when compliance concerns are merely implied.\n\nHere is the full transcript of the conversation:\n{% for message in messages %}\n{{ message[\"role\"] }}: {{ message[\"message\"] }}\n{% endfor %}\n\nReturn ONLY valid JSON matching the schema. Do not include explanations."
+            }
+        ]
+    }
+]

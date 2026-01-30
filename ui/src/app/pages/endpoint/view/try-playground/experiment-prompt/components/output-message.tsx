@@ -32,9 +32,7 @@ export const OutputMessage: FC<{
   // State to manage the outputs extracted from the callerResponse
   const [outputs, setOutputs] = useState<
     | {
-        content: Uint8Array | string;
-        contenttype: string;
-        contentformat: string;
+        content: string;
       }[]
     | null
   >(null);
@@ -49,17 +47,7 @@ export const OutputMessage: FC<{
       const responses = callerResponse.getDataList();
 
       if (responses && responses.length > 0) {
-        setOutputs(
-          responses.map(response => ({
-            contentformat: response.getContentformat(),
-            contenttype: response.getContenttype(),
-            content:
-              response.getContenttype() === 'text' ||
-              response.getContenttype() === 'image'
-                ? response.getContent_asB64()
-                : response.getContent_asU8(),
-          })),
-        );
+        setOutputs(responses.map(response => ({ content: response })));
       }
 
       if (metrics) setEndpointMetrics(metrics);
@@ -89,37 +77,7 @@ export const OutputMessage: FC<{
                 <div className="min-h-[250px] max-h-[450px] flex flex-col justify-start items-center relative">
                   {outputs ? (
                     outputs.map((out, i) => {
-                      if (out.contenttype === 'text') {
-                        return (
-                          <MarkdownViewer
-                            text={atob(out.content as string)}
-                            key={i}
-                          />
-                        );
-                      }
-
-                      if (out.contenttype === 'image') {
-                        return (
-                          <div
-                            key={i}
-                            className="bg-white dark:bg-gray-900 p-4 rounded-[2px] flex justify-start items-start w-full"
-                          >
-                            <img
-                              alt="response-image"
-                              className="rounded-[2px] h-[250px] border shadow-sm"
-                              src={`data:image/png;base64,${atob(out.content as string)}`}
-                            />
-                          </div>
-                        );
-                      }
-
-                      if (out.contenttype === 'audio') {
-                        return (
-                          <AudioPlayer audioData={out.content as Uint8Array} />
-                        );
-                      }
-
-                      return null;
+                      return <MarkdownViewer text={out.content} key={i} />;
                     })
                   ) : (
                     <div className="opacity-60 w-full p-4">
@@ -128,28 +86,6 @@ export const OutputMessage: FC<{
                     </div>
                   )}
                 </div>
-              </div>
-            ),
-          },
-          {
-            label: 'attributes',
-            element: (
-              <div className="flex-1 bg-white dark:bg-gray-900">
-                {callerResponse ? (
-                  <CodeHighlighting
-                    className="max-w-full h-full"
-                    code={JSON.stringify(
-                      callerResponse.getDataList().map(rc => rc.toObject()),
-                      null,
-                      2,
-                    )}
-                  />
-                ) : (
-                  <div className="opacity-60 w-full p-4">
-                    Attributes will be available here after the completion of
-                    execution
-                  </div>
-                )}
               </div>
             ),
           },
@@ -195,48 +131,6 @@ export const OutputMessage: FC<{
           },
         ]}
       />
-    </div>
-  );
-};
-
-/**
- * AudioPlayer Component
- *
- * This component is responsible for playing audio data. It takes in an audio data buffer (Uint8Array),
- * creates a Blob URL for the audio, and renders an HTML audio player with controls.
- * If the audio data is not available, it shows a loading spinner.
- *
- * Props:
- * - audioData: A Uint8Array representing the audio data to be played.
- */
-const AudioPlayer: FC<{ audioData: ArrayBuffer | Uint8Array }> = ({
-  audioData,
-}) => {
-  const [audioSrc, setAudioSrc] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (audioData) {
-      const blob = new Blob([audioData], { type: 'audio/wav' }); // Create a Blob from the audio data
-      const url = URL.createObjectURL(blob); // Generate a URL for the Blob
-      setAudioSrc(url); // Set the URL as the source for the audio player
-
-      // Cleanup function to revoke the Blob URL when the component unmounts or audioData changes
-      return () => {
-        URL.revokeObjectURL(url);
-      };
-    }
-  }, [audioData]);
-
-  return (
-    <div className="h-full flex justify-center items-center flex-1">
-      {audioSrc ? (
-        <audio controls>
-          <source src={audioSrc} type="audio/wav" />
-          Your browser does not support the audio element.
-        </audio>
-      ) : (
-        <Spinner /> // Display a loading spinner if the audio source is not yet available
-      )}
     </div>
   );
 };
