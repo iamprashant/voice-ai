@@ -93,7 +93,6 @@ func (elt *elevenlabsTTS) textToSpeechCallback(conn *websocket.Conn, ctx context
 					elt.logger.Infof("elevenlabs-tts: websocket closed gracefully")
 					return
 				}
-
 				elt.logger.Errorf("elevenlabs-tts: websocket read error: %v", err)
 				return
 			}

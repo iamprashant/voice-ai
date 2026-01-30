@@ -320,14 +320,14 @@ func (f EndOfSpeechPacket) ContextId() string {
 	return f.ContextID
 }
 
-type InterimSpeechPacket struct {
+type InterimEndOfSpeechPacket struct {
 	// contextID identifies the context being updated.
 	ContextID string
 
 	Speech string
 }
 
-func (p InterimSpeechPacket) ContextId() string {
+func (p InterimEndOfSpeechPacket) ContextId() string {
 	return p.ContextID
 }
 

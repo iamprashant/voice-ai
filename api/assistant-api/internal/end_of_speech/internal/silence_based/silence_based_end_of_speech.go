@@ -94,7 +94,7 @@ func (eos *SilenceBasedEOS) Analyze(ctx context.Context, pkt internal_type.Packe
 		eos.state.segment = seg
 		eos.mu.RUnlock()
 		// let the client know about interim speech
-		eos.callback(ctx, internal_type.InterimSpeechPacket{
+		eos.callback(ctx, internal_type.InterimEndOfSpeechPacket{
 			Speech:    seg.Text,
 			ContextID: seg.ContextID,
 		})
@@ -152,7 +152,7 @@ func (eos *SilenceBasedEOS) Analyze(ctx context.Context, pkt internal_type.Packe
 		eos.mu.Unlock()
 
 		// let the client know about interim speech
-		eos.callback(ctx, internal_type.InterimSpeechPacket{
+		eos.callback(ctx, internal_type.InterimEndOfSpeechPacket{
 			Speech:    newSeg.Text,
 			ContextID: newSeg.ContextID,
 		})

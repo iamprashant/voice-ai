@@ -124,8 +124,6 @@ func (spk *GenericRequestor) callSpeaking(ctx context.Context, result internal_t
 			}
 		}
 	case internal_type.LLMResponseDeltaPacket:
-		spk.logger.Debugf("testing -> got to speak %+v", result)
-		spk.logger.Debugf("testing -> got to speak ID %+v", spk.messaging.GetID())
 		if result.ContextId() != spk.messaging.GetID() {
 			return nil
 		}
@@ -312,8 +310,7 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				}
 			}
 			continue
-
-		case internal_type.InterimSpeechPacket:
+		case internal_type.InterimEndOfSpeechPacket:
 			talking.Notify(ctx, &protos.ConversationUserMessage{Id: vl.ContextID, Message: &protos.ConversationUserMessage_Text{Text: vl.Speech}, Completed: false, Time: timestamppb.New(time.Now())})
 			continue
 		case internal_type.EndOfSpeechPacket:
@@ -326,6 +323,10 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 
 			// stop idle timeout as bot has started responding
 			talking.stopIdleTimeoutTimer()
+
+			if err := talking.messaging.Transition(internal_adapter_request_customizers.LLMGenerating); err != nil {
+				talking.logger.Errorf("messaging transition error: %v", err)
+			}
 
 			if err := talking.Notify(ctx,
 				&protos.ConversationUserMessage{Id: vl.ContextID, Message: &protos.ConversationUserMessage_Text{Text: vl.Speech}, Completed: true, Time: timestamppb.New(time.Now())}); err != nil {
