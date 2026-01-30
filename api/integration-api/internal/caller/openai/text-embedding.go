@@ -10,9 +10,9 @@ import (
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	internal_caller_metrics "github.com/rapidaai/api/integration-api/internal/caller/metrics"
 	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
+	"github.com/rapidaai/protos"
 	integration_api "github.com/rapidaai/protos"
 )
 
@@ -55,7 +55,7 @@ func (ec *embeddingCaller) GetEmbeddingNewParams(opts *internal_callers.Embeddin
 // GetText2Speech implements internal_callers.Text2SpeechCaller.
 func (ec *embeddingCaller) GetEmbedding(ctx context.Context,
 	content map[int32]string,
-	options *internal_callers.EmbeddingOptions) ([]*integration_api.Embedding, types.Metrics, error) {
+	options *internal_callers.EmbeddingOptions) ([]*integration_api.Embedding, []*protos.Metric, error) {
 	mertics := internal_caller_metrics.NewMetricBuilder(options.RequestId)
 	mertics.OnStart()
 
@@ -97,11 +97,11 @@ func (ec *embeddingCaller) GetEmbedding(ctx context.Context,
 	output := make([]*integration_api.Embedding, len(resp.Data))
 
 	// all the usages into the metrics
-	mertics.OnAddMetrics(&types.Metric{
+	mertics.OnAddMetrics(&protos.Metric{
 		Name:        type_enums.OUTPUT_TOKEN.String(),
 		Value:       fmt.Sprintf("%d", resp.Usage.PromptTokens),
 		Description: "Input token",
-	}, &types.Metric{
+	}, &protos.Metric{
 		Name:        type_enums.TOTAL_TOKEN.String(),
 		Value:       fmt.Sprintf("%d", resp.Usage.TotalTokens),
 		Description: "Total Token",

@@ -80,65 +80,133 @@ func (f MetricPacket) ContextId() string {
 }
 
 // =============================================================================
+// Directive Packets
+// =============================================================================
+
+type DirectivePacket struct {
+	// ContextID identifies the context to be flushed.
+	ContextID string
+
+	// Directive
+	Directive protos.ConversationDirective_DirectiveType
+
+	// arguments for directive
+	Arguments map[string]interface{}
+}
+
+func (f DirectivePacket) ContextId() string {
+	return f.ContextID
+}
+
+// =============================================================================
 // LLM Packets
 // =============================================================================
 
 type LLMPacket interface {
+	Packet
 	ContextId() string
 }
 
-type LLMStreamPacket struct {
-
+type LLMErrorPacket struct {
 	// contextID identifies the context to be flushed.
 	ContextID string
 
-	// message
+	// error
+	Error error
+
+	//
+
+}
+
+func (f LLMErrorPacket) ContextId() string {
+	return f.ContextID
+}
+
+// LLMResponseDeltaPacket represents a streaming text delta from the LLM.
+// This packet is emitted during streaming responses, containing partial text chunks.
+type LLMResponseDeltaPacket struct {
+	// ContextID identifies the context for this response.
+	ContextID string
+
+	// Text contains the partial text content of this delta.
 	Text string
 }
 
-func (f LLMStreamPacket) ContextId() string {
+func (f LLMResponseDeltaPacket) ContextId() string {
 	return f.ContextID
 }
 
-type LLMMessagePacket struct {
-	// contextID identifies the context to be flushed.
+// LLMResponseDonePacket signals the completion of an LLM response stream.
+// This packet is emitted when the LLM has finished generating its response.
+type LLMResponseDonePacket struct {
+	// ContextID identifies the context for this response.
 	ContextID string
 
-	// message
-	Message *types.Message
+	// Text contains the final aggregated text (optional, may be empty for streaming).
+	Text string
 }
 
-func (f LLMMessagePacket) Content() string {
-	return f.Message.String()
+func (f LLMResponseDonePacket) Content() string {
+	return f.Text
 }
 
-func (f LLMMessagePacket) Role() string {
+func (f LLMResponseDonePacket) Role() string {
 	return "assistant"
 }
 
-func (f LLMMessagePacket) ContextId() string {
+func (f LLMResponseDonePacket) ContextId() string {
 	return f.ContextID
 }
 
-func (f LLMMessagePacket) IsToolCall() bool {
-	return f.Message != nil && f.Message.Role == "tool"
+// =============================================================================
+// LLM Tool Call Packets
+// =============================================================================
+
+type LLMToolPacket interface {
+	ToolId() string
 }
 
-type LLMToolPacket struct {
+type LLMToolCallPacket struct {
+	// id of tool which user has configured
+	ToolID string
+
 	// name of tool which user has configured
 	Name string
 
 	// contextID identifies the context to be flushed.
 	ContextID string
 
-	// action
-	Action protos.AssistantConversationAction_ActionType
+	// arguments for tool call
+	Arguments map[string]interface{}
+}
 
-	// result
+func (f LLMToolCallPacket) ContextId() string {
+	return f.ContextID
+}
+
+func (f LLMToolCallPacket) ToolId() string {
+	return f.ToolID
+}
+
+type LLMToolResultPacket struct {
+	// id of tool which user has configured
+	ToolID string
+
+	// name of tool which user has configured
+	Name string
+
+	// contextID identifies the context to be flushed.
+	ContextID string
+
+	// result for tool call
 	Result map[string]interface{}
 }
 
-func (f LLMToolPacket) ContextId() string {
+func (f LLMToolResultPacket) ToolId() string {
+	return f.ToolID
+}
+
+func (f LLMToolResultPacket) ContextId() string {
 	return f.ContextID
 }
 
@@ -250,6 +318,17 @@ type EndOfSpeechPacket struct {
 
 func (f EndOfSpeechPacket) ContextId() string {
 	return f.ContextID
+}
+
+type InterimEndOfSpeechPacket struct {
+	// contextID identifies the context being updated.
+	ContextID string
+
+	Speech string
+}
+
+func (p InterimEndOfSpeechPacket) ContextId() string {
+	return p.ContextID
 }
 
 type SpeechToTextPacket struct {

@@ -78,7 +78,7 @@ func (conversationService *assistantConversationService) CreateLLMAction(
 	assistantId,
 	assistantConversationId uint64,
 	messageId string,
-	in, out *types.Message, metrics []*types.Metric) (*internal_conversation_entity.AssistantConversationAction, error) {
+	in, out *protos.Message, metrics []*protos.Metric) (*internal_conversation_entity.AssistantConversationAction, error) {
 	start := time.Now()
 	db := conversationService.postgres.DB(ctx)
 	aca := &internal_conversation_entity.AssistantConversationAction{
@@ -106,7 +106,7 @@ func (conversationService *assistantConversationService) CreateToolAction(
 	assistantId uint64,
 	assistantConversationId uint64,
 	messageId string,
-	in, out map[string]interface{}, metrics []*types.Metric) (*internal_conversation_entity.AssistantConversationAction, error) {
+	in, out map[string]interface{}, metrics []*protos.Metric) (*internal_conversation_entity.AssistantConversationAction, error) {
 	start := time.Now()
 	db := conversationService.postgres.DB(ctx)
 	aca := &internal_conversation_entity.AssistantConversationAction{
@@ -135,7 +135,7 @@ func (conversationService *assistantConversationService) ApplyToolMetrics(
 	assistantConversationId uint64,
 	assistantConversationActionId uint64,
 	assistantConversationMessageId string,
-	metrics []*types.Metric,
+	metrics []*protos.Metric,
 ) ([]*internal_conversation_entity.AssistantConversationActionMetric, error) {
 	start := time.Now()
 	db := conversationService.postgres.DB(ctx)

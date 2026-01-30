@@ -294,16 +294,24 @@ export const VoiceAgentDebugger: FC<{
             <>
               {assistant && (
                 <div className="flex flex-col w-full h-full flex-1 grow">
-                  <div className="p-4 text-sm leading-normal">
-                    <div className="flex flex-row justify-between items-center text-sm uppercase tracking-wider">
+                  <div className="p-4 text-sm leading-normal border-b">
+                    <div className="flex flex-row justify-between items-center text-sm tracking-wider">
                       <h3>Name</h3>
                     </div>
                     <div className="py-2 text-sm leading-normal">
                       {assistant.getName()}
                     </div>
+                    <div className="mt-4 flex flex-row justify-between items-center text-sm tracking-wider">
+                      <h3>Executor</h3>
+                    </div>
+                    <div className="py-2 text-sm leading-normal">
+                      {assistant.hasAssistantprovideragentkit() && 'Agentkit'}
+                      {assistant.hasAssistantproviderwebsocket() && 'Websocket'}
+                      {assistant.hasAssistantprovidermodel() && 'Model'}
+                    </div>
                     {assistant.getDescription() && (
                       <>
-                        <div className="flex mt-4 flex-row justify-between items-center text-sm uppercase tracking-wider">
+                        <div className="flex mt-4 flex-row justify-between items-center text-sm tracking-wider">
                           <h3>Description</h3>
                         </div>
                         <div className="py-2 text-sm leading-normal">
@@ -422,7 +430,7 @@ export const VoiceAgentDebugger: FC<{
                         <div className="text-sm font-mono tracking-wider lowercase">
                           Input Mode
                         </div>
-                        <div className="font-medium">
+                        <div className="font-medium font-mono">
                           Text
                           {assistant
                             ?.getDebuggerdeployment()
@@ -433,7 +441,7 @@ export const VoiceAgentDebugger: FC<{
                         <div className="text-sm font-mono tracking-wider lowercase">
                           Output Mode
                         </div>
-                        <div className="font-medium">
+                        <div className="font-medium font-mono">
                           Text
                           {assistant
                             ?.getDebuggerdeployment()
@@ -580,6 +588,7 @@ export const VoiceAgentDebugger: FC<{
                     return (
                       <div
                         key={idx}
+                        data-key={event.payload.id}
                         className="p-2 text-xs flex flex-col space-y-1"
                       >
                         <div className="flex space-x-1 items-center">
@@ -602,6 +611,7 @@ export const VoiceAgentDebugger: FC<{
                     return (
                       <div
                         key={idx}
+                        data-key={event.payload.id}
                         className="p-2 text-xs flex flex-col space-y-1"
                       >
                         <div className="flex space-x-1 items-center">

@@ -109,6 +109,7 @@ type GenericRequestor struct {
 
 func NewGenericRequestor(ctx context.Context, config *config.AssistantConfig, logger commons.Logger, source utils.RapidaSource, postgres connectors.PostgresConnector, opensearch connectors.OpenSearchConnector, redis connectors.RedisConnector, storage storages.Storage, streamer internal_streamers.Streamer,
 ) GenericRequestor {
+	// Initialize services
 
 	return GenericRequestor{
 		logger:   logger,

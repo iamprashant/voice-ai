@@ -26,15 +26,15 @@ type azureIntegrationGRPCApi struct {
 	azureIntegrationApi
 }
 
-func (az *azureIntegrationGRPCApi) StreamChat(irRequest *integration_api.ChatRequest, stream integration_api.AzureService_StreamChatServer) error {
-	return az.integrationApi.StreamChat(
-		irRequest,
+func (az *azureIntegrationGRPCApi) StreamChat(stream integration_api.AzureService_StreamChatServer) error {
+	az.logger.Debugf("Bidirectional stream chat opened for azure")
+	return az.integrationApi.StreamChatBidirectional(
 		stream.Context(),
 		"AZURE-FOUNDRY",
-		internal_azure_callers.NewLargeLanguageCaller(az.logger, irRequest.GetCredential()),
-		func(cr *integration_api.ChatResponse) error {
-			return stream.Send(cr)
+		func(cred *integration_api.Credential) internal_callers.LargeLanguageCaller {
+			return internal_azure_callers.NewLargeLanguageCaller(az.logger, cred)
 		},
+		stream,
 	)
 }
 

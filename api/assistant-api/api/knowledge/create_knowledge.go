@@ -11,15 +11,15 @@ import (
 
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
-	knowledge_api "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
-// CreateKnowledge implements knowledge_api.KnowledgeServiceServer.
-func (knowledgeApi *knowledgeGrpcApi) CreateKnowledge(ctx context.Context, cer *knowledge_api.CreateKnowledgeRequest) (*knowledge_api.CreateKnowledgeResponse, error) {
+// CreateKnowledge implements protos.KnowledgeServiceServer.
+func (knowledgeApi *knowledgeGrpcApi) CreateKnowledge(ctx context.Context, cer *protos.CreateKnowledgeRequest) (*protos.CreateKnowledgeResponse, error) {
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(ctx)
 	if !isAuthenticated || !iAuth.HasProject() {
 		knowledgeApi.logger.Errorf("unauthenticated request for invoke")
-		return utils.Error[knowledge_api.CreateKnowledgeResponse](
+		return utils.Error[protos.CreateKnowledgeResponse](
 			errors.New("unauthenticated request for invoke"),
 			"Please provider valid service credentials to perfom invoke, read docs @ docs.rapida.ai",
 		)
@@ -32,7 +32,7 @@ func (knowledgeApi *knowledgeGrpcApi) CreateKnowledge(ctx context.Context, cer *
 		cer.GetKnowledgeEmbeddingModelOptions(),
 	)
 	if err != nil {
-		return utils.Error[knowledge_api.CreateKnowledgeResponse](
+		return utils.Error[protos.CreateKnowledgeResponse](
 			err,
 			"Unable to create knowledge, please try again later.",
 		)
@@ -40,17 +40,17 @@ func (knowledgeApi *knowledgeGrpcApi) CreateKnowledge(ctx context.Context, cer *
 
 	_, err = knowledgeApi.knowledgeService.CreateOrUpdateKnowledgeTag(ctx, iAuth, _kn.Id, cer.GetTags())
 	if err != nil {
-		return utils.Error[knowledge_api.CreateKnowledgeResponse](
+		return utils.Error[protos.CreateKnowledgeResponse](
 			err,
 			"Unable to create knowledge tags, please try again.",
 		)
 	}
 
-	out := &knowledge_api.Knowledge{}
+	out := &protos.Knowledge{}
 	err = utils.Cast(_kn, out)
 	if err != nil {
 		knowledgeApi.logger.Errorf("unable to cast the knowledge model to the response object")
 	}
-	return utils.Success[knowledge_api.CreateKnowledgeResponse, *knowledge_api.Knowledge](out)
+	return utils.Success[protos.CreateKnowledgeResponse, *protos.Knowledge](out)
 
 }

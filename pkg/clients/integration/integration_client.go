@@ -26,9 +26,12 @@ type IntegrationServiceClient interface {
 		auth types.SimplePrinciple,
 		providerName string,
 		request *protos.ChatRequest) (*protos.ChatResponse, error)
-	StreamChat(c context.Context, auth types.SimplePrinciple,
-		providerName string,
-		request *protos.ChatRequest) (protos.OpenAiService_StreamChatClient, error)
+	// StreamChat opens a bidirectional stream for the given provider.
+	// Returns the raw grpc.BidiStreamingClient for caller to manage:
+	//   - Send requests via stream.Send(request)
+	//   - Receive responses via stream.Recv()
+	//   - Close when done via stream.CloseSend()
+	StreamChat(c context.Context, auth types.SimplePrinciple, providerName string) (grpc.BidiStreamingClient[protos.ChatRequest, protos.ChatResponse], error)
 	Embedding(ctx context.Context, auth types.SimplePrinciple, providerName string, in *protos.EmbeddingRequest) (*protos.EmbeddingResponse, error)
 	Reranking(ctx context.Context, auth types.SimplePrinciple, providerName string, in *protos.RerankingRequest) (*protos.RerankingResponse, error)
 	VerifyCredential(ctx context.Context, auth types.SimplePrinciple, providerName string, in *protos.Credential) (*protos.VerifyCredentialResponse, error)
@@ -148,23 +151,32 @@ func (client *integrationServiceClient) Chat(c context.Context,
 	}
 }
 
-// StreamChat implements IntegrationServiceClient.
-func (client *integrationServiceClient) StreamChat(c context.Context, auth types.SimplePrinciple, providerName string, request *protos.ChatRequest) (protos.OpenAiService_StreamChatClient, error) {
+// StreamChat opens a bidirectional stream for the given provider.
+// Returns raw grpc.BidiStreamingClient for caller to manage the connection:
+//   - Send requests via stream.Send(request)
+//   - Receive responses via stream.Recv()
+//   - Close when done via stream.CloseSend()
+func (client *integrationServiceClient) StreamChat(c context.Context, auth types.SimplePrinciple, providerName string) (grpc.BidiStreamingClient[protos.ChatRequest, protos.ChatResponse], error) {
+	ctx := client.WithAuth(c, auth)
 	switch providerName := strings.ToLower(providerName); providerName {
 	case "openai":
-		return client.openAiClient.StreamChat(client.WithAuth(c, auth), request)
+		return client.openAiClient.StreamChat(ctx)
 	case "anthropic":
-		return client.anthropicClient.StreamChat(client.WithAuth(c, auth), request)
+		return client.anthropicClient.StreamChat(ctx)
 	case "gemini":
-		return client.geminiClient.StreamChat(client.WithAuth(c, auth), request)
+		return client.geminiClient.StreamChat(ctx)
 	case "cohere":
-		return client.cohereClient.StreamChat(client.WithAuth(c, auth), request)
+		return client.cohereClient.StreamChat(ctx)
 	case "azure-foundry":
-		return client.azureAiClient.StreamChat(client.WithAuth(c, auth), request)
+		return client.azureAiClient.StreamChat(ctx)
 	case "vertexai":
-		return client.vertexaiClient.StreamChat(client.WithAuth(c, auth), request)
+		return client.vertexaiClient.StreamChat(ctx)
+	case "mistral":
+		return client.mistralClient.StreamChat(ctx)
+	case "replicate":
+		return client.replicateClient.StreamChat(ctx)
 	default:
-		return nil, errors.New("illegal provider for chat request")
+		return nil, errors.New("illegal provider for stream chat request")
 	}
 }
 

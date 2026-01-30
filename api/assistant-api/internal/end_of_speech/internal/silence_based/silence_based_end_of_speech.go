@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	internaltype "github.com/rapidaai/api/assistant-api/internal/type"
+	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/utils"
 )
@@ -35,7 +35,7 @@ type command struct {
 // SilenceBasedEOS detects end-of-speech based on silence duration
 type SilenceBasedEOS struct {
 	logger         commons.Logger
-	callback       internaltype.EndOfSpeechCallback
+	callback       func(context.Context, ...internal_type.Packet) error
 	silenceTimeout time.Duration
 
 	// worker orchestration
@@ -55,8 +55,8 @@ type eosState struct {
 }
 
 // NewSilenceBasedEOS creates a new silence-based end-of-speech detector
-func NewSilenceBasedEndOfSpeech(logger commons.Logger, callback internaltype.EndOfSpeechCallback, opts utils.Option,
-) (internaltype.EndOfSpeech, error) {
+func NewSilenceBasedEndOfSpeech(logger commons.Logger, callback func(context.Context, ...internal_type.Packet) error, opts utils.Option,
+) (internal_type.EndOfSpeech, error) {
 	threshold := 1000 * time.Millisecond
 	if v, err := opts.GetFloat64("microphone.eos.timeout"); err == nil {
 		threshold = time.Duration(v) * time.Millisecond
@@ -82,24 +82,28 @@ func (eos *SilenceBasedEOS) Name() string {
 }
 
 // Analyze processes incoming speech packets
-func (eos *SilenceBasedEOS) Analyze(ctx context.Context, pkt internaltype.Packet) error {
-	// eos.logger.Debugf("testing -> SilenceBasedEOS Analyze: received packet of type %T and %+v", pkt, pkt)
+func (eos *SilenceBasedEOS) Analyze(ctx context.Context, pkt internal_type.Packet) error {
 	switch p := pkt.(type) {
-	case internaltype.UserTextPacket:
+	case internal_type.UserTextPacket:
 		if p.Text == "" {
 			return nil
 		}
-		eos.mu.RLock()
+		eos.mu.Lock()
 		seg := SpeechSegment{ContextID: p.ContextId(), Text: p.Text, Timestamp: time.Now()}
 		eos.state.segment = seg
-		eos.mu.RUnlock()
+		eos.mu.Unlock()
+		// let the client know about interim speech
+		eos.callback(ctx, internal_type.InterimEndOfSpeechPacket{
+			Speech:    seg.Text,
+			ContextID: seg.ContextID,
+		})
 		eos.send(command{
 			ctx:     ctx,
 			segment: seg,
 			fireNow: true,
 		})
 
-	case internaltype.InterruptionPacket:
+	case internal_type.InterruptionPacket:
 		eos.mu.RLock()
 		seg := eos.state.segment
 		eos.mu.RUnlock()
@@ -113,7 +117,7 @@ func (eos *SilenceBasedEOS) Analyze(ctx context.Context, pkt internaltype.Packet
 			timeout: eos.silenceTimeout,
 		})
 
-	case internaltype.SpeechToTextPacket:
+	case internal_type.SpeechToTextPacket:
 		eos.mu.Lock()
 		if p.Interim {
 			seg := eos.state.segment
@@ -122,6 +126,7 @@ func (eos *SilenceBasedEOS) Analyze(ctx context.Context, pkt internaltype.Packet
 			if seg.Text == "" {
 				return nil
 			}
+			//
 			eos.send(command{
 				ctx:     ctx,
 				segment: seg,
@@ -143,6 +148,14 @@ func (eos *SilenceBasedEOS) Analyze(ctx context.Context, pkt internaltype.Packet
 		}
 		eos.state.segment = newSeg
 		eos.mu.Unlock()
+
+		// let the client know about interim speech
+		eos.callback(ctx, internal_type.InterimEndOfSpeechPacket{
+			Speech:    newSeg.Text,
+			ContextID: newSeg.ContextID,
+		})
+
+		// trigger the command to reset timer
 		eos.send(command{
 			ctx:     ctx,
 			segment: newSeg,
@@ -256,7 +269,7 @@ func (eos *SilenceBasedEOS) fire(ctx context.Context, seg SpeechSegment) {
 		return
 	}
 
-	_ = eos.callback(ctx, internaltype.EndOfSpeechPacket{
+	_ = eos.callback(ctx, internal_type.EndOfSpeechPacket{
 		Speech:    seg.Text,
 		ContextID: seg.ContextID,
 	})

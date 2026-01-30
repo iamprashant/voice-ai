@@ -9,7 +9,6 @@ import (
 	"context"
 
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
-	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/protos"
 )
 
@@ -41,7 +40,7 @@ making it easier to maintain and evolve the codebase over time.
 type AssistantExecutor interface {
 
 	// init after creation to intilize all fields
-	Initialize(ctx context.Context, communication internal_type.Communication, cfg *protos.AssistantConversationConfiguration) error
+	Initialize(ctx context.Context, communication internal_type.Communication, cfg *protos.ConversationConfiguration) error
 
 	// name
 	Name() string
@@ -50,7 +49,7 @@ type AssistantExecutor interface {
 	Execute(ctx context.Context, communication internal_type.Communication, pctk internal_type.Packet) error
 
 	// disconnect
-	Close(ctx context.Context, communication internal_type.Communication) error
+	Close(ctx context.Context) error
 }
 
 /**
@@ -88,5 +87,8 @@ type ToolExecutor interface {
 	*   - A slice of Content pointers containing the results of the tool calls
 	*   - An error if any occurred during execution
 	 */
-	ExecuteAll(ctx context.Context, message internal_type.LLMPacket, calls []*protos.ToolCall, communication internal_type.Communication) ([]internal_type.Packet, []*types.Content)
+	ExecuteAll(ctx context.Context, contextID string, calls []*protos.ToolCall, communication internal_type.Communication) *protos.Message
+
+	// clean up resources
+	Close(ctx context.Context) error
 }

@@ -266,7 +266,11 @@ export const CARTESIA_EMOTION_LEVEL_COMBINATION = [
  */
 
 export const GEMINI_MODEL = () => {
-  return require('./gemini/models.json');
+  return require('./gemini/text-models.json');
+};
+
+export const GEMINI_EMBEDDING_MODEL = () => {
+  return require('./gemini/text-embedding-models.json');
 };
 
 /**

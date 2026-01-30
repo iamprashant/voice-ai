@@ -52,7 +52,7 @@ type Config struct {
 
 type ToolResponse struct {
 	Success bool           `json:"success"`
-	Result  any            `json:"result,omitempty"`
+	Result  []string       `json:"result,omitempty"`
 	Error   string         `json:"error,omitempty"`
 	Data    map[string]any `json:"data,omitempty"`
 }
@@ -64,7 +64,7 @@ func NewToolResponse(success bool) *ToolResponse {
 	}
 }
 
-func (r *ToolResponse) WithResult(result any) *ToolResponse {
+func (r *ToolResponse) WithResult(result []string) *ToolResponse {
 	r.Result = result
 	return r
 }
@@ -114,7 +114,6 @@ type Client struct {
 
 func NewClient(ctx context.Context, logger commons.Logger, opts utils.Option) (*Client, error) {
 
-	logger.Debugf("optiopnms => %+v", opts)
 	// ------------------------------------------------------------------
 	// Required option
 	// ------------------------------------------------------------------
@@ -256,14 +255,6 @@ func NewClient(ctx context.Context, logger commons.Logger, opts utils.Option) (*
 		return nil, err
 	}
 
-	logger.Infof(
-		"Connected to MCP server: %s (protocol=%s timeout=%ds tools=%d)",
-		config.ServerURL,
-		config.Protocol,
-		config.Timeout,
-		len(c.tools),
-	)
-
 	return c, nil
 }
 
@@ -365,7 +356,7 @@ func (c *Client) Ping(ctx context.Context) error {
 }
 
 // Close closes all active sessions
-func (c *Client) Close() error {
+func (c *Client) Close(ctx context.Context) error {
 	return c.client.Close()
 }
 
@@ -442,7 +433,6 @@ func (c *Client) convertSchema(schema mcp.ToolInputSchema) *protos.FunctionParam
 // convertResult converts MCP CallToolResult to ToolResponse
 func (c *Client) convertResult(result *mcp.CallToolResult) *ToolResponse {
 	resp := NewToolResponse(!result.IsError)
-
 	var texts []string
 	for _, content := range result.Content {
 		switch ct := content.(type) {
@@ -450,15 +440,10 @@ func (c *Client) convertResult(result *mcp.CallToolResult) *ToolResponse {
 			texts = append(texts, ct.Text)
 		}
 	}
-
-	if len(texts) == 1 {
-		resp.WithResult(texts[0])
-	} else if len(texts) > 1 {
-		resp.WithResult(texts)
-	}
-
 	if result.IsError && len(texts) > 0 {
 		resp.WithError(texts[0])
+	} else {
+		resp.WithResult(texts)
 	}
 
 	return resp

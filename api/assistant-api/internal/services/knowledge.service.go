@@ -11,16 +11,16 @@ import (
 	internal_knowledge_gorm "github.com/rapidaai/api/assistant-api/internal/entity/knowledges"
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
-	workflow_api "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
 type KnowledgeService interface {
-	GetAll(ctx context.Context, auth types.SimplePrinciple, criterias []*workflow_api.Criteria, paginate *workflow_api.Paginate) (int64, *[]internal_knowledge_gorm.Knowledge, error)
+	GetAll(ctx context.Context, auth types.SimplePrinciple, criterias []*protos.Criteria, paginate *protos.Paginate) (int64, *[]internal_knowledge_gorm.Knowledge, error)
 	Get(ctx context.Context, auth types.SimplePrinciple, knowledgeId uint64) (*internal_knowledge_gorm.Knowledge, error)
 	CreateKnowledge(ctx context.Context, auth types.SimplePrinciple,
 		name string, description, visibility *string,
 		embeddingProviderModelName string,
-		embeddingProviderModelOptions []*workflow_api.Metadata,
+		embeddingProviderModelOptions []*protos.Metadata,
 	) (*internal_knowledge_gorm.Knowledge, error)
 	CreateOrUpdateKnowledgeTag(ctx context.Context,
 		auth types.SimplePrinciple,
@@ -58,9 +58,9 @@ type KnowledgeService interface {
 		ctx context.Context,
 		auth types.SimplePrinciple,
 		projectId uint64,
-		criterias []*workflow_api.Criteria,
-		paginate *workflow_api.Paginate,
-		order *workflow_api.Ordering) (int64, []*internal_knowledge_gorm.KnowledgeLog, error)
+		criterias []*protos.Criteria,
+		paginate *protos.Paginate,
+		order *protos.Ordering) (int64, []*internal_knowledge_gorm.KnowledgeLog, error)
 
 	GetLogObject(
 		ctx context.Context,
@@ -71,21 +71,21 @@ type KnowledgeService interface {
 type KnowledgeDocumentService interface {
 	GetAll(ctx context.Context, auth types.SimplePrinciple,
 		knowledgeId uint64,
-		criterias []*workflow_api.Criteria, paginate *workflow_api.Paginate) (int64, *[]internal_knowledge_gorm.KnowledgeDocument, error)
+		criterias []*protos.Criteria, paginate *protos.Paginate) (int64, *[]internal_knowledge_gorm.KnowledgeDocument, error)
 	Get(ctx context.Context, auth types.SimplePrinciple, knowledgeId uint64, knowledgeDocumentId uint64) (*internal_knowledge_gorm.KnowledgeDocument, error)
 	CreateManualDocument(ctx context.Context,
 		auth types.SimplePrinciple,
 		knowledge *internal_knowledge_gorm.Knowledge,
 		datasource string,
 		documentStructure string,
-		contents []*workflow_api.Content) ([]*internal_knowledge_gorm.KnowledgeDocument, error)
+		contents []*protos.DocumentContent) ([]*internal_knowledge_gorm.KnowledgeDocument, error)
 
 	CreateToolDocument(ctx context.Context,
 		auth types.SimplePrinciple,
 		knowledge *internal_knowledge_gorm.Knowledge,
 		datasource string,
 		documentStructure string,
-		contents []*workflow_api.Content,
+		contents []*protos.DocumentContent,
 	) ([]*internal_knowledge_gorm.KnowledgeDocument, error)
 
 	GetCounts(ctx context.Context, auth types.SimplePrinciple, knowledgeId uint64) (documentCount, wordCount, tokenCount uint32)
@@ -94,8 +94,8 @@ type KnowledgeDocumentService interface {
 		auth types.SimplePrinciple,
 		knowledgeId uint64,
 		storageNamespace string,
-		criterias []*workflow_api.Criteria,
-		paginate *workflow_api.Paginate) (int64, []*workflow_api.KnowledgeDocumentSegment, error)
+		criterias []*protos.Criteria,
+		paginate *protos.Paginate) (int64, []*protos.KnowledgeDocumentSegment, error)
 
 	UpdateDocumentSegment(
 		ctx context.Context,
@@ -112,7 +112,7 @@ type KnowledgeDocumentService interface {
 		quantities []string,
 		locations []string,
 		industries []string,
-	) (*workflow_api.KnowledgeDocumentSegment, error)
+	) (*protos.KnowledgeDocumentSegment, error)
 
 	DeleteDocumentSegment(
 		ctx context.Context,
@@ -120,5 +120,5 @@ type KnowledgeDocumentService interface {
 		index string,
 		documentId string,
 		reason string,
-	) (*workflow_api.KnowledgeDocumentSegment, error)
+	) (*protos.KnowledgeDocumentSegment, error)
 }

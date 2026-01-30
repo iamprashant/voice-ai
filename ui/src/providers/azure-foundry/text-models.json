@@ -1,22 +1,42 @@
 [
     {
         "id": "azure/gpt-4o",
-        "name": "gpt-4o"
+        "name": "gpt-4o",
+        "pricing": {
+            "prompt_per_1m": 2.5,
+            "completion_per_1m": 10.0
+        }
     },
     {
         "id": "azure/gpt-4o-mini",
-        "name": "gpt-4o-mini"
+        "name": "gpt-4o-mini",
+        "pricing": {
+            "prompt_per_1m": 0.16,
+            "completion_per_1m": 0.66
+        }
     },
     {
         "id": "azure/gpt-4.1-nano",
-        "name": "gpt-4.1-nano"
+        "name": "gpt-4.1-nano",
+        "pricing": {
+            "prompt_per_1m": 0.1,
+            "completion_per_1m": 0.4
+        }
     },
     {
         "id": "azure/gpt-5-nano",
-        "name": "gpt-5-nano"
+        "name": "gpt-5-nano",
+        "pricing": {
+            "prompt_per_1m": 0.05,
+            "completion_per_1m": 0.4
+        }
     },
     {
         "id": "azure/gpt-5-mini",
-        "name": "gpt-5-mini"
+        "name": "gpt-5-mini",
+        "pricing": {
+            "prompt_per_1m": 0.25,
+            "completion_per_1m": 2.0
+        }
     }
 ]

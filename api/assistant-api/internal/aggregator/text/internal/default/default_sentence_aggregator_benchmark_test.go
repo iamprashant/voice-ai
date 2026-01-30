@@ -55,7 +55,7 @@ func BenchmarkSingleTextTokenization(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
-		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 			ContextID: "speaker1",
 			Text:      "Hello world.",
 		})
@@ -69,7 +69,7 @@ func BenchmarkMultipleTexts(b *testing.B) {
 	opts := utils.Option{"speaker.sentence.boundaries": "."}
 	ctx := context.Background()
 
-	sentences := []*internal_type.LLMStreamPacket{
+	sentences := []*internal_type.LLMResponseDeltaPacket{
 		{ContextID: "speaker1", Text: "First sentence."},
 		{ContextID: "speaker1", Text: " Second sentence."},
 		{ContextID: "speaker1", Text: " Third sentence."},
@@ -105,7 +105,7 @@ func BenchmarkLargeTexts(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
-		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 			ContextID: "speaker1",
 			Text:      largeText,
 		})
@@ -132,7 +132,7 @@ func BenchmarkMultipleBoundaries(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
 		for _, s := range testTexts {
-			aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+			aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 				ContextID: "speaker1",
 				Text:      s,
 			})
@@ -154,7 +154,7 @@ func BenchmarkContextSwitching(b *testing.B) {
 		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
 		for speaker := 0; speaker < 5; speaker++ {
 			for j := 0; j < 3; j++ {
-				aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+				aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 					ContextID: fmt.Sprintf("speaker%d", speaker),
 					Text:      fmt.Sprintf("Text %d.", j),
 				})
@@ -178,7 +178,7 @@ func BenchmarkResultChannelConsumption(b *testing.B) {
 
 		// Send sentences
 		for j := 0; j < 10; j++ {
-			aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+			aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 				ContextID: "speaker1",
 				Text:      fmt.Sprintf("Text %d.", j),
 			})
@@ -199,10 +199,10 @@ func BenchmarkCompleteFlag(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
-		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 			ContextID: "speaker1",
 			Text:      "This is a test",
-		}, internal_type.LLMMessagePacket{
+		}, internal_type.LLMResponseDonePacket{
 			ContextID: "speaker1",
 		})
 
@@ -222,7 +222,7 @@ func BenchmarkBufferingWithoutBoundaries(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
 		for j := 0; j < 5; j++ {
-			aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+			aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 				ContextID: "speaker1",
 				Text:      "Text segment",
 			})
@@ -252,7 +252,7 @@ func BenchmarkStreamingLargeText(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
 		for _, chunk := range chunks {
-			aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+			aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 				ContextID: "speaker1",
 				Text:      chunk,
 			})
@@ -287,10 +287,10 @@ func BenchmarkEmptyAndCompleteFlush(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
 		// Send empty with complete flag
-		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 			ContextID: "speaker1",
 			Text:      "",
-		}, internal_type.LLMMessagePacket{
+		}, internal_type.LLMResponseDonePacket{
 			ContextID: "speaker1",
 		})
 		aggregator.Close()
@@ -323,17 +323,17 @@ func BenchmarkComplexScenario(b *testing.B) {
 		}
 
 		for _, turn := range conversationTurns {
-			aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+			aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 				ContextID: turn.speaker,
 				Text:      turn.text,
 			})
 		}
 
 		// Flush remaining
-		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 			ContextID: "alice",
 			Text:      "",
-		}, internal_type.LLMMessagePacket{
+		}, internal_type.LLMResponseDonePacket{
 			ContextID: "alice",
 		})
 
@@ -350,7 +350,7 @@ func BenchmarkParallelProcessing(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
-			aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+			aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 				ContextID: "speaker1",
 				Text:      "Hello world.",
 			})
@@ -372,7 +372,7 @@ func BenchmarkWhitespaceProcessing(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
-		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 			ContextID: "speaker1",
 			Text:      textWithWhitespace,
 		})

@@ -10,9 +10,8 @@ import (
 
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
-	integration_api "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
 type Anthropic struct {
@@ -31,7 +30,7 @@ var (
 	TIMEOUT            = 5 * time.Minute
 )
 
-func anthropicAI(logger commons.Logger, credential *integration_api.Credential) Anthropic {
+func anthropicAI(logger commons.Logger, credential *protos.Credential) Anthropic {
 	return Anthropic{
 		logger: logger,
 		credential: func() map[string]interface{} {
@@ -53,21 +52,21 @@ func (aicaller *Anthropic) GetClient() (*anthropic.Client, error) {
 	return &clt, nil
 }
 
-func (anthropicC *Anthropic) UsageMetrics(usages anthropic.Usage) types.Metrics {
-	metrics := make(types.Metrics, 0)
-	metrics = append(metrics, &types.Metric{
+func (anthropicC *Anthropic) UsageMetrics(usages anthropic.Usage) []*protos.Metric {
+	metrics := make([]*protos.Metric, 0)
+	metrics = append(metrics, &protos.Metric{
 		Name:        type_enums.OUTPUT_TOKEN.String(),
 		Value:       fmt.Sprintf("%d", usages.OutputTokens),
 		Description: "Input token",
 	})
 
-	metrics = append(metrics, &types.Metric{
+	metrics = append(metrics, &protos.Metric{
 		Name:        type_enums.INPUT_TOKEN.String(),
 		Value:       fmt.Sprintf("%d", usages.InputTokens),
 		Description: "Output Token",
 	})
 
-	metrics = append(metrics, &types.Metric{
+	metrics = append(metrics, &protos.Metric{
 		Name:        type_enums.TOTAL_TOKEN.String(),
 		Value:       fmt.Sprintf("%d", usages.InputTokens+usages.OutputTokens),
 		Description: "Total Token",

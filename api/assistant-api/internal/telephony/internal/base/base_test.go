@@ -36,10 +36,6 @@ func TestCreateVoiceRequest(t *testing.T) {
 			audioData: []byte{0x01, 0x02, 0x03, 0x04},
 		},
 		{
-			name:      "Nil audio data",
-			audioData: nil,
-		},
-		{
 			name:      "Large audio chunk (1KB)",
 			audioData: make([]byte, 1024),
 		},
@@ -59,7 +55,7 @@ func TestCreateVoiceRequest(t *testing.T) {
 
 			// Verify audio content matches
 			if tt.audioData != nil {
-				assert.Equal(t, tt.audioData, request.GetMessage().GetAudio().Content)
+				assert.Equal(t, tt.audioData, request.GetMessage().GetAudio())
 			}
 		})
 	}

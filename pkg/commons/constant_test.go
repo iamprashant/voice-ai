@@ -7,8 +7,6 @@ package commons
 
 import (
 	"testing"
-
-	"github.com/rapidaai/protos"
 )
 
 func TestTelemetryIndex(t *testing.T) {
@@ -127,115 +125,115 @@ func TestResponseContentFormat_String(t *testing.T) {
 	}
 }
 
-func TestMessageContent_StringContent(t *testing.T) {
-	tests := []struct {
-		name     string
-		contents []*protos.Content
-		expected string
-	}{
-		{
-			name:     "empty contents",
-			contents: []*protos.Content{},
-			expected: "",
-		},
-		{
-			name: "single text raw content",
-			contents: []*protos.Content{
-				{
-					ContentType:   string(TEXT_CONTENT),
-					ContentFormat: string(TEXT_CONTENT_FORMAT_RAW),
-					Content:       []byte("Hello World"),
-				},
-			},
-			expected: "Hello World",
-		},
-		{
-			name: "multiple contents with text",
-			contents: []*protos.Content{
-				{
-					ContentType:   string(AUDIO_CONTENT),
-					ContentFormat: string(AUDIO_CONTENT_FORMAT_RAW),
-					Content:       []byte("audio data"),
-				},
-				{
-					ContentType:   string(TEXT_CONTENT),
-					ContentFormat: string(TEXT_CONTENT_FORMAT_RAW),
-					Content:       []byte("Text content"),
-				},
-				{
-					ContentType:   string(IMAGE_CONTENT),
-					ContentFormat: string(IMAGE_CONTENT_FORMAT_URL),
-					Content:       []byte("image url"),
-				},
-			},
-			expected: "Text content",
-		},
-		{
-			name: "text content but not raw format",
-			contents: []*protos.Content{
-				{
-					ContentType:   string(TEXT_CONTENT),
-					ContentFormat: string(AUDIO_CONTENT_FORMAT_URL), // not raw
-					Content:       []byte("ignored"),
-				},
-			},
-			expected: "",
-		},
-		{
-			name: "multiple text contents",
-			contents: []*protos.Content{
-				{
-					ContentType:   string(TEXT_CONTENT),
-					ContentFormat: string(TEXT_CONTENT_FORMAT_RAW),
-					Content:       []byte("First "),
-				},
-				{
-					ContentType:   string(TEXT_CONTENT),
-					ContentFormat: string(TEXT_CONTENT_FORMAT_RAW),
-					Content:       []byte("Second"),
-				},
-			},
-			expected: "First Second",
-		},
-	}
+// func TestMessageContent_StringContent(t *testing.T) {
+// 	tests := []struct {
+// 		name     string
+// 		contents []*protos.Content
+// 		expected string
+// 	}{
+// 		{
+// 			name:     "empty contents",
+// 			contents: []*protos.Content{},
+// 			expected: "",
+// 		},
+// 		{
+// 			name: "single text raw content",
+// 			contents: []*protos.Content{
+// 				{
+// 					ContentType:   string(TEXT_CONTENT),
+// 					ContentFormat: string(TEXT_CONTENT_FORMAT_RAW),
+// 					Content:       []byte("Hello World"),
+// 				},
+// 			},
+// 			expected: "Hello World",
+// 		},
+// 		{
+// 			name: "multiple contents with text",
+// 			contents: []*protos.Content{
+// 				{
+// 					ContentType:   string(AUDIO_CONTENT),
+// 					ContentFormat: string(AUDIO_CONTENT_FORMAT_RAW),
+// 					Content:       []byte("audio data"),
+// 				},
+// 				{
+// 					ContentType:   string(TEXT_CONTENT),
+// 					ContentFormat: string(TEXT_CONTENT_FORMAT_RAW),
+// 					Content:       []byte("Text content"),
+// 				},
+// 				{
+// 					ContentType:   string(IMAGE_CONTENT),
+// 					ContentFormat: string(IMAGE_CONTENT_FORMAT_URL),
+// 					Content:       []byte("image url"),
+// 				},
+// 			},
+// 			expected: "Text content",
+// 		},
+// 		{
+// 			name: "text content but not raw format",
+// 			contents: []*protos.Content{
+// 				{
+// 					ContentType:   string(TEXT_CONTENT),
+// 					ContentFormat: string(AUDIO_CONTENT_FORMAT_URL), // not raw
+// 					Content:       []byte("ignored"),
+// 				},
+// 			},
+// 			expected: "",
+// 		},
+// 		{
+// 			name: "multiple text contents",
+// 			contents: []*protos.Content{
+// 				{
+// 					ContentType:   string(TEXT_CONTENT),
+// 					ContentFormat: string(TEXT_CONTENT_FORMAT_RAW),
+// 					Content:       []byte("First "),
+// 				},
+// 				{
+// 					ContentType:   string(TEXT_CONTENT),
+// 					ContentFormat: string(TEXT_CONTENT_FORMAT_RAW),
+// 					Content:       []byte("Second"),
+// 				},
+// 			},
+// 			expected: "First Second",
+// 		},
+// 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mc := &MessageContent{
-				Contents: tt.contents,
-			}
-			result := mc.StringContent()
-			if result != tt.expected {
-				t.Errorf("StringContent() = %v, want %v", result, tt.expected)
-			}
-		})
-	}
-}
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			mc := &MessageContent{
+// 				Contents: tt.contents,
+// 			}
+// 			result := mc.StringContent()
+// 			if result != tt.expected {
+// 				t.Errorf("StringContent() = %v, want %v", result, tt.expected)
+// 			}
+// 		})
+// 	}
+// }
 
-func TestToMessageContent(t *testing.T) {
-	original := &protos.Message{
-		Role: "user",
-		Contents: []*protos.Content{
-			{
-				ContentType:   string(TEXT_CONTENT),
-				ContentFormat: string(TEXT_CONTENT_FORMAT_RAW),
-				Content:       []byte("test"),
-			},
-		},
-	}
+// func TestToMessageContent(t *testing.T) {
+// 	original := &protos.Message{
+// 		Role: "user",
+// 		Contents: []*protos.Content{
+// 			{
+// 				ContentType:   string(TEXT_CONTENT),
+// 				ContentFormat: string(TEXT_CONTENT_FORMAT_RAW),
+// 				Content:       []byte("test"),
+// 			},
+// 		},
+// 	}
 
-	result := ToMessageContent(original)
+// 	result := ToMessageContent(original)
 
-	if result.Role != original.Role {
-		t.Errorf("Role = %v, want %v", result.Role, original.Role)
-	}
+// 	if result.Role != original.Role {
+// 		t.Errorf("Role = %v, want %v", result.Role, original.Role)
+// 	}
 
-	if len(result.Contents) != len(original.Contents) {
-		t.Errorf("Contents length = %d, want %d", len(result.Contents), len(original.Contents))
-	}
+// 	if len(result.Contents) != len(original.Contents) {
+// 		t.Errorf("Contents length = %d, want %d", len(result.Contents), len(original.Contents))
+// 	}
 
-	// Check that it's a copy, not the same slice
-	if &result.Contents == &original.Contents {
-		t.Error("Contents should be copied, not the same reference")
-	}
-}
+// 	// Check that it's a copy, not the same slice
+// 	if &result.Contents == &original.Contents {
+// 		t.Error("Contents should be copied, not the same reference")
+// 	}
+// }

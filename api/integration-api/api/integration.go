@@ -17,7 +17,9 @@ import (
 	"github.com/rapidaai/pkg/storages"
 	storage_files "github.com/rapidaai/pkg/storages/file-storage"
 	"github.com/rapidaai/pkg/types"
+	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
+	"github.com/rapidaai/protos"
 	integration_api "github.com/rapidaai/protos"
 )
 
@@ -62,8 +64,8 @@ func (iApi *integrationApi) PreHook(c context.Context, auth types.SimplePrincipl
 	}
 }
 
-func (iApi *integrationApi) PostHook(c context.Context, auth types.SimplePrinciple, irRequest ProviderModelRequest, requestId uint64, intName string) func(rst map[string]interface{}, metrics types.Metrics) {
-	return func(rst map[string]interface{}, metrics types.Metrics) {
+func (iApi *integrationApi) PostHook(c context.Context, auth types.SimplePrinciple, irRequest ProviderModelRequest, requestId uint64, intName string) func(rst map[string]interface{}, metrics []*protos.Metric) {
+	return func(rst map[string]interface{}, metrics []*protos.Metric) {
 		iApi.postHook(c, auth,
 			irRequest.GetAdditionalData(),
 			irRequest.GetCredential().GetId(),
@@ -79,7 +81,7 @@ func (iApi *integrationApi) preHook(ctx context.Context, auth types.SimplePrinci
 	start := time.Now()
 	go func(currentCtx context.Context, requestId uint64, s3Prefix string, additionalData map[string]string, _request map[string]interface{}) {
 		nCtx := context.Background()
-		_, err := iApi.auditService.Create(nCtx, requestId, *auth.GetCurrentOrganizationId(), *auth.GetCurrentProjectId(), credentialId, intName, keyPrefix, []*types.Metric{}, "active")
+		_, err := iApi.auditService.Create(nCtx, requestId, *auth.GetCurrentOrganizationId(), *auth.GetCurrentProjectId(), credentialId, intName, keyPrefix, []*protos.Metric{}, type_enums.RECORD_ACTIVE)
 		if err != nil {
 			iApi.logger.Benchmark("integration.PreHook.Execute", time.Since(start))
 			iApi.logger.Debugf("Executing prehook for auditId %d with error %+v", requestId, err)
@@ -103,14 +105,13 @@ func (iApi *integrationApi) preHook(ctx context.Context, auth types.SimplePrinci
 		iApi.storage.Store(nCtx, key, _str)
 	}(ctx, requestId, keyPrefix, extras, request)
 }
-func (iApi *integrationApi) postHook(ctx context.Context, auth types.SimplePrinciple, extras map[string]string, credentialId, requestId uint64, intName string, response map[string]interface{}, metrics []*types.Metric) {
+func (iApi *integrationApi) postHook(ctx context.Context, auth types.SimplePrinciple, extras map[string]string, credentialId, requestId uint64, intName string, response map[string]interface{}, metrics []*protos.Metric) {
 	iApi.logger.Debugf("Executing posthook for auditId %d", requestId)
 	start := time.Now()
 	keyPrefix := iApi.ObjectPrefix(*auth.GetCurrentOrganizationId(), *auth.GetCurrentProjectId(), credentialId)
-	go func(currentContext context.Context, _auditId uint64, s3Prefix string, _response map[string]interface{}) {
-		<-currentContext.Done()
-		nCtx := context.Background()
 
+	go func(currentContext context.Context, _auditId uint64, s3Prefix string, _response map[string]interface{}) {
+		nCtx := context.Background()
 		_, err := iApi.auditService.UpdateMetadata(nCtx, requestId, extras)
 		if err != nil {
 			iApi.logger.Errorf("unable to update the external audit metadata table for audit Id %d", _auditId)
@@ -119,7 +120,7 @@ func (iApi *integrationApi) postHook(ctx context.Context, auth types.SimplePrinc
 			// need to change with valid random id
 		}
 		iApi.logger.Debugf("Executing posthook for auditId %d", _auditId)
-		_, err = iApi.auditService.Create(nCtx, _auditId, *auth.GetCurrentOrganizationId(), *auth.GetCurrentProjectId(), credentialId, intName, s3Prefix, metrics, "complete")
+		_, err = iApi.auditService.Create(nCtx, _auditId, *auth.GetCurrentOrganizationId(), *auth.GetCurrentProjectId(), credentialId, intName, s3Prefix, metrics, type_enums.RECORD_COMPLETE)
 		if err != nil {
 			iApi.logger.Debugf("Executing posthook for auditId %d with error %+v", requestId, err)
 			iApi.logger.Errorf("unable to update the external audit table for audit Id %d", _auditId)

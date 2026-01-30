@@ -5,11 +5,6 @@
 // See LICENSE.md or contact sales@rapida.ai for commercial usage.
 package types
 
-import (
-	"github.com/rapidaai/pkg/utils"
-	"github.com/rapidaai/protos"
-)
-
 type Content struct {
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// audio, image, video, text etc
@@ -38,18 +33,18 @@ func (c *Content) GetContentType() string {
 	return string(c.ContentType)
 }
 
-func (c *Content) ToProto() *protos.Content {
-	protoC := &protos.Content{}
-	utils.Cast(c, protoC)
-	return protoC
-}
+// func (c *Content) ToProto() *protos.Content {
+// 	protoC := &protos.Content{}
+// 	utils.Cast(c, protoC)
+// 	return protoC
+// }
 
-type Contents []*Content
+// type Contents []*Content
 
-func (m Contents) ToProto() []*protos.Content {
-	out := make([]*protos.Content, len(m))
-	for idx, k := range m {
-		out[idx] = k.ToProto()
-	}
-	return out
-}
+// func (m Contents) ToProto() []*protos.Content {
+// 	out := make([]*protos.Content, len(m))
+// 	for idx, k := range m {
+// 		out[idx] = k.ToProto()
+// 	}
+// 	return out
+// }

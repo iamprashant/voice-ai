@@ -10,7 +10,6 @@ import (
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	internal_caller_metrics "github.com/rapidaai/api/integration-api/internal/caller/metrics"
 	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
 
 	protos "github.com/rapidaai/protos"
@@ -54,9 +53,9 @@ func (rr *rerankingCaller) GetRerankRequest(opts *internal_callers.RerankerOptio
 func (rr *rerankingCaller) GetReranking(ctx context.Context,
 	// providerModel string,
 	query string,
-	content map[int32]*protos.Content,
+	content map[int32]string,
 	options *internal_callers.RerankerOptions,
-) ([]*protos.Reranking, types.Metrics, error) {
+) ([]*protos.Reranking, []*protos.Metric, error) {
 	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)
 	metrics.OnStart()
 
@@ -74,9 +73,9 @@ func (rr *rerankingCaller) GetReranking(ctx context.Context,
 	input := make([]*cohere.RerankRequestDocumentsItem, len(content))
 	for k, v := range content {
 		input[k] = &cohere.RerankRequestDocumentsItem{
-			String: string(v.Content),
+			String: v,
 			RerankDocument: map[string]string{
-				"Description": string(v.Content),
+				"Description": v,
 			},
 		}
 	}

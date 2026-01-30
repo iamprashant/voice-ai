@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
+	"github.com/rapidaai/protos"
 )
 
 type MetricBuilder struct {
-	metricsMap map[string]*types.Metric
+	metricsMap map[string]*protos.Metric
 	start      time.Time
 	requestId  uint64
 }
@@ -17,7 +17,7 @@ type MetricBuilder struct {
 // NewMetricBuilder initializes and returns a new MetricBuilder
 func NewMetricBuilder(requestId uint64) *MetricBuilder {
 	return &MetricBuilder{
-		metricsMap: make(map[string]*types.Metric),
+		metricsMap: make(map[string]*protos.Metric),
 		requestId:  requestId,
 	}
 }
@@ -26,19 +26,19 @@ func NewMetricBuilder(requestId uint64) *MetricBuilder {
 func (mb *MetricBuilder) OnStart() *MetricBuilder {
 	mb.start = time.Now()
 
-	mb.metricsMap[type_enums.TIME_TAKEN.String()] = &types.Metric{
+	mb.metricsMap[type_enums.TIME_TAKEN.String()] = &protos.Metric{
 		Name:        type_enums.TIME_TAKEN.String(),
 		Value:       fmt.Sprintf("%d", int64(time.Since(mb.start))),
 		Description: "Time taken to serve the llm request",
 	}
 
-	mb.metricsMap[type_enums.LLM_REQUEST_ID.String()] = &types.Metric{
+	mb.metricsMap[type_enums.LLM_REQUEST_ID.String()] = &protos.Metric{
 		Name:        type_enums.LLM_REQUEST_ID.String(),
 		Value:       fmt.Sprintf("%d", mb.requestId),
 		Description: "LLM Request ID",
 	}
 
-	mb.metricsMap[type_enums.STATUS.String()] = &types.Metric{
+	mb.metricsMap[type_enums.STATUS.String()] = &protos.Metric{
 		Name:        type_enums.STATUS.String(),
 		Value:       type_enums.RECORD_FAILED.String(), // Initially mark as RECORD_FAILED
 		Description: "Status of the given request to LLM",
@@ -70,7 +70,7 @@ func (mb *MetricBuilder) OnFailure() *MetricBuilder {
 }
 
 // OnAddMetrics adds additional metrics to the builder, ensuring uniqueness
-func (mb *MetricBuilder) OnAddMetrics(metrics ...*types.Metric) *MetricBuilder {
+func (mb *MetricBuilder) OnAddMetrics(metrics ...*protos.Metric) *MetricBuilder {
 	for _, newMetric := range metrics {
 		mb.metricsMap[newMetric.Name] = newMetric // Ensure uniqueness by overwriting existing ones
 	}
@@ -78,8 +78,8 @@ func (mb *MetricBuilder) OnAddMetrics(metrics ...*types.Metric) *MetricBuilder {
 }
 
 // Build returns the list of unique metrics
-func (mb *MetricBuilder) Build() types.Metrics {
-	uniqueMetrics := make([]*types.Metric, 0, len(mb.metricsMap))
+func (mb *MetricBuilder) Build() []*protos.Metric {
+	uniqueMetrics := make([]*protos.Metric, 0, len(mb.metricsMap))
 	for _, metric := range mb.metricsMap {
 		uniqueMetrics = append(uniqueMetrics, metric)
 	}

@@ -14,9 +14,9 @@ type Streamer interface {
 	// Recv receives the next input value from the stream.
 	// It returns the received value and any error encountered.
 	// If the stream is closed, it should return (zero value, io.EOF).
-	Recv() (*protos.AssistantMessagingRequest, error)
+	Recv() (*protos.AssistantTalkInput, error)
 
 	// Send sends an output value to the stream.
 	// It returns an error if the send operation fails.
-	Send(*protos.AssistantMessagingResponse) error
+	Send(*protos.AssistantTalkOutput) error
 }

@@ -6,14 +6,14 @@ package internal_callers
 import (
 	"fmt"
 
-	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
 	"github.com/rapidaai/protos"
 )
 
 type ChatCompletionOptions struct {
 	AIOptions
-
+	// request identifier
+	Request *protos.ChatRequest
 	// The available tool definitions that the chat completions request can use, including caller-defined functions.
 	ToolDefinitions []*ToolDefinition `json:"tool_definitions"`
 }
@@ -114,14 +114,15 @@ func (fpp *FunctionParameterProperty) ToMap() map[string]interface{} {
 }
 
 func NewChatOptions(
-	requestId uint64,
+	uuID uint64,
 	irRequest *protos.ChatRequest,
 	preHook func(rst map[string]interface{}),
-	postHook func(rst map[string]interface{}, metrics types.Metrics),
+	postHook func(rst map[string]interface{}, metrics []*protos.Metric),
 ) *ChatCompletionOptions {
 	cc := &ChatCompletionOptions{
+		Request: irRequest,
 		AIOptions: AIOptions{
-			RequestId:      requestId,
+			RequestId:      uuID,
 			PreHook:        preHook,
 			PostHook:       postHook,
 			ModelParameter: irRequest.GetModelParameters(),

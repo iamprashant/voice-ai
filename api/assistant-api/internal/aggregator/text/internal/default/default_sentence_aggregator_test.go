@@ -122,7 +122,7 @@ func TestSingleText(t *testing.T) {
 	defer aggregator.Close()
 
 	ctx := context.Background()
-	err := aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+	err := aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 		ContextID: "speaker1",
 		Text:      "Hello world.",
 	})
@@ -137,7 +137,7 @@ func TestSingleText(t *testing.T) {
 	}
 
 	// Handle both AssembledText and other AssemblerOutput types
-	if ts, ok := results[0].(internal_type.LLMStreamPacket); ok {
+	if ts, ok := results[0].(internal_type.LLMResponseDeltaPacket); ok {
 		if ts.Text != "Hello world." {
 			t.Errorf("expected 'Hello world.', got '%s'", ts.Text)
 		}
@@ -165,7 +165,7 @@ func TestMultipleTexts(t *testing.T) {
 
 	go func() {
 		for _, s := range sentences {
-			aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+			aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 				ContextID: "speaker1",
 				Text:      s,
 			})
@@ -181,7 +181,7 @@ func TestMultipleTexts(t *testing.T) {
 
 	expected := []string{"First sentence.", "Second sentence.", "Third sentence."}
 	for i, result := range results {
-		if ts, ok := result.(internal_type.LLMStreamPacket); ok {
+		if ts, ok := result.(internal_type.LLMResponseDeltaPacket); ok {
 			if ts.Text != expected[i] {
 				t.Errorf("result %d: expected '%s', got '%s'", i, expected[i], ts.Text)
 			}
@@ -210,7 +210,7 @@ func TestMultipleBoundaries(t *testing.T) {
 		// Count results through channel
 		resultCount := 0
 		go func() {
-			aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+			aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 				ContextID: "speaker1",
 				Text:      tc.input,
 			})
@@ -249,13 +249,13 @@ func TestContextSwitching(t *testing.T) {
 
 	go func() {
 		// Speaker 1 starts with boundary
-		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 			ContextID: "speaker1",
 			Text:      "Hello there.",
 		})
 
 		// Speaker 2 continues with boundary
-		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 			ContextID: "speaker2",
 			Text:      "Goodbye.",
 		})
@@ -272,7 +272,7 @@ func TestContextSwitching(t *testing.T) {
 	foundSpeaker1 := false
 	foundSpeaker2 := false
 	for _, result := range results {
-		if ts, ok := result.(internal_type.LLMStreamPacket); ok {
+		if ts, ok := result.(internal_type.LLMResponseDeltaPacket); ok {
 			if ts.ContextID == "speaker1" {
 				foundSpeaker1 = true
 				if ts.Text != "Hello there." {
@@ -305,12 +305,12 @@ func TestIsCompleteFlag(t *testing.T) {
 
 	go func() {
 		// Send incomplete sentence without boundary
-		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 			ContextID: "speaker1",
 			Text:      "This is incomplete",
 		})
 		// Force completion with Flush
-		aggregator.Aggregate(ctx, internal_type.LLMMessagePacket{
+		aggregator.Aggregate(ctx, internal_type.LLMResponseDonePacket{
 			ContextID: "speaker1",
 		})
 	}()
@@ -325,9 +325,9 @@ func TestIsCompleteFlag(t *testing.T) {
 
 	// First result should be the flushed sentence (can be value or pointer)
 	var sentence string
-	if ts, ok := results[0].(internal_type.LLMStreamPacket); ok {
+	if ts, ok := results[0].(internal_type.LLMResponseDeltaPacket); ok {
 		sentence = ts.Text
-	} else if ts, ok := results[0].(internal_type.LLMStreamPacket); ok {
+	} else if ts, ok := results[0].(internal_type.LLMResponseDeltaPacket); ok {
 		sentence = ts.Text
 	} else {
 		t.Errorf("expected first result to be AssembledText, got %T", results[0])
@@ -339,7 +339,7 @@ func TestIsCompleteFlag(t *testing.T) {
 	}
 
 	// Second result should be the Flush message
-	if _, ok := results[1].(internal_type.LLMMessagePacket); !ok {
+	if _, ok := results[1].(internal_type.LLMResponseDonePacket); !ok {
 		t.Errorf("expected second result to be Flush message, got %T", results[1])
 	}
 }
@@ -352,7 +352,7 @@ func TestEmptyInput(t *testing.T) {
 
 	ctx := context.Background()
 
-	err := aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+	err := aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 		ContextID: "speaker1",
 		Text:      "",
 	})
@@ -377,18 +377,18 @@ func TestNoBoundariesDefined(t *testing.T) {
 
 	go func() {
 		// Without boundaries, we can only get output with Flush
-		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 			ContextID: "speaker1",
 			Text:      "Hello world",
 		})
 
-		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 			ContextID: "speaker1",
 			Text:      " this is great",
 		})
 
 		// Flush to trigger output
-		aggregator.Aggregate(ctx, internal_type.LLMMessagePacket{
+		aggregator.Aggregate(ctx, internal_type.LLMResponseDonePacket{
 			ContextID: "speaker1",
 		})
 	}()
@@ -401,7 +401,7 @@ func TestNoBoundariesDefined(t *testing.T) {
 		return
 	}
 
-	if ts, ok := results[0].(internal_type.LLMStreamPacket); ok {
+	if ts, ok := results[0].(internal_type.LLMResponseDeltaPacket); ok {
 		if ts.Text != "Hello world this is great" {
 			t.Errorf("expected 'Hello world this is great', got '%s'", ts.Text)
 		}
@@ -419,7 +419,7 @@ func TestContextCancellation(t *testing.T) {
 	// Cancel context immediately
 	cancel()
 
-	err := aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+	err := aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 		ContextID: "speaker1",
 		Text:      "Hello.",
 	})
@@ -453,7 +453,7 @@ func TestConcurrentContexts(t *testing.T) {
 			defer wg.Done()
 			contextID := fmt.Sprintf("speaker%d", speakerID)
 			for i := 0; i < 3; i++ {
-				aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+				aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 					ContextID: contextID,
 					Text:      fmt.Sprintf("Text %d.", i),
 				})
@@ -487,19 +487,19 @@ func TestBufferStateMaintenance(t *testing.T) {
 
 	go func() {
 		// Send partial sentence
-		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 			ContextID: "speaker1",
 			Text:      "Hello",
 		})
 
 		// Continue with no boundary
-		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 			ContextID: "speaker1",
 			Text:      " world",
 		})
 
 		// Now add boundary
-		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 			ContextID: "speaker1",
 			Text:      ".",
 		})
@@ -512,7 +512,7 @@ func TestBufferStateMaintenance(t *testing.T) {
 		return
 	}
 
-	if ts, ok := results[0].(internal_type.LLMStreamPacket); ok && ts.Text != "Hello world." {
+	if ts, ok := results[0].(internal_type.LLMResponseDeltaPacket); ok && ts.Text != "Hello world." {
 		t.Errorf("expected 'Hello world.', got '%s'", ts.Text)
 	}
 }
@@ -526,11 +526,11 @@ func TestWhitespaceHandling(t *testing.T) {
 	ctx := context.Background()
 
 	go func() {
-		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 			ContextID: "speaker1",
 			Text:      "Hello.   \n  ",
 		})
-		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 			ContextID: "speaker1",
 			Text:      "World.",
 		})
@@ -545,7 +545,7 @@ func TestWhitespaceHandling(t *testing.T) {
 	}
 
 	// First sentence should be trimmed
-	if ts, ok := results[0].(internal_type.LLMStreamPacket); ok && ts.Text != "Hello." {
+	if ts, ok := results[0].(internal_type.LLMResponseDeltaPacket); ok && ts.Text != "Hello." {
 		t.Errorf("expected 'Hello.', got '%s'", ts.Text)
 	}
 }
@@ -590,7 +590,7 @@ func TestSpecialCharacterBoundaries(t *testing.T) {
 	ctx := context.Background()
 
 	go func() {
-		aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+		aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 			ContextID: "speaker1",
 			Text:      "Really?",
 		})
@@ -598,7 +598,7 @@ func TestSpecialCharacterBoundaries(t *testing.T) {
 
 	results := collectResults(ctx, aggregator.Result())
 	if len(results) > 0 {
-		if ts, ok := results[0].(internal_type.LLMStreamPacket); ok && ts.Text != "Really?" {
+		if ts, ok := results[0].(internal_type.LLMResponseDeltaPacket); ok && ts.Text != "Really?" {
 			t.Errorf("special character boundary failed: got '%s'", ts.Text)
 		}
 	}
@@ -615,7 +615,7 @@ func TestLargeBatch(t *testing.T) {
 
 	go func() {
 		for i := 0; i < batchSize; i++ {
-			aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+			aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 				ContextID: "speaker1",
 				Text:      fmt.Sprintf("Text %d.", i),
 			})
@@ -669,7 +669,7 @@ func TestLLMStreamingInput(t *testing.T) {
 					return
 				}
 				results = append(results, result)
-				if ts, ok := result.(internal_type.LLMStreamPacket); ok {
+				if ts, ok := result.(internal_type.LLMResponseDeltaPacket); ok {
 					t.Logf("Received result: %q", ts.Text)
 				}
 
@@ -686,7 +686,7 @@ func TestLLMStreamingInput(t *testing.T) {
 	go func() {
 		for i, chunk := range llmChunks {
 			t.Logf("Sending chunk %d: %q", i, chunk)
-			err := aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+			err := aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 				ContextID: "llm",
 				Text:      chunk,
 			})
@@ -720,7 +720,7 @@ func TestLLMStreamingInput(t *testing.T) {
 
 	for i, r := range results {
 		logger.Debugf("result %+v", r)
-		if ts, ok := r.(internal_type.LLMStreamPacket); ok {
+		if ts, ok := r.(internal_type.LLMResponseDeltaPacket); ok {
 			if ts.ContextID != "llm" {
 				t.Errorf("result %d: expected context 'llm', got '%s'", i, ts.ContextID)
 			}
@@ -752,7 +752,7 @@ func TestLLMStreamingWithPauses(t *testing.T) {
 	go func() {
 		for _, chunk := range chunks {
 			time.Sleep(50 * time.Millisecond) // simulate slow LLM token stream
-			_ = aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+			_ = aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 				ContextID: "llm",
 				Text:      chunk,
 			})
@@ -768,7 +768,7 @@ func TestLLMStreamingWithPauses(t *testing.T) {
 		t.Fatalf("expected 1 sentence, got %d", len(results))
 	}
 
-	if ts, ok := results[0].(internal_type.LLMStreamPacket); ok && ts.Text != "This sentence arrives slowly." {
+	if ts, ok := results[0].(internal_type.LLMResponseDeltaPacket); ok && ts.Text != "This sentence arrives slowly." {
 		t.Errorf("unexpected sentence: %q", ts.Text)
 	}
 }
@@ -784,13 +784,13 @@ func TestLLMStreamingWithContextSwitch(t *testing.T) {
 
 	go func() {
 		// LLM A starts streaming (with boundary to get output)
-		_ = aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+		_ = aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 			ContextID: "llm-A",
 			Text:      "LLM A is speaking.",
 		})
 
 		// LLM B interrupts
-		_ = aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+		_ = aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 			ContextID: "llm-B",
 			Text:      "Hello from B.",
 		})
@@ -806,7 +806,7 @@ func TestLLMStreamingWithContextSwitch(t *testing.T) {
 		t.Fatalf("expected at least 2 results, got %d", len(results))
 	}
 
-	if ts, ok := results[0].(internal_type.LLMStreamPacket); ok {
+	if ts, ok := results[0].(internal_type.LLMResponseDeltaPacket); ok {
 		if ts.ContextID != "llm-A" {
 			t.Errorf("expected first result from llm-A, got %s", ts.ContextID)
 		}
@@ -814,7 +814,7 @@ func TestLLMStreamingWithContextSwitch(t *testing.T) {
 
 	foundB := false
 	for _, r := range results {
-		if ts, ok := r.(internal_type.LLMStreamPacket); ok {
+		if ts, ok := r.(internal_type.LLMResponseDeltaPacket); ok {
 			if ts.ContextID == "llm-B" {
 				foundB = true
 			}
@@ -837,13 +837,13 @@ func TestLLMStreamingForcedCompletion(t *testing.T) {
 
 	go func() {
 		// Stream without punctuation
-		_ = aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+		_ = aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 			ContextID: "llm",
 			Text:      "This sentence never ends",
 		})
 
 		// Force flush to emit the buffered sentence
-		_ = aggregator.Aggregate(ctx, internal_type.LLMMessagePacket{
+		_ = aggregator.Aggregate(ctx, internal_type.LLMResponseDonePacket{
 			ContextID: "llm",
 		})
 
@@ -860,9 +860,9 @@ func TestLLMStreamingForcedCompletion(t *testing.T) {
 	}
 
 	var sentence string
-	if ts, ok := results[0].(internal_type.LLMStreamPacket); ok {
+	if ts, ok := results[0].(internal_type.LLMResponseDeltaPacket); ok {
 		sentence = ts.Text
-	} else if ts, ok := results[0].(internal_type.LLMStreamPacket); ok {
+	} else if ts, ok := results[0].(internal_type.LLMResponseDeltaPacket); ok {
 		sentence = ts.Text
 	} else {
 		t.Fatalf("expected first result to be AssembledText, got %T", results[0])
@@ -872,7 +872,7 @@ func TestLLMStreamingForcedCompletion(t *testing.T) {
 		t.Errorf("unexpected sentence: %q", sentence)
 	}
 
-	if _, ok := results[1].(internal_type.LLMMessagePacket); !ok {
+	if _, ok := results[1].(internal_type.LLMResponseDonePacket); !ok {
 		t.Errorf("expected second result to be Flush message, got %T", results[1])
 	}
 }
@@ -897,14 +897,14 @@ func TestLLMStreamingUnformattedButComplete(t *testing.T) {
 		}
 
 		for _, chunk := range chunks {
-			_ = aggregator.Aggregate(ctx, internal_type.LLMStreamPacket{
+			_ = aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 				ContextID: "llm",
 				Text:      chunk,
 			})
 		}
 
 		// End of stream — force completion with Flush
-		_ = aggregator.Aggregate(ctx, internal_type.LLMMessagePacket{
+		_ = aggregator.Aggregate(ctx, internal_type.LLMResponseDonePacket{
 			ContextID: "llm",
 		})
 
@@ -922,10 +922,10 @@ func TestLLMStreamingUnformattedButComplete(t *testing.T) {
 
 	expected := "this is a raw llm response"
 	var sentence, contextID string
-	if ts, ok := results[0].(internal_type.LLMStreamPacket); ok {
+	if ts, ok := results[0].(internal_type.LLMResponseDeltaPacket); ok {
 		sentence = ts.Text
 		contextID = ts.ContextID
-	} else if ts, ok := results[0].(internal_type.LLMStreamPacket); ok {
+	} else if ts, ok := results[0].(internal_type.LLMResponseDeltaPacket); ok {
 		sentence = ts.Text
 		contextID = ts.ContextID
 	} else {
@@ -939,7 +939,7 @@ func TestLLMStreamingUnformattedButComplete(t *testing.T) {
 		t.Errorf("expected context 'llm', got %s", contextID)
 	}
 
-	if _, ok := results[1].(internal_type.LLMMessagePacket); !ok {
+	if _, ok := results[1].(internal_type.LLMResponseDonePacket); !ok {
 		t.Errorf("expected second result to be Flush message, got %T", results[1])
 	}
 }

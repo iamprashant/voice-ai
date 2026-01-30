@@ -6,13 +6,15 @@
 package token_tiktoken_calculators
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/pkoukk/tiktoken-go"
 
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/tokens"
-	"github.com/rapidaai/pkg/types"
+	type_enums "github.com/rapidaai/pkg/types/enums"
+	"github.com/rapidaai/protos"
 )
 
 type tikTokenCostCalculator struct {
@@ -29,20 +31,32 @@ func NewTikTokenCostCalculator(
 	}
 }
 
-func (occ *tikTokenCostCalculator) Token(in []*types.Message, out *types.Message) []*types.Metric {
-	mt := make([]*types.Metric, 0)
+func (occ *tikTokenCostCalculator) Token(in []*protos.Message, out *protos.Message) []*protos.Metric {
+	mt := make([]*protos.Metric, 0)
 	ti, to := occ.token(occ.model, in, out)
-	mt = append(mt, types.NewInputTokenMetric(ti))
-	mt = append(mt, types.NewOutputTokenMetric(to))
+	mt = append(mt, &protos.Metric{
+		Name:        type_enums.INPUT_TOKEN.String(),
+		Value:       fmt.Sprintf("%d", ti),
+		Description: "Number of input tokens",
+	})
+
+	mt = append(mt, &protos.Metric{
+		Name:        type_enums.OUTPUT_TOKEN.String(),
+		Value:       fmt.Sprintf("%d", to),
+		Description: "Number of output tokens",
+	})
 	// If you want to add the total token count as well
 	totalTokens := ti + to
-	mt = append(mt, types.NewTotalTokenMetric(totalTokens))
-
+	mt = append(mt, &protos.Metric{
+		Name:        type_enums.TOTAL_TOKEN.String(),
+		Value:       fmt.Sprintf("%d", totalTokens),
+		Description: "Total number of tokens",
+	})
 	return mt
 }
 
 func (occ *tikTokenCostCalculator) token(name string,
-	in []*types.Message, out *types.Message) (int, int) {
+	in []*protos.Message, out *protos.Message) (int, int) {
 	tkm, err := tiktoken.EncodingForModel(name)
 	if err != nil {
 		return 0, 0
@@ -70,14 +84,25 @@ func (occ *tikTokenCostCalculator) token(name string,
 	}
 	inTokenCount := 0
 	for _, message := range in {
-		inTokenCount += tokensPerMessage
-		inTokenCount += len(tkm.Encode(types.OnlyStringContent(message.GetContents()), nil, nil))
-		inTokenCount += len(tkm.Encode(message.GetRole(), nil, nil))
+		switch msg := message.Message.(type) {
+		case *protos.Message_User:
+			inTokenCount += tokensPerMessage
+			inTokenCount += len(tkm.Encode(msg.User.GetContent(), nil, nil))
+			inTokenCount += len(tkm.Encode(message.GetRole(), nil, nil))
+		case *protos.Message_Assistant:
+			inTokenCount += tokensPerMessage
+			inTokenCount += len(tkm.Encode(strings.Join(out.GetAssistant().GetContents(), ""), nil, nil))
+			inTokenCount += len(tkm.Encode(message.GetRole(), nil, nil))
+		case *protos.Message_System:
+			inTokenCount += tokensPerMessage
+			inTokenCount += len(tkm.Encode(msg.System.GetContent(), nil, nil))
+			inTokenCount += len(tkm.Encode(message.GetRole(), nil, nil))
+		}
 	}
 	// every reply is primed with <|start|>assistant<|message|>
 	inTokenCount += 3
 	outputToken := 0
-	outputToken += len(tkm.Encode(types.OnlyStringContent(out.GetContents()), nil, nil))
+	outputToken += len(tkm.Encode(strings.Join(out.GetAssistant().GetContents(), ""), nil, nil))
 	outputToken += len(tkm.Encode("assistant", nil, nil))
 
 	return inTokenCount, outputToken

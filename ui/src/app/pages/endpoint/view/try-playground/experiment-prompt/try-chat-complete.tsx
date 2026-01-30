@@ -142,7 +142,7 @@ export function TryChatComplete(props: {
                       })}
                     />
                   )}
-                  {x.getType() === InputVarType.paragraph && (
+                  {x.getType() === InputVarType.stringInput && (
                     <ParagraphTextarea
                       id={x.getName()}
                       {...register(x.getName(), {

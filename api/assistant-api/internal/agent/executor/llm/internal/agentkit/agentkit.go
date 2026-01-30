@@ -14,17 +14,14 @@ import (
 	"io"
 	"math"
 	"sync"
-	"time"
 
 	internal_agent_executor "github.com/rapidaai/api/assistant-api/internal/agent/executor"
 	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
 	internal_adapter_telemetry "github.com/rapidaai/api/assistant-api/internal/telemetry"
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
 	"github.com/rapidaai/protos"
-	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
@@ -34,16 +31,16 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+var _ internal_agent_executor.AssistantExecutor = (*agentkitExecutor)(nil)
+
 type agentkitExecutor struct {
-	logger   commons.Logger
-	agentKit protos.AgentTalkClient
-	talker   grpc.BidiStreamingClient[protos.AgentTalkRequest, protos.AgentTalkResponse]
-	conn     *grpc.ClientConn
-	mu       sync.RWMutex
+	logger     commons.Logger
+	connection *grpc.ClientConn
+	talker     grpc.BidiStreamingClient[protos.TalkInput, protos.TalkOutput]
+	mu         sync.RWMutex
 }
 
-// NewAgentKitAssistantExecutor creates a new AgentKit-based assistant executor
-// that communicates with an external gRPC service for LLM operations.
+// NewAgentKitAssistantExecutor creates a new AgentKit-based assistant executor.
 func NewAgentKitAssistantExecutor(logger commons.Logger) internal_agent_executor.AssistantExecutor {
 	return &agentkitExecutor{
 		logger: logger,
@@ -51,116 +48,120 @@ func NewAgentKitAssistantExecutor(logger commons.Logger) internal_agent_executor
 }
 
 // Name returns the executor name identifier.
-func (executor *agentkitExecutor) Name() string {
+func (e *agentkitExecutor) Name() string {
 	return "agentkit"
 }
 
-// Initialize establishes the gRPC connection to the AgentKit service and starts
-// the bidirectional stream for communication.
-func (executor *agentkitExecutor) Initialize(ctx context.Context, communication internal_type.Communication, cfg *protos.AssistantConversationConfiguration) error {
-	start := time.Now()
-	ctx, span, _ := communication.Tracer().StartSpan(ctx, utils.AssistantAgentConnectStage, internal_adapter_telemetry.KV{K: "executor", V: internal_adapter_telemetry.StringValue(executor.Name())})
+// Initialize establishes the gRPC connection and starts the listener.
+func (e *agentkitExecutor) Initialize(ctx context.Context, comm internal_type.Communication, cfg *protos.ConversationConfiguration) error {
+	_, span, _ := comm.Tracer().StartSpan(ctx, utils.AssistantAgentConnectStage, internal_adapter_telemetry.KV{K: "executor", V: internal_adapter_telemetry.StringValue(e.Name())})
 	defer span.EndSpan(ctx, utils.AssistantAgentConnectStage)
 
-	providerDefinition := communication.Assistant().AssistantProviderAgentkit
-	if providerDefinition == nil {
-		return fmt.Errorf("agentkit provider definition is nil")
+	provider := comm.Assistant().AssistantProviderAgentkit
+	if provider == nil {
+		return fmt.Errorf("agentkit provider is not enabled")
 	}
 
-	g, gCtx := errgroup.WithContext(ctx)
-
-	// Goroutine to establish gRPC connection and start streaming
-	g.Go(func() error {
-		return executor.establishConnection(gCtx, providerDefinition, communication)
-	})
-
-	if err := g.Wait(); err != nil {
-		executor.logger.Errorf("Error during initialization of agentkit: %v", err)
+	// Connect
+	if err := e.connect(ctx, provider); err != nil {
 		return err
 	}
 
-	// Start the response listener in background
+	// Start listener - stops on context cancel or server close
 	utils.Go(ctx, func() {
-		if err := executor.responseListener(ctx, communication); err != nil {
-			executor.logger.Errorf("Error in AgentKit response listener: %v", err)
+		if err := e.listen(ctx, comm.OnPacket); err != nil && ctx.Err() == nil {
+			comm.OnPacket(ctx, internal_type.DirectivePacket{Directive: protos.ConversationDirective_END_CONVERSATION, Arguments: map[string]interface{}{"reason": err.Error()}})
 		}
 	})
 
-	// Send initial configuration to AgentKit
-	if err := executor.sendConfiguration(communication, cfg); err != nil {
+	// Send initial configuration
+	if err := e.sendConfiguration(provider.AssistantId, provider.Id, comm.Conversation().Id, cfg); err != nil {
 		return fmt.Errorf("failed to send configuration: %w", err)
 	}
-	executor.logger.Benchmark("AgentKitExecutor.Initialize", time.Since(start))
 	return nil
 }
 
-// establishConnection creates the gRPC connection with proper TLS/credentials configuration.
-func (executor *agentkitExecutor) establishConnection(
-	ctx context.Context,
-	provider *internal_assistant_entity.AssistantProviderAgentkit,
-	communication internal_type.Communication,
-) error {
-	grpcOpts := []grpc.DialOption{
-		grpc.WithDefaultCallOptions(
-			grpc.MaxCallRecvMsgSize(math.MaxInt64),
-			grpc.MaxCallSendMsgSize(math.MaxInt64),
-		),
-	}
-
-	// Configure TLS if certificate is provided
+// connect establishes the gRPC connection.
+func (e *agentkitExecutor) connect(ctx context.Context, provider *internal_assistant_entity.AssistantProviderAgentkit) error {
+	opts := []grpc.DialOption{grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(math.MaxInt64), grpc.MaxCallSendMsgSize(math.MaxInt64))}
+	// credentials and tls
 	if provider.Certificate != "" {
-		tlsCreds, err := executor.buildTLSCredentials(provider.Certificate)
+		creds, err := e.buildTLSCredentials(provider.Certificate)
 		if err != nil {
-			return fmt.Errorf("failed to build TLS credentials: %w", err)
+			return fmt.Errorf("TLS credentials failed: %w", err)
 		}
-		grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(tlsCreds))
+		opts = append(opts, grpc.WithTransportCredentials(creds))
 	} else {
-		grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
 
-	conn, err := grpc.NewClient(provider.Url, grpcOpts...)
+	// create connection with provider url
+	conn, err := grpc.NewClient(provider.Url, opts...)
 	if err != nil {
-		return fmt.Errorf("failed to connect to agentkit: %w", err)
+		return fmt.Errorf("connect failed: %w", err)
 	}
-	executor.conn = conn
-	executor.agentKit = protos.NewAgentTalkClient(conn)
 
-	// Build metadata from provider configuration
-	md := metadata.New(provider.Metadata)
-	streamCtx := metadata.NewOutgoingContext(ctx, md)
+	// create client and stream
+	client := protos.NewAgentKitClient(conn)
+	e.connection = conn
 
-	talker, err := executor.agentKit.Talk(streamCtx)
+	// Build metadata from provider.Metadata (headers to pass to server)
+	streamCtx := ctx
+	if len(provider.Metadata) > 0 {
+		md := metadata.New(map[string]string(provider.Metadata))
+		streamCtx = metadata.NewOutgoingContext(ctx, md)
+	}
+
+	talker, err := client.Talk(streamCtx)
 	if err != nil {
-		return fmt.Errorf("failed to start agentkit stream: %w", err)
+		return fmt.Errorf("stream start failed: %w", err)
 	}
-	executor.talker = talker
+	e.talker = talker
 	return nil
 }
 
 // buildTLSCredentials creates TLS credentials from a PEM certificate.
-func (executor *agentkitExecutor) buildTLSCredentials(certPEM string) (credentials.TransportCredentials, error) {
-	certPool := x509.NewCertPool()
-	if !certPool.AppendCertsFromPEM([]byte(certPEM)) {
-		return nil, fmt.Errorf("failed to parse certificate")
+// If certPEM is "insecure" or "skip-verify", it skips certificate verification (dev only).
+func (e *agentkitExecutor) buildTLSCredentials(certPEM string) (credentials.TransportCredentials, error) {
+	// Allow skipping verification for development
+	if certPEM == "insecure" || certPEM == "skip-verify" {
+		e.logger.Warnf("Using insecure TLS (skipping certificate verification) - DO NOT USE IN PRODUCTION")
+		return credentials.NewTLS(&tls.Config{
+			InsecureSkipVerify: true,
+			MinVersion:         tls.VersionTLS12,
+		}), nil
+	}
+
+	pool := x509.NewCertPool()
+	if !pool.AppendCertsFromPEM([]byte(certPEM)) {
+		e.logger.Errorf("Failed to parse certificate PEM (length=%d, starts=%q)", len(certPEM), certPEM[:min(50, len(certPEM))])
+		return nil, fmt.Errorf("invalid certificate: failed to parse PEM")
 	}
 	return credentials.NewTLS(&tls.Config{
-		RootCAs: certPool,
+		RootCAs:    pool,
+		MinVersion: tls.VersionTLS12,
 	}), nil
 }
 
-// sendConfiguration sends the initial configuration to the AgentKit service.
-func (executor *agentkitExecutor) sendConfiguration(communication internal_type.Communication, cfg *protos.AssistantConversationConfiguration) error {
-	if executor.talker == nil {
-		return fmt.Errorf("talker stream is not initialized")
+// send writes a message to the gRPC stream.
+func (e *agentkitExecutor) send(req *protos.TalkInput) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if e.talker == nil {
+		return fmt.Errorf("not connected")
 	}
+	return e.talker.Send(req)
+}
 
-	return executor.talker.Send(&protos.AgentTalkRequest{
-		Request: &protos.AgentTalkRequest_Configuration{
-			Configuration: &protos.AssistantConversationConfiguration{
-				AssistantConversationId: communication.Conversation().Id,
+// sendConfiguration sends the initial configuration.
+func (e *agentkitExecutor) sendConfiguration(assistantId uint64, assistantProviderID uint64, ConversationID uint64, cfg *protos.ConversationConfiguration) error {
+	return e.send(&protos.TalkInput{
+		Request: &protos.TalkInput_Configuration{
+			Configuration: &protos.ConversationConfiguration{
+				AssistantConversationId: ConversationID,
 				Assistant: &protos.AssistantDefinition{
-					AssistantId: communication.Assistant().Id,
-					Version:     utils.GetVersionString(communication.Assistant().AssistantProviderId),
+					AssistantId: assistantId,
+					Version:     utils.GetVersionString(assistantProviderID),
 				},
 				Args:         cfg.GetArgs(),
 				Metadata:     cfg.GetMetadata(),
@@ -172,181 +173,102 @@ func (executor *agentkitExecutor) sendConfiguration(communication internal_type.
 	})
 }
 
-// responseListener listens for responses from the AgentKit service and processes them.
-func (executor *agentkitExecutor) responseListener(ctx context.Context, communication internal_type.Communication) error {
+// listen reads messages until context is cancelled or connection closes.
+func (e *agentkitExecutor) listen(ctx context.Context, onPacket func(ctx context.Context, packet ...internal_type.Packet) error) error {
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return nil
 		default:
 		}
-
-		if executor.talker == nil {
-			return fmt.Errorf("talker stream is nil")
-		}
-
-		resp, err := executor.talker.Recv()
+		resp, err := e.talker.Recv()
 		if err != nil {
-			if errors.Is(err, io.EOF) || status.Code(err) == codes.Canceled {
-				executor.logger.Debugf("AgentKit stream closed")
-				return nil
+			e.logger.Debugf("Listener received error: %v", err)
+			code := status.Code(err)
+			switch {
+			case errors.Is(err, io.EOF):
+				// Server gracefully closed
+				onPacket(ctx, internal_type.DirectivePacket{Directive: protos.ConversationDirective_END_CONVERSATION, Arguments: map[string]interface{}{"reason": "server closed connection"}})
+			case code == codes.Canceled:
+				// RPC canceled (client or server)
+				onPacket(ctx, internal_type.DirectivePacket{Directive: protos.ConversationDirective_END_CONVERSATION, Arguments: map[string]interface{}{"reason": "connection canceled"}})
+			case code == codes.Unavailable:
+				// Server went down
+				onPacket(ctx, internal_type.DirectivePacket{Directive: protos.ConversationDirective_END_CONVERSATION, Arguments: map[string]interface{}{"reason": "server unavailable"}})
+			default:
+				// Other errors
+				onPacket(ctx, internal_type.DirectivePacket{Directive: protos.ConversationDirective_END_CONVERSATION, Arguments: map[string]interface{}{"reason": err.Error()}})
 			}
-			return fmt.Errorf("stream recv error: %w", err)
+			return nil
 		}
-
-		if err := executor.processResponse(ctx, resp, communication); err != nil {
-			executor.logger.Errorf("Error processing AgentKit response: %v", err)
-		}
+		e.handleResponse(ctx, resp, onPacket)
 	}
 }
 
-// processResponse handles individual responses from the AgentKit service.
-func (executor *agentkitExecutor) processResponse(
-	ctx context.Context,
-	resp *protos.AgentTalkResponse,
-	communication internal_type.Communication,
-) error {
-	if resp.GetError() != nil {
-		executor.logger.Errorf("AgentKit error response: code=%d, message=%s", resp.GetCode())
-		return nil
-	}
-
-	if !resp.GetSuccess() {
-		return nil
-	}
-
+// handleResponse processes a single response from the server.
+func (e *agentkitExecutor) handleResponse(ctx context.Context, resp *protos.TalkOutput, onPacket func(ctx context.Context, packet ...internal_type.Packet) error) {
 	switch data := resp.GetData().(type) {
-	case *protos.AgentTalkResponse_Interruption:
-		communication.OnPacket(ctx, internal_type.InterruptionPacket{
-			ContextID: fmt.Sprintf("%d", communication.Conversation().Id),
-			Source:    internal_type.InterruptionSourceWord,
-		})
+	case *protos.TalkOutput_Interruption:
+		onPacket(ctx, internal_type.InterruptionPacket{ContextID: data.Interruption.Id, Source: internal_type.InterruptionSourceWord})
 
-	case *protos.AgentTalkResponse_Assistant:
-		if err := executor.processAssistantMessage(ctx, data.Assistant, communication); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// processAssistantMessage handles assistant messages from AgentKit.
-func (executor *agentkitExecutor) processAssistantMessage(
-	ctx context.Context,
-	assistant *protos.AssistantConversationAssistantMessage,
-	communication internal_type.Communication,
-) error {
-	if assistant == nil {
-		return nil
-	}
-
-	contextID := assistant.GetId()
-	if contextID == "" {
-		contextID = fmt.Sprintf("%d", communication.Conversation().Id)
-	}
-
-	switch msg := assistant.GetMessage().(type) {
-	case *protos.AssistantConversationAssistantMessage_Text:
-		// Send streaming text packet
-		communication.OnPacket(ctx, internal_type.LLMStreamPacket{
-			ContextID: contextID,
-			Text:      msg.Text.GetContent(),
-		})
-
-		// If completed, send the full message packet
-		if assistant.GetCompleted() {
-			message := types.NewMessage("assistant", &types.Content{
-				ContentType:   commons.TEXT_CONTENT.String(),
-				ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
-				Content:       []byte(msg.Text.GetContent()),
-			})
-			communication.OnPacket(ctx, internal_type.LLMMessagePacket{
-				ContextID: contextID,
-				Message:   message,
-			})
+	case *protos.TalkOutput_Assistant:
+		switch msg := data.Assistant.GetMessage().(type) {
+		case *protos.ConversationAssistantMessage_Text:
+			if data.Assistant.GetCompleted() {
+				onPacket(ctx, internal_type.LLMResponseDonePacket{
+					ContextID: data.Assistant.GetId(),
+					Text:      msg.Text,
+				})
+				return
+			}
+			onPacket(ctx, internal_type.LLMResponseDeltaPacket{ContextID: data.Assistant.GetId(), Text: msg.Text})
+		case *protos.ConversationAssistantMessage_Audio:
+			e.logger.Debugf("Received audio message (not implemented)")
 		}
 
-	case *protos.AssistantConversationAssistantMessage_Audio:
-		// Handle audio messages if needed
-		executor.logger.Debugf("Received audio message from AgentKit (not implemented)")
+	case *protos.TalkOutput_Directive:
+		args, _ := utils.AnyMapToInterfaceMap(data.Directive.GetArgs())
+		onPacket(ctx, internal_type.DirectivePacket{ContextID: data.Directive.GetId(), Directive: data.Directive.GetType(), Arguments: args})
 	}
-
-	return nil
 }
 
-// Execute processes incoming packets and sends them to the AgentKit service.
-func (executor *agentkitExecutor) Execute(
-	ctx context.Context,
-	communication internal_type.Communication,
-	packet internal_type.Packet,
-) error {
-	ctx, span, _ := communication.Tracer().StartSpan(
-		ctx,
-		utils.AssistantAgentTextGenerationStage,
-		internal_adapter_telemetry.MessageKV(packet.ContextId()),
-	)
+// Execute sends a packet to the AgentKit server.
+func (e *agentkitExecutor) Execute(ctx context.Context, comm internal_type.Communication, packet internal_type.Packet) error {
+	_, span, _ := comm.Tracer().StartSpan(ctx, utils.AssistantAgentTextGenerationStage, internal_adapter_telemetry.MessageKV(packet.ContextId()))
 	defer span.EndSpan(ctx, utils.AssistantAgentTextGenerationStage)
-
 	switch p := packet.(type) {
 	case internal_type.UserTextPacket:
-		return executor.handleUserTextPacket(ctx, p, communication)
-	case internal_type.StaticPacket:
-		return executor.handleStaticPacket(p)
-	default:
-		return fmt.Errorf("unsupported packet type: %T", packet)
-	}
-}
-
-// handleUserTextPacket sends user text messages to the AgentKit service.
-func (executor *agentkitExecutor) handleUserTextPacket(
-	ctx context.Context,
-	packet internal_type.UserTextPacket,
-	communication internal_type.Communication,
-) error {
-	if executor.talker == nil {
-		return fmt.Errorf("talker stream is not initialized")
-	}
-
-	// Send message to AgentKit
-	return executor.talker.Send(&protos.AgentTalkRequest{
-		Request: &protos.AgentTalkRequest_Message{
-			Message: &protos.AssistantConversationUserMessage{
-				Message: &protos.AssistantConversationUserMessage_Text{
-					Text: &protos.AssistantConversationMessageTextContent{
-						Content: packet.Text,
+		return e.send(&protos.TalkInput{
+			Request: &protos.TalkInput_Message{
+				Message: &protos.ConversationUserMessage{
+					Message: &protos.ConversationUserMessage_Text{
+						Text: p.Text,
 					},
+					Id:        packet.ContextId(),
+					Completed: true,
+					Time:      timestamppb.Now(),
 				},
-				Id:        packet.ContextId(),
-				Completed: true,
-				Time:      timestamppb.Now(),
 			},
-		},
-	})
-}
+		})
+	case internal_type.StaticPacket:
+		return nil
 
-// handleStaticPacket appends static assistant responses to history.
-func (executor *agentkitExecutor) handleStaticPacket(packet internal_type.StaticPacket) error {
-	executor.mu.Lock()
-	defer executor.mu.Unlock()
-	return nil
-}
-
-// Close terminates the AgentKit connection and cleans up resources.
-func (executor *agentkitExecutor) Close(ctx context.Context, communication internal_type.Communication) error {
-	executor.logger.Debugf("Closing AgentKit executor")
-
-	if executor.talker != nil {
-		if err := executor.talker.CloseSend(); err != nil {
-			executor.logger.Errorf("Error closing talker stream: %v", err)
-		}
-		executor.talker = nil
+	default:
+		return fmt.Errorf("unsupported packet: %T", packet)
 	}
+}
 
-	if executor.conn != nil {
-		if err := executor.conn.Close(); err != nil {
-			executor.logger.Errorf("Error closing gRPC connection: %v", err)
-		}
-		executor.conn = nil
+// Close terminates the gRPC connection.
+func (e *agentkitExecutor) Close(ctx context.Context) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if e.talker != nil {
+		e.talker.CloseSend()
+		e.talker = nil
+	}
+	if e.connection != nil {
+		e.connection.Close()
+		e.connection = nil
 	}
 	return nil
 }

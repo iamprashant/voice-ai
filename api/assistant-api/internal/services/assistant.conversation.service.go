@@ -13,6 +13,7 @@ import (
 	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
+	protos "github.com/rapidaai/protos"
 	workflow_api "github.com/rapidaai/protos"
 )
 
@@ -251,7 +252,7 @@ type AssistantConversationService interface {
 		assistantId uint64,
 		conversationId uint64,
 		assistantConversationMessageId string,
-		in, out *types.Message, metrics []*types.Metric) (*internal_conversation_entity.AssistantConversationAction, error)
+		in, out *protos.Message, metrics []*protos.Metric) (*internal_conversation_entity.AssistantConversationAction, error)
 
 	CreateToolAction(ctx context.Context,
 		auth types.SimplePrinciple,
@@ -259,7 +260,7 @@ type AssistantConversationService interface {
 		conversationId uint64,
 		assistantConversationMessageId string,
 		in, out map[string]interface{},
-		metrics []*types.Metric) (
+		metrics []*protos.Metric) (
 		*internal_conversation_entity.AssistantConversationAction, error)
 
 	// all about conversation

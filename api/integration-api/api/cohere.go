@@ -28,16 +28,16 @@ type cohereIntegrationGRPCApi struct {
 	cohereIntegrationApi
 }
 
-// StreamChat implements protos.CohereServiceServer.
-func (cohere *cohereIntegrationGRPCApi) StreamChat(irRequest *integration_api.ChatRequest, stream integration_api.CohereService_StreamChatServer) error {
-	cohere.logger.Debugf("request for streaming chat cohere with request %+v", irRequest)
-	return cohere.integrationApi.StreamChat(
-		irRequest,
-
+// StreamChat implements protos.CohereServiceServer (bidirectional streaming).
+func (cohere *cohereIntegrationGRPCApi) StreamChat(stream integration_api.CohereService_StreamChatServer) error {
+	cohere.logger.Debugf("Bidirectional stream chat opened for cohere")
+	return cohere.integrationApi.StreamChatBidirectional(
 		stream.Context(),
 		"COHERE",
-		internal_cohere_callers.NewLargeLanguageCaller(cohere.logger, irRequest.GetCredential()),
-		stream.Send,
+		func(cred *integration_api.Credential) internal_callers.LargeLanguageCaller {
+			return internal_cohere_callers.NewLargeLanguageCaller(cohere.logger, cred)
+		},
+		stream,
 	)
 }
 

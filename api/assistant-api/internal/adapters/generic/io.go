@@ -25,12 +25,12 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-func (io *GenericRequestor) Input(message *protos.AssistantConversationUserMessage) error {
+func (io *GenericRequestor) Input(message *protos.ConversationUserMessage) error {
 	switch msg := message.GetMessage().(type) {
-	case *protos.AssistantConversationUserMessage_Audio:
-		return io.OnPacket(io.Context(), internal_type.UserAudioPacket{Audio: msg.Audio.GetContent()})
-	case *protos.AssistantConversationUserMessage_Text:
-		return io.OnPacket(io.Context(), internal_type.UserTextPacket{Text: msg.Text.GetContent()})
+	case *protos.ConversationUserMessage_Audio:
+		return io.OnPacket(io.Context(), internal_type.UserAudioPacket{Audio: msg.Audio})
+	case *protos.ConversationUserMessage_Text:
+		return io.OnPacket(io.Context(), internal_type.UserTextPacket{Text: msg.Text})
 	default:
 		return fmt.Errorf("illegal input from the user %+v", msg)
 	}
@@ -153,9 +153,7 @@ func (listening *GenericRequestor) initializeEndOfSpeech(ctx context.Context, op
 
 	endOfSpeech, err := internal_end_of_speech.GetEndOfSpeech(ctx,
 		listening.logger,
-		func(_ctx context.Context, act internal_type.EndOfSpeechPacket) error {
-			return listening.OnPacket(_ctx, act)
-		},
+		listening.OnPacket,
 		options)
 	if err != nil {
 		listening.logger.Warnf("unable to initialize text analyzer %+v", err)
@@ -178,7 +176,7 @@ func (listening *GenericRequestor) initializeDenoiser(ctx context.Context, audio
 func (listening *GenericRequestor) initializeVAD(ctx context.Context, audioConfig *protos.AudioConfig, options utils.Option,
 ) error {
 	start := time.Now()
-	vad, err := internal_vad.GetVAD(listening.Context(), listening.logger, audioConfig, func(vr internal_type.InterruptionPacket) error { return listening.OnPacket(listening.Context(), vr) }, options)
+	vad, err := internal_vad.GetVAD(listening.Context(), listening.logger, audioConfig, listening.OnPacket, options)
 	if err != nil {
 		listening.logger.Errorf("error wile intializing vad %+v", err)
 		return err

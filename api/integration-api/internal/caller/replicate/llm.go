@@ -10,7 +10,6 @@ import (
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	internal_caller_metrics "github.com/rapidaai/api/integration-api/internal/caller/metrics"
 	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
 	integration_api "github.com/rapidaai/protos"
 	protos "github.com/rapidaai/protos"
@@ -31,9 +30,9 @@ func (*largeLanguageCaller) StreamChatCompletion(
 	ctx context.Context,
 	allMessages []*protos.Message,
 	options *internal_callers.ChatCompletionOptions,
-	onStream func(types.Message) error,
-	onMetrics func(*types.Message, types.Metrics) error,
-	onError func(err error),
+	onStream func(string, *protos.Message) error,
+	onMetrics func(string, *protos.Message, []*protos.Metric) error,
+	onError func(string, error),
 ) error {
 	panic("unimplemented")
 }
@@ -42,7 +41,7 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 	ctx context.Context,
 	allMessages []*protos.Message,
 	options *internal_callers.ChatCompletionOptions,
-) (*types.Message, types.Metrics, error) {
+) (*protos.Message, []*protos.Metric, error) {
 	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)
 	metrics.OnStart()
 
@@ -100,16 +99,17 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 	metrics.OnSuccess()
 
 	// options.AIOptions.PreHook(llc.toString(response))
+	message := &protos.Message{
+		Role: "assistant",
+		Message: &protos.Message_Assistant{
+			Assistant: &protos.AssistantMessage{
+				Contents: []string{strings.Join(v, "")},
+			},
+		},
+	}
 	options.PostHook(map[string]interface{}{
 		"result": prediction,
 	}, metrics.Build())
 
-	return &types.Message{
-		Role: "chatbot",
-		Contents: []*types.Content{{
-			ContentType:   commons.TEXT_CONTENT.String(),
-			ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
-			Content:       []byte(strings.Join(v, "")),
-		}},
-	}, metrics.Build(), nil
+	return message, metrics.Build(), nil
 }

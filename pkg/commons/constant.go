@@ -7,7 +7,6 @@ package commons
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/rapidaai/protos"
 )
@@ -78,25 +77,25 @@ func (rct ResponseContentFormat) String() string {
 
 type MessageContent protos.Message
 
-func (mc *MessageContent) StringContent() string {
-	var builder strings.Builder
-	if len(mc.Contents) == 0 {
-		return ""
-	}
-	for _, c := range mc.Contents {
-		if ResponseContentType(c.GetContentType()) == TEXT_CONTENT {
-			if ResponseContentFormat(c.GetContentFormat()) == TEXT_CONTENT_FORMAT_RAW {
-				builder.Write(c.Content)
-			}
-		}
-	}
-	return builder.String()
-}
+// func (mc *MessageContent) StringContent() string {
+// 	var builder strings.Builder
+// 	if len(mc.Contents) == 0 {
+// 		return ""
+// 	}
+// 	for _, c := range mc.Contents {
+// 		if ResponseContentType(c.GetContentType()) == TEXT_CONTENT {
+// 			if ResponseContentFormat(c.GetContentFormat()) == TEXT_CONTENT_FORMAT_RAW {
+// 				builder.Write(c.Content)
+// 			}
+// 		}
+// 	}
+// 	return builder.String()
+// }
 
-func ToMessageContent(msg *protos.Message) *MessageContent {
-	// copy the message avoid locking
-	return &MessageContent{
-		Role:     msg.GetRole(),
-		Contents: msg.GetContents(),
-	}
-}
+// func ToMessageContent(msg *protos.Message) *MessageContent {
+// 	// copy the message avoid locking
+// 	return &MessageContent{
+// 		Role:     msg.GetRole(),
+// 		Contents: msg.GetContents(),
+// 	}
+// }

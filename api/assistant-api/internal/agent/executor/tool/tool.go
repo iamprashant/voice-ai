@@ -23,7 +23,6 @@ import (
 	"github.com/rapidaai/protos"
 
 	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	"github.com/rapidaai/pkg/utils"
 )
@@ -63,10 +62,8 @@ func (executor *toolExecutor) initializeLocalTool(logger commons.Logger, toolOpt
 		return internal_tool_local.NewKnowledgeRetrievalToolCaller(logger, toolOpts, communication)
 	case "api_request":
 		return internal_tool_local.NewApiRequestToolCaller(logger, toolOpts, communication)
-	case "endpoint":
+	case "endpoint_request":
 		return internal_tool_local.NewEndpointToolCaller(logger, toolOpts, communication)
-	case "put_on_hold":
-		return internal_tool_local.NewPutOnHoldToolCaller(logger, toolOpts, communication)
 	case "end_of_conversation":
 		return internal_tool_local.NewEndOfConversationCaller(logger, toolOpts, communication)
 	default:
@@ -117,15 +114,7 @@ func (executor *toolExecutor) initializeTools(ctx context.Context, tools []*inte
 func (executor *toolExecutor) Initialize(ctx context.Context, communication internal_type.Communication) error {
 	ctx, span, _ := communication.Tracer().StartSpan(ctx, utils.AssistantToolConnectStage)
 	defer span.EndSpan(ctx, utils.AssistantToolConnectStage)
-
-	start := time.Now()
-	tools := communication.Assistant().AssistantTools
-
-	// Initialize local tools
-	executor.initializeTools(ctx, tools, communication, span)
-	executor.logger.Benchmark("ToolExecutor.Init", time.Since(start))
-	executor.logger.Infof("Initialized %d tools total", len(executor.tools))
-
+	executor.initializeTools(ctx, communication.Assistant().AssistantTools, communication, span)
 	return nil
 }
 
@@ -133,104 +122,86 @@ func (executor *toolExecutor) GetFunctionDefinitions() []*protos.FunctionDefinit
 	return executor.availableToolFunctions
 }
 
-func (executor *toolExecutor) tool(messageId string, in, out map[string]interface{}, metrics []*types.Metric, communication internal_type.Communication) error {
-	utils.Go(communication.Context(), func() {
-		communication.CreateConversationToolLog(messageId, in, out, metrics)
-	})
-	return nil
-}
-
-func (executor *toolExecutor) execute(ctx context.Context, message internal_type.LLMPacket, call *protos.ToolCall, communication internal_type.Communication) internal_type.LLMToolPacket {
-	ctx, span, _ := communication.Tracer().StartSpan(ctx, utils.AssistantToolExecuteStage, internal_adapter_telemetry.MessageKV(message.ContextId()))
+func (executor *toolExecutor) execute(ctx context.Context, contextID string, call *protos.ToolCall, communication internal_type.Communication) *protos.ToolMessage_Tool {
+	ctx, span, _ := communication.Tracer().StartSpan(ctx, utils.AssistantToolExecuteStage, internal_adapter_telemetry.MessageKV(contextID))
 	defer span.EndSpan(ctx, utils.AssistantToolExecuteStage)
 
 	start := time.Now()
-	metrics := make([]*types.Metric, 0)
-
+	// metrics := make([]*types.Metric, 0)
 	funC, ok := executor.getTool(call.GetFunction().GetName())
 	if !ok {
-		return internal_type.LLMToolPacket{ContextID: message.ContextId(),
-			Action: protos.AssistantConversationAction_ACTION_UNSPECIFIED, Result: map[string]interface{}{
-				"error":   "unable to find tool: " + call.GetFunction().GetName(),
-				"success": false,
-				"status":  "FAIL",
-			}}
+		return &protos.ToolMessage_Tool{Name: call.GetFunction().GetName(), Id: call.Id, Content: "unable to find tool: " + call.GetFunction().GetName()}
 	}
+	span.AddAttributes(ctx,
+		internal_adapter_telemetry.KV{K: "function", V: internal_adapter_telemetry.StringValue(call.GetFunction().GetName())},
+		internal_adapter_telemetry.KV{K: "argument", V: internal_adapter_telemetry.StringValue(call.GetFunction().GetArguments())})
 
-	// should return multiple things
-	span.AddAttributes(ctx, internal_adapter_telemetry.KV{K: "function", V: internal_adapter_telemetry.StringValue(call.GetFunction().GetName())}, internal_adapter_telemetry.KV{K: "argument", V: internal_adapter_telemetry.StringValue(call.GetFunction().GetArguments())})
+	arguments := executor.parseArgument(call.GetFunction().GetArguments())
+	// on packge
+	communication.OnPacket(ctx, internal_type.LLMToolCallPacket{ToolID: call.GetId(), Name: call.GetFunction().GetName(), Arguments: arguments})
+	// output
+	output := funC.Call(ctx, contextID, call.GetId(), arguments, communication)
 
-	output := funC.Call(ctx, message, call.GetId(), call.GetFunction().GetArguments(), communication)
-	metrics = append(metrics, types.NewTimeTakenMetric(time.Since(start)))
+	communication.OnPacket(ctx, internal_type.LLMToolResultPacket{ToolID: call.GetId(), Name: call.GetFunction().GetName(), Result: output})
 
-	//
-	executor.tool(message.ContextId(), map[string]interface{}{
-		"id":        call.Id,
-		"name":      call.GetFunction().GetName(),
-		"arguments": call.GetFunction().GetArguments(),
-	}, output.Result, metrics, communication)
+	// log tool execution
+	// executor.tool(contextID, map[string]interface{}{
+	// 	"id":        call.Id,
+	// 	"name":      call.GetFunction().GetName(),
+	// 	"arguments": arguments,
+	// }, output, append(metrics, types.NewTimeTakenMetric(time.Since(start))), communication)
 
-	executor.Log(ctx, funC, communication, message.ContextId(), type_enums.RECORD_COMPLETE, int64(time.Since(start)),
+	// log execution record
+	executor.log(ctx, funC, communication, contextID, type_enums.RECORD_COMPLETE, int64(time.Since(start)),
 		map[string]interface{}{
 			"id":        call.Id,
 			"name":      call.GetFunction().GetName(),
-			"arguments": call.GetFunction().GetArguments(),
-		}, output.Result)
+			"arguments": arguments,
+		}, output)
 
-	return output
+	return &protos.ToolMessage_Tool{Name: call.GetFunction().GetName(), Id: call.Id, Content: output.Result()}
 }
 
-func (executor *toolExecutor) ExecuteAll(ctx context.Context, message internal_type.LLMPacket, calls []*protos.ToolCall, communication internal_type.Communication) ([]internal_type.Packet, []*types.Content) {
+func (executor *toolExecutor) ExecuteAll(ctx context.Context, contextID string, calls []*protos.ToolCall, communication internal_type.Communication) *protos.Message {
 	if len(calls) == 0 {
-		return nil, nil
+		return nil
 	}
-
 	// Use mutex-protected slices for concurrent writes
-	contents := make([]internal_type.Packet, 0, len(calls))
-	result := make([]*types.Content, 0, len(calls))
-
+	result := make([]*protos.ToolMessage_Tool, 0, len(calls))
 	var wg sync.WaitGroup
 	for _, xt := range calls {
 		xtCopy := xt
 		wg.Add(1)
 		utils.Go(context.Background(), func() {
 			defer wg.Done()
-
-			cntn := executor.execute(ctx, message, xtCopy, communication)
-
-			bt, err := json.Marshal(cntn.Result)
-			content := &types.Content{
-				ContentType:   xtCopy.GetId(),
-				ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
-				Name:          xtCopy.GetFunction().GetName(),
-			}
-			if err != nil {
-				content.Content = []byte("unable to parse the response.")
-			} else {
-				content.Content = bt
-			}
-
-			// Thread-safe append
-			contents = append(contents, cntn)
-			result = append(result, content)
+			result = append(result, executor.execute(ctx, contextID, xtCopy, communication))
 		})
 	}
 	wg.Wait()
+	return &protos.Message{Role: "tool", Message: &protos.Message_Tool{Tool: &protos.ToolMessage{Tools: result}}}
+}
 
-	return contents, result
+func (executor *toolExecutor) parseArgument(arguments string) map[string]interface{} {
+	var argMap map[string]interface{}
+	err := json.Unmarshal([]byte(arguments), &argMap)
+	if err != nil {
+		return map[string]interface{}{"raw": arguments}
+	} else {
+		return argMap
+	}
 }
 
 // Close releases all resources held by the tool executor
-func (executor *toolExecutor) Close() error {
+func (executor *toolExecutor) Close(ctx context.Context) error {
 	for _, client := range executor.mcpClients {
-		if err := client.Close(); err != nil {
+		if err := client.Close(ctx); err != nil {
 			executor.logger.Errorf("failed to close MCP client: %v", err)
 		}
 	}
 	return nil
 }
 
-func (executor *toolExecutor) Log(ctx context.Context, toolCaller internal_tool.ToolCaller, communication internal_type.Communication, assistantConversationMessageId string, recordStatus type_enums.RecordState, timeTaken int64, in, out map[string]interface{}) {
+func (executor *toolExecutor) log(ctx context.Context, toolCaller internal_tool.ToolCaller, communication internal_type.Communication, assistantConversationMessageId string, recordStatus type_enums.RecordState, timeTaken int64, in, out map[string]interface{}) {
 	utils.Go(ctx, func() {
 		// Include function definition in log
 		if def, err := toolCaller.Definition(); err == nil {

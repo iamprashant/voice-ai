@@ -42,11 +42,3 @@ func (executor *toolCaller) Definition() (*protos.FunctionDefinition, error) {
 	}
 	return definition, nil
 }
-
-func (executor *toolCaller) Result(msg string, success bool) map[string]interface{} {
-	if success {
-		return map[string]interface{}{"data": msg, "success": true, "status": "SUCCESS"}
-	} else {
-		return map[string]interface{}{"error": msg, "success": false, "status": "FAIL"}
-	}
-}

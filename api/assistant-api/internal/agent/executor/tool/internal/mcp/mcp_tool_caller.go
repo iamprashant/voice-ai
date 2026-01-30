@@ -7,7 +7,6 @@ package internal_tool_mcp
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	internal_tool "github.com/rapidaai/api/assistant-api/internal/agent/executor/tool/internal"
@@ -64,60 +63,29 @@ func (m *MCPToolCaller) ExecutionMethod() string {
 // Call executes the MCP tool with the given arguments and returns the response
 func (m *MCPToolCaller) Call(
 	ctx context.Context,
-	pkt internal_type.LLMPacket,
+	contextID,
 	toolId string,
-	args string,
+	args map[string]interface{},
 	communication internal_type.Communication,
-) internal_type.LLMToolPacket {
-	m.logger.Debugf("MCP tool call: %s with args: %s", m.toolName, args)
-
-	// Parse the arguments from JSON string to map
-	arguments, err := m.parseArguments(args)
-	if err != nil {
-		m.logger.Errorf("failed to parse arguments for MCP tool %s: %v", m.toolName, err)
-		return m.errorPacket(pkt.ContextId(), fmt.Sprintf("failed to parse arguments: %v", err))
-	}
-
-	// Execute the tool call via MCP client
-	response, err := m.client.Execute(ctx, m.toolName, arguments)
+) internal_tool.ToolCallResult {
+	response, err := m.client.Execute(ctx, m.toolName, args)
 	if err != nil {
 		m.logger.Errorf("MCP tool execution failed for %s: %v", m.toolName, err)
-		return m.errorPacket(pkt.ContextId(), fmt.Sprintf("tool execution failed: %v", err))
+		return m.errorPacket(contextID, fmt.Sprintf("tool execution failed: %v", err))
 	}
-
-	// Convert response to LLMToolPacket
-	return internal_type.LLMToolPacket{
-		Name:      m.toolName,
-		ContextID: pkt.ContextId(),
-		Action:    protos.AssistantConversationAction_MCP_TOOL_CALL,
-		Result:    response.ToMap(),
+	if response.Error != "" {
+		return m.errorPacket(contextID, response.Error)
 	}
-}
-
-// parseArguments converts a JSON string to a map of arguments
-func (m *MCPToolCaller) parseArguments(args string) (map[string]any, error) {
-	if args == "" || args == "{}" {
-		return make(map[string]any), nil
-	}
-
-	var arguments map[string]any
-	if err := json.Unmarshal([]byte(args), &arguments); err != nil {
-		// Try to wrap as a single value if it's not valid JSON object
-		return map[string]any{"input": args}, nil
-	}
-	return arguments, nil
+	return internal_tool.JustResult(map[string]interface{}{
+		"status": "SUCCESS",
+		"result": response.Result,
+	})
 }
 
 // errorPacket creates an error response packet
-func (m *MCPToolCaller) errorPacket(contextId, errorMsg string) internal_type.LLMToolPacket {
-	return internal_type.LLMToolPacket{
-		Name:      m.toolName,
-		ContextID: contextId,
-		Action:    protos.AssistantConversationAction_MCP_TOOL_CALL,
-		Result: map[string]interface{}{
-			"success": false,
-			"status":  "FAIL",
-			"error":   errorMsg,
-		},
-	}
+func (m *MCPToolCaller) errorPacket(contextId, errorMsg string) internal_tool.ToolCallResult {
+	return internal_tool.JustResult(map[string]interface{}{
+		"status": "FAIL",
+		"error":  errorMsg,
+	})
 }

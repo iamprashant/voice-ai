@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/types"
+	"github.com/rapidaai/protos"
 )
 
 func TestNewTikTokenCostCalculator(t *testing.T) {
@@ -28,14 +28,12 @@ func TestTikTokenCostCalculator_Token_EmptyMessages(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	calculator := NewTikTokenCostCalculator(logger, "gpt-3.5-turbo")
 
-	in := []*types.Message{}
-	out := &types.Message{
+	in := []*protos.Message{}
+	out := &protos.Message{
 		Role: "assistant",
-		Contents: []*types.Content{
-			{
-				ContentType:   "text",
-				ContentFormat: "raw",
-				Content:       []byte("Hello world"),
+		Message: &protos.Message_Assistant{
+			Assistant: &protos.AssistantMessage{
+				Contents: []string{"Hello world"},
 			},
 		},
 	}
@@ -52,25 +50,19 @@ func TestTikTokenCostCalculator_Token_SingleInputMessage(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	calculator := NewTikTokenCostCalculator(logger, "gpt-3.5-turbo")
 
-	in := []*types.Message{
+	in := []*protos.Message{
 		{
 			Role: "user",
-			Contents: []*types.Content{
-				{
-					ContentType:   "text",
-					ContentFormat: "raw",
-					Content:       []byte("Hello"),
-				},
+			Message: &protos.Message_User{
+				User: &protos.UserMessage{Content: "Hello"},
 			},
 		},
 	}
-	out := &types.Message{
+	out := &protos.Message{
 		Role: "assistant",
-		Contents: []*types.Content{
-			{
-				ContentType:   "text",
-				ContentFormat: "raw",
-				Content:       []byte("Hi there"),
+		Message: &protos.Message_Assistant{
+			Assistant: &protos.AssistantMessage{
+				Contents: []string{"Hi there"},
 			},
 		},
 	}
@@ -96,35 +88,25 @@ func TestTikTokenCostCalculator_Token_MultipleInputMessages(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	calculator := NewTikTokenCostCalculator(logger, "gpt-3.5-turbo")
 
-	in := []*types.Message{
+	in := []*protos.Message{
 		{
 			Role: "system",
-			Contents: []*types.Content{
-				{
-					ContentType:   "text",
-					ContentFormat: "raw",
-					Content:       []byte("You are a helpful assistant"),
-				},
+			Message: &protos.Message_System{
+				System: &protos.SystemMessage{Content: "You are a helpful assistant"},
 			},
 		},
 		{
 			Role: "user",
-			Contents: []*types.Content{
-				{
-					ContentType:   "text",
-					ContentFormat: "raw",
-					Content:       []byte("Hello"),
-				},
+			Message: &protos.Message_User{
+				User: &protos.UserMessage{Content: "Hello"},
 			},
 		},
 	}
-	out := &types.Message{
+	out := &protos.Message{
 		Role: "assistant",
-		Contents: []*types.Content{
-			{
-				ContentType:   "text",
-				ContentFormat: "raw",
-				Content:       []byte("Hi there! How can I help you?"),
+		Message: &protos.Message_Assistant{
+			Assistant: &protos.AssistantMessage{
+				Contents: []string{"Hi there! How can I help you?"},
 			},
 		},
 	}
@@ -141,25 +123,19 @@ func TestTikTokenCostCalculator_Token_GPT35Turbo0613(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	calculator := NewTikTokenCostCalculator(logger, "gpt-3.5-turbo-0613")
 
-	in := []*types.Message{
+	in := []*protos.Message{
 		{
 			Role: "user",
-			Contents: []*types.Content{
-				{
-					ContentType:   "text",
-					ContentFormat: "raw",
-					Content:       []byte("Test"),
-				},
+			Message: &protos.Message_User{
+				User: &protos.UserMessage{Content: "Test"},
 			},
 		},
 	}
-	out := &types.Message{
+	out := &protos.Message{
 		Role: "assistant",
-		Contents: []*types.Content{
-			{
-				ContentType:   "text",
-				ContentFormat: "raw",
-				Content:       []byte("Response"),
+		Message: &protos.Message_Assistant{
+			Assistant: &protos.AssistantMessage{
+				Contents: []string{"Response"},
 			},
 		},
 	}
@@ -176,25 +152,19 @@ func TestTikTokenCostCalculator_Token_GPT4(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	calculator := NewTikTokenCostCalculator(logger, "gpt-4")
 
-	in := []*types.Message{
+	in := []*protos.Message{
 		{
 			Role: "user",
-			Contents: []*types.Content{
-				{
-					ContentType:   "text",
-					ContentFormat: "raw",
-					Content:       []byte("Test GPT-4"),
-				},
+			Message: &protos.Message_User{
+				User: &protos.UserMessage{Content: "Test GPT-4"},
 			},
 		},
 	}
-	out := &types.Message{
+	out := &protos.Message{
 		Role: "assistant",
-		Contents: []*types.Content{
-			{
-				ContentType:   "text",
-				ContentFormat: "raw",
-				Content:       []byte("GPT-4 response"),
+		Message: &protos.Message_Assistant{
+			Assistant: &protos.AssistantMessage{
+				Contents: []string{"GPT-4 response"},
 			},
 		},
 	}
@@ -211,25 +181,19 @@ func TestTikTokenCostCalculator_Token_GPT35Turbo0301(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	calculator := NewTikTokenCostCalculator(logger, "gpt-3.5-turbo-0301")
 
-	in := []*types.Message{
+	in := []*protos.Message{
 		{
 			Role: "user",
-			Contents: []*types.Content{
-				{
-					ContentType:   "text",
-					ContentFormat: "raw",
-					Content:       []byte("Test"),
-				},
+			Message: &protos.Message_User{
+				User: &protos.UserMessage{Content: "Test"},
 			},
 		},
 	}
-	out := &types.Message{
+	out := &protos.Message{
 		Role: "assistant",
-		Contents: []*types.Content{
-			{
-				ContentType:   "text",
-				ContentFormat: "raw",
-				Content:       []byte("Response"),
+		Message: &protos.Message_Assistant{
+			Assistant: &protos.AssistantMessage{
+				Contents: []string{"Response"},
 			},
 		},
 	}
@@ -246,25 +210,19 @@ func TestTikTokenCostCalculator_Token_UnknownModel(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	calculator := NewTikTokenCostCalculator(logger, "unknown-model")
 
-	in := []*types.Message{
+	in := []*protos.Message{
 		{
 			Role: "user",
-			Contents: []*types.Content{
-				{
-					ContentType:   "text",
-					ContentFormat: "raw",
-					Content:       []byte("Test"),
-				},
+			Message: &protos.Message_User{
+				User: &protos.UserMessage{Content: "Test"},
 			},
 		},
 	}
-	out := &types.Message{
+	out := &protos.Message{
 		Role: "assistant",
-		Contents: []*types.Content{
-			{
-				ContentType:   "text",
-				ContentFormat: "raw",
-				Content:       []byte("Response"),
+		Message: &protos.Message_Assistant{
+			Assistant: &protos.AssistantMessage{
+				Contents: []string{"Response"},
 			},
 		},
 	}
@@ -284,25 +242,19 @@ func TestTikTokenCostCalculator_Token_GPT35TurboVariant(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	calculator := NewTikTokenCostCalculator(logger, "gpt-3.5-turbo-1106")
 
-	in := []*types.Message{
+	in := []*protos.Message{
 		{
 			Role: "user",
-			Contents: []*types.Content{
-				{
-					ContentType:   "text",
-					ContentFormat: "raw",
-					Content:       []byte("Test"),
-				},
+			Message: &protos.Message_User{
+				User: &protos.UserMessage{Content: "Test"},
 			},
 		},
 	}
-	out := &types.Message{
+	out := &protos.Message{
 		Role: "assistant",
-		Contents: []*types.Content{
-			{
-				ContentType:   "text",
-				ContentFormat: "raw",
-				Content:       []byte("Response"),
+		Message: &protos.Message_Assistant{
+			Assistant: &protos.AssistantMessage{
+				Contents: []string{"Response"},
 			},
 		},
 	}
@@ -319,25 +271,19 @@ func TestTikTokenCostCalculator_Token_GPT4Variant(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	calculator := NewTikTokenCostCalculator(logger, "gpt-4-turbo")
 
-	in := []*types.Message{
+	in := []*protos.Message{
 		{
 			Role: "user",
-			Contents: []*types.Content{
-				{
-					ContentType:   "text",
-					ContentFormat: "raw",
-					Content:       []byte("Test"),
-				},
+			Message: &protos.Message_User{
+				User: &protos.UserMessage{Content: "Test"},
 			},
 		},
 	}
-	out := &types.Message{
+	out := &protos.Message{
 		Role: "assistant",
-		Contents: []*types.Content{
-			{
-				ContentType:   "text",
-				ContentFormat: "raw",
-				Content:       []byte("Response"),
+		Message: &protos.Message_Assistant{
+			Assistant: &protos.AssistantMessage{
+				Contents: []string{"Response"},
 			},
 		},
 	}
@@ -354,15 +300,21 @@ func TestTikTokenCostCalculator_Token_EmptyContent(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	calculator := NewTikTokenCostCalculator(logger, "gpt-3.5-turbo")
 
-	in := []*types.Message{
+	in := []*protos.Message{
 		{
-			Role:     "user",
-			Contents: []*types.Content{}, // Empty contents
+			Role: "user",
+			Message: &protos.Message_User{
+				User: &protos.UserMessage{Content: ""}, // Empty content
+			},
 		},
 	}
-	out := &types.Message{
-		Role:     "assistant",
-		Contents: []*types.Content{}, // Empty contents
+	out := &protos.Message{
+		Role: "assistant",
+		Message: &protos.Message_Assistant{
+			Assistant: &protos.AssistantMessage{
+				Contents: []string{}, // Empty contents
+			},
+		},
 	}
 
 	metrics := calculator.Token(in, out)
@@ -373,29 +325,23 @@ func TestTikTokenCostCalculator_Token_EmptyContent(t *testing.T) {
 	assert.Equal(t, "TOTAL_TOKEN", metrics[2].Name)
 }
 
-func TestTikTokenCostCalculator_Token_NonTextContent(t *testing.T) {
+func TestTikTokenCostCalculator_Token_UserMessageOnly(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	calculator := NewTikTokenCostCalculator(logger, "gpt-3.5-turbo")
 
-	in := []*types.Message{
+	in := []*protos.Message{
 		{
 			Role: "user",
-			Contents: []*types.Content{
-				{
-					ContentType:   "image", // Non-text content
-					ContentFormat: "url",
-					Content:       []byte("http://example.com/image.jpg"),
-				},
+			Message: &protos.Message_User{
+				User: &protos.UserMessage{Content: "What is the weather today?"},
 			},
 		},
 	}
-	out := &types.Message{
+	out := &protos.Message{
 		Role: "assistant",
-		Contents: []*types.Content{
-			{
-				ContentType:   "text",
-				ContentFormat: "raw",
-				Content:       []byte("I see an image"),
+		Message: &protos.Message_Assistant{
+			Assistant: &protos.AssistantMessage{
+				Contents: []string{"I can help you with weather information"},
 			},
 		},
 	}
@@ -413,14 +359,12 @@ func TestTikTokenCostCalculator_Token_NilMessages(t *testing.T) {
 	calculator := NewTikTokenCostCalculator(logger, "gpt-3.5-turbo")
 
 	// Test with nil input messages
-	in := []*types.Message(nil)
-	out := &types.Message{
+	in := []*protos.Message(nil)
+	out := &protos.Message{
 		Role: "assistant",
-		Contents: []*types.Content{
-			{
-				ContentType:   "text",
-				ContentFormat: "raw",
-				Content:       []byte("Response"),
+		Message: &protos.Message_Assistant{
+			Assistant: &protos.AssistantMessage{
+				Contents: []string{"Response"},
 			},
 		},
 	}
@@ -442,25 +386,19 @@ func TestTikTokenCostCalculator_Token_LongMessages(t *testing.T) {
 		longText[i] = 'a'
 	}
 
-	in := []*types.Message{
+	in := []*protos.Message{
 		{
 			Role: "user",
-			Contents: []*types.Content{
-				{
-					ContentType:   "text",
-					ContentFormat: "raw",
-					Content:       longText,
-				},
+			Message: &protos.Message_User{
+				User: &protos.UserMessage{Content: string(longText)},
 			},
 		},
 	}
-	out := &types.Message{
+	out := &protos.Message{
 		Role: "assistant",
-		Contents: []*types.Content{
-			{
-				ContentType:   "text",
-				ContentFormat: "raw",
-				Content:       longText,
+		Message: &protos.Message_Assistant{
+			Assistant: &protos.AssistantMessage{
+				Contents: []string{string(longText)},
 			},
 		},
 	}
@@ -483,25 +421,19 @@ func TestTikTokenCostCalculator_Token_SpecialCharacters(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	calculator := NewTikTokenCostCalculator(logger, "gpt-3.5-turbo")
 
-	in := []*types.Message{
+	in := []*protos.Message{
 		{
 			Role: "user",
-			Contents: []*types.Content{
-				{
-					ContentType:   "text",
-					ContentFormat: "raw",
-					Content:       []byte("Hello 🌍 with émojis and spëcial chärs!"),
-				},
+			Message: &protos.Message_User{
+				User: &protos.UserMessage{Content: "Hello 🌍 with émojis and spëcial chärs!"},
 			},
 		},
 	}
-	out := &types.Message{
+	out := &protos.Message{
 		Role: "assistant",
-		Contents: []*types.Content{
-			{
-				ContentType:   "text",
-				ContentFormat: "raw",
-				Content:       []byte("Hi there! 👋"),
+		Message: &protos.Message_Assistant{
+			Assistant: &protos.AssistantMessage{
+				Contents: []string{"Hi there! 👋"},
 			},
 		},
 	}
@@ -514,39 +446,66 @@ func TestTikTokenCostCalculator_Token_SpecialCharacters(t *testing.T) {
 	assert.Equal(t, "TOTAL_TOKEN", metrics[2].Name)
 }
 
-func TestTikTokenCostCalculator_Token_MixedContentTypes(t *testing.T) {
+func TestTikTokenCostCalculator_Token_MultipleAssistantContents(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	calculator := NewTikTokenCostCalculator(logger, "gpt-3.5-turbo")
 
-	in := []*types.Message{
+	in := []*protos.Message{
 		{
 			Role: "user",
-			Contents: []*types.Content{
-				{
-					ContentType:   "text",
-					ContentFormat: "raw",
-					Content:       []byte("Hello"),
-				},
-				{
-					ContentType:   "image",
-					ContentFormat: "url",
-					Content:       []byte("http://example.com/image.jpg"),
-				},
-				{
-					ContentType:   "text",
-					ContentFormat: "raw",
-					Content:       []byte(" world"),
-				},
+			Message: &protos.Message_User{
+				User: &protos.UserMessage{Content: "Hello"},
 			},
 		},
 	}
-	out := &types.Message{
+	out := &protos.Message{
 		Role: "assistant",
-		Contents: []*types.Content{
-			{
-				ContentType:   "text",
-				ContentFormat: "raw",
-				Content:       []byte("Hi there!"),
+		Message: &protos.Message_Assistant{
+			Assistant: &protos.AssistantMessage{
+				Contents: []string{"Hi there!", "How can I help you today?"},
+			},
+		},
+	}
+
+	metrics := calculator.Token(in, out)
+
+	assert.Len(t, metrics, 3)
+	assert.Equal(t, "INPUT_TOKEN", metrics[0].Name)
+	assert.Equal(t, "OUTPUT_TOKEN", metrics[1].Name)
+	assert.Equal(t, "TOTAL_TOKEN", metrics[2].Name)
+}
+
+func TestTikTokenCostCalculator_Token_AssistantInInput(t *testing.T) {
+	logger, _ := commons.NewApplicationLogger()
+	calculator := NewTikTokenCostCalculator(logger, "gpt-3.5-turbo")
+
+	in := []*protos.Message{
+		{
+			Role: "user",
+			Message: &protos.Message_User{
+				User: &protos.UserMessage{Content: "Hello"},
+			},
+		},
+		{
+			Role: "assistant",
+			Message: &protos.Message_Assistant{
+				Assistant: &protos.AssistantMessage{
+					Contents: []string{"Hi! How can I help?"},
+				},
+			},
+		},
+		{
+			Role: "user",
+			Message: &protos.Message_User{
+				User: &protos.UserMessage{Content: "What is AI?"},
+			},
+		},
+	}
+	out := &protos.Message{
+		Role: "assistant",
+		Message: &protos.Message_Assistant{
+			Assistant: &protos.AssistantMessage{
+				Contents: []string{"AI stands for Artificial Intelligence"},
 			},
 		},
 	}

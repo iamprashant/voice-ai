@@ -9,8 +9,8 @@ import (
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	internal_caller_metrics "github.com/rapidaai/api/integration-api/internal/caller/metrics"
 	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
+	"github.com/rapidaai/protos"
 	integration_api "github.com/rapidaai/protos"
 )
 
@@ -28,7 +28,7 @@ func NewEmbeddingCaller(logger commons.Logger, credential *integration_api.Crede
 func (ec *embeddingCaller) GetEmbedding(ctx context.Context,
 	// providerModel string,
 	content map[int32]string,
-	options *internal_callers.EmbeddingOptions) ([]*integration_api.Embedding, types.Metrics, error) {
+	options *internal_callers.EmbeddingOptions) ([]*integration_api.Embedding, []*protos.Metric, error) {
 	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)
 	metrics.OnStart()
 

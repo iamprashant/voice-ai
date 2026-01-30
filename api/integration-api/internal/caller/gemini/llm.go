@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -15,7 +16,6 @@ import (
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	internal_caller_metrics "github.com/rapidaai/api/integration-api/internal/caller/metrics"
 	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
 	"github.com/rapidaai/protos"
 )
@@ -30,75 +30,69 @@ func NewLargeLanguageCaller(logger commons.Logger, credential *protos.Credential
 	}
 }
 
-func (llc *largeLanguageCaller) BuildHistory(allMessages []*protos.Message) (*genai.Content, []*genai.Content, genai.Part) {
+func (llc *largeLanguageCaller) buildHistory(allMessages []*protos.Message) (*genai.Content, []*genai.Content, genai.Part) {
 	history := make([]*genai.Content, 0)
 	for _, msg := range allMessages {
 		switch msg.GetRole() {
 		case "user":
-			content := &genai.Content{
-				Role:  "user",
-				Parts: make([]*genai.Part, 0, len(msg.GetContents())),
-			}
-			for _, ct := range msg.GetContents() {
-				if ct.ContentType == commons.TEXT_CONTENT.String() {
-					content.Parts = append(content.Parts, &genai.Part{Text: string(ct.GetContent())})
-				} else {
-					llc.logger.Warnf("Unknown content type: %s", ct.ContentType)
+			if user := msg.GetUser(); user != nil {
+				content := &genai.Content{
+					Role:  "user",
+					Parts: []*genai.Part{{Text: user.GetContent()}},
 				}
+				history = append(history, content)
 			}
-			history = append(history, content)
 		case "model", "assistant":
-			content := &genai.Content{
-				Role:  "model",
-				Parts: make([]*genai.Part, 0, len(msg.GetContents())),
-			}
-			for _, ct := range msg.GetContents() {
-				if ct.ContentType == commons.TEXT_CONTENT.String() {
-					content.Parts = append(content.Parts, &genai.Part{Text: string(ct.GetContent())})
+			if assistant := msg.GetAssistant(); assistant != nil {
+				content := &genai.Content{
+					Role:  "model",
+					Parts: make([]*genai.Part, 0),
 				}
+				for _, ct := range assistant.GetContents() {
+					content.Parts = append(content.Parts, &genai.Part{Text: ct})
+				}
+				for _, tc := range assistant.GetToolCalls() {
+					content.Parts = append(content.Parts, &genai.Part{
+						FunctionCall: &genai.FunctionCall{
+							ID: tc.GetId(),
+							// Args: tc.GetFunction().GetArguments().AsMap(),
+							Name: tc.GetFunction().GetName(),
+						},
+					})
+				}
+				history = append(history, content)
 			}
-			for _, tc := range msg.GetToolCalls() {
-				content.Parts = append(content.Parts, &genai.Part{
-					FunctionCall: &genai.FunctionCall{
-						ID: tc.GetId(),
-						// Args: tc.GetFunction().GetArguments().AsMap(),
-						Name: tc.GetFunction().GetName(),
-					},
-				})
-			}
-			history = append(history, content)
 		case "system":
-			sysContent := &genai.Content{
-				Parts: make([]*genai.Part, 0, len(msg.GetContents())),
-			}
-			for _, ct := range msg.GetContents() {
-				if ct.ContentType == commons.TEXT_CONTENT.String() {
-					sysContent.Parts = append(sysContent.Parts, &genai.Part{Text: string(ct.GetContent())})
+			if system := msg.GetSystem(); system != nil {
+				sysContent := &genai.Content{
+					Parts: []*genai.Part{{Text: system.GetContent()}},
 				}
+				history = append(history, sysContent)
 			}
-			history = append(history, sysContent)
 		case "tool":
-			content := &genai.Content{
-				Role:  "user",
-				Parts: make([]*genai.Part, 0, len(msg.GetContents())),
-			}
-
-			// get the last message and tool name and id
-
-			for _, v := range msg.GetContents() {
-				var responseMap map[string]any
-				if err := json.Unmarshal([]byte(v.GetContent()), &responseMap); err != nil {
-					responseMap = make(map[string]any)
+			if tool := msg.GetTool(); tool != nil {
+				content := &genai.Content{
+					Role:  "user",
+					Parts: make([]*genai.Part, 0),
 				}
-				content.Parts = append(content.Parts, &genai.Part{
-					FunctionResponse: &genai.FunctionResponse{
-						Name:     v.GetName(),
-						ID:       v.GetContentType(),
-						Response: responseMap,
-					},
-				})
+
+				// get the last message and tool name and id
+
+				for _, t := range tool.GetTools() {
+					var responseMap map[string]any
+					if err := json.Unmarshal([]byte(t.GetContent()), &responseMap); err != nil {
+						responseMap = make(map[string]any)
+					}
+					content.Parts = append(content.Parts, &genai.Part{
+						FunctionResponse: &genai.FunctionResponse{
+							Name:     t.GetName(),
+							ID:       t.GetId(),
+							Response: responseMap,
+						},
+					})
+				}
+				history = append(history, content)
 			}
-			history = append(history, content)
 		default:
 			llc.logger.Warnf("Unknown role: %s", msg.GetRole())
 			continue
@@ -118,7 +112,7 @@ func (llc *largeLanguageCaller) BuildHistory(allMessages []*protos.Message) (*ge
 	return history[0], history[1:], lastPart
 }
 
-func (llc *largeLanguageCaller) ToGoogleSchema(fp *internal_callers.FunctionParameter) *genai.Schema {
+func (llc *largeLanguageCaller) toGoogleSchema(fp *internal_callers.FunctionParameter) *genai.Schema {
 	schema := &genai.Schema{
 		Type:       genai.Type(fp.Type),
 		Properties: make(map[string]*genai.Schema),
@@ -127,12 +121,12 @@ func (llc *largeLanguageCaller) ToGoogleSchema(fp *internal_callers.FunctionPara
 		schema.Required = fp.Required
 	}
 	for key, prop := range fp.Properties {
-		schema.Properties[key] = llc.GoogleFunctionParameterPropertyToSchema(&prop)
+		schema.Properties[key] = llc.googleFunctionParameterPropertyToSchema(&prop)
 	}
 	return schema
 }
 
-func (llc *largeLanguageCaller) GoogleFunctionParameterPropertyToSchema(fpp *internal_callers.FunctionParameterProperty) *genai.Schema {
+func (llc *largeLanguageCaller) googleFunctionParameterPropertyToSchema(fpp *internal_callers.FunctionParameterProperty) *genai.Schema {
 	schema := &genai.Schema{
 		Type:        genai.Type(fpp.Type),
 		Description: fpp.Description,
@@ -153,9 +147,7 @@ func (llc *largeLanguageCaller) GoogleFunctionParameterPropertyToSchema(fpp *int
 	return schema
 }
 
-func (llc *largeLanguageCaller) GetContentConfig(
-	opts *internal_callers.ChatCompletionOptions,
-) (mdl string, config *genai.GenerateContentConfig) {
+func (llc *largeLanguageCaller) getContentConfig(opts *internal_callers.ChatCompletionOptions) (mdl string, config *genai.GenerateContentConfig) {
 	config = &genai.GenerateContentConfig{}
 	if len(opts.ToolDefinitions) > 0 {
 		// config.Tools = []*genai.Tool{{
@@ -175,7 +167,7 @@ func (llc *largeLanguageCaller) GetContentConfig(
 						funcDef.Description = fn.Description
 					}
 					if fn.Parameters != nil {
-						funcDef.Parameters = llc.ToGoogleSchema(fn.Parameters)
+						funcDef.Parameters = llc.toGoogleSchema(fn.Parameters)
 					}
 					fd[idx] = funcDef
 				}
@@ -248,19 +240,20 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 	ctx context.Context,
 	allMessages []*protos.Message,
 	options *internal_callers.ChatCompletionOptions,
-	onStream func(types.Message) error,
-	onMetrics func(*types.Message, types.Metrics) error,
-	onError func(err error),
+	onStream func(string, *protos.Message) error,
+	onMetrics func(string, *protos.Message, []*protos.Metric) error,
+	onError func(string, error),
 ) error {
+	start := time.Now()
 	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)
 	metrics.OnStart()
+	var firstTokenTime *time.Time
 	client, err := llc.GetClient()
 	if err != nil {
 		options.PostHook(map[string]interface{}{
 			"error": err,
 		}, metrics.OnFailure().Build())
-		onMetrics(nil, metrics.OnFailure().Build())
-		onError(err)
+		onError(options.Request.GetRequestId(), err)
 		return err
 	}
 
@@ -268,8 +261,8 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
 
-	instruction, history, current := llc.BuildHistory(allMessages)
-	model, config := llc.GetContentConfig(options)
+	instruction, history, current := llc.buildHistory(allMessages)
+	model, config := llc.getContentConfig(options)
 	config.SystemInstruction = instruction
 	chat, err := client.Chats.Create(ctx,
 		model,
@@ -280,16 +273,16 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 		options.PostHook(map[string]interface{}{
 			"error": err,
 		}, metrics.OnFailure().Build())
-		onMetrics(nil, metrics.OnFailure().Build())
-		onError(err)
+		onError(options.Request.GetRequestId(), err)
 		return err
 	}
 
 	options.PreHook(llc.MessageJson(model, config, history, current))
-	completeMsg := types.Message{
-		Role: "model",
-	}
-	isToolCall := false
+	contents := make([]string, 0)
+	toolCalls := make([]*protos.ToolCall, 0)
+	contentBuilders := make([]strings.Builder, 0)
+	var textTokenBuffer []string // Buffer to hold text tokens temporarily
+	hasToolCalls := false        // Flag to track if response contains tool calls
 	accumlator := &GoogleChatCompletionAccumulator{}
 	for resp, err := range chat.SendMessageStream(ctx, current) {
 		if err != nil {
@@ -297,8 +290,7 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 				"result": utils.ToJson(resp),
 				"error":  err,
 			}, metrics.OnFailure().Build())
-			onMetrics(nil, metrics.OnFailure().Build())
-			onError(err)
+			onError(options.Request.GetRequestId(), err)
 			return err
 		}
 		accumlator.AddChunk(resp)
@@ -306,62 +298,103 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 			if choice.Content != nil {
 				for _, part := range choice.Content.Parts {
 					if part.FunctionCall != nil {
-						isToolCall = true
-						if completeMsg.ToolCalls == nil {
-							completeMsg.ToolCalls = make([]*types.ToolCall, 0)
-						}
-						for len(completeMsg.ToolCalls) <= int(choice.Index) {
-							completeMsg.ToolCalls = append(completeMsg.ToolCalls, nil)
+						hasToolCalls = true
+						for len(toolCalls) <= int(choice.Index) {
+							toolCalls = append(toolCalls, nil)
 						}
 						argsJSON, err := json.Marshal(part.FunctionCall.Args)
 						if err != nil {
 							llc.logger.Errorf("Error marshaling function args: %v", err)
 							argsJSON = []byte("{}")
 						}
-						completeMsg.ToolCalls[int(choice.Index)] = &types.ToolCall{
-							Id:   &part.FunctionCall.ID,
-							Type: utils.Ptr("function"),
-							Function: &types.FunctionCall{
-								Name:      &part.FunctionCall.Name,
-								Arguments: utils.Ptr(string(argsJSON)),
+						toolCalls[int(choice.Index)] = &protos.ToolCall{
+							Id:   part.FunctionCall.ID,
+							Type: "function",
+							Function: &protos.FunctionCall{
+								Name:      part.FunctionCall.Name,
+								Arguments: string(argsJSON),
 							},
 						}
 					}
 					if part.Text != "" {
-						if !isToolCall {
-							onStream(types.Message{
-								Contents: []*types.Content{
-									{
-										ContentType:   commons.TEXT_CONTENT.String(),
-										ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
-										Content:       []byte(part.Text),
-									},
-								},
-								Role: choice.Content.Role,
-							})
+						for len(contentBuilders) <= int(choice.Index) {
+							contentBuilders = append(contentBuilders, strings.Builder{})
 						}
-
-						if completeMsg.Contents == nil {
-							completeMsg.Contents = make([]*types.Content, 0)
-						}
-						for len(completeMsg.Contents) <= int(choice.Index) {
-							completeMsg.Contents = append(completeMsg.Contents, &types.Content{
-								ContentType:   commons.TEXT_CONTENT.String(),
-								ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
-								Content:       []byte{},
-							})
-						}
-						completeMsg.Contents[int(choice.Index)].Content = append(completeMsg.Contents[int(choice.Index)].Content, []byte(part.Text)...)
+						contentBuilders[int(choice.Index)].WriteString(part.Text)
+						// Buffer the token instead of streaming immediately
+						textTokenBuffer = append(textTokenBuffer, part.Text)
 					}
 				}
 			}
 		}
 	}
+
+	// Build contents from builders
+	for _, builder := range contentBuilders {
+		contents = append(contents, builder.String())
+	}
+
+	// Filter nil tool calls
+	filteredToolCalls := make([]*protos.ToolCall, 0)
+	for _, tc := range toolCalls {
+		if tc != nil {
+			filteredToolCalls = append(filteredToolCalls, tc)
+		}
+	}
+
+	metrics.OnAddMetrics(llc.UsageMetrics(accumlator.UsageMetadata)...)
+	protoMsg := &protos.Message{
+		Role: "assistant",
+		Message: &protos.Message_Assistant{
+			Assistant: &protos.AssistantMessage{
+				Contents:  contents,
+				ToolCalls: filteredToolCalls,
+			},
+		},
+	}
+
+	// Stream text tokens only if no tool calls in response
+	if !hasToolCalls {
+		for _, token := range textTokenBuffer {
+			if token != "" {
+				// Record first token received time
+				if firstTokenTime == nil {
+					now := time.Now()
+					firstTokenTime = &now
+				}
+				tokenMsg := &protos.Message{
+					Role: "assistant",
+					Message: &protos.Message_Assistant{
+						Assistant: &protos.AssistantMessage{
+							Contents: []string{token},
+						},
+					},
+				}
+				if err := onStream(options.Request.GetRequestId(), tokenMsg); err != nil {
+					llc.logger.Warnf("error streaming token: %v", err)
+				}
+			}
+		}
+	}
+
+	// Add first token time metric if tokens were streamed
+	if firstTokenTime != nil {
+		metrics.OnAddMetrics(&protos.Metric{
+			Name:        "FIRST_TOKEN_RECIEVED_TIME",
+			Value:       fmt.Sprintf("%d", firstTokenTime.Sub(start)),
+			Description: "Time to receive first token from LLM",
+		})
+	}
+	// Update time taken and status
+	metrics.OnSuccess()
+	// Send metrics with complete message
+	onMetrics(options.Request.GetRequestId(), protoMsg, metrics.Build())
+
+	// Call PostHook after metrics for each message end
 	options.PostHook(map[string]interface{}{
 		"result": accumlator,
-	}, metrics.OnSuccess().Build())
-	metrics.OnAddMetrics(llc.UsageMetrics(accumlator.UsageMetadata)...)
-	onMetrics(&completeMsg, metrics.OnSuccess().Build())
+	}, metrics.Build())
+
 	return nil
 }
 
@@ -369,7 +402,7 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 	ctx context.Context,
 	allMessages []*protos.Message,
 	options *internal_callers.ChatCompletionOptions,
-) (*types.Message, types.Metrics, error) {
+) (*protos.Message, []*protos.Metric, error) {
 	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)
 	metrics.OnStart()
 	client, err := llc.GetClient()
@@ -388,8 +421,8 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
 
-	instruction, histories, current := llc.BuildHistory(allMessages)
-	model, config := llc.GetContentConfig(options)
+	instruction, histories, current := llc.buildHistory(allMessages)
+	model, config := llc.getContentConfig(options)
 	config.SystemInstruction = instruction
 	chat, err := client.Chats.Create(ctx,
 		model,
@@ -410,9 +443,8 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 		return nil, metrics.Build(), err
 	}
 
-	output := make([]*types.Content, len(resp.Candidates))
+	contents := make([]string, len(resp.Candidates))
 	metrics.OnSuccess()
-	metrics.OnAddMetrics(llc.UsageMetrics(resp.UsageMetadata)...)
 	for _, choice := range resp.Candidates {
 		if choice.Content != nil {
 			buf := strings.Builder{}
@@ -421,18 +453,25 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 					_, _ = buf.WriteString(part.Text)
 				}
 			}
-			output[choice.Index] = &types.Content{
-				ContentType:   commons.TEXT_CONTENT.String(),
-				ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
-				Content:       []byte(buf.String()),
-			}
+			contents[choice.Index] = buf.String()
 		}
 	}
+	message := &protos.Message{
+		Role: "assistant",
+		Message: &protos.Message_Assistant{
+			Assistant: &protos.AssistantMessage{
+				Contents: contents,
+			},
+		},
+	}
+
+	// Add usage metrics from response
+	if resp.UsageMetadata != nil {
+		metrics.OnAddMetrics(llc.UsageMetrics(resp.UsageMetadata)...)
+	}
+
 	options.PostHook(map[string]interface{}{"result": resp}, metrics.Build())
-	return &types.Message{
-		Role:     "model",
-		Contents: output,
-	}, metrics.Build(), nil
+	return message, metrics.Build(), nil
 }
 
 func (llc *largeLanguageCaller) MessageJson(model string, cfg *genai.GenerateContentConfig, history []*genai.Content, ct genai.Part) map[string]interface{} {

@@ -7,11 +7,35 @@ package internal_tool
 
 import (
 	"context"
+	"encoding/json"
 
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 
 	"github.com/rapidaai/protos"
 )
+
+type ToolCallResult map[string]interface{}
+
+func Result(msg string, success bool) ToolCallResult {
+	if success {
+		return map[string]interface{}{"data": msg, "status": "SUCCESS"}
+	} else {
+		return map[string]interface{}{"error": msg, "status": "FAIL"}
+	}
+}
+
+func JustResult(data map[string]interface{}) ToolCallResult {
+	return ToolCallResult(data)
+}
+
+func (rt ToolCallResult) Result() string {
+	bytes, err := json.Marshal(rt)
+	if err != nil {
+		return `{"error":"failed to marshal result","success":false,"status":"FAIL"}`
+	}
+
+	return string(bytes)
+}
 
 // ToolCaller defines the contract for invoking a tool/function that can be
 // executed by the agent runtime. Implementations encapsulate tool metadata,
@@ -41,5 +65,5 @@ type ToolCaller interface {
 	// Call executes the tool with the given arguments and communication
 	// context. It returns a slice of Packets representing the tool's
 	// response(s) to be consumed by the agent runtime.
-	Call(ctx context.Context, pkt internal_type.LLMPacket, toolId string, args string, communication internal_type.Communication) internal_type.LLMToolPacket
+	Call(ctx context.Context, messageId string, toolId string, args map[string]interface{}, communication internal_type.Communication) ToolCallResult
 }

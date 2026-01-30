@@ -42,34 +42,34 @@ func TestContent_GetContentType(t *testing.T) {
 	}
 }
 
-func TestContent_ToProto(t *testing.T) {
-	c := &Content{
-		Name:          "name",
-		ContentType:   "type",
-		ContentFormat: "format",
-		Content:       []byte("content"),
-		Meta:          map[string]interface{}{"key": "value"},
-	}
-	proto := c.ToProto()
-	if proto.Name != "name" {
-		t.Errorf("ToProto() Name = %v, want %v", proto.Name, "name")
-	}
-	// Assuming Cast works, just check it's not nil
-	if proto == nil {
-		t.Errorf("ToProto() returned nil")
-	}
-}
+// func TestContent_ToProto(t *testing.T) {
+// 	c := &Content{
+// 		Name:          "name",
+// 		ContentType:   "type",
+// 		ContentFormat: "format",
+// 		Content:       []byte("content"),
+// 		Meta:          map[string]interface{}{"key": "value"},
+// 	}
+// 	proto := c.ToProto()
+// 	if proto.Name != "name" {
+// 		t.Errorf("ToProto() Name = %v, want %v", proto.Name, "name")
+// 	}
+// 	// Assuming Cast works, just check it's not nil
+// 	if proto == nil {
+// 		t.Errorf("ToProto() returned nil")
+// 	}
+// }
 
-func TestContents_ToProto(t *testing.T) {
-	contents := Contents{
-		&Content{Name: "1"},
-		&Content{Name: "2"},
-	}
-	protos := contents.ToProto()
-	if len(protos) != 2 {
-		t.Errorf("ToProto() length = %v, want %v", len(protos), 2)
-	}
-	if protos[0].Name != "1" {
-		t.Errorf("ToProto()[0].Name = %v, want %v", protos[0].Name, "1")
-	}
-}
+// func TestContents_ToProto(t *testing.T) {
+// 	contents := Contents{
+// 		&Content{Name: "1"},
+// 		&Content{Name: "2"},
+// 	}
+// 	protos := contents.ToProto()
+// 	if len(protos) != 2 {
+// 		t.Errorf("ToProto() length = %v, want %v", len(protos), 2)
+// 	}
+// 	if protos[0].Name != "1" {
+// 		t.Errorf("ToProto()[0].Name = %v, want %v", protos[0].Name, "1")
+// 	}
+// }

@@ -14,7 +14,7 @@ import (
 )
 
 // sendMessage is a helper function that centralizes the logic for sending a response via the stream.
-func (n *GenericRequestor) sendMessage(ctx context.Context, response *protos.AssistantMessagingResponse) error {
+func (n *GenericRequestor) sendMessage(ctx context.Context, response *protos.AssistantTalkOutput) error {
 	if err := n.Streamer().Send(response); err != nil {
 		return nil
 	}
@@ -30,11 +30,11 @@ func (n *GenericRequestor) Notify(ctx context.Context, actionDatas ...interface{
 
 	for _, actionData := range actionDatas {
 		switch actionData := actionData.(type) {
-		case *protos.AssistantConversationUserMessage:
-			n.sendMessage(ctx, &protos.AssistantMessagingResponse{
+		case *protos.ConversationUserMessage:
+			n.sendMessage(ctx, &protos.AssistantTalkOutput{
 				Code:    200,
 				Success: true,
-				Data: &protos.AssistantMessagingResponse_User{
+				Data: &protos.AssistantTalkOutput_User{
 					User: actionData,
 				},
 			})
@@ -52,25 +52,25 @@ func (n *GenericRequestor) Notify(ctx context.Context, actionDatas ...interface{
 					K: "messageId", V: internal_adapter_telemetry.StringValue(actionData.Id),
 				})
 			switch lt := actionData.Message.(type) {
-			case *protos.AssistantConversationUserMessage_Text:
+			case *protos.ConversationUserMessage_Text:
 				span.AddAttributes(ctx,
 					internal_adapter_telemetry.KV{
 						K: "notificaiton_type", V: internal_adapter_telemetry.StringValue("text"),
 					},
 					internal_adapter_telemetry.KV{
-						K: "content_length", V: internal_adapter_telemetry.IntValue(len(lt.Text.Content)),
+						K: "content_length", V: internal_adapter_telemetry.IntValue(len(lt.Text)),
 					},
 					internal_adapter_telemetry.KV{
-						K: "content", V: internal_adapter_telemetry.StringValue(lt.Text.Content),
+						K: "content", V: internal_adapter_telemetry.StringValue(lt.Text),
 					})
 			}
 
 			continue
-		case *protos.AssistantConversationAssistantMessage:
-			n.sendMessage(ctx, &protos.AssistantMessagingResponse{
+		case *protos.ConversationAssistantMessage:
+			n.sendMessage(ctx, &protos.AssistantTalkOutput{
 				Code:    200,
 				Success: true,
-				Data: &protos.AssistantMessagingResponse_Assistant{
+				Data: &protos.AssistantTalkOutput_Assistant{
 					Assistant: actionData,
 				},
 			})
@@ -85,33 +85,33 @@ func (n *GenericRequestor) Notify(ctx context.Context, actionDatas ...interface{
 					K: "messageId", V: internal_adapter_telemetry.StringValue(actionData.Id),
 				})
 			switch lt := actionData.Message.(type) {
-			case *protos.AssistantConversationAssistantMessage_Audio:
+			case *protos.ConversationAssistantMessage_Audio:
 				span.AddAttributes(ctx,
 					internal_adapter_telemetry.KV{
 						K: "notificaiton_type", V: internal_adapter_telemetry.StringValue("audio"),
 					},
 					internal_adapter_telemetry.KV{
-						K: "content_length", V: internal_adapter_telemetry.IntValue(len(lt.Audio.GetContent())),
+						K: "content_length", V: internal_adapter_telemetry.IntValue(len(lt.Audio)),
 					})
-			case *protos.AssistantConversationAssistantMessage_Text:
+			case *protos.ConversationAssistantMessage_Text:
 				span.AddAttributes(ctx,
 					internal_adapter_telemetry.KV{
 						K: "notificaiton_type", V: internal_adapter_telemetry.StringValue("text"),
 					},
 					internal_adapter_telemetry.KV{
-						K: "content_length", V: internal_adapter_telemetry.IntValue(len(lt.Text.Content)),
+						K: "content_length", V: internal_adapter_telemetry.IntValue(len(lt.Text)),
 					},
 					internal_adapter_telemetry.KV{
-						K: "content", V: internal_adapter_telemetry.StringValue(lt.Text.Content),
+						K: "content", V: internal_adapter_telemetry.StringValue(lt.Text),
 					})
 			}
 			continue
 
-		case *protos.AssistantConversationInterruption:
-			n.sendMessage(ctx, &protos.AssistantMessagingResponse{
+		case *protos.ConversationInterruption:
+			n.sendMessage(ctx, &protos.AssistantTalkOutput{
 				Code:    200,
 				Success: true,
-				Data: &protos.AssistantMessagingResponse_Interruption{
+				Data: &protos.AssistantTalkOutput_Interruption{
 					Interruption: actionData,
 				},
 			})
@@ -124,13 +124,13 @@ func (n *GenericRequestor) Notify(ctx context.Context, actionDatas ...interface{
 					K: "messageId", V: internal_adapter_telemetry.StringValue(actionData.Id),
 				})
 			continue
-		case *protos.AssistantConversationConfiguration:
+		case *protos.ConversationConfiguration:
 			// Handle configuration actions
 			utils.Go(ctx, func() {
-				n.sendMessage(ctx, &protos.AssistantMessagingResponse{
+				n.sendMessage(ctx, &protos.AssistantTalkOutput{
 					Code:    200,
 					Success: true,
-					Data: &protos.AssistantMessagingResponse_Configuration{
+					Data: &protos.AssistantTalkOutput_Configuration{
 						Configuration: actionData,
 					},
 				})
@@ -145,8 +145,8 @@ func (n *GenericRequestor) Notify(ctx context.Context, actionDatas ...interface{
 				},
 			)
 			continue
-		case *protos.AssistantMessagingResponse_Action:
-			n.sendMessage(ctx, &protos.AssistantMessagingResponse{
+		case *protos.AssistantTalkOutput_Directive:
+			n.sendMessage(ctx, &protos.AssistantTalkOutput{
 				Code:    200,
 				Success: true,
 				Data:    actionData,

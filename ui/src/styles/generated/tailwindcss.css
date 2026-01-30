@@ -458,6 +458,9 @@
   .top-2 {
     top: calc(var(--spacing) * 2);
   }
+  .top-3 {
+    top: calc(var(--spacing) * 3);
+  }
   .top-4 {
     top: calc(var(--spacing) * 4);
   }
@@ -478,6 +481,9 @@
   }
   .right-2 {
     right: calc(var(--spacing) * 2);
+  }
+  .right-3 {
+    right: calc(var(--spacing) * 3);
   }
   .right-4 {
     right: calc(var(--spacing) * 4);
@@ -2335,6 +2341,9 @@
   .mt-\[2px\] {
     margin-top: 2px;
   }
+  .mt-auto {
+    margin-top: auto;
+  }
   .mr-1 {
     margin-right: calc(var(--spacing) * 1);
   }
@@ -2614,9 +2623,6 @@
   .h-\[200px\] {
     height: 200px;
   }
-  .h-\[250px\] {
-    height: 250px;
-  }
   .h-\[300px\] {
     height: 300px;
   }
@@ -2871,9 +2877,6 @@
   }
   .w-\[160px\] {
     width: 160px;
-  }
-  .w-\[200px\] {
-    width: 200px;
   }
   .w-\[265px\] {
     width: 265px;
@@ -3961,9 +3964,6 @@
       background-color: color-mix(in oklab, var(--color-blue-600) 10%, transparent) !important;
     }
   }
-  .\!bg-light-background {
-    background-color: var(--color-light-background) !important;
-  }
   .bg-amber-100 {
     background-color: var(--color-amber-100);
   }
@@ -4531,9 +4531,6 @@
   .object-cover {
     object-fit: cover;
   }
-  .\!p-0 {
-    padding: calc(var(--spacing) * 0) !important;
-  }
   .p-0 {
     padding: calc(var(--spacing) * 0);
   }
@@ -4728,6 +4725,9 @@
   }
   .pr-5 {
     padding-right: calc(var(--spacing) * 5);
+  }
+  .pr-6 {
+    padding-right: calc(var(--spacing) * 6);
   }
   .pr-8 {
     padding-right: calc(var(--spacing) * 8);
@@ -5442,6 +5442,9 @@
   }
   .ring-blue-200 {
     --tw-ring-color: var(--color-blue-200);
+  }
+  .ring-blue-500 {
+    --tw-ring-color: var(--color-blue-500);
   }
   .ring-blue-500\/30 {
     --tw-ring-color: color-mix(in srgb, oklch(62.3% 0.214 259.815) 30%, transparent);
@@ -8298,6 +8301,16 @@
       }
     }
   }
+  .dark\:bg-blue-900 {
+    @media (prefers-color-scheme: dark) {
+      &:not(.light *) {
+        background-color: var(--color-blue-900);
+      }
+    }
+    &:is(.dark *) {
+      background-color: var(--color-blue-900);
+    }
+  }
   .dark\:bg-blue-900\/30 {
     @media (prefers-color-scheme: dark) {
       &:not(.light *) {
@@ -8828,6 +8841,16 @@
     }
     &:is(.dark *) {
       background-color: var(--color-purple-400);
+    }
+  }
+  .dark\:bg-purple-900 {
+    @media (prefers-color-scheme: dark) {
+      &:not(.light *) {
+        background-color: var(--color-purple-900);
+      }
+    }
+    &:is(.dark *) {
+      background-color: var(--color-purple-900);
     }
   }
   .dark\:bg-purple-900\/30 {

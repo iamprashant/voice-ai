@@ -62,13 +62,13 @@ class InvokeResponse(_message.Message):
     META_FIELD_NUMBER: _ClassVar[int]
     code: int
     success: bool
-    data: _containers.RepeatedCompositeFieldContainer[_common_pb2.Content]
+    data: _containers.RepeatedScalarFieldContainer[str]
     error: _common_pb2.Error
     requestId: int
     timeTaken: int
     metrics: _containers.RepeatedCompositeFieldContainer[_common_pb2.Metric]
     meta: _struct_pb2.Struct
-    def __init__(self, code: _Optional[int] = ..., success: bool = ..., data: _Optional[_Iterable[_Union[_common_pb2.Content, _Mapping]]] = ..., error: _Optional[_Union[_common_pb2.Error, _Mapping]] = ..., requestId: _Optional[int] = ..., timeTaken: _Optional[int] = ..., metrics: _Optional[_Iterable[_Union[_common_pb2.Metric, _Mapping]]] = ..., meta: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ...) -> None: ...
+    def __init__(self, code: _Optional[int] = ..., success: bool = ..., data: _Optional[_Iterable[str]] = ..., error: _Optional[_Union[_common_pb2.Error, _Mapping]] = ..., requestId: _Optional[int] = ..., timeTaken: _Optional[int] = ..., metrics: _Optional[_Iterable[_Union[_common_pb2.Metric, _Mapping]]] = ..., meta: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ...) -> None: ...
 
 class UpdateRequest(_message.Message):
     __slots__ = ("requestId", "metadata")

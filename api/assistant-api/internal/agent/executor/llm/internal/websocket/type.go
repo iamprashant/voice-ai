@@ -8,120 +8,118 @@ package internal_websocket
 import "encoding/json"
 
 // =============================================================================
-// WebSocket Message Types - Similar to AgentKit gRPC pattern
+// Message Types
+// =============================================================================
+//
+// Communication Flow:
+//   Initialize     → Connection established
+//   Configuration  → Session ready
+//   UserMessage    → Server processes (user can send multiple)
+//   Stream         → Chunk response (one at a time)
+//   Complete       → Final response with metrics
+//   ToolCall       → Server requests action (disconnect, etc)
+//   Interruption   → User interrupted response
+//   Close          → End session
+//
 // =============================================================================
 
-// WSMessageType defines the type of message and what data structure to expect
-type WSMessageType string
+type MessageType string
 
 const (
-	// Request types (client -> server)
-	WSTypeConfiguration WSMessageType = "configuration" // Data: WSConfigurationData
-	WSTypeUserMessage   WSMessageType = "user_message"  // Data: WSUserMessageData
+	// Client → Server
+	TypeConfiguration MessageType = "configuration"
+	TypeUserMessage   MessageType = "user_message"
 
-	// Response types (server -> client)
-	WSTypeAssistantMessage WSMessageType = "assistant_message" // Data: WSAssistantMessageData
-	WSTypeStream           WSMessageType = "stream"            // Data: WSStreamData
-	WSTypeInterruption     WSMessageType = "interruption"      // Data: WSInterruptionData
-	WSTypeError            WSMessageType = "error"             // Data: WSErrorData
+	// Server → Client (sequential - one response at a time)
+	TypeStream       MessageType = "stream"       // Streaming chunk
+	TypeComplete     MessageType = "complete"     // Response complete with metrics
+	TypeToolCall     MessageType = "tool_call"    // Server requests action
+	TypeInterruption MessageType = "interruption" // User interrupted
+	TypeError        MessageType = "error"
+	TypeClose        MessageType = "close"
 
-	// Control types (bidirectional)
-	WSTypePing WSMessageType = "ping" // Data: nil
-	WSTypePong WSMessageType = "pong" // Data: nil
+	// Bidirectional
+	TypePing MessageType = "ping"
+	TypePong MessageType = "pong"
 )
 
 // =============================================================================
-// Request/Response Envelope
+// Message Envelope
 // =============================================================================
 
-// WSRequest represents an outgoing WebSocket message with typed data
-type WSRequest struct {
-	Type      WSMessageType `json:"type"`
-	Timestamp int64         `json:"timestamp"`
-	Data      interface{}   `json:"data,omitempty"`
+type Request struct {
+	Type      MessageType `json:"type"`
+	Timestamp int64       `json:"timestamp"`
+	Data      any         `json:"data,omitempty"`
 }
 
-// WSResponse represents an incoming WebSocket message with typed data
-type WSResponse struct {
-	Type    WSMessageType   `json:"type"`
+type Response struct {
+	Type    MessageType     `json:"type"`
 	Success bool            `json:"success"`
 	Data    json.RawMessage `json:"data,omitempty"`
-	Error   *WSErrorData    `json:"error,omitempty"`
+	Error   *ErrorData      `json:"error,omitempty"`
 }
 
 // =============================================================================
-// Data Structures for each message type
+// Client → Server
 // =============================================================================
 
-// WSConfigurationData contains initial connection configuration
-// Used with: WSTypeConfiguration
-type WSConfigurationData struct {
-	AssistantID         uint64                 `json:"assistant_id"`
-	ConversationID      uint64                 `json:"conversation_id"`
-	AssistantDefinition *WSAssistantDefinition `json:"assistant,omitempty"`
-	Metadata            map[string]interface{} `json:"metadata,omitempty"`
-	Args                map[string]interface{} `json:"args,omitempty"`
-	Options             map[string]interface{} `json:"options,omitempty"`
+type ConfigurationData struct {
+	AssistantID    uint64         `json:"assistant_id"`
+	ConversationID uint64         `json:"conversation_id"`
+	Metadata       map[string]any `json:"metadata,omitempty"`
 }
 
-// WSAssistantDefinition contains assistant metadata
-type WSAssistantDefinition struct {
-	AssistantID uint64 `json:"assistant_id"`
-	Name        string `json:"name,omitempty"`
-}
-
-// WSUserMessageData contains user message content
-// Used with: WSTypeUserMessage
-type WSUserMessageData struct {
-	ID        string `json:"id"`
-	Content   string `json:"content"`
-	Completed bool   `json:"completed"`
-	Timestamp int64  `json:"timestamp"`
-}
-
-// WSAssistantMessageData contains assistant response content
-// Used with: WSTypeAssistantMessage
-type WSAssistantMessageData struct {
-	ID        string                     `json:"id"`
-	Message   *WSAssistantMessageContent `json:"message"`
-	Completed bool                       `json:"completed"`
-	Metrics   []*WSMetric                `json:"metrics,omitempty"`
-}
-
-// WSAssistantMessageContent represents the message content (text or audio)
-type WSAssistantMessageContent struct {
-	Type    string `json:"type"` // "text" or "audio"
-	Content string `json:"content,omitempty"`
-	Audio   []byte `json:"audio,omitempty"`
-}
-
-// WSStreamData contains streaming text chunk
-// Used with: WSTypeStream
-type WSStreamData struct {
+type UserMessageData struct {
 	ID      string `json:"id"`
 	Content string `json:"content"`
-	Index   int    `json:"index,omitempty"`
 }
 
-// WSInterruptionData contains interruption signal
-// Used with: WSTypeInterruption
-type WSInterruptionData struct {
-	ID      string  `json:"id,omitempty"`
-	Source  string  `json:"source,omitempty"` // "word", "vad"
-	StartAt float64 `json:"start_at,omitempty"`
-	EndAt   float64 `json:"end_at,omitempty"`
+// =============================================================================
+// Server → Client
+// =============================================================================
+
+// StreamData - streaming text chunk
+type StreamData struct {
+	ID      string `json:"id"`
+	Content string `json:"content"`
+	Index   int    `json:"index"`
 }
 
-// WSErrorData contains error information
-// Used with: WSTypeError or in WSResponse.Error
-type WSErrorData struct {
+// CompleteData - response complete with full content and metrics
+type CompleteData struct {
+	ID      string        `json:"id"`
+	Content string        `json:"content"`
+	Metrics []*MetricData `json:"metrics,omitempty"`
+}
+
+// ToolCallData - server requests an action
+type ToolCallData struct {
+	ID     string         `json:"id"`
+	Name   string         `json:"name"` // "disconnect", "transfer", etc
+	Params map[string]any `json:"params,omitempty"`
+}
+
+// InterruptionData - user interrupted the response
+type InterruptionData struct {
+	ID     string `json:"id"`
+	Source string `json:"source"` // "word" or "vad"
+}
+
+// CloseData - session end
+type CloseData struct {
+	Reason string `json:"reason"`
+	Code   int    `json:"code"`
+}
+
+// ErrorData - error info
+type ErrorData struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
-	Details string `json:"details,omitempty"`
 }
 
-// WSMetric contains metric information
-type WSMetric struct {
+// MetricData - performance metric
+type MetricData struct {
 	Name  string  `json:"name"`
 	Value float64 `json:"value"`
 	Unit  string  `json:"unit,omitempty"`

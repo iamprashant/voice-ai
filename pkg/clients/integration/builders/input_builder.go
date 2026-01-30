@@ -15,8 +15,8 @@ import (
 
 type InputChatBuilder interface {
 	Credential(i uint64, dp *structpb.Struct) *protos.Credential
-
 	Chat(
+		requestId string,
 		credential *protos.Credential,
 		modelOpts map[string]*anypb.Any,
 		tools []*protos.FunctionDefinition,
@@ -63,7 +63,7 @@ type InputRerankingBuilder interface {
 		credential *protos.Credential,
 		modelOpts map[string]*anypb.Any,
 		additionalData map[string]string,
-		contents map[int32]*protos.Content,
+		contents map[int32]string,
 	) *protos.RerankingRequest
 	Options(
 		opts map[string]interface{},

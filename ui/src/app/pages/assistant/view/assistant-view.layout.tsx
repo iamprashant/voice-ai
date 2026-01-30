@@ -182,14 +182,14 @@ export const AssistantViewLayout: FC<HTMLAttributes<HTMLDivElement>> = () => {
                   >
                     Create New version
                   </IButton>
-                  <IButton
+                  {/* <IButton
                     className="w-full justify-start"
                     onClick={() =>
                       goToCreateAssistantWebsocketVersion(assistantId!)
                     }
                   >
                     Connect new Websocket
-                  </IButton>
+                  </IButton> */}
                   <IButton
                     className="w-full justify-start"
                     onClick={() =>

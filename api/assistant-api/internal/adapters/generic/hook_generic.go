@@ -79,7 +79,6 @@ func (md *GenericRequestor) OnEndConversation() error {
 	})
 	return nil
 }
-
 func (hk *GenericRequestor) Analysis(endpointId uint64, endpointVersion string, arguments map[string]interface{}) (map[string]interface{}, error) {
 	ivk, err := hk.analyze(
 		hk.Context(),
@@ -97,14 +96,13 @@ func (hk *GenericRequestor) Analysis(endpointId uint64, endpointVersion string, 
 	if ivk.GetSuccess() {
 		if data := ivk.GetData(); len(data) > 0 {
 			var contentData map[string]interface{}
-			if err := json.Unmarshal(data[0].Content, &contentData); err != nil {
+			if err := json.Unmarshal([]byte(data[0]), &contentData); err != nil {
 				return map[string]interface{}{
-					"result": string(data[0].Content),
+					"result": data[0],
 				}, nil
 			}
 			return contentData, nil
 		}
-
 	}
 	return nil, fmt.Errorf("empty response from endpoint")
 }

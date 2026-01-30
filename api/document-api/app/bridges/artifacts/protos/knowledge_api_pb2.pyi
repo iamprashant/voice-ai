@@ -156,6 +156,20 @@ class GetAllKnowledgeDocumentResponse(_message.Message):
     paginated: _common_pb2.Paginated
     def __init__(self, code: _Optional[int] = ..., success: bool = ..., data: _Optional[_Iterable[_Union[KnowledgeDocument, _Mapping]]] = ..., error: _Optional[_Union[_common_pb2.Error, _Mapping]] = ..., paginated: _Optional[_Union[_common_pb2.Paginated, _Mapping]] = ...) -> None: ...
 
+class DocumentContent(_message.Message):
+    __slots__ = ("name", "contentType", "contentFormat", "content", "meta")
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    CONTENTTYPE_FIELD_NUMBER: _ClassVar[int]
+    CONTENTFORMAT_FIELD_NUMBER: _ClassVar[int]
+    CONTENT_FIELD_NUMBER: _ClassVar[int]
+    META_FIELD_NUMBER: _ClassVar[int]
+    name: str
+    contentType: str
+    contentFormat: str
+    content: bytes
+    meta: _struct_pb2.Struct
+    def __init__(self, name: _Optional[str] = ..., contentType: _Optional[str] = ..., contentFormat: _Optional[str] = ..., content: _Optional[bytes] = ..., meta: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ...) -> None: ...
+
 class CreateKnowledgeDocumentRequest(_message.Message):
     __slots__ = ("knowledgeId", "documentSource", "dataSource", "contents", "preProcess", "separator", "maxChunkSize", "chunkOverlap", "name", "description", "documentStructure")
     class PRE_PROCESS(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
@@ -184,7 +198,7 @@ class CreateKnowledgeDocumentRequest(_message.Message):
     knowledgeId: int
     documentSource: CreateKnowledgeDocumentRequest.DOCUMENT_SOURCE
     dataSource: str
-    contents: _containers.RepeatedCompositeFieldContainer[_common_pb2.Content]
+    contents: _containers.RepeatedCompositeFieldContainer[DocumentContent]
     preProcess: CreateKnowledgeDocumentRequest.PRE_PROCESS
     separator: str
     maxChunkSize: int
@@ -192,7 +206,7 @@ class CreateKnowledgeDocumentRequest(_message.Message):
     name: str
     description: str
     documentStructure: str
-    def __init__(self, knowledgeId: _Optional[int] = ..., documentSource: _Optional[_Union[CreateKnowledgeDocumentRequest.DOCUMENT_SOURCE, str]] = ..., dataSource: _Optional[str] = ..., contents: _Optional[_Iterable[_Union[_common_pb2.Content, _Mapping]]] = ..., preProcess: _Optional[_Union[CreateKnowledgeDocumentRequest.PRE_PROCESS, str]] = ..., separator: _Optional[str] = ..., maxChunkSize: _Optional[int] = ..., chunkOverlap: _Optional[int] = ..., name: _Optional[str] = ..., description: _Optional[str] = ..., documentStructure: _Optional[str] = ...) -> None: ...
+    def __init__(self, knowledgeId: _Optional[int] = ..., documentSource: _Optional[_Union[CreateKnowledgeDocumentRequest.DOCUMENT_SOURCE, str]] = ..., dataSource: _Optional[str] = ..., contents: _Optional[_Iterable[_Union[DocumentContent, _Mapping]]] = ..., preProcess: _Optional[_Union[CreateKnowledgeDocumentRequest.PRE_PROCESS, str]] = ..., separator: _Optional[str] = ..., maxChunkSize: _Optional[int] = ..., chunkOverlap: _Optional[int] = ..., name: _Optional[str] = ..., description: _Optional[str] = ..., documentStructure: _Optional[str] = ...) -> None: ...
 
 class CreateKnowledgeDocumentResponse(_message.Message):
     __slots__ = ("code", "success", "data", "error", "paginated")

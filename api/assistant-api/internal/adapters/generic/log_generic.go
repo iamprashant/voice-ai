@@ -6,7 +6,6 @@
 package internal_adapter_generic
 
 import (
-	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 	protos "github.com/rapidaai/protos"
 )
@@ -75,7 +74,7 @@ func (cr *GenericRequestor) GetConversationLogs() []*protos.Message {
 	return messages
 }
 
-func (cr *GenericRequestor) CreateConversationMessageLog(messageid string, in, out *types.Message, metrics []*types.Metric) error {
+func (cr *GenericRequestor) CreateConversationMessageLog(messageid string, in, out *protos.Message, metrics []*protos.Metric) error {
 	cr.conversationService.CreateLLMAction(
 		cr.Context(),
 		cr.Auth(),
@@ -87,7 +86,7 @@ func (cr *GenericRequestor) CreateConversationMessageLog(messageid string, in, o
 }
 
 func (cr *GenericRequestor) CreateConversationToolLog(
-	messageid string, in, out map[string]interface{}, metrics []*types.Metric) error {
+	messageid string, in, out map[string]interface{}, metrics []*protos.Metric) error {
 	cr.conversationService.CreateToolAction(
 		cr.Context(),
 		cr.Auth(),

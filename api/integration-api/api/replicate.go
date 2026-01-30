@@ -28,9 +28,17 @@ type replicateIntegrationGRPCApi struct {
 	replicateIntegrationApi
 }
 
-// StreamChat implements protos.ReplicateServiceServer.
-func (*replicateIntegrationGRPCApi) StreamChat(*integration_api.ChatRequest, integration_api.ReplicateService_StreamChatServer) error {
-	panic("unimplemented")
+// StreamChat implements protos.ReplicateServiceServer (bidirectional streaming).
+func (replicate *replicateIntegrationGRPCApi) StreamChat(stream integration_api.ReplicateService_StreamChatServer) error {
+	replicate.logger.Debugf("Bidirectional stream chat opened for replicate")
+	return replicate.integrationApi.StreamChatBidirectional(
+		stream.Context(),
+		"REPLICATE",
+		func(cred *integration_api.Credential) internal_callers.LargeLanguageCaller {
+			return internal_replicate_callers.NewLargeLanguageCaller(replicate.logger, cred)
+		},
+		stream,
+	)
 }
 
 func NewReplicateRPC(config *config.IntegrationConfig, logger commons.Logger, postgres connectors.PostgresConnector) *replicateIntegrationRPCApi {

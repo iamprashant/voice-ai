@@ -9,14 +9,13 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/google/uuid"
 	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/types"
 	type_enums "github.com/rapidaai/pkg/types/enums"
 )
 
 type Messaging interface {
-	Create(msg string) *types.Message
-	GetMessage() (*types.Message, error)
+	GetID() string
 	Transition(state InteractionState) error
 	GetInputMode() type_enums.MessageMode
 	SwitchInputMode(mm type_enums.MessageMode)
@@ -42,7 +41,6 @@ func (s InteractionState) String() string {
 	switch s {
 	case Unknown:
 		return "Unknown"
-
 	case LLMGenerated:
 		return "LLMGenerated"
 	case Interrupt:
@@ -58,9 +56,9 @@ func (s InteractionState) String() string {
 
 type messaging struct {
 	logger commons.Logger
-	in     *types.Message
-	actor  type_enums.MessageActor
-	state  InteractionState
+	in     string
+	// actor type_enums.MessageActor
+	state InteractionState
 
 	// rw mutex
 	mutex sync.RWMutex
@@ -72,7 +70,7 @@ type messaging struct {
 func NewMessaging(logger commons.Logger) Messaging {
 	return &messaging{
 		logger:     logger,
-		actor:      type_enums.UserActor,
+		in:         uuid.NewString(),
 		inputMode:  type_enums.TextMode,
 		outputMode: type_enums.TextMode,
 		state:      Unknown,
@@ -103,31 +101,7 @@ func (ms *messaging) SwitchInputMode(mm type_enums.MessageMode) {
 	ms.inputMode = mm
 }
 
-func (ms *messaging) GetMessage() (*types.Message, error) {
-	if ms.in != nil {
-		return ms.in, nil
-	}
-	return nil, fmt.Errorf("invalid message for acting user")
-}
-
-func (ms *messaging) Create(msg string) *types.Message {
-	ms.mutex.Lock()
-	defer ms.mutex.Unlock()
-	if ms.in != nil {
-		ms.in.MergeContent(&types.Content{
-			ContentType:   commons.TEXT_CONTENT.String(),
-			ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
-			Content:       []byte(msg),
-		})
-	} else {
-		ms.in = types.NewMessage("user", &types.Content{
-			ContentType:   commons.TEXT_CONTENT.String(),
-			ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
-			Content:       []byte(msg),
-		})
-		ms.in.AddMetadata("mode", ms.inputMode.String())
-
-	}
+func (ms *messaging) GetID() string {
 	return ms.in
 }
 
@@ -142,17 +116,11 @@ func (ms *messaging) Transition(newState InteractionState) error {
 		if ms.state == Interrupted || ms.state == Interrupt {
 			return fmt.Errorf("Transition: invalid transition: agent can't interrupt multiple times")
 		}
-		if ms.state == LLMGenerated || ms.state == LLMGenerating {
-			ms.in = nil
-		}
 	case Interrupted:
 		if ms.state == Interrupted {
 			return fmt.Errorf("Transition: invalid transition: agent can't interrupted multiple times")
 		}
-		if ms.state == LLMGenerated || ms.state == LLMGenerating {
-			ms.in = nil
-		}
-
+		ms.in = uuid.NewString()
 	}
 	ms.state = newState
 	return nil

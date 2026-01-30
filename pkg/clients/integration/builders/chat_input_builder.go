@@ -36,6 +36,7 @@ func (in *inputChatBuilder) Credential(i uint64, dp *structpb.Struct) *protos.Cr
 }
 
 func (in *inputChatBuilder) Chat(
+	requestId string,
 	credential *protos.Credential,
 	modelOpts map[string]*anypb.Any,
 	tools []*protos.FunctionDefinition,
@@ -43,6 +44,7 @@ func (in *inputChatBuilder) Chat(
 	conversations ...*protos.Message,
 ) *protos.ChatRequest {
 	request := &protos.ChatRequest{
+		RequestId:       requestId,
 		Credential:      credential,
 		Conversations:   conversations,
 		ModelParameters: modelOpts,
@@ -61,13 +63,33 @@ func (in *inputChatBuilder) Chat(
 }
 
 func (in *inputChatBuilder) WithinMessage(role, prompt string) *protos.Message {
+	if role == "user" {
+		return &protos.Message{
+			Role: role,
+			Message: &protos.Message_User{
+				User: &protos.UserMessage{
+					Content: prompt,
+				},
+			},
+		}
+	}
+	if role == "system" {
+		return &protos.Message{
+			Role: role,
+			Message: &protos.Message_System{
+				System: &protos.SystemMessage{
+					Content: prompt,
+				},
+			},
+		}
+	}
 	return &protos.Message{
 		Role: role,
-		Contents: []*protos.Content{{
-			ContentType:   commons.TEXT_CONTENT.String(),
-			ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
-			Content:       []byte(prompt),
-		}},
+		Message: &protos.Message_Assistant{
+			Assistant: &protos.AssistantMessage{
+				Contents: []string{prompt},
+			},
+		},
 	}
 }
 
@@ -83,10 +105,11 @@ func (in *inputChatBuilder) Message(
 }
 
 func (in *inputChatBuilder) Arguments(variables []*gorm_types.PromptVariable, arguments map[string]*anypb.Any) map[string]interface{} {
+	existing := in.PromptArguments(variables)
 	args, err := utils.AnyMapToInterfaceMap(arguments)
 	if err != nil {
+		return existing
 	}
-	existing := in.PromptArguments(variables)
 	return utils.MergeMaps(existing, args)
 }
 

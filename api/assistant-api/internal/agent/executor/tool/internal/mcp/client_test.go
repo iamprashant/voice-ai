@@ -164,8 +164,8 @@ func TestToolResponse(t *testing.T) {
 	})
 
 	t.Run("WithResult", func(t *testing.T) {
-		resp := NewToolResponse(true).WithResult("test result")
-		assert.Equal(t, "test result", resp.Result)
+		resp := NewToolResponse(true).WithResult([]string{"test result"})
+		assert.Equal(t, []string{"test result"}, resp.Result)
 	})
 
 	t.Run("WithError", func(t *testing.T) {
@@ -182,13 +182,13 @@ func TestToolResponse(t *testing.T) {
 
 	t.Run("ToMap_Success", func(t *testing.T) {
 		resp := NewToolResponse(true).
-			WithResult("test result").
+			WithResult([]string{"test result"}).
 			WithData("key", "value")
 
 		m := resp.ToMap()
 		assert.Equal(t, true, m["success"])
 		assert.Equal(t, "SUCCESS", m["status"])
-		assert.Equal(t, "test result", m["result"])
+		assert.Equal(t, []string{"test result"}, m["result"])
 		assert.NotNil(t, m["data"])
 	})
 
@@ -303,7 +303,7 @@ func ExampleNewClient() {
 	if err != nil {
 		panic(err)
 	}
-	defer client.Close()
+	defer client.Close(ctx)
 
 	// List available tools
 	tools, err := client.ListTools(ctx)

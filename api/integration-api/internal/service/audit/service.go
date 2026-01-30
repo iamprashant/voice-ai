@@ -14,7 +14,8 @@ import (
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	gorm_models "github.com/rapidaai/pkg/models/gorm"
-	"github.com/rapidaai/pkg/types"
+	type_enums "github.com/rapidaai/pkg/types/enums"
+	"github.com/rapidaai/protos"
 	integration_api "github.com/rapidaai/protos"
 )
 
@@ -33,7 +34,7 @@ func NewAuditService(logger commons.Logger, postgres connectors.PostgresConnecto
 // do not play with proto object as mutex
 func (aS *auditService) Create(ctx context.Context,
 	requestId, organizationId, projectId, credentialId uint64, intName,
-	assetPrefix string, mertics types.Metrics, status string) (*internal_gorm.ExternalAudit, error) {
+	assetPrefix string, mertics []*protos.Metric, status type_enums.RecordState) (*internal_gorm.ExternalAudit, error) {
 	db := aS.postgres.DB(ctx)
 
 	audit := &internal_gorm.ExternalAudit{

@@ -3,6 +3,7 @@ import { HTMLAttributes } from 'react';
 
 export const BlueNoticeBlock: React.FC<HTMLAttributes<HTMLDivElement>> = ({
   className,
+  onClick,
   children,
 }) => {
   return (
@@ -12,6 +13,7 @@ export const BlueNoticeBlock: React.FC<HTMLAttributes<HTMLDivElement>> = ({
         'border-blue-600 bg-blue-500/10 text-sm',
         className,
       )}
+      onClick={onClick}
     >
       {children}
     </div>

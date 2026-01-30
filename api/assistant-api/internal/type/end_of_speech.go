@@ -9,8 +9,6 @@ import (
 	"context"
 )
 
-type EndOfSpeechCallback func(context.Context, EndOfSpeechPacket) error
-
 type EndOfSpeech interface {
 	Name() string
 	Analyze(ctx context.Context, s Packet) error

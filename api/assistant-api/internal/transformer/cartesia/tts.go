@@ -126,20 +126,22 @@ func (ct *cartesiaTTS) Transform(ctx context.Context, in internal_type.LLMPacket
 		return fmt.Errorf("cartesia-tts: websocket connection is not initialized")
 	}
 
-	if currentCtx != in.ContextId() && currentCtx != "" {
-		_ = conn.WriteJSON(map[string]interface{}{
-			"context_id": currentCtx,
-			"cancel":     true,
-		})
-	}
-
 	switch input := in.(type) {
-	case internal_type.LLMStreamPacket:
+	case internal_type.InterruptionPacket:
+		// only stop speaking on word-level interruptions
+		if input.Source == internal_type.InterruptionSourceWord && currentCtx != "" {
+			_ = conn.WriteJSON(map[string]interface{}{
+				"context_id": currentCtx,
+				"cancel":     true,
+			})
+		}
+		return nil
+	case internal_type.LLMResponseDeltaPacket:
 		message := ct.GetTextToSpeechInput(input.Text, map[string]interface{}{"continue": true, "context_id": ct.contextId, "max_buffer_delay_ms": "0ms"})
 		if err := conn.WriteJSON(message); err != nil {
 			return err
 		}
-	case internal_type.LLMMessagePacket:
+	case internal_type.LLMResponseDonePacket:
 		message := ct.GetTextToSpeechInput("", map[string]interface{}{"continue": false, "flush": true, "context_id": ct.contextId})
 		if err := conn.WriteJSON(message); err != nil {
 			return err

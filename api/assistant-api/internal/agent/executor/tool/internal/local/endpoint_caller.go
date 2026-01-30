@@ -16,7 +16,7 @@ import (
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	endpoint_client_builders "github.com/rapidaai/pkg/clients/endpoint/builders"
 	"github.com/rapidaai/pkg/commons"
-	protos "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
 type endpointToolCaller struct {
@@ -52,41 +52,33 @@ func NewEndpointToolCaller(
 	}, nil
 }
 
-func (afkTool *endpointToolCaller) Call(ctx context.Context, pkt internal_type.LLMPacket, toolId string, args string, communication internal_type.Communication) internal_type.LLMToolPacket {
+func (afkTool *endpointToolCaller) Call(ctx context.Context, contextID, toolId string, args map[string]interface{}, communication internal_type.Communication) internal_tool.ToolCallResult {
 	body := afkTool.Parse(afkTool.endpointParameters, args, communication)
 	ivk, err := communication.DeploymentCaller().Invoke(
 		ctx,
 		communication.Auth(),
-		afkTool.inputBuilder.Invoke(
-			&protos.EndpointDefinition{
-				EndpointId: afkTool.endpointId,
-				Version:    "latest",
-			},
-			afkTool.inputBuilder.Arguments(body, nil),
-			nil,
-			nil,
-		),
+		afkTool.inputBuilder.Invoke(&protos.EndpointDefinition{EndpointId: afkTool.endpointId, Version: "latest"}, afkTool.inputBuilder.Arguments(body, nil), afkTool.inputBuilder.Metadata(map[string]interface{}{"message_id": contextID}, nil), nil),
 	)
 	if err != nil {
 		afkTool.logger.Errorf("error while calling endpoint %+v", err)
-		return internal_type.LLMToolPacket{Name: afkTool.Name(), ContextID: pkt.ContextId(), Action: protos.AssistantConversationAction_ENDPOINT_CALL, Result: afkTool.Result("Failed to resolve", false)}
+		return internal_tool.Result("Failed to resolve", false)
 	}
 	if ivk.GetSuccess() {
 		if data := ivk.GetData(); len(data) > 0 {
 			var contentData map[string]interface{}
-			if err := json.Unmarshal(data[0].Content, &contentData); err != nil {
-				return internal_type.LLMToolPacket{Name: afkTool.Name(), ContextID: pkt.ContextId(), Action: protos.AssistantConversationAction_ENDPOINT_CALL, Result: map[string]interface{}{"result": string(data[0].Content)}}
+			if err := json.Unmarshal([]byte(data[0]), &contentData); err != nil {
+				return internal_tool.Result(data[0], true)
 			}
-			return internal_type.LLMToolPacket{Name: afkTool.Name(), ContextID: pkt.ContextId(), Action: protos.AssistantConversationAction_ENDPOINT_CALL, Result: contentData}
+			return internal_tool.JustResult(contentData)
 		}
 
 	}
-	return internal_type.LLMToolPacket{Name: afkTool.Name(), ContextID: pkt.ContextId(), Action: protos.AssistantConversationAction_ENDPOINT_CALL, Result: afkTool.Result("Failed to resolve", false)}
+	return internal_tool.Result("Failed to resolve", false)
 }
 
 func (md *endpointToolCaller) Parse(
 	mapping map[string]string,
-	args string,
+	args map[string]interface{},
 	communication internal_type.Communication,
 ) map[string]interface{} {
 	arguments := make(map[string]interface{})
@@ -96,14 +88,7 @@ func (md *endpointToolCaller) Parse(
 			case "name":
 				arguments[value] = md.Name()
 			case "argument":
-				var argMap map[string]interface{}
-				err := json.Unmarshal([]byte(args), &argMap)
-				if err != nil {
-					md.logger.Debugf("the arugment might be string")
-					arguments[value] = args
-				} else {
-					arguments[value] = argMap
-				}
+				arguments[value] = args
 			}
 		}
 		if k, ok := strings.CutPrefix(key, "assistant."); ok {

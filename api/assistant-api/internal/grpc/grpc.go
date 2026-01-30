@@ -14,7 +14,7 @@ import (
 )
 
 type unidirectionalStreamer struct {
-	server grpc.BidiStreamingServer[protos.AssistantMessagingRequest, protos.AssistantMessagingResponse]
+	server grpc.BidiStreamingServer[protos.AssistantTalkInput, protos.AssistantTalkOutput]
 }
 
 func NewGrpcUnidirectionalStreamer(
@@ -28,12 +28,12 @@ func (uds *unidirectionalStreamer) Context() context.Context {
 	return uds.server.Context()
 }
 
-func (uds *unidirectionalStreamer) Recv() (*protos.AssistantMessagingRequest, error) {
+func (uds *unidirectionalStreamer) Recv() (*protos.AssistantTalkInput, error) {
 	return uds.server.Recv()
 }
 
 // Send sends an output value to the stream.
 // It returns an error if the send operation fails.
-func (uds *unidirectionalStreamer) Send(out *protos.AssistantMessagingResponse) error {
+func (uds *unidirectionalStreamer) Send(out *protos.AssistantTalkOutput) error {
 	return uds.server.Send(out)
 }

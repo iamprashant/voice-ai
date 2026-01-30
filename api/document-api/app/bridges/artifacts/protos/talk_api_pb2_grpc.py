@@ -27,7 +27,8 @@ if _version_not_supported:
 
 
 class TalkServiceStub(object):
-    """Missing associated documentation comment in .proto file."""
+    """Talk Service for assistant messaging
+    """
 
     def __init__(self, channel):
         """Constructor.
@@ -37,8 +38,8 @@ class TalkServiceStub(object):
         """
         self.AssistantTalk = channel.stream_stream(
                 '/talk_api.TalkService/AssistantTalk',
-                request_serializer=talk__api__pb2.AssistantMessagingRequest.SerializeToString,
-                response_deserializer=talk__api__pb2.AssistantMessagingResponse.FromString,
+                request_serializer=talk__api__pb2.AssistantTalkInput.SerializeToString,
+                response_deserializer=talk__api__pb2.AssistantTalkOutput.FromString,
                 _registered_method=True)
         self.GetAllAssistantConversation = channel.unary_unary(
                 '/talk_api.TalkService/GetAllAssistantConversation',
@@ -73,46 +74,54 @@ class TalkServiceStub(object):
 
 
 class TalkServiceServicer(object):
-    """Missing associated documentation comment in .proto file."""
+    """Talk Service for assistant messaging
+    """
 
     def AssistantTalk(self, request_iterator, context):
-        """Missing associated documentation comment in .proto file."""
+        """Bi-directional streaming RPC for assistant messaging
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def GetAllAssistantConversation(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Get all assistant conversations
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def GetAllConversationMessage(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Get all messages in a conversation
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def CreateMessageMetric(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Create message metric
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def CreateConversationMetric(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Create conversation metric
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def CreatePhoneCall(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Create phone call
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def CreateBulkPhoneCall(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Create bulk phone calls
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -122,8 +131,8 @@ def add_TalkServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'AssistantTalk': grpc.stream_stream_rpc_method_handler(
                     servicer.AssistantTalk,
-                    request_deserializer=talk__api__pb2.AssistantMessagingRequest.FromString,
-                    response_serializer=talk__api__pb2.AssistantMessagingResponse.SerializeToString,
+                    request_deserializer=talk__api__pb2.AssistantTalkInput.FromString,
+                    response_serializer=talk__api__pb2.AssistantTalkOutput.SerializeToString,
             ),
             'GetAllAssistantConversation': grpc.unary_unary_rpc_method_handler(
                     servicer.GetAllAssistantConversation,
@@ -164,7 +173,8 @@ def add_TalkServiceServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class TalkService(object):
-    """Missing associated documentation comment in .proto file."""
+    """Talk Service for assistant messaging
+    """
 
     @staticmethod
     def AssistantTalk(request_iterator,
@@ -181,8 +191,8 @@ class TalkService(object):
             request_iterator,
             target,
             '/talk_api.TalkService/AssistantTalk',
-            talk__api__pb2.AssistantMessagingRequest.SerializeToString,
-            talk__api__pb2.AssistantMessagingResponse.FromString,
+            talk__api__pb2.AssistantTalkInput.SerializeToString,
+            talk__api__pb2.AssistantTalkOutput.FromString,
             options,
             channel_credentials,
             insecure,
@@ -345,6 +355,82 @@ class TalkService(object):
             '/talk_api.TalkService/CreateBulkPhoneCall',
             talk__api__pb2.CreateBulkPhoneCallRequest.SerializeToString,
             talk__api__pb2.CreateBulkPhoneCallResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+
+class AgentKitStub(object):
+    """AgentKit Service for assistant messaging
+    """
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.Talk = channel.stream_stream(
+                '/talk_api.AgentKit/Talk',
+                request_serializer=talk__api__pb2.TalkInput.SerializeToString,
+                response_deserializer=talk__api__pb2.TalkOutput.FromString,
+                _registered_method=True)
+
+
+class AgentKitServicer(object):
+    """AgentKit Service for assistant messaging
+    """
+
+    def Talk(self, request_iterator, context):
+        """Bi-directional streaming RPC for assistant messaging
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_AgentKitServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'Talk': grpc.stream_stream_rpc_method_handler(
+                    servicer.Talk,
+                    request_deserializer=talk__api__pb2.TalkInput.FromString,
+                    response_serializer=talk__api__pb2.TalkOutput.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'talk_api.AgentKit', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+    server.add_registered_method_handlers('talk_api.AgentKit', rpc_method_handlers)
+
+
+ # This class is part of an EXPERIMENTAL API.
+class AgentKit(object):
+    """AgentKit Service for assistant messaging
+    """
+
+    @staticmethod
+    def Talk(request_iterator,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.stream_stream(
+            request_iterator,
+            target,
+            '/talk_api.AgentKit/Talk',
+            talk__api__pb2.TalkInput.SerializeToString,
+            talk__api__pb2.TalkOutput.FromString,
             options,
             channel_credentials,
             insecure,

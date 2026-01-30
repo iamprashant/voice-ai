@@ -42,7 +42,7 @@ func (tws *twilioWebsocketStreamer) Context() context.Context {
 	return tws.streamer.Context()
 }
 
-func (tws *twilioWebsocketStreamer) Recv() (*protos.AssistantMessagingRequest, error) {
+func (tws *twilioWebsocketStreamer) Recv() (*protos.AssistantTalkInput, error) {
 	if tws.streamer.Connection() == nil {
 		return nil, tws.handleError("WebSocket connection is nil", io.EOF)
 	}
@@ -74,17 +74,17 @@ func (tws *twilioWebsocketStreamer) Recv() (*protos.AssistantMessagingRequest, e
 	}
 }
 
-func (tws *twilioWebsocketStreamer) Send(response *protos.AssistantMessagingResponse) error {
+func (tws *twilioWebsocketStreamer) Send(response *protos.AssistantTalkOutput) error {
 	switch data := response.GetData().(type) {
-	case *protos.AssistantMessagingResponse_Assistant:
+	case *protos.AssistantTalkOutput_Assistant:
 		switch content := data.Assistant.Message.(type) {
-		case *protos.AssistantConversationAssistantMessage_Audio:
+		case *protos.ConversationAssistantMessage_Audio:
 			//1ms 32  10ms 320byte @ 16000Hz, 16-bit mono PCM = 640 bytes
 			// Each message needs to be a 20ms sample of audio.
 			// At 8kHz the message should be 320 bytes.
 			// At 16kHz the message should be 640 bytes.
 			bufferSizeThreshold := 8 * 20
-			audioData := content.Audio.GetContent()
+			audioData := content.Audio
 
 			// Use vng.audioBuffer to handle pending data across calls
 			tws.streamer.LockOutputAudioBuffer()
@@ -115,8 +115,8 @@ func (tws *twilioWebsocketStreamer) Send(response *protos.AssistantMessagingResp
 				tws.streamer.OutputBuffer().Reset() // Clear the buffer after flushing
 			}
 		}
-	case *protos.AssistantMessagingResponse_Interruption:
-		if data.Interruption.Type == protos.AssistantConversationInterruption_INTERRUPTION_TYPE_WORD {
+	case *protos.AssistantTalkOutput_Interruption:
+		if data.Interruption.Type == protos.ConversationInterruption_INTERRUPTION_TYPE_WORD {
 			tws.streamer.LockOutputAudioBuffer()
 			tws.streamer.OutputBuffer().Reset() // Clear the buffer after flushing
 			tws.streamer.UnlockOutputAudioBuffer()
@@ -125,8 +125,8 @@ func (tws *twilioWebsocketStreamer) Send(response *protos.AssistantMessagingResp
 				tws.logger.Errorf("Error sending clear command:", err)
 			}
 		}
-	case *protos.AssistantMessagingResponse_Action:
-		if data.Action.GetAction() == protos.AssistantConversationAction_END_CONVERSATION {
+	case *protos.AssistantTalkOutput_Directive:
+		if data.Directive.GetType() == protos.ConversationDirective_END_CONVERSATION {
 			if tws.streamer.GetUuid() != "" {
 				//
 				client, err := tws.client(tws.streamer.VaultCredential())
@@ -161,7 +161,7 @@ func (tws *twilioWebsocketStreamer) handleStartEvent(mediaEvent internal_twilio.
 	tws.streamID = mediaEvent.StreamSid
 }
 
-func (tws *twilioWebsocketStreamer) handleMediaEvent(mediaEvent internal_twilio.TwilioMediaEvent) (*protos.AssistantMessagingRequest, error) {
+func (tws *twilioWebsocketStreamer) handleMediaEvent(mediaEvent internal_twilio.TwilioMediaEvent) (*protos.AssistantTalkInput, error) {
 	payloadBytes, err := tws.streamer.Encoder().DecodeString(mediaEvent.Media.Payload)
 	if err != nil {
 		tws.logger.Warn("Failed to decode media payload", "error", err.Error())

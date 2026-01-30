@@ -287,7 +287,7 @@ const CreateNewVersion: FC<{ assistantId: string }> = ({ assistantId }) => {
 -----END CERTIFICATE-----"
                       value={certificate}
                       onChange={value => {
-                        setCertificate(certificate);
+                        setCertificate(value);
                       }}
                       className="min-h-40 max-h-dvh "
                     />

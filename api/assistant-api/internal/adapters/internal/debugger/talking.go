@@ -101,14 +101,14 @@ func (talking *debuggerTalking) Talk(
 			return fmt.Errorf("stream.Recv error: %w", err)
 		}
 		switch msg := req.GetRequest().(type) {
-		case *protos.AssistantMessagingRequest_Message:
+		case *protos.AssistantTalkInput_Message:
 			if initialized {
 				// talking.logger.Benchmark("accepting input after", time.Since(talking.StartedAt))
 				if err := talking.Input(req.GetMessage()); err != nil {
 					talking.logger.Errorf("error while accepting input %v", err)
 				}
 			}
-		case *protos.AssistantMessagingRequest_Configuration:
+		case *protos.AssistantTalkInput_Configuration:
 			if err := talking.Connect(ctx, auth, identifier, msg.Configuration); err != nil {
 				talking.logger.Errorf("unexpected error while connect assistant, might be problem in configuration %+v", err)
 				return fmt.Errorf("talking.Connect error: %w", err)

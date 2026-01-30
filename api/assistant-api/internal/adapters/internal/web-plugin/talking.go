@@ -91,13 +91,13 @@ func (talking *webpluginTalking) Talk(ctx context.Context, auth types.SimplePrin
 			return fmt.Errorf("stream.Recv error: %w", err)
 		}
 		switch msg := req.GetRequest().(type) {
-		case *protos.AssistantMessagingRequest_Message:
+		case *protos.AssistantTalkInput_Message:
 			if initialized {
 				if err := talking.Input(req.GetMessage()); err != nil {
 					talking.logger.Errorf("error while accepting input %v", err)
 				}
 			}
-		case *protos.AssistantMessagingRequest_Configuration:
+		case *protos.AssistantTalkInput_Configuration:
 			initialized = false
 			if err := talking.Connect(ctx, auth, identifier, msg.Configuration); err != nil {
 				talking.logger.Errorf("unexpected error while connect assistant, might be problem in configuration %+v", err)

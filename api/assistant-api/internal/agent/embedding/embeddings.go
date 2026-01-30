@@ -9,7 +9,7 @@ import (
 	"context"
 
 	"github.com/rapidaai/pkg/types"
-	protos "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
 type TextEmbeddingOption struct {

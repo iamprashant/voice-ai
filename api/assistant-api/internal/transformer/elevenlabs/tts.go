@@ -93,7 +93,6 @@ func (elt *elevenlabsTTS) textToSpeechCallback(conn *websocket.Conn, ctx context
 					elt.logger.Infof("elevenlabs-tts: websocket closed gracefully")
 					return
 				}
-
 				elt.logger.Errorf("elevenlabs-tts: websocket read error: %v", err)
 				return
 			}
@@ -135,7 +134,12 @@ func (t *elevenlabsTTS) Transform(ctx context.Context, in internal_type.LLMPacke
 	}
 
 	switch input := in.(type) {
-	case internal_type.LLMStreamPacket:
+	case internal_type.InterruptionPacket:
+		// only stop speaking on word-level interruptions
+		if input.Source == internal_type.InterruptionSourceWord && currentCtx != "" {
+		}
+		return nil
+	case internal_type.LLMResponseDeltaPacket:
 		if err := cnn.WriteJSON(map[string]interface{}{
 			"text":       input.Text,
 			"context_id": currentCtx,
@@ -150,7 +154,7 @@ func (t *elevenlabsTTS) Transform(ctx context.Context, in internal_type.LLMPacke
 			t.logger.Errorf("elevenlab-tts: unable to write json for text to speech: %v", err)
 			return err
 		}
-	case internal_type.LLMMessagePacket:
+	case internal_type.LLMResponseDonePacket:
 		return nil
 	default:
 		return fmt.Errorf("elevenlab-tts: unsupported input type %T", in)

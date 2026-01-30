@@ -38,7 +38,7 @@ func (vng *vonageWebsocketStreamer) Context() context.Context {
 	return vng.streamer.Context()
 }
 
-func (vng *vonageWebsocketStreamer) Recv() (*protos.AssistantMessagingRequest, error) {
+func (vng *vonageWebsocketStreamer) Recv() (*protos.AssistantTalkInput, error) {
 	if vng.streamer.Connection() == nil {
 		return nil, vng.handleError("WebSocket connection is nil", io.EOF)
 	}
@@ -73,20 +73,20 @@ func (vng *vonageWebsocketStreamer) Recv() (*protos.AssistantMessagingRequest, e
 	return nil, nil
 }
 
-func (vng *vonageWebsocketStreamer) Send(response *protos.AssistantMessagingResponse) error {
+func (vng *vonageWebsocketStreamer) Send(response *protos.AssistantTalkOutput) error {
 	if vng.streamer.Connection() == nil {
 		return nil
 	}
 	switch data := response.GetData().(type) {
-	case *protos.AssistantMessagingResponse_Assistant:
+	case *protos.AssistantTalkOutput_Assistant:
 		switch content := data.Assistant.Message.(type) {
-		case *protos.AssistantConversationAssistantMessage_Audio:
+		case *protos.ConversationAssistantMessage_Audio:
 			//	1ms 32  10ms 320byte @ 16000Hz, 16-bit mono PCM = 640 bytes
 			// Each message needs to be a 20ms sample of audio.
 			// At 8kHz the message should be 320 bytes.
 			// At 16kHz the message should be 640 bytes.
 			bufferSizeThreshold := 32 * 20
-			audioData := content.Audio.GetContent()
+			audioData := content.Audio
 
 			// Use vng.audioBuffer to handle pending data across calls
 			vng.streamer.LockOutputAudioBuffer()
@@ -113,8 +113,8 @@ func (vng *vonageWebsocketStreamer) Send(response *protos.AssistantMessagingResp
 				vng.streamer.OutputBuffer().Reset() // Clear the buffer after flushing
 			}
 		}
-	case *protos.AssistantMessagingResponse_Interruption:
-		if data.Interruption.Type == protos.AssistantConversationInterruption_INTERRUPTION_TYPE_WORD {
+	case *protos.AssistantTalkOutput_Interruption:
+		if data.Interruption.Type == protos.ConversationInterruption_INTERRUPTION_TYPE_WORD {
 			vng.streamer.LockOutputAudioBuffer()
 			vng.streamer.OutputBuffer().Reset()
 			vng.streamer.UnlockOutputAudioBuffer()
@@ -124,8 +124,8 @@ func (vng *vonageWebsocketStreamer) Send(response *protos.AssistantMessagingResp
 				vng.logger.Errorf("Error sending clear command:", err)
 			}
 		}
-	case *protos.AssistantMessagingResponse_Action:
-		if data.Action.GetAction() == protos.AssistantConversationAction_END_CONVERSATION {
+	case *protos.AssistantTalkOutput_Directive:
+		if data.Directive.GetType() == protos.ConversationDirective_END_CONVERSATION {
 			if vng.streamer.GetUuid() != "" {
 				cAuth, err := vng.Auth(vng.streamer.VaultCredential())
 				if err != nil {
@@ -156,7 +156,7 @@ func (vng *vonageWebsocketStreamer) Send(response *protos.AssistantMessagingResp
 	return nil
 }
 
-func (vng *vonageWebsocketStreamer) handleMediaEvent(message []byte) (*protos.AssistantMessagingRequest, error) {
+func (vng *vonageWebsocketStreamer) handleMediaEvent(message []byte) (*protos.AssistantTalkInput, error) {
 	vng.streamer.LockInputAudioBuffer()
 	defer vng.streamer.UnlockInputAudioBuffer()
 

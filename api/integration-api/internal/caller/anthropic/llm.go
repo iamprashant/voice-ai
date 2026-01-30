@@ -3,14 +3,15 @@ package internal_anthropic_callers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
+	"time"
 
 	"github.com/anthropics/anthropic-sdk-go"
 
 	internal_callers "github.com/rapidaai/api/integration-api/internal/caller"
 	internal_caller_metrics "github.com/rapidaai/api/integration-api/internal/caller/metrics"
 	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
 	protos "github.com/rapidaai/protos"
 )
@@ -31,18 +32,15 @@ func (llc *largeLanguageCaller) BuildHistory(allMessages []*protos.Message) ([]a
 	for _, msg := range allMessages {
 		switch msg.GetRole() {
 		case "assistant":
-			// message :=
 			mConnect := make([]anthropic.ContentBlockParamUnion, 0)
-			for _, c := range msg.GetContents() {
-				if c.GetContentType() == commons.TEXT_CONTENT.String() {
-					mConnect = append(mConnect, anthropic.ContentBlockParamUnion{
-						OfText: &anthropic.TextBlockParam{
-							Text: string(c.GetContent()),
-						},
-					})
-				}
+			for _, c := range msg.GetAssistant().GetContents() {
+				mConnect = append(mConnect, anthropic.ContentBlockParamUnion{
+					OfText: &anthropic.TextBlockParam{
+						Text: string(c),
+					},
+				})
 			}
-			for _, tc := range msg.GetToolCalls() {
+			for _, tc := range msg.GetAssistant().GetToolCalls() {
 				var input map[string]interface{}
 				if err := json.Unmarshal([]byte(tc.GetFunction().GetArguments()), &input); err != nil {
 					llc.logger.Warnf("Invalid JSON in tool call arguments: %v", err)
@@ -63,32 +61,22 @@ func (llc *largeLanguageCaller) BuildHistory(allMessages []*protos.Message) ([]a
 				})
 			}
 		case "user":
-			uContent := make([]anthropic.ContentBlockParamUnion, 0)
-			for _, c := range msg.GetContents() {
-				if c.GetContentType() == commons.TEXT_CONTENT.String() {
-					txtContent := string(c.GetContent())
-					// ignore emty block
-					if strings.TrimSpace(txtContent) != "" {
-						uContent = append(uContent, anthropic.ContentBlockParamUnion{
-							OfText: &anthropic.TextBlockParam{
-								Text: string(c.GetContent()),
-							},
-						})
-					}
-				}
-			}
-			if len(uContent) > 0 {
+			if u := msg.GetUser(); u != nil && strings.TrimSpace(u.GetContent()) != "" {
 				messages = append(messages, anthropic.MessageParam{
-					Role:    anthropic.MessageParamRoleUser,
-					Content: uContent,
-				})
+					Role: anthropic.MessageParamRoleUser,
+					Content: []anthropic.ContentBlockParamUnion{{
+						OfText: &anthropic.TextBlockParam{
+							Text: string(u.GetContent()),
+						},
+					},
+					}})
 			}
 		case "tool":
 			tContent := make([]anthropic.ContentBlockParamUnion, 0)
-			for _, c := range msg.GetContents() {
+			for _, c := range msg.GetTool().GetTools() {
 				tContent = append(tContent, anthropic.ContentBlockParamUnion{
 					OfToolResult: &anthropic.ToolResultBlockParam{
-						ToolUseID: c.GetContentType(),
+						ToolUseID: c.GetId(),
 						Content: []anthropic.ToolResultBlockParamContentUnion{{
 							OfText: &anthropic.TextBlockParam{
 								Text: string(c.GetContent()),
@@ -104,27 +92,28 @@ func (llc *largeLanguageCaller) BuildHistory(allMessages []*protos.Message) ([]a
 				})
 			}
 		case "system":
-			for _, c := range msg.GetContents() {
-				if c.GetContentType() == commons.TEXT_CONTENT.String() {
-					systemPrompt = append(systemPrompt, anthropic.TextBlockParam{
-						Text: string(c.GetContent()),
-					})
-				}
+			if c := msg.GetSystem(); c != nil {
+				systemPrompt = append(systemPrompt, anthropic.TextBlockParam{
+					Text: string(c.GetContent()),
+				})
 			}
 		}
 	}
 	return systemPrompt, messages
 }
+
 func (llc *largeLanguageCaller) StreamChatCompletion(
 	ctx context.Context,
 	allMessages []*protos.Message,
 	options *internal_callers.ChatCompletionOptions,
-	onStream func(types.Message) error,
-	onMetrics func(*types.Message, types.Metrics) error,
-	onError func(err error),
+	onStream func(string, *protos.Message) error,
+	onMetrics func(string, *protos.Message, []*protos.Metric) error,
+	onError func(string, error),
 ) error {
+	start := time.Now()
 	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)
 	metrics.OnStart()
+	var firstTokenTime *time.Time
 
 	instruction, messages := llc.BuildHistory(allMessages)
 	params := llc.GetMessageNewParams(options)
@@ -134,8 +123,7 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 	client, err := llc.GetClient()
 	if err != nil {
 		llc.logger.Errorf("chat completion unable to get client for anthropic: %v", err)
-		onError(err)
-		onMetrics(nil, metrics.OnFailure().Build())
+		onError(options.Request.GetRequestId(), err)
 		options.PostHook(map[string]interface{}{
 			"error": err,
 		}, metrics.OnFailure().Build())
@@ -145,27 +133,25 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 	stream := client.Messages.NewStreaming(ctx, params)
 	message := anthropic.Message{}
 	if stream.Err() != nil {
-		llc.logger.Errorf("stream error: %v", stream.Err())
 		options.PostHook(map[string]interface{}{
 			"result": utils.ToJson(message),
 			"error":  stream.Err(),
 		}, metrics.Build())
-		onMetrics(nil, metrics.OnFailure().Build())
-		onError(stream.Err())
+		onError(options.Request.GetRequestId(), stream.Err())
 		return stream.Err()
 	}
 
-	completeMessage := types.Message{
-		Role: "assistant",
-	}
-	var currentToolCall *types.ToolCall
-	var currentContent *types.Content
+	completeMessage := &protos.AssistantMessage{}
+	var currentToolCall *protos.ToolCall
+	var currentContent string
+	var textTokenBuffer []string // Buffer to hold text tokens temporarily
 	isToolCall := false
+	hasToolCalls := false // Flag to track if response contains tool calls
 	for stream.Next() {
 		event := stream.Current()
 		err := message.Accumulate(event)
 		if err != nil {
-			onError(err)
+			onError(options.Request.GetRequestId(), err)
 			continue
 		}
 
@@ -175,43 +161,30 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 			switch event.ContentBlock.Type {
 			case "tool_use":
 				isToolCall = true
-				currentToolCall = &types.ToolCall{
-					Id:   utils.Ptr(event.ContentBlock.ID),
-					Type: utils.Ptr("function"),
-					Function: &types.FunctionCall{
-						Name:      utils.Ptr(event.ContentBlock.Name),
-						Arguments: utils.Ptr(""),
+				hasToolCalls = true
+				currentToolCall = &protos.ToolCall{
+					Id:   event.ContentBlock.ID,
+					Type: "function",
+					Function: &protos.FunctionCall{
+						Name: event.ContentBlock.Name,
 					},
 				}
 			case "text":
-				currentContent = &types.Content{
-					ContentType:   commons.TEXT_CONTENT.String(),
-					ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
-					Content:       []byte(""),
-				}
+				currentContent = ""
 			}
 
 		case anthropic.ContentBlockDeltaEvent:
 			switch event.Delta.Type {
 			case "text_delta":
 				content := event.Delta.Text
-				if content != "" && currentContent != nil {
-					currentContent.Content = append(currentContent.Content, []byte(content)...)
-					if !isToolCall {
-						if err := onStream(types.Message{
-							Contents: []*types.Content{{
-								ContentType:   commons.TEXT_CONTENT.String(),
-								ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
-								Content:       []byte(content),
-							}},
-							Role: "assistant",
-						}); err != nil {
-						}
-					}
+				if content != "" && !isToolCall {
+					currentContent += content
+					// Buffer the token instead of streaming immediately
+					textTokenBuffer = append(textTokenBuffer, content)
 				}
 			case "input_json_delta":
 				if currentToolCall != nil {
-					currentToolCall.Function.MergeArguments(utils.Ptr(event.Delta.PartialJSON))
+					currentToolCall.Function.Arguments += event.Delta.PartialJSON
 				}
 			}
 
@@ -219,23 +192,66 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 			if currentToolCall != nil {
 				completeMessage.ToolCalls = append(completeMessage.ToolCalls, currentToolCall)
 			}
-			if currentContent != nil {
+			if currentContent != "" {
 				completeMessage.Contents = append(completeMessage.Contents, currentContent)
+				currentContent = ""
 			}
 			isToolCall = false
 
 		case anthropic.MessageStopEvent:
 			metrics.OnAddMetrics(llc.UsageMetrics(message.Usage)...)
+
+			finalMsg := &protos.Message{
+				Role: "assistant",
+				Message: &protos.Message_Assistant{
+					Assistant: completeMessage,
+				},
+			}
+			// Stream text tokens only if no tool calls in response
+			if !hasToolCalls {
+				for _, token := range textTokenBuffer {
+					if token != "" {
+						// Record first token received time
+						if firstTokenTime == nil {
+							now := time.Now()
+							firstTokenTime = &now
+						}
+						tokenMsg := &protos.Message{
+							Role: "assistant",
+							Message: &protos.Message_Assistant{
+								Assistant: &protos.AssistantMessage{
+									Contents: []string{token},
+								},
+							},
+						}
+						if err := onStream(options.Request.GetRequestId(), tokenMsg); err != nil {
+							llc.logger.Warnf("error streaming token: %v", err)
+						}
+					}
+				}
+			}
+			// Add first token time metric if tokens were streamed
+			if firstTokenTime != nil {
+				metrics.OnAddMetrics(&protos.Metric{
+					Name:        "FIRST_TOKEN_RECIEVED_TIME",
+					Value:       fmt.Sprintf("%d", firstTokenTime.Sub(start)),
+					Description: "Time to receive first token from LLM",
+				})
+			}
+			// Update time taken and status
+			metrics.OnSuccess()
+			// Send metrics with complete message
+			onMetrics(options.Request.GetRequestId(), finalMsg, metrics.Build())
+			// Call PostHook after metrics for each message end
 			options.PostHook(map[string]interface{}{
 				"result": utils.ToJson(message),
-			}, metrics.OnSuccess().Build())
-			onMetrics(&completeMessage, metrics.Build())
+			}, metrics.Build())
 			return nil
 		}
 	}
 	if stream.Err() != nil {
 		llc.logger.Errorf("Stream error: %v", stream.Err())
-		onError(stream.Err())
+		onError(options.Request.GetRequestId(), stream.Err())
 		return stream.Err()
 	}
 	return nil
@@ -307,6 +323,16 @@ func (llc *largeLanguageCaller) GetMessageNewParams(opts *internal_callers.ChatC
 			if topP, err := utils.AnyToFloat64(value); err == nil {
 				options.TopP = anthropic.Float(topP)
 			}
+		case "model.response_format":
+			if format, err := utils.AnyToJSON(value); err == nil {
+
+				jsonSchemaParam := anthropic.OutputConfigParam{}
+				jsonData, err := json.Marshal(format)
+				if err == nil {
+					json.Unmarshal(jsonData, &jsonSchemaParam)
+				}
+				options.OutputConfig = jsonSchemaParam
+			}
 		}
 	}
 	return options
@@ -316,7 +342,7 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 	ctx context.Context,
 	allMessages []*protos.Message,
 	options *internal_callers.ChatCompletionOptions,
-) (*types.Message, types.Metrics, error) {
+) (*protos.Message, []*protos.Metric, error) {
 	metrics := internal_caller_metrics.NewMetricBuilder(options.RequestId)
 	metrics.OnStart()
 
@@ -343,39 +369,42 @@ func (llc *largeLanguageCaller) GetChatCompletion(
 		return nil, metrics.Build(), err
 	}
 
-	internalMessage := llc.convertAnthropicMessageToInternal(*resp)
+	protoMessage := llc.convertAnthropicMessageToProto(*resp)
 	metrics.OnAddMetrics(llc.UsageMetrics(resp.Usage)...)
 	options.PostHook(map[string]interface{}{
 		"result": resp,
 		"error":  err,
 	}, metrics.OnSuccess().Build())
-	return &internalMessage, metrics.Build(), nil
+	return protoMessage, metrics.Build(), nil
 }
 
-func (llc *largeLanguageCaller) convertAnthropicMessageToInternal(message anthropic.Message) types.Message {
-	internalMessage := types.Message{
-		Contents:  make([]*types.Content, 0),
-		ToolCalls: make([]*types.ToolCall, 0),
-	}
+func (llc *largeLanguageCaller) convertAnthropicMessageToProto(message anthropic.Message) *protos.Message {
+	contents := make([]string, 0)
+	toolCalls := make([]*protos.ToolCall, 0)
+
 	for _, content := range message.Content {
 		switch c := content.AsAny().(type) {
 		case anthropic.TextBlock:
-			internalMessage.Contents = append(internalMessage.Contents, &types.Content{
-				ContentType:   commons.TEXT_CONTENT.String(),
-				ContentFormat: commons.TEXT_CONTENT_FORMAT_RAW.String(),
-				Content:       []byte(c.Text),
-			})
+			contents = append(contents, c.Text)
 		case anthropic.ToolUseBlock:
-			internalMessage.ToolCalls = append(internalMessage.ToolCalls, &types.ToolCall{
-				Id:   utils.Ptr(c.ID),
-				Type: utils.Ptr("function"),
-				Function: &types.FunctionCall{
-					Name:      utils.Ptr(c.Name),
-					Arguments: utils.Ptr(string(c.JSON.Input.Raw())),
+			toolCalls = append(toolCalls, &protos.ToolCall{
+				Id:   c.ID,
+				Type: "function",
+				Function: &protos.FunctionCall{
+					Name:      c.Name,
+					Arguments: string(c.JSON.Input.Raw()),
 				},
 			})
 		}
 	}
 
-	return internalMessage
+	return &protos.Message{
+		Role: "assistant",
+		Message: &protos.Message_Assistant{
+			Assistant: &protos.AssistantMessage{
+				Contents:  contents,
+				ToolCalls: toolCalls,
+			},
+		},
+	}
 }

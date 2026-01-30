@@ -43,7 +43,7 @@ func getModelPath() string {
 	return envModelPath
 }
 
-func newSileroOrSkip(t *testing.T, inputCfg *protos.AudioConfig, threshold float64, cb internal_type.VADCallback) *SileroVAD {
+func newSileroOrSkip(t *testing.T, inputCfg *protos.AudioConfig, threshold float64, cb func(ctx context.Context, pkt ...internal_type.Packet) error) *SileroVAD {
 	logger, err := commons.NewApplicationLogger()
 	opts := newTestOptions(t, threshold)
 	vad, err := NewSileroVAD(t.Context(), logger, inputCfg, cb, opts)
@@ -84,7 +84,7 @@ func generateNoise(samples int) internal_type.UserAudioPacket {
 
 func TestNewSileroVAD_DefaultThreshold(t *testing.T) {
 	inputConfig := internal_audio.NewLinear16khzMonoAudioConfig()
-	callback := func(internal_type.InterruptionPacket) error { return nil }
+	callback := func(context.Context, ...internal_type.Packet) error { return nil }
 
 	vad := newSileroOrSkip(t, inputConfig, -1, callback)
 
@@ -97,7 +97,7 @@ func TestNewSileroVAD_DefaultThreshold(t *testing.T) {
 
 func TestSileroVAD_Name(t *testing.T) {
 	inputConfig := internal_audio.NewLinear16khzMonoAudioConfig()
-	callback := func(internal_type.InterruptionPacket) error { return nil }
+	callback := func(context.Context, ...internal_type.Packet) error { return nil }
 
 	vad := newSileroOrSkip(t, inputConfig, 0.5, callback)
 
@@ -107,7 +107,7 @@ func TestSileroVAD_Name(t *testing.T) {
 func TestSileroVAD_Process_Silence_NoCallback(t *testing.T) {
 	inputConfig := internal_audio.NewLinear16khzMonoAudioConfig()
 	callbackCalled := false
-	callback := func(internal_type.InterruptionPacket) error {
+	callback := func(context.Context, ...internal_type.Packet) error {
 		callbackCalled = true
 		return nil
 	}
@@ -122,8 +122,12 @@ func TestSileroVAD_Process_Silence_NoCallback(t *testing.T) {
 func TestSileroVAD_Process_Speech_AllowsCallback(t *testing.T) {
 	inputConfig := internal_audio.NewLinear16khzMonoAudioConfig()
 	var result internal_type.InterruptionPacket
-	callback := func(r internal_type.InterruptionPacket) error {
-		result = r
+	callback := func(ctx context.Context, pkt ...internal_type.Packet) error {
+		if len(pkt) > 0 {
+			if interruption, ok := pkt[0].(internal_type.InterruptionPacket); ok {
+				result = interruption
+			}
+		}
 		return nil
 	}
 
@@ -135,7 +139,7 @@ func TestSileroVAD_Process_Speech_AllowsCallback(t *testing.T) {
 }
 
 func TestSileroVAD_Process_DifferentSampleRates(t *testing.T) {
-	callback := func(internal_type.InterruptionPacket) error { return nil }
+	callback := func(context.Context, ...internal_type.Packet) error { return nil }
 
 	tests := []struct {
 		name       string
@@ -162,7 +166,7 @@ func TestSileroVAD_Process_DifferentSampleRates(t *testing.T) {
 }
 
 func TestSileroVAD_Process_DifferentChannels(t *testing.T) {
-	callback := func(internal_type.InterruptionPacket) error { return nil }
+	callback := func(context.Context, ...internal_type.Packet) error { return nil }
 
 	tests := []struct {
 		name     string
@@ -187,7 +191,7 @@ func TestSileroVAD_Process_DifferentChannels(t *testing.T) {
 
 func TestSileroVAD_Process_CorruptedData(t *testing.T) {
 	inputConfig := internal_audio.NewLinear16khzMonoAudioConfig()
-	callback := func(internal_type.InterruptionPacket) error { return nil }
+	callback := func(context.Context, ...internal_type.Packet) error { return nil }
 
 	vad := newSileroOrSkip(t, inputConfig, 0.5, callback)
 
@@ -198,7 +202,7 @@ func TestSileroVAD_Process_CorruptedData(t *testing.T) {
 
 func TestSileroVAD_Process_VerySmallChunks(t *testing.T) {
 	inputConfig := internal_audio.NewLinear16khzMonoAudioConfig()
-	callback := func(internal_type.InterruptionPacket) error { return nil }
+	callback := func(context.Context, ...internal_type.Packet) error { return nil }
 
 	vad := newSileroOrSkip(t, inputConfig, 0.5, callback)
 
@@ -214,7 +218,7 @@ func TestSileroVAD_Process_VerySmallChunks(t *testing.T) {
 
 func TestSileroVAD_Process_Concurrent(t *testing.T) {
 	inputConfig := internal_audio.NewLinear16khzMonoAudioConfig()
-	callback := func(internal_type.InterruptionPacket) error { return nil }
+	callback := func(context.Context, ...internal_type.Packet) error { return nil }
 
 	vad := newSileroOrSkip(t, inputConfig, 0.5, callback)
 
@@ -233,7 +237,7 @@ func TestSileroVAD_Process_Concurrent(t *testing.T) {
 func TestSileroVAD_Close_Idempotent(t *testing.T) {
 	logger, err := commons.NewApplicationLogger()
 	inputConfig := internal_audio.NewLinear16khzMonoAudioConfig()
-	callback := func(internal_type.InterruptionPacket) error { return nil }
+	callback := func(context.Context, ...internal_type.Packet) error { return nil }
 	opts := newTestOptions(t, 0.5)
 
 	vad, err := NewSileroVAD(t.Context(), logger, inputConfig, callback, opts)
@@ -266,13 +270,13 @@ func TestSileroVAD_ModelPath_Environment(t *testing.T) {
 	})
 
 	inputConfig := internal_audio.NewLinear16khzMonoAudioConfig()
-	callback := func(internal_type.InterruptionPacket) error { return nil }
+	callback := func(context.Context, ...internal_type.Packet) error { return nil }
 	_ = newSileroOrSkip(t, inputConfig, 0.5, callback)
 }
 
 func TestSileroVAD_Process_NoisePatterns(t *testing.T) {
 	inputConfig := internal_audio.NewLinear16khzMonoAudioConfig()
-	callback := func(internal_type.InterruptionPacket) error { return nil }
+	callback := func(context.Context, ...internal_type.Packet) error { return nil }
 
 	vad := newSileroOrSkip(t, inputConfig, 0.5, callback)
 
@@ -282,7 +286,7 @@ func TestSileroVAD_Process_NoisePatterns(t *testing.T) {
 
 func TestSileroVAD_Process_MaxAmplitude(t *testing.T) {
 	inputConfig := internal_audio.NewLinear16khzMonoAudioConfig()
-	callback := func(internal_type.InterruptionPacket) error { return nil }
+	callback := func(context.Context, ...internal_type.Packet) error { return nil }
 
 	vad := newSileroOrSkip(t, inputConfig, 0.5, callback)
 
@@ -304,7 +308,7 @@ func TestSileroVAD_Process_MaxAmplitude(t *testing.T) {
 
 func TestSileroVAD_Process_RepeatedCalls(t *testing.T) {
 	inputConfig := internal_audio.NewLinear16khzMonoAudioConfig()
-	callback := func(internal_type.InterruptionPacket) error { return nil }
+	callback := func(context.Context, ...internal_type.Packet) error { return nil }
 
 	vad := newSileroOrSkip(t, inputConfig, 0.5, callback)
 
@@ -318,7 +322,7 @@ func TestSileroVAD_Process_RepeatedCalls(t *testing.T) {
 func TestSileroVAD_StatefulProcessing(t *testing.T) {
 	inputConfig := internal_audio.NewLinear16khzMonoAudioConfig()
 	var calls int
-	callback := func(internal_type.InterruptionPacket) error {
+	callback := func(context.Context, ...internal_type.Packet) error {
 		calls++
 		return nil
 	}

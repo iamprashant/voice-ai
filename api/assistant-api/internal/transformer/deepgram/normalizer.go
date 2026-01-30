@@ -35,8 +35,6 @@ type deepgramNormalizer struct {
 // NewDeepgramNormalizer creates a Deepgram-specific text normalizer.
 func NewDeepgramNormalizer(logger commons.Logger, opts utils.Option) internal_type.TextNormalizer {
 	cfg := internal_type.DefaultNormalizerConfig()
-
-	logger.Debugf("testing -> deepgram-normalizer: initializing with options: %v", opts)
 	language, _ := opts.GetString("speaker.language")
 	if language == "" {
 		language = "en"

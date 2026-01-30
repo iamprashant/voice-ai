@@ -28,16 +28,16 @@ type anthropicIntegrationGRPCApi struct {
 	anthropicIntegrationApi
 }
 
-// StreamChat implements protos.AnthropicServiceServer.
-func (anthropic *anthropicIntegrationGRPCApi) StreamChat(irRequest *protos.ChatRequest, stream protos.AnthropicService_StreamChatServer) error {
-	// StreamChat implements protos.CohereServiceServer.
-	anthropic.logger.Debugf("request for streaming chat anthropic with request %+v", irRequest)
-	return anthropic.integrationApi.StreamChat(
-		irRequest,
+// StreamChat implements protos.AnthropicServiceServer (bidirectional streaming).
+func (anthropic *anthropicIntegrationGRPCApi) StreamChat(stream protos.AnthropicService_StreamChatServer) error {
+	anthropic.logger.Debugf("Bidirectional stream chat opened for anthropic")
+	return anthropic.integrationApi.StreamChatBidirectional(
 		stream.Context(),
 		"ANTHROPIC",
-		internal_anthropic_callers.NewLargeLanguageCaller(anthropic.logger, irRequest.GetCredential()),
-		stream.Send,
+		func(cred *protos.Credential) internal_callers.LargeLanguageCaller {
+			return internal_anthropic_callers.NewLargeLanguageCaller(anthropic.logger, cred)
+		},
+		stream,
 	)
 }
 

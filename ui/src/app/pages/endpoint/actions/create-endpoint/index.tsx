@@ -7,6 +7,7 @@ import { Helmet } from '@/app/components/helmet';
 import {
   IBlueBGArrowButton,
   ICancelButton,
+  SimpleButton,
 } from '@/app/components/form/button';
 import { TabForm } from '@/app/components/form/tab-form';
 import {
@@ -35,8 +36,12 @@ import { CreateEndpoint } from '@rapidaai/react';
 import { ServiceError } from '@rapidaai/react';
 import { ChatCompletePrompt } from '@/utils/prompt';
 import { connectionConfig } from '@/configs';
-import { YellowNoticeBlock } from '@/app/components/container/message/notice-block';
-import { ExternalLink, Info } from 'lucide-react';
+import {
+  BlueNoticeBlock,
+  YellowNoticeBlock,
+} from '@/app/components/container/message/notice-block';
+import { ArrowUpRight, ExternalLink, Info, MoveRight } from 'lucide-react';
+import { ConfigureEndpointPromptDialog } from '@/app/components/base/modal/configure-endpoint-prompt-modal/index';
 
 /**
  *
@@ -217,9 +222,110 @@ export function CreateEndpointPage() {
   };
 
   const [isShow, setIsShow] = useState(false);
+  const [isConfigureEndpointPromptOpen, setIsConfigureEndpointPromptOpen] =
+    useState(false);
+
+  const handleSelectTemplate = (template: {
+    name: string;
+    description: string;
+    provider: string;
+    model: string;
+    parameters: { temperature: number; response_format: string };
+    instruction: { role: string; content: string }[];
+  }) => {
+    // Set the name and description
+    setName(template.name);
+    setDescription(template.description);
+
+    // Set prompt config from template instruction
+    const promptMessages = template.instruction.map(inst => ({
+      role: inst.role,
+      content: inst.content,
+    }));
+
+    // Extract variables from the template content (look for {{ variable }} patterns)
+    const variableRegex = /\{\{\s*(\w+)(?:\[.*?\])?\s*\}\}/g;
+    const variables: { name: string; type: string; defaultvalue: string }[] =
+      [];
+    const seenVariables = new Set<string>();
+
+    template.instruction.forEach(inst => {
+      let match;
+      while ((match = variableRegex.exec(inst.content)) !== null) {
+        const varName = match[1];
+        if (!seenVariables.has(varName)) {
+          seenVariables.add(varName);
+          variables.push({
+            name: varName,
+            type: 'string',
+            defaultvalue: '',
+          });
+        }
+      }
+    });
+
+    setPromptConfig({
+      prompt: promptMessages,
+      variables:
+        variables.length > 0
+          ? variables
+          : [{ name: 'messages', type: 'string', defaultvalue: '' }],
+    });
+
+    // Get default parameters for the template provider
+    const newParams = GetDefaultTextProviderConfigIfInvalid(
+      template.provider,
+      [],
+    );
+
+    // Helper function to set or create a parameter
+    const setOrCreateParam = (key: string, value: string) => {
+      const existingParam = newParams.find(p => p.getKey() === key);
+      if (existingParam) {
+        existingParam.setValue(value);
+      } else {
+        const newParam = new Metadata();
+        newParam.setKey(key);
+        newParam.setValue(value);
+        newParams.push(newParam);
+      }
+    };
+
+    // Update temperature
+    setOrCreateParam(
+      'model.temperature',
+      String(template.parameters.temperature),
+    );
+
+    // Update response_format
+    if (template.parameters.response_format) {
+      setOrCreateParam(
+        'model.response_format',
+        template.parameters.response_format,
+      );
+    }
+
+    // Update model name
+    setOrCreateParam('model.name', template.model);
+
+    // Update model id
+    setOrCreateParam('model.id', `${template.provider}/${template.model}`);
+
+    // Set the provider and parameters
+    setTextProviderModel({
+      provider: template.provider,
+      parameters: newParams,
+    });
+  };
+
   return (
     <>
       <Helmet title="Create an Endpoint"></Helmet>
+      <ConfigureEndpointPromptDialog
+        modalOpen={isConfigureEndpointPromptOpen}
+        setModalOpen={setIsConfigureEndpointPromptOpen}
+        onSelectTemplate={handleSelectTemplate}
+      />
       <ConfirmDialog
         showing={isShow}
         type="warning"
@@ -273,6 +379,26 @@ export function CreateEndpointPage() {
                   </a>
                 </YellowNoticeBlock>
                 <div className="space-y-6 px-8 pb-8 max-w-4xl ">
+                  <BlueNoticeBlock
+                    className="p-4 px-6 rounded-md cursor-pointer border"
+                    onClick={() => {
+                      setIsConfigureEndpointPromptOpen(true);
+                    }}
+                  >
+                    <h2 className="mb-1 text-[15px] font-semibold text-blue-600">
+                      Quick Start with Usecase Template
+                    </h2>
+                    <div className="flex justify-between space-x-2">
+                      <p className="text-sm">
+                        Choose from pre-configured templates Click to browse
+                        available usecases and auto-fill your form
+                      </p>
+                      <ArrowUpRight
+                        className="text-blue-600 shrink-0"
+                        strokeWidth={1.5}
+                      />
+                    </div>
+                  </BlueNoticeBlock>
                   <TextProvider
                     onChangeProvider={onChangeTextProvider}
                     onChangeParameter={onChangeTextProviderParameter}

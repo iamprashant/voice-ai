@@ -113,30 +113,30 @@ func (google *googleTextToSpeech) Initialize() error {
 // Transform handles streaming synthesis requests for input text.
 func (google *googleTextToSpeech) Transform(ctx context.Context, in internal_type.LLMPacket) error {
 	google.mu.Lock()
-	contextChanged := in.ContextId() != google.contextId && google.contextId != ""
+	currentCtx := google.contextId
 	if in.ContextId() != google.contextId {
 		google.contextId = in.ContextId()
 	}
 	sCli := google.streamClient
 	google.mu.Unlock()
-
-	// If context changed, reinitialize the stream to prevent old chunks from leaking
-	if contextChanged {
-		google.logger.Debugf("google-tts: context changed from old to %s, reinitializing stream", in.ContextId())
-		if err := google.Initialize(); err != nil {
-			return fmt.Errorf("failed to reinitialize stream on context change: %w", err)
-		}
-		google.mu.Lock()
-		sCli = google.streamClient
-		google.mu.Unlock()
-	}
-
 	if sCli == nil {
 		return fmt.Errorf("google-tts: calling transform without initialize")
 	}
 
 	switch input := in.(type) {
-	case internal_type.LLMStreamPacket:
+	case internal_type.InterruptionPacket:
+		// only stop speaking on word-level interruptions
+		if input.Source == internal_type.InterruptionSourceWord && currentCtx != "" {
+			google.logger.Debugf("google-tts: context changed from old to %s, reinitializing stream", in.ContextId())
+			if err := google.Initialize(); err != nil {
+				return fmt.Errorf("failed to reinitialize stream on context change: %w", err)
+			}
+			google.mu.Lock()
+			sCli = google.streamClient
+			google.mu.Unlock()
+		}
+		return nil
+	case internal_type.LLMResponseDeltaPacket:
 		if err := sCli.Send(&texttospeechpb.StreamingSynthesizeRequest{
 			StreamingRequest: &texttospeechpb.StreamingSynthesizeRequest_Input{
 				Input: &texttospeechpb.StreamingSynthesisInput{
@@ -148,7 +148,7 @@ func (google *googleTextToSpeech) Transform(ctx context.Context, in internal_typ
 			return fmt.Errorf("failed to synthesize text: %w", err)
 		}
 		return nil
-	case internal_type.LLMMessagePacket:
+	case internal_type.LLMResponseDonePacket:
 		return nil
 	default:
 		return fmt.Errorf("google-tts: unsupported input type %T", in)

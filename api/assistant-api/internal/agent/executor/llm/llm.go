@@ -31,7 +31,7 @@ func NewAssistantExecutor(logger commons.Logger) internal_agent_executor.Assista
 }
 
 // Init implements internal_executors.AssistantExecutor.
-func (a *assistantExecutor) Initialize(ctx context.Context, communication internal_type.Communication, cfg *protos.AssistantConversationConfiguration) error {
+func (a *assistantExecutor) Initialize(ctx context.Context, communication internal_type.Communication, cfg *protos.ConversationConfiguration) error {
 	switch communication.Assistant().AssistantProvider {
 	case type_enums.AGENTKIT:
 		a.executor = internal_agentkit.NewAgentKitAssistantExecutor(a.logger)
@@ -58,9 +58,9 @@ func (a *assistantExecutor) Execute(ctx context.Context, communication internal_
 	return a.executor.Execute(ctx, communication, pctk)
 }
 
-func (a *assistantExecutor) Close(ctx context.Context, communication internal_type.Communication) error {
+func (a *assistantExecutor) Close(ctx context.Context) error {
 	if a.executor == nil {
 		return errors.New("assistant executor not initialized")
 	}
-	return a.executor.Close(ctx, communication)
+	return a.executor.Close(ctx)
 }

@@ -6,7 +6,9 @@ package integration_api
 import (
 	"context"
 	"errors"
+	"io"
 
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -16,113 +18,159 @@ import (
 	protos "github.com/rapidaai/protos"
 )
 
-// StreamChat handles streaming chat requests to a large language model.
+// StreamChatBidirectional handles bidirectional streaming chat with persistent connection.
 //
 // This method:
-// 1. Authenticates the request using the provided context.
-// 2. Initiates a streaming chat completion using the provided LLM caller.
-// utions.
-// 3. Processes the streaming responses, including content, metrics, and errors.
-// 4. Sends formatted responses back to the client using the provided send function.
+// 1. Authenticates the client once at the beginning.
+// 2. Keeps the connection open, receiving multiple ChatRequest messages.
+// 3. For each message, processes it through the LLM caller.
+// 4. Sends responses back through the same stream.
+// 5. Continues until the client closes the stream or an error occurs.
+//
+// Advantages:
+// - Single persistent connection for multiple messages
+// - No reconnection overhead
+// - Real-time bidirectional communication
+// - Efficient for conversational AI
 //
 // Parameters:
-// - irRequest: The chat request containing model and conversation details.
 // - context: The context for the request, used for authentication and cancellation.
-// - tag: A string identifier for the request, used for logging.
-// - llmCaller: The interface to call the large language model.
-// - send: A function to send responses back to the client.
+// - providerName: A string identifier for the provider, used for logging.
+// - callerFactory: A function to create a new LLM caller for each request with its credential.
+// - stream: The bidirectional gRPC stream for receiving requests and sending responses.
 //
-// The method uses channels to handle concurrent processing of content, metrics,
-// and errors from the LLM. It continues to stream responses until the output
-// channel is closed or an error occurs.
-//
-// Returns an error if authentication fails or if there's an issue sending responses.
-
-func (iApi *integrationApi) StreamChat(
-	irRequest *protos.ChatRequest,
+// Returns an error if authentication fails or if there's an issue during streaming.
+func (iApi *integrationApi) StreamChatBidirectional(
 	context context.Context,
 	providerName string,
-	llmCaller internal_callers.LargeLanguageCaller,
-	send func(*protos.ChatResponse) error) error {
+	callerFactory func(*protos.Credential) internal_callers.LargeLanguageCaller,
+	stream grpc.BidiStreamingServer[protos.ChatRequest, protos.ChatResponse],
+) error {
+	// Authenticate once at the beginning
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(context)
 	if !isAuthenticated || !iAuth.HasProject() {
-		iApi.logger.Errorf("unauthenticated request for invoke")
+		iApi.logger.Errorf("unauthenticated request for bidirectional stream chat")
 		return status.Error(codes.Unauthenticated, "Please provide valid service credentials to perform invoke.")
 	}
-	requestId := iApi.RequestId()
-	if irRequest.AdditionalData == nil {
-		irRequest.AdditionalData = map[string]string{}
-	}
 
-	irRequest.AdditionalData["provider_name"] = providerName
-	model, ok := irRequest.ModelParameters["model.name"]
-	if ok {
-		mdl, err := utils.AnyToString(model)
-		if err == nil {
-			irRequest.AdditionalData["model_name"] = mdl
+	iApi.logger.Infof("Bidirectional stream chat opened for provider: %s", providerName)
+
+	// Keep connection open and process multiple requests
+	for {
+		// Receive next chat request from client
+		irRequest, err := stream.Recv()
+		if err == io.EOF {
+			// Client closed the stream gracefully
+			iApi.logger.Infof("Client closed bidirectional stream for provider: %s", providerName)
+			return nil
 		}
-	}
-
-	modelID, ok := irRequest.ModelParameters["model.id"]
-	if ok {
-		mdlID, err := utils.AnyToString(modelID)
-		if err == nil {
-			irRequest.AdditionalData["model_id"] = mdlID
+		if err != nil {
+			iApi.logger.Errorf("Error receiving from bidirectional stream: %v", err)
+			return status.Errorf(codes.Internal, "Error receiving chat request from stream: %v", err)
 		}
-	}
 
-	source, ok := utils.GetClientSource(context)
-	if ok {
-		irRequest.AdditionalData["source"] = source.Get()
-	}
+		if irRequest == nil {
+			iApi.logger.Warnf("Received nil request from bidirectional stream")
+			continue
+		}
 
-	clientEnv, ok := utils.GetClientEnvironment(context)
-	if ok {
-		irRequest.AdditionalData["env"] = clientEnv.Get()
-	}
+		// Generate unique request ID for this message
+		uuID := iApi.RequestId()
+		if irRequest.AdditionalData == nil {
+			irRequest.AdditionalData = map[string]string{}
+		}
 
-	clientRegion, ok := utils.GetClientRegion(context)
-	if ok {
-		irRequest.AdditionalData["region"] = clientRegion.Get()
-	}
+		// Populate request metadata
+		irRequest.AdditionalData["provider_name"] = providerName
+		model, ok := irRequest.ModelParameters["model.name"]
+		if ok {
+			mdl, err := utils.AnyToString(model)
+			if err == nil {
+				irRequest.AdditionalData["model_name"] = mdl
+			}
+		}
 
-	return llmCaller.StreamChatCompletion(
-		context,
-		irRequest.GetConversations(),
-		internal_callers.NewChatOptions(
-			requestId,
-			irRequest,
-			iApi.PreHook(context, iAuth, irRequest, requestId, providerName),
-			iApi.PostHook(context, iAuth, irRequest, requestId, providerName),
-		),
-		func(content types.Message) error {
-			return send(&protos.ChatResponse{
-				Success:   true,
-				RequestId: requestId,
-				Data:      content.ToProto(),
-			})
-		},
-		func(content *types.Message, mtx types.Metrics) error {
-			return send(&protos.ChatResponse{
-				Success:   true,
-				RequestId: requestId,
-				Metrics:   mtx.ToProto(),
-				Data:      content.ToProto(),
-			})
-		},
-		func(err error) {
-			send(&protos.ChatResponse{
+		modelID, ok := irRequest.ModelParameters["model.id"]
+		if ok {
+			mdlID, err := utils.AnyToString(modelID)
+			if err == nil {
+				irRequest.AdditionalData["model_id"] = mdlID
+			}
+		}
+
+		source, ok := utils.GetClientSource(context)
+		if ok {
+			irRequest.AdditionalData["source"] = source.Get()
+		}
+
+		clientEnv, ok := utils.GetClientEnvironment(context)
+		if ok {
+			irRequest.AdditionalData["env"] = clientEnv.Get()
+		}
+
+		clientRegion, ok := utils.GetClientRegion(context)
+		if ok {
+			irRequest.AdditionalData["region"] = clientRegion.Get()
+		}
+
+		// Create a new LLM caller for this request with its credential
+		llmCaller := callerFactory(irRequest.GetCredential())
+
+		// Process the chat completion request
+		err = llmCaller.StreamChatCompletion(
+			stream.Context(),
+			irRequest.GetConversations(),
+			internal_callers.NewChatOptions(
+				uuID,
+				irRequest,
+				iApi.PreHook(stream.Context(), iAuth, irRequest, uuID, providerName),
+				iApi.PostHook(stream.Context(), iAuth, irRequest, uuID, providerName),
+			),
+			func(rID string, content *protos.Message) error {
+				return stream.Send(&protos.ChatResponse{
+					Success:   true,
+					RequestId: rID,
+					Data:      content,
+				})
+			},
+			func(rID string, content *protos.Message, mtx []*protos.Metric) error {
+				return stream.Send(&protos.ChatResponse{
+					Success:   true,
+					RequestId: rID,
+					Metrics:   mtx,
+					Data:      content,
+				})
+			},
+			func(rID string, err error) {
+				stream.Send(&protos.ChatResponse{
+					Success:   false,
+					Code:      400,
+					RequestId: rID,
+					Error: &protos.Error{
+						ErrorCode:    uint64(400),
+						ErrorMessage: err.Error(),
+						HumanMessage: err.Error(),
+					},
+				})
+			},
+		)
+
+		// If there's an error during processing, send it and continue (don't close stream)
+		if err != nil {
+			iApi.logger.Warnf("Error processing chat request in bidirectional stream: %v", err)
+			stream.Send(&protos.ChatResponse{
 				Success:   false,
-				Code:      400,
-				RequestId: requestId,
+				Code:      500,
+				RequestId: irRequest.GetRequestId(),
 				Error: &protos.Error{
-					ErrorCode:    uint64(400),
+					ErrorCode:    500,
 					ErrorMessage: err.Error(),
-					HumanMessage: err.Error(),
+					HumanMessage: "Internal server error processing your request",
 				},
 			})
-		},
-	)
+			// Continue to next request instead of closing stream
+		}
+	}
 }
 
 func (iApi *integrationApi) Chat(
@@ -140,7 +188,7 @@ func (iApi *integrationApi) Chat(
 			"Please provider valid service credentials to perfom invoke, read docs @ docs.rapida.ai",
 		)
 	}
-	requestId := iApi.RequestId()
+	uuID := iApi.RequestId()
 	if irRequest.AdditionalData == nil {
 		irRequest.AdditionalData = map[string]string{}
 	}
@@ -180,10 +228,10 @@ func (iApi *integrationApi) Chat(
 		c,
 		irRequest.GetConversations(),
 		internal_callers.NewChatOptions(
-			requestId,
+			uuID,
 			irRequest,
-			iApi.PreHook(c, iAuth, irRequest, requestId, tag),
-			iApi.PostHook(c, iAuth, irRequest, requestId, tag),
+			iApi.PreHook(c, iAuth, irRequest, uuID, tag),
+			iApi.PostHook(c, iAuth, irRequest, uuID, tag),
 		),
 	)
 	if err != nil {
@@ -192,7 +240,7 @@ func (iApi *integrationApi) Chat(
 	return &protos.ChatResponse{
 		Code:    200,
 		Success: true,
-		Data:    completions.ToProto(),
-		Metrics: metrics.ToProto(),
+		Data:    completions,
+		Metrics: metrics,
 	}, nil
 }

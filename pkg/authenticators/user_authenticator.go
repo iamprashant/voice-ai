@@ -48,7 +48,7 @@ func (authenticator *userAuthenticator) Authorize(ctx context.Context, authToken
 			ProjectName: r.GetProjectName(),
 		})
 	}
-	authenticator.logger.Debugf("Benchmarking: userAuthenticator.Authorize time taken %v", time.Since(start))
+	authenticator.logger.Benchmark("Benchmarking: userAuthenticator.Authorize time taken", time.Since(start))
 	return &types.PlainAuthPrinciple{
 		User: types.UserInfo{
 			Id:    ath.GetUser().GetId(),
