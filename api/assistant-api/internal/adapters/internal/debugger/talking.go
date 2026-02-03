@@ -109,6 +109,7 @@ func (talking *debuggerTalking) Talk(
 				}
 			}
 		case *protos.AssistantTalkInput_Configuration:
+			talking.logger.Infof("testing -> Received configuration for debugger talking %+v", msg.Configuration)
 			if err := talking.Connect(ctx, auth, identifier, msg.Configuration); err != nil {
 				talking.logger.Errorf("unexpected error while connect assistant, might be problem in configuration %+v", err)
 				return fmt.Errorf("talking.Connect error: %w", err)

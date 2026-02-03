@@ -57,6 +57,7 @@ require (
 	google.golang.org/genai v1.40.0
 	google.golang.org/grpc v1.77.0
 	google.golang.org/protobuf v1.36.10
+	gopkg.in/hraban/opus.v2 v2.0.0-20230925203106-0188a62cb302
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gorm.io/driver/postgres v1.5.4
 	gorm.io/driver/sqlite v1.6.0
@@ -148,7 +149,6 @@ require (
 	github.com/pion/ice/v4 v4.2.0 // indirect
 	github.com/pion/logging v0.2.4 // indirect
 	github.com/pion/mdns/v2 v2.1.0 // indirect
-	github.com/pion/opus v0.0.0-20260122090349-7342caad2cf7 // indirect
 	github.com/pion/randutil v0.1.0 // indirect
 	github.com/pion/rtcp v1.2.16 // indirect
 	github.com/pion/sctp v1.9.2 // indirect
@@ -196,7 +196,6 @@ require (
 	google.golang.org/genproto v0.0.0-20250603155806-513f23925822 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20251022142026-3a174f9686a8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251103181224-f26f9409b101 // indirect
-	gopkg.in/hraban/opus.v2 v2.0.0-20230925203106-0188a62cb302 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

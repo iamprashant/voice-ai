@@ -105,7 +105,6 @@ func (spk *GenericRequestor) interruptAllProvider(ctx context.Context, result in
 }
 
 func (spk *GenericRequestor) callSpeaking(ctx context.Context, result internal_type.LLMPacket) error {
-	spk.logger.Debugf("testing -> callSpeaking called with result type %T", result)
 	switch res := result.(type) {
 	case internal_type.LLMResponseDonePacket:
 		if spk.textToSpeechTransformer != nil {
@@ -241,7 +240,7 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 
 			continue
 		case internal_type.InterruptionPacket:
-			talking.logger.Infof("testing -> interruption received from source %+v", vl)
+
 			ctx, span, _ := talking.Tracer().StartSpan(talking.Context(), utils.AssistantUtteranceStage)
 			defer span.EndSpan(ctx, utils.AssistantUtteranceStage)
 
@@ -332,7 +331,7 @@ func (talking *GenericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 			talking.Notify(ctx, &protos.ConversationUserMessage{Id: vl.ContextID, Message: &protos.ConversationUserMessage_Text{Text: vl.Speech}, Completed: false, Time: timestamppb.New(time.Now())})
 			continue
 		case internal_type.EndOfSpeechPacket:
-			talking.logger.Infof("testing ->  end of speech received from source %+v", vl)
+
 			ctx, span, _ := talking.Tracer().StartSpan(talking.Context(), utils.AssistantUtteranceStage)
 			span.EndSpan(ctx,
 				utils.AssistantUtteranceStage,

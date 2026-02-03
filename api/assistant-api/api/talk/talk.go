@@ -10,9 +10,9 @@ import (
 
 	"github.com/rapidaai/api/assistant-api/config"
 	internal_adapter "github.com/rapidaai/api/assistant-api/internal/adapters"
-	internal_grpc "github.com/rapidaai/api/assistant-api/internal/grpc"
 	internal_services "github.com/rapidaai/api/assistant-api/internal/services"
 	internal_assistant_service "github.com/rapidaai/api/assistant-api/internal/services/assistant"
+	internal_webrtc "github.com/rapidaai/api/assistant-api/internal/webrtc"
 	web_client "github.com/rapidaai/pkg/clients/web"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
@@ -98,7 +98,13 @@ func (cApi *ConversationGrpcApi) AssistantTalk(stream assistant_api.TalkService_
 
 	source, ok := utils.GetClientSource(stream.Context())
 	if !ok {
+		cApi.logger.Errorf("unable to resolve the source from the context")
 		return errors.New("illegal source")
+	}
+	streamer, err := internal_webrtc.NewGrpcStreamer(stream.Context(), cApi.logger, stream)
+	if err != nil {
+		cApi.logger.Errorf("failed to create grpc streamer: %v", err)
+		return err
 	}
 	talker, err := internal_adapter.GetTalker(
 		source,
@@ -109,16 +115,12 @@ func (cApi *ConversationGrpcApi) AssistantTalk(stream assistant_api.TalkService_
 		cApi.opensearch,
 		cApi.redis,
 		cApi.storage,
-		internal_grpc.NewGrpcUnidirectionalStreamer(stream),
+		streamer,
 	)
 	if err != nil {
+		cApi.logger.Errorf("failed to setup talker: %v", err)
 		return err
 	}
 
-	return talker.
-		Talk(
-			stream.Context(),
-			auth,
-			internal_adapter.Identifier(source, stream.Context(), auth, ""),
-		)
+	return talker.Talk(stream.Context(), auth, internal_adapter.Identifier(source, stream.Context(), auth, ""))
 }

@@ -57,14 +57,6 @@ func GetTalker(source utils.RapidaSource, ctx context.Context, cfg *config.Assis
 			logger.Errorf("assistant call talker failed with err %+v", err)
 		}
 		return talker, nil
-	case utils.WebRTC:
-		// WebRTC uses the SDK talker since it's similar to SDK but with WebRTC transport
-		talker, err := internal_sdk.NewSDKTalking(ctx, cfg, logger, postgres, opensearch, redis, storage, streamer)
-		if err != nil {
-			logger.Errorf("webrtc talker failed with err %+v", err)
-			return nil, err
-		}
-		return talker, nil
 	case utils.SIP:
 		// SIP uses the phone talker since it's similar to phone call but with native SIP/RTP transport
 		talker, err := internal_phone.NewTalking(ctx, cfg, logger, postgres, opensearch, redis, storage, streamer)
@@ -96,8 +88,6 @@ func Identifier(source utils.RapidaSource, ctx context.Context, auth types.Simpl
 		return RapidaCallIdentifier(auth, identity)
 	case utils.Whatsapp:
 		return RapidaWhatsappIdentifier(auth, identity)
-	case utils.WebRTC:
-		return WebRTCIdentifier(ctx, auth)
 	case utils.SIP:
 		return SIPIdentifier(auth, identity)
 	default:
@@ -243,40 +233,6 @@ func RapidaWhatsappIdentifier(auth types.SimplePrinciple, identity string) strin
 	return vl
 }
 
-// WebRTCIdentifier generates a unique identifier for WebRTC connections.
-//
-// This function creates a standardized identifier string for WebRTC sessions
-// by combining:
-// 1. A "webrtc" prefix
-// 2. Client source from context
-// 3. Client environment from context
-// 4. Authentication ID (or generated UUID if not present)
-// 5. Current project ID
-// 6. Current organization ID
-//
-// Parameters:
-//   - ctx: Context containing client information
-//   - auth: SimplePrinciple containing project and organization IDs
-//
-// Returns:
-//   - A lowercase string identifier for the WebRTC session
-func WebRTCIdentifier(ctx context.Context, auth types.SimplePrinciple) string {
-	source, _ := utils.GetClientSource(ctx)
-	environment, _ := utils.GetClientEnvironment(ctx)
-	authId, exists := utils.GetAuthId(ctx)
-
-	if !exists {
-		authId = utils.Ptr[string](uuid.New().String())
-	}
-	vl := strings.ToLower(
-		fmt.Sprintf(`webrtc-%s-%s-%s-%d-%d`,
-			source,
-			environment,
-			*authId,
-			*auth.GetCurrentProjectId(), *auth.GetCurrentOrganizationId()))
-	return vl
-}
-
 // SIPIdentifier generates a unique identifier for SIP connections.
 //
 // This function creates a standardized identifier string for SIP sessions
@@ -298,6 +254,37 @@ func SIPIdentifier(auth types.SimplePrinciple, identity string) string {
 		fmt.Sprintf(`sip-%s-%s-%d-%d`,
 			"production",
 			identity,
+			*auth.GetCurrentProjectId(), *auth.GetCurrentOrganizationId()))
+	return vl
+}
+
+// WebRTCIdentifier generates a unique identifier for WebRTC connections via gRPC signaling.
+//
+// This function creates a standardized identifier string for WebRTC sessions
+// by combining:
+// 1. A "webrtc" prefix
+// 2. The client environment
+// 3. Authentication ID
+// 4. Current project ID
+// 5. Current organization ID
+//
+// Parameters:
+//   - ctx: Context containing client information
+//   - auth: SimplePrinciple containing project and organization IDs
+//
+// Returns:
+//   - A lowercase string identifier for the WebRTC session
+func WebRTCIdentifier(ctx context.Context, auth types.SimplePrinciple) string {
+	environment, _ := utils.GetClientEnvironment(ctx)
+	authId, exists := utils.GetAuthId(ctx)
+
+	if !exists {
+		authId = utils.Ptr[string](uuid.New().String())
+	}
+	vl := strings.ToLower(
+		fmt.Sprintf(`webrtc-%s-%s-%d-%d`,
+			environment,
+			*authId,
 			*auth.GetCurrentProjectId(), *auth.GetCurrentOrganizationId()))
 	return vl
 }

@@ -19,7 +19,6 @@ const (
 	SDK       RapidaSource = "sdk"
 	PhoneCall RapidaSource = "phone-call"
 	Whatsapp  RapidaSource = "whatsapp"
-	WebRTC    RapidaSource = "webrtc"
 	SIP       RapidaSource = "sip"
 )
 
@@ -42,8 +41,6 @@ func FromSourceStr(label string) RapidaSource {
 		return PhoneCall
 	case "whatsapp":
 		return Whatsapp
-	case "webrtc":
-		return WebRTC
 	case "sip":
 		return SIP
 	default:

@@ -87,8 +87,7 @@ func TalkCallbackApiRoute(
 
 		// WebRTC - native browser voice communication
 		// WebSocket endpoint for signaling only - audio flows via WebRTC media tracks
-		apiv1.GET("/webrtc/:assistantId", talkRpcApi.WebRTCConnect)
-		apiv1.GET("/webrtc/:assistantId/:conversationId", talkRpcApi.WebRTCConnectWithConversation)
+		// apiv1.GET("/webrtc/:assistantId", talkRpcApi.WebRTCConnect)
 
 		// SIP - native SIP/RTP voice communication
 		// These endpoints are for SIP trunks that support webhooks (Telnyx, SignalWire, etc.)

@@ -46,7 +46,6 @@ export const VoiceAgent: FC<{
     return new VI(connectConfig, agentConfig, agentCallback);
   }, [connectConfig, agentConfig, agentCallback]);
 
-  //
   const [assistant, setAssistant] = useState<Assistant | null>(null);
   const { loading, showLoader, hideLoader } = useRapidaStore();
 
@@ -71,7 +70,7 @@ export const VoiceAgent: FC<{
         <div className="relative overflow-hidden h-full mx-auto w-2/3 dark:bg-gray-950/50 border rounded-l-lg">
           {debug ? (
             <div className="bg-white dark:bg-gray-950 z-10 absolute top-0 left-0 right-0 ">
-              <PageHeaderBlock className="border-b bg-light-background dark:bg-gray-900 pl-3">
+              <PageHeaderBlock className="border-b pl-3">
                 <a
                   href={`/deployment/assistant/${agentConfig.id}/overview`}
                   className="flex items-center hover:text-red-600 hover:cursor-pointer"
@@ -325,16 +324,12 @@ export const VoiceAgentDebugger: FC<{
                     <InputGroup
                       title="Arguments"
                       childClass="p-0"
-                      className="m-0 border-x-0 rounded-none"
+                      className="m-0 border-x-0 rounded-none border-0"
                     >
                       <div className="text-sm leading-normal">
                         {variables.map((x, idx) => {
                           return (
-                            <InputVarForm
-                              key={idx}
-                              var={x}
-                              className="bg-light-background"
-                            >
+                            <InputVarForm key={idx} var={x}>
                               {x.getType() === InputVarType.textInput && (
                                 <TextTextarea
                                   readOnly={voiceAgent.isConnected}
