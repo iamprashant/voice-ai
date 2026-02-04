@@ -259,19 +259,19 @@ export const AssistantViewLayout: FC<HTMLAttributes<HTMLDivElement>> = () => {
         <div className="flex items-center divide-x border-r w-fit">
           <TabLink
             to={`/deployment/assistant/${assistantId}/overview`}
-            className="text-sm/6 uppercase font-medium"
+            className="text-[13px]/6 uppercase font-semibold"
           >
             Overview
           </TabLink>
           <TabLink
             to={`/deployment/assistant/${assistantId}/sessions`}
-            className="text-sm/6 uppercase font-medium"
+            className="text-[13px]/6 uppercase font-semibold"
           >
             Sessions
           </TabLink>
           <TabLink
             to={`/deployment/assistant/${assistantId}/version-history`}
-            className="text-sm/6 uppercase font-medium"
+            className="text-[13px]/6 uppercase font-semibold"
           >
             Versions
           </TabLink>

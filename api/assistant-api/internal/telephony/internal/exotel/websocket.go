@@ -9,9 +9,9 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"sync"
 
 	"github.com/gorilla/websocket"
-	internal_audio "github.com/rapidaai/api/assistant-api/internal/audio"
 	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
 	internal_conversation_entity "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
@@ -23,18 +23,81 @@ import (
 )
 
 type exotelWebsocketStreamer struct {
-	streamer internal_telephony_base.BaseTelephonyStreamer
-	logger   commons.Logger
-	streamID string
+	streamer       internal_telephony_base.BaseTelephonyStreamer
+	logger         commons.Logger
+	streamID       string
+	audioProcessor *internal_exotel.AudioProcessor
+
+	// Output sender state
+	outputSenderStarted bool
+	outputSenderMu      sync.Mutex
+	audioCtx            context.Context
+	audioCancel         context.CancelFunc
 }
 
 func NewExotelWebsocketStreamer(logger commons.Logger, connection *websocket.Conn, assistant *internal_assistant_entity.Assistant, conversation *internal_conversation_entity.AssistantConversation, vlt *protos.VaultCredential,
 ) internal_type.TelephonyStreamer {
-	return &exotelWebsocketStreamer{
-		logger:   logger,
-		streamID: "",
-		streamer: internal_telephony_base.NewBaseTelephonyStreamer(logger, connection, assistant, conversation, vlt),
+	audioProcessor, err := internal_exotel.NewAudioProcessor(logger)
+	if err != nil {
+		logger.Error("Failed to create audio processor", "error", err)
+		return nil
 	}
+
+	exo := &exotelWebsocketStreamer{
+		logger:         logger,
+		streamID:       "",
+		streamer:       internal_telephony_base.NewBaseTelephonyStreamer(logger, connection, assistant, conversation, vlt),
+		audioProcessor: audioProcessor,
+	}
+
+	// Set up callbacks
+	audioProcessor.SetInputAudioCallback(exo.sendProcessedInputAudio)
+	audioProcessor.SetOutputChunkCallback(exo.sendAudioChunk)
+
+	return exo
+}
+
+// sendProcessedInputAudio is the callback for processed input audio
+func (exotel *exotelWebsocketStreamer) sendProcessedInputAudio(audio []byte) {
+	// This will be called when enough audio has been buffered
+	// The audio is already converted to 16kHz linear16
+	exotel.streamer.LockInputAudioBuffer()
+	exotel.streamer.InputBuffer().Write(audio)
+	exotel.streamer.UnlockInputAudioBuffer()
+}
+
+// sendAudioChunk sends an audio chunk to Exotel
+func (exotel *exotelWebsocketStreamer) sendAudioChunk(chunk *internal_exotel.AudioChunk) error {
+	if exotel.streamID == "" {
+		return nil
+	}
+	return exotel.sendingExotelMessage("media", map[string]interface{}{
+		"payload": exotel.streamer.Encoder().EncodeToString(chunk.Data),
+	})
+}
+
+// stopAudioProcessing stops the output sender goroutine
+func (exotel *exotelWebsocketStreamer) stopAudioProcessing() {
+	exotel.outputSenderMu.Lock()
+	if exotel.audioCancel != nil {
+		exotel.audioCancel()
+		exotel.audioCancel = nil
+	}
+	exotel.outputSenderMu.Unlock()
+}
+
+// startOutputSender starts the consistent audio output sender
+func (exotel *exotelWebsocketStreamer) startOutputSender() {
+	exotel.outputSenderMu.Lock()
+	defer exotel.outputSenderMu.Unlock()
+
+	if exotel.outputSenderStarted {
+		return
+	}
+
+	exotel.audioCtx, exotel.audioCancel = context.WithCancel(exotel.streamer.Context())
+	exotel.outputSenderStarted = true
+	go exotel.audioProcessor.RunOutputSender(exotel.audioCtx)
 }
 
 func (exotel *exotelWebsocketStreamer) Context() context.Context {
@@ -48,6 +111,7 @@ func (exotel *exotelWebsocketStreamer) Recv() (*protos.AssistantTalkInput, error
 
 	_, message, err := exotel.streamer.Connection().ReadMessage()
 	if err != nil {
+		exotel.stopAudioProcessing()
 		exotel.streamer.Cancel()
 		return nil, io.EOF
 	}
@@ -60,7 +124,9 @@ func (exotel *exotelWebsocketStreamer) Recv() (*protos.AssistantTalkInput, error
 
 	switch mediaEvent.Event {
 	case "connected":
-		return exotel.streamer.CreateConnectionRequest(internal_audio.NewLinear8khzMonoAudioConfig(), internal_audio.NewLinear8khzMonoAudioConfig())
+		// Return downstream config (16kHz linear16) for STT/TTS
+		downstreamConfig := exotel.audioProcessor.GetDownstreamConfig()
+		return exotel.streamer.CreateConnectionRequest(downstreamConfig, downstreamConfig)
 	case "start":
 		exotel.handleStartEvent(mediaEvent)
 		return nil, nil
@@ -69,6 +135,7 @@ func (exotel *exotelWebsocketStreamer) Recv() (*protos.AssistantTalkInput, error
 	case "dtmf":
 		return nil, nil
 	case "stop":
+		exotel.stopAudioProcessing()
 		exotel.streamer.Cancel()
 		return nil, io.EOF
 	default:
@@ -82,56 +149,27 @@ func (exotel *exotelWebsocketStreamer) Send(response *protos.AssistantTalkOutput
 	case *protos.AssistantTalkOutput_Assistant:
 		switch content := data.Assistant.Message.(type) {
 		case *protos.ConversationAssistantMessage_Audio:
-			//1ms 32  10ms 320byte @ 16000Hz, 16-bit mono PCM = 640 bytes
-			// Each message needs to be a 20ms sample of audio.
-			// At 8kHz the message should be 320 bytes.
-			// At 16kHz the message should be 640 bytes.
-			bufferSizeThreshold := 32 * 20
-			audioData := content.Audio
-
-			// Use vng.audioBuffer to handle pending data across calls
-			exotel.streamer.LockOutputAudioBuffer()
-			defer exotel.streamer.UnlockOutputAudioBuffer()
-
-			// Append incoming audio data to the buffer
-			exotel.streamer.OutputBuffer().Write(audioData)
-			// Process and send chunks of 640 bytes
-			for exotel.streamer.OutputBuffer().Len() >= bufferSizeThreshold && exotel.streamID != "" {
-				chunk := exotel.streamer.OutputBuffer().Next(bufferSizeThreshold) // Get and remove the next 640 bytes
-				if err := exotel.sendingExotelMessage("media", map[string]interface{}{
-					"payload": exotel.streamer.Encoder().EncodeToString(chunk),
-				}); err != nil {
-					exotel.logger.Error("Failed to send audio chunk", "error", err.Error())
-					return err
-				}
-			}
-
-			// If response is marked as completed, flush any remaining audio in the buffer
-			if data.Assistant.GetCompleted() && exotel.streamer.OutputBuffer().Len() > 0 {
-				remainingChunk := exotel.streamer.OutputBuffer().Bytes()
-				if err := exotel.sendingExotelMessage("media", map[string]interface{}{
-					"payload": exotel.streamer.Encoder().EncodeToString(remainingChunk),
-				}); err != nil {
-					exotel.logger.Errorf("Failed to send final audio chunk", "error", err.Error())
-					return err
-				}
-				exotel.streamer.OutputBuffer().Reset() // Clear the buffer after flushing
+			// Process audio through the audio processor (converts 16kHz -> 8kHz linear16)
+			// The audio will be sent at consistent 20ms intervals by RunOutputSender
+			if err := exotel.audioProcessor.ProcessOutputAudio(content.Audio); err != nil {
+				exotel.logger.Error("Failed to process output audio", "error", err.Error())
+				return err
 			}
 		}
 	case *protos.AssistantTalkOutput_Interruption:
 		// interrupt on word given by stt
 		if data.Interruption.Type == protos.ConversationInterruption_INTERRUPTION_TYPE_WORD {
-			exotel.streamer.LockInputAudioBuffer()
-			exotel.streamer.OutputBuffer().Reset()
-			exotel.streamer.UnlockInputAudioBuffer()
+			// Clear both input and output buffers
+			exotel.audioProcessor.ClearInputBuffer()
+			exotel.audioProcessor.ClearOutputBuffer()
 
-			//
 			if err := exotel.sendingExotelMessage("clear", nil); err != nil {
 				exotel.logger.Errorf("Error sending clear command:", err)
 			}
 		}
 	case *protos.AssistantTalkOutput_Directive:
 		if data.Directive.GetType() == protos.ConversationDirective_END_CONVERSATION {
+			exotel.stopAudioProcessing()
 			if err := exotel.streamer.Connection().Close(); err != nil {
 				// terminate the conversation as end tool call is triggered
 				exotel.logger.Errorf("Error disconnecting command:", err)
@@ -144,9 +182,9 @@ func (exotel *exotelWebsocketStreamer) Send(response *protos.AssistantTalkOutput
 // start event contains streamSid to be used for subsequent media messages
 func (exotel *exotelWebsocketStreamer) handleStartEvent(mediaEvent internal_exotel.ExotelMediaEvent) {
 	exotel.streamID = mediaEvent.StreamSid
+	// Start the consistent output sender when stream starts
+	exotel.startOutputSender()
 }
-
-// when exotel is connected then connect the assistant
 
 func (exotel *exotelWebsocketStreamer) handleMediaEvent(mediaEvent internal_exotel.ExotelMediaEvent) (*protos.AssistantTalkInput, error) {
 	payloadBytes, err := exotel.streamer.Encoder().DecodeString(mediaEvent.Media.Payload)
@@ -155,14 +193,17 @@ func (exotel *exotelWebsocketStreamer) handleMediaEvent(mediaEvent internal_exot
 		return nil, nil
 	}
 
+	// Process input audio through audio processor (converts linear16 8kHz -> linear16 16kHz)
+	if err := exotel.audioProcessor.ProcessInputAudio(payloadBytes); err != nil {
+		exotel.logger.Debug("Failed to process input audio", "error", err.Error())
+		return nil, nil
+	}
+
+	// Check if we have enough buffered audio to send downstream
 	exotel.streamer.LockInputAudioBuffer()
 	defer exotel.streamer.UnlockInputAudioBuffer()
 
-	// 1ms 8 bytes @ 8kHz µ-law mono 60ms of audio as silero can't process smaller chunk for mulaw
-	exotel.streamer.InputBuffer().Write(payloadBytes)
-	const bufferSizeThreshold = 32 * 60
-
-	if exotel.streamer.InputBuffer().Len() >= bufferSizeThreshold {
+	if exotel.streamer.InputBuffer().Len() > 0 {
 		audioRequest := exotel.streamer.CreateVoiceRequest(exotel.streamer.InputBuffer().Bytes())
 		exotel.streamer.InputBuffer().Reset()
 		return audioRequest, nil

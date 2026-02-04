@@ -418,7 +418,7 @@ export const PreviewPhoneAgent = () => {
                 </>
               )}
             </div>
-            {variables.length > 0 ? (
+            {variables.length > 0 && (
               <InputGroup
                 title="Arguments"
                 className="m-0 border-x-0 rounded-none"
@@ -482,10 +482,6 @@ export const PreviewPhoneAgent = () => {
                   })}
                 </div>
               </InputGroup>
-            ) : (
-              <YellowNoticeBlock>
-                Assistant do not accept any arguments.
-              </YellowNoticeBlock>
             )}
             <InputGroup
               title="Deployment"

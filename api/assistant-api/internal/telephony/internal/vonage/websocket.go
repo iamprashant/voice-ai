@@ -10,12 +10,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"sync"
 
 	"github.com/gorilla/websocket"
-	internal_audio "github.com/rapidaai/api/assistant-api/internal/audio"
 	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
 	internal_conversation_entity "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
 	internal_telephony_base "github.com/rapidaai/api/assistant-api/internal/telephony/internal/base"
+	internal_vonage "github.com/rapidaai/api/assistant-api/internal/telephony/internal/vonage/internal"
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/commons"
 	protos "github.com/rapidaai/protos"
@@ -23,15 +24,76 @@ import (
 )
 
 type vonageWebsocketStreamer struct {
-	streamer internal_telephony_base.BaseTelephonyStreamer
-	logger   commons.Logger
+	streamer       internal_telephony_base.BaseTelephonyStreamer
+	logger         commons.Logger
+	audioProcessor *internal_vonage.AudioProcessor
+
+	// Output sender state
+	outputSenderStarted bool
+	outputSenderMu      sync.Mutex
+	audioCtx            context.Context
+	audioCancel         context.CancelFunc
 }
 
 func NewVonageWebsocketStreamer(logger commons.Logger, connection *websocket.Conn, assistant *internal_assistant_entity.Assistant, conversation *internal_conversation_entity.AssistantConversation, vlt *protos.VaultCredential) internal_type.TelephonyStreamer {
-	return &vonageWebsocketStreamer{
-		logger:   logger,
-		streamer: internal_telephony_base.NewBaseTelephonyStreamer(logger, connection, assistant, conversation, vlt),
+	audioProcessor, err := internal_vonage.NewAudioProcessor(logger)
+	if err != nil {
+		logger.Error("Failed to create audio processor", "error", err)
+		return nil
 	}
+
+	vng := &vonageWebsocketStreamer{
+		logger:         logger,
+		streamer:       internal_telephony_base.NewBaseTelephonyStreamer(logger, connection, assistant, conversation, vlt),
+		audioProcessor: audioProcessor,
+	}
+
+	// Set up callbacks
+	audioProcessor.SetInputAudioCallback(vng.sendProcessedInputAudio)
+	audioProcessor.SetOutputChunkCallback(vng.sendAudioChunk)
+
+	return vng
+}
+
+// sendProcessedInputAudio is the callback for processed input audio
+func (vng *vonageWebsocketStreamer) sendProcessedInputAudio(audio []byte) {
+	// This will be called when enough audio has been buffered
+	// The audio is already in 16kHz linear16 format
+	vng.streamer.LockInputAudioBuffer()
+	vng.streamer.InputBuffer().Write(audio)
+	vng.streamer.UnlockInputAudioBuffer()
+}
+
+// sendAudioChunk sends an audio chunk to Vonage
+func (vng *vonageWebsocketStreamer) sendAudioChunk(chunk *internal_vonage.AudioChunk) error {
+	if vng.streamer.Connection() == nil {
+		return nil
+	}
+	return vng.streamer.Connection().WriteMessage(websocket.BinaryMessage, chunk.Data)
+}
+
+// stopAudioProcessing stops the output sender goroutine
+func (vng *vonageWebsocketStreamer) stopAudioProcessing() {
+	vng.outputSenderMu.Lock()
+	if vng.audioCancel != nil {
+		vng.audioCancel()
+		vng.audioCancel = nil
+	}
+	vng.outputSenderMu.Unlock()
+}
+
+// startOutputSender starts the consistent audio output sender
+func (vng *vonageWebsocketStreamer) startOutputSender() {
+	vng.outputSenderMu.Lock()
+	defer vng.outputSenderMu.Unlock()
+
+	if vng.outputSenderStarted {
+		return
+	}
+
+	vng.audioCtx, vng.audioCancel = context.WithCancel(vng.streamer.Context())
+	vng.outputSenderStarted = true
+	go vng.audioProcessor.RunOutputSender(vng.audioCtx)
 }
 
 func (vng *vonageWebsocketStreamer) Context() context.Context {
@@ -55,9 +117,14 @@ func (vng *vonageWebsocketStreamer) Recv() (*protos.AssistantTalkInput, error) {
 		}
 		switch textEvent["event"] {
 		case "websocket:connected":
-			return vng.streamer.CreateConnectionRequest(internal_audio.NewLinear16khzMonoAudioConfig(), internal_audio.NewLinear16khzMonoAudioConfig())
+			// Start the consistent output sender when connected
+			vng.startOutputSender()
+			// Return downstream config (16kHz linear16) for STT/TTS
+			downstreamConfig := vng.audioProcessor.GetDownstreamConfig()
+			return vng.streamer.CreateConnectionRequest(downstreamConfig, downstreamConfig)
 
 		case "stop":
+			vng.stopAudioProcessing()
 			return nil, io.EOF
 
 		default:
@@ -81,55 +148,31 @@ func (vng *vonageWebsocketStreamer) Send(response *protos.AssistantTalkOutput) e
 	case *protos.AssistantTalkOutput_Assistant:
 		switch content := data.Assistant.Message.(type) {
 		case *protos.ConversationAssistantMessage_Audio:
-			//	1ms 32  10ms 320byte @ 16000Hz, 16-bit mono PCM = 640 bytes
-			// Each message needs to be a 20ms sample of audio.
-			// At 8kHz the message should be 320 bytes.
-			// At 16kHz the message should be 640 bytes.
-			bufferSizeThreshold := 32 * 20
-			audioData := content.Audio
-
-			// Use vng.audioBuffer to handle pending data across calls
-			vng.streamer.LockOutputAudioBuffer()
-			defer vng.streamer.UnlockOutputAudioBuffer()
-
-			// Append incoming audio data to the buffer
-			vng.streamer.OutputBuffer().Write(audioData)
-			// Process and send chunks of 640 bytes
-			for vng.streamer.OutputBuffer().Len() >= bufferSizeThreshold {
-				chunk := vng.streamer.OutputBuffer().Next(bufferSizeThreshold) // Get and remove the next 640 bytes
-				if err := vng.streamer.Connection().WriteMessage(websocket.BinaryMessage, chunk); err != nil {
-					vng.logger.Error("Failed to send audio chunk", "error", err.Error())
-					return err
-				}
-			}
-
-			// If response is marked as completed, flush any remaining audio in the buffer
-			if data.Assistant.GetCompleted() && vng.streamer.OutputBuffer().Len() > 0 {
-				remainingChunk := vng.streamer.OutputBuffer().Bytes()
-				if err := vng.streamer.Connection().WriteMessage(websocket.BinaryMessage, remainingChunk); err != nil {
-					vng.logger.Errorf("Failed to send final audio chunk", "error", err.Error())
-					return err
-				}
-				vng.streamer.OutputBuffer().Reset() // Clear the buffer after flushing
+			// Process audio through the audio processor
+			// The audio will be sent at consistent 20ms intervals by RunOutputSender
+			if err := vng.audioProcessor.ProcessOutputAudio(content.Audio); err != nil {
+				vng.logger.Error("Failed to process output audio", "error", err.Error())
+				return err
 			}
 		}
 	case *protos.AssistantTalkOutput_Interruption:
 		if data.Interruption.Type == protos.ConversationInterruption_INTERRUPTION_TYPE_WORD {
-			vng.streamer.LockOutputAudioBuffer()
-			vng.streamer.OutputBuffer().Reset()
-			vng.streamer.UnlockOutputAudioBuffer()
+			// Clear both input and output buffers
+			vng.audioProcessor.ClearInputBuffer()
+			vng.audioProcessor.ClearOutputBuffer()
 
-			// Clear the buffer after flushing
+			// Send clear command to Vonage
 			if err := vng.streamer.Connection().WriteMessage(websocket.TextMessage, []byte(`{"action":"clear"}`)); err != nil {
 				vng.logger.Errorf("Error sending clear command:", err)
 			}
 		}
 	case *protos.AssistantTalkOutput_Directive:
 		if data.Directive.GetType() == protos.ConversationDirective_END_CONVERSATION {
+			vng.stopAudioProcessing()
 			if vng.streamer.GetUuid() != "" {
 				cAuth, err := vng.Auth(vng.streamer.VaultCredential())
 				if err != nil {
-					vng.logger.Errorf("Error creating Twilio client:", err)
+					vng.logger.Errorf("Error creating Vonage client:", err)
 					if err := vng.streamer.Cancel(); err != nil {
 						vng.logger.Errorf("Error disconnecting command:", err)
 					}
@@ -137,7 +180,7 @@ func (vng *vonageWebsocketStreamer) Send(response *protos.AssistantTalkOutput) e
 				}
 
 				if _, _, err := vonage.NewVoiceClient(cAuth).Hangup(vng.streamer.GetUuid()); err != nil {
-					vng.logger.Errorf("Error ending Twilio call:", err)
+					vng.logger.Errorf("Error ending Vonage call:", err)
 					if err := vng.streamer.Cancel(); err != nil {
 						vng.logger.Errorf("Error disconnecting command:", err)
 					}
@@ -157,13 +200,18 @@ func (vng *vonageWebsocketStreamer) Send(response *protos.AssistantTalkOutput) e
 }
 
 func (vng *vonageWebsocketStreamer) handleMediaEvent(message []byte) (*protos.AssistantTalkInput, error) {
+	// Process input audio through audio processor
+	// Vonage sends linear16 16kHz, which matches downstream format
+	if err := vng.audioProcessor.ProcessInputAudio(message); err != nil {
+		vng.logger.Debug("Failed to process input audio", "error", err.Error())
+		return nil, nil
+	}
+
+	// Check if we have enough buffered audio to send downstream
 	vng.streamer.LockInputAudioBuffer()
 	defer vng.streamer.UnlockInputAudioBuffer()
 
-	vng.streamer.InputBuffer().Write(message)
-	const bufferSizeThreshold = 32 * 60
-
-	if vng.streamer.InputBuffer().Len() >= bufferSizeThreshold {
+	if vng.streamer.InputBuffer().Len() > 0 {
 		audioRequest := vng.streamer.CreateVoiceRequest(vng.streamer.InputBuffer().Bytes())
 		vng.streamer.InputBuffer().Reset()
 		return audioRequest, nil

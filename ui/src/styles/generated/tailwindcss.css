@@ -4841,6 +4841,10 @@
     font-size: var(--text-5xl);
     line-height: var(--tw-leading, var(--text-5xl--line-height));
   }
+  .text-\[13px\]\/6 {
+    font-size: 13px;
+    line-height: calc(var(--spacing) * 6);
+  }
   .text-base {
     font-size: var(--text-base);
     line-height: var(--tw-leading, var(--text-base--line-height));

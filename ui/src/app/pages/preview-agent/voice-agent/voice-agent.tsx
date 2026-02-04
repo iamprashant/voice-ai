@@ -66,8 +66,8 @@ export const VoiceAgent: FC<{
     return <PageLoader />;
   } else
     return (
-      <div className="h-dvh flex p-8 text-sm/6 w-full">
-        <div className="relative overflow-hidden h-full mx-auto w-2/3 dark:bg-gray-950/50 border rounded-l-lg">
+      <div className="h-dvh flex p-8 text-sm/6 w-full gap-8">
+        <div className="relative overflow-hidden h-full mx-auto w-2/3 dark:bg-gray-950/50 border">
           {debug ? (
             <div className="bg-white dark:bg-gray-950 z-10 absolute top-0 left-0 right-0 ">
               <PageHeaderBlock className="border-b pl-3">
@@ -82,7 +82,7 @@ export const VoiceAgent: FC<{
                 </a>
               </PageHeaderBlock>
               {!assistant?.getDebuggerdeployment()?.hasInputaudio() && (
-                <YellowNoticeBlock className="flex items-center justify-between space-x-3">
+                <YellowNoticeBlock className="flex items-center justify-between gap-3">
                   <Info className="shrink-0 w-4 h-4" />
                   <div className="text-sm font-medium">
                     Voice functionality is currently disabled. Please enable it
@@ -106,7 +106,7 @@ export const VoiceAgent: FC<{
           ) : (
             <div className="bg-white dark:bg-gray-950 z-10 absolute top-0 left-0 right-0">
               {!assistant?.getApideployment()?.hasInputaudio() && (
-                <YellowNoticeBlock className="flex items-center justify-between space-x-3">
+                <YellowNoticeBlock className="flex items-center justify-between gap-3">
                   <Info className="shrink-0 w-4 h-4" />
                   <div className="text-sm font-medium">
                     Voice functionality is currently disabled. Please enable it
@@ -176,7 +176,7 @@ export const VoiceAgent: FC<{
             </div>
           </div>
         </div>
-        <div className="shrink-0 flex flex-col overflow-auto border border-l-0 w-1/3 rounded-r-lg">
+        <div className="shrink-0 flex flex-col overflow-auto border w-1/3">
           <VoiceAgentDebugger
             voiceAgent={voiceAgentContextValue}
             assistant={assistant}
@@ -293,7 +293,7 @@ export const VoiceAgentDebugger: FC<{
             <>
               {assistant && (
                 <div className="flex flex-col w-full h-full flex-1 grow">
-                  <div className="p-4 text-sm leading-normal border-b">
+                  <div className="p-4 text-sm leading-normal">
                     <div className="flex flex-row justify-between items-center text-sm tracking-wider">
                       <h3>Name</h3>
                     </div>
@@ -320,7 +320,7 @@ export const VoiceAgentDebugger: FC<{
                     )}
                   </div>
 
-                  {variables.length > 0 ? (
+                  {variables.length > 0 && (
                     <InputGroup
                       title="Arguments"
                       childClass="p-0"
@@ -410,10 +410,6 @@ export const VoiceAgentDebugger: FC<{
                         })}
                       </div>
                     </InputGroup>
-                  ) : (
-                    <YellowNoticeBlock>
-                      Assistant do not accept any arguments.
-                    </YellowNoticeBlock>
                   )}
                   <InputGroup
                     title="Deployment"
@@ -538,10 +534,10 @@ export const VoiceAgentDebugger: FC<{
           element: (
             <div className="flex flex-col flex-1 divide-y w-full ">
               {events.length === 0 ? (
-                <YellowNoticeBlock>
+                <div className="flex items-center justify-center flex-1 h-full">
                   No events have been recorded yet. Start interacting to see
                   updates here.
-                </YellowNoticeBlock>
+                </div>
               ) : (
                 events.map((event, idx) => {
                   if (event.type === 'action') {

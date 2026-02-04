@@ -9,7 +9,7 @@ export const BlueNoticeBlock: React.FC<HTMLAttributes<HTMLDivElement>> = ({
   return (
     <div
       className={cn(
-        'px-4 py-2 border-[0.5px] border-l-4',
+        'px-4 py-2 border-[0.5px]',
         'border-blue-600 bg-blue-500/10 text-sm',
         className,
       )}
@@ -27,7 +27,7 @@ export const GreenNoticeBlock: React.FC<HTMLAttributes<HTMLDivElement>> = ({
   return (
     <div
       className={cn(
-        'px-4 py-2 border-[0.5px] border-l-4',
+        'px-4 py-2 border-[0.5px]',
         'border-green-600 bg-green-500/10 text-sm',
         className,
       )}
@@ -45,7 +45,7 @@ export const RedNoticeBlock: React.FC<HTMLAttributes<HTMLDivElement>> = ({
     <div className="bg-white dark:bg-slate-950">
       <div
         className={cn(
-          'px-4 py-2 border-[0.5px] border-l-4!',
+          'px-4 py-2 border-[0.5px]!',
           'text-sm border-red-600 bg-red-100 dark:bg-red-500/20',
           className,
         )}
@@ -63,8 +63,8 @@ export const YellowNoticeBlock: React.FC<HTMLAttributes<HTMLDivElement>> = ({
   return (
     <div
       className={cn(
-        'px-4 py-2 border-[0.5px] border-l-4',
-        'border-yellow-600 dark:border-yellow-600/70 bg-yellow-500/10 text-sm',
+        'px-4 py-2 border-[0.5px]',
+        'border-yellow-600 dark:border-yellow-600/70 bg-yellow-500/10 text-sm/6',
         className,
       )}
     >
