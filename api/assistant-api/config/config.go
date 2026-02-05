@@ -25,6 +25,13 @@ type SIPConfig struct {
 	RTPPortRangeEnd   int    `mapstructure:"rtp_port_range_end"`
 }
 
+// AudioSocketConfig holds the AudioSocket server configuration
+type AudioSocketConfig struct {
+	Enabled bool   `mapstructure:"enabled"`
+	Host    string `mapstructure:"host"`
+	Port    int    `mapstructure:"port"`
+}
+
 // Application config structure
 type AssistantConfig struct {
 	config.AppConfig    `mapstructure:",squash"`
@@ -35,6 +42,7 @@ type AssistantConfig struct {
 	AssetStoreConfig    configs.AssetStoreConfig `mapstructure:"asset_store" validate:"required"`
 	PublicAssistantHost string                   `mapstructure:"public_assistant_host" validate:"required"`
 	SIPConfig           SIPConfig                `mapstructure:"sip"`
+	AudioSocketConfig   AudioSocketConfig        `mapstructure:"audiosocket"`
 }
 
 // reading config and intializing configs for application
@@ -64,6 +72,9 @@ func InitConfig() (*viper.Viper, error) {
 }
 
 func setDefault(v *viper.Viper) {
+	v.SetDefault("audiosocket.enabled", false)
+	v.SetDefault("audiosocket.host", "0.0.0.0")
+	v.SetDefault("audiosocket.port", 4573)
 }
 
 // Getting application config from viper

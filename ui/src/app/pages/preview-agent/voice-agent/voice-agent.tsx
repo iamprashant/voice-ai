@@ -69,7 +69,7 @@ export const VoiceAgent: FC<{
       <div className="h-dvh flex p-8 text-sm/6 w-full gap-8">
         <div className="relative overflow-hidden h-full mx-auto w-2/3 dark:bg-gray-950/50 border">
           {debug ? (
-            <div className="bg-white dark:bg-gray-950 z-10 absolute top-0 left-0 right-0 ">
+            <div className="z-10 absolute top-0 left-0 right-0 ">
               <PageHeaderBlock className="border-b pl-3">
                 <a
                   href={`/deployment/assistant/${agentConfig.id}/overview`}

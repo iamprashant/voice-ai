@@ -85,17 +85,10 @@ func TalkCallbackApiRoute(
 		apiv1.GET("/:telephony/prj/event/:assistantId/:conversationId/:x-api-key", talkRpcApi.Callback)
 		apiv1.POST("/:telephony/prj/event/:assistantId/:conversationId/:x-api-key", talkRpcApi.Callback)
 
-		// twilio whatsapp
-		apiv1.POST("/twilio/whatsapp/:assistantToken", talkRpcApi.WhatsappReciever)
-
-		// vonage call
+		// telephony websocket implimenation
 		apiv1.GET("/:telephony/call/:assistantId", talkRpcApi.CallReciever)
 		apiv1.GET("/:telephony/usr/:assistantId/:identifier/:conversationId/:authorization/:x-auth-id/:x-project-id", talkRpcApi.CallTalker)
 		apiv1.GET("/:telephony/prj/:assistantId/:identifier/:conversationId/:x-api-key", talkRpcApi.CallTalker)
-
-		// WebRTC - native browser voice communication
-		// WebSocket endpoint for signaling only - audio flows via WebRTC media tracks
-		// apiv1.GET("/webrtc/:assistantId", talkRpcApi.WebRTCConnect)
 
 		// SIP - native SIP/RTP voice communication
 		// These endpoints are for SIP trunks that support webhooks (Telnyx, SignalWire, etc.)

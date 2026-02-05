@@ -23,6 +23,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
+	assistant_talk_api "github.com/rapidaai/api/assistant-api/api/talk"
 	"github.com/rapidaai/api/assistant-api/config"
 	router "github.com/rapidaai/api/assistant-api/router"
 	"github.com/rapidaai/pkg/authenticators"
@@ -269,6 +270,15 @@ func (app *AppRunner) Init(ctx context.Context) error {
 	app.Closeable = append(app.Closeable, app.Opensearch.Disconnect)
 	app.Closeable = append(app.Closeable, app.Postgres.Disconnect)
 	app.Closeable = append(app.Closeable, app.Redis.Disconnect)
+
+	if app.Cfg.AudioSocketConfig.Enabled {
+		cApi := assistant_talk_api.NewConversationApi(app.Cfg, app.Logger, app.Postgres, app.Redis, app.Opensearch, app.Opensearch)
+		audioManager := assistant_talk_api.NewAudioSocketManager(cApi, &app.Cfg.AudioSocketConfig)
+		if err := audioManager.Start(ctx); err != nil {
+			return err
+		}
+		app.Closeable = append(app.Closeable, audioManager.Close)
+	}
 	return nil
 }
 

@@ -10,6 +10,7 @@ import (
 	"errors"
 
 	"github.com/rapidaai/api/assistant-api/config"
+	internal_asterisk_telephony "github.com/rapidaai/api/assistant-api/internal/telephony/internal/asterisk"
 	internal_exotel_telephony "github.com/rapidaai/api/assistant-api/internal/telephony/internal/exotel"
 	internal_twilio_telephony "github.com/rapidaai/api/assistant-api/internal/telephony/internal/twilio"
 	internal_vonage_telephony "github.com/rapidaai/api/assistant-api/internal/telephony/internal/vonage"
@@ -20,9 +21,10 @@ import (
 type Telephony string
 
 const (
-	Twilio Telephony = "twilio"
-	Exotel Telephony = "exotel"
-	Vonage Telephony = "vonage"
+	Twilio   Telephony = "twilio"
+	Exotel   Telephony = "exotel"
+	Vonage   Telephony = "vonage"
+	Asterisk Telephony = "asterisk"
 )
 
 func (at Telephony) String() string {
@@ -37,6 +39,8 @@ func GetTelephony(at Telephony, cfg *config.AssistantConfig, logger commons.Logg
 		return internal_exotel_telephony.NewExotelTelephony(cfg, logger)
 	case Vonage:
 		return internal_vonage_telephony.NewVonageTelephony(cfg, logger)
+	case Asterisk:
+		return internal_asterisk_telephony.NewAsteriskTelephony(cfg, logger)
 	default:
 		return nil, errors.New("illegal telephony provider")
 	}

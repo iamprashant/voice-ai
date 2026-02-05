@@ -34,6 +34,7 @@ type ConversationApi struct {
 	assistantConversationService internal_services.AssistantConversationService
 	assistantService             internal_services.AssistantService
 	vaultClient                  web_client.VaultClient
+	authClient                   web_client.AuthClient
 }
 
 type ConversationGrpcApi struct {
@@ -57,6 +58,7 @@ func NewConversationGRPCApi(config *config.AssistantConfig, logger commons.Logge
 			assistantService:             internal_assistant_service.NewAssistantService(config, logger, postgres, opensearch),
 			storage:                      storage_files.NewStorage(config.AssetStoreConfig, logger),
 			vaultClient:                  web_client.NewVaultClientGRPC(&config.AppConfig, logger, redis),
+			authClient:                   web_client.NewAuthenticator(&config.AppConfig, logger, redis),
 		},
 	}
 }
@@ -78,6 +80,7 @@ func NewWebRtcApi(config *config.AssistantConfig, logger commons.Logger,
 			assistantService:             internal_assistant_service.NewAssistantService(config, logger, postgres, opensearch),
 			storage:                      storage_files.NewStorage(config.AssetStoreConfig, logger),
 			vaultClient:                  web_client.NewVaultClientGRPC(&config.AppConfig, logger, redis),
+			authClient:                   web_client.NewAuthenticator(&config.AppConfig, logger, redis),
 		},
 	}
 }
@@ -98,8 +101,8 @@ func NewConversationApi(config *config.AssistantConfig, logger commons.Logger,
 		assistantService:             internal_assistant_service.NewAssistantService(config, logger, postgres, opensearch),
 		storage:                      storage_files.NewStorage(config.AssetStoreConfig, logger),
 		vaultClient:                  web_client.NewVaultClientGRPC(&config.AppConfig, logger, redis),
+		authClient:                   web_client.NewAuthenticator(&config.AppConfig, logger, redis),
 	}
-
 }
 
 // AssistantTalk handles incoming assistant talk requests.
