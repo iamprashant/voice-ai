@@ -29,6 +29,25 @@ type Telephony interface {
 	InboundCall(c *gin.Context, auth types.SimplePrinciple, assistantId uint64, clientNumber string, assistantConversationId uint64) error
 }
 
+func GetAnswerPrefix(auth types.SimplePrinciple, assistantId uint64, assistantConversationId uint64, toPhone string) string {
+	switch auth.Type() {
+	case "project":
+		return fmt.Sprintf("prj/%d/%s/%d/%s",
+			assistantId,
+			toPhone,
+			assistantConversationId,
+			auth.GetCurrentToken())
+	default:
+		return fmt.Sprintf("usr/%d/%s/%d/%s/%d/%d",
+			assistantId,
+			toPhone,
+			assistantConversationId,
+			auth.GetCurrentToken(),
+			*auth.GetUserId(),
+			*auth.GetCurrentProjectId())
+	}
+}
+
 func GetAnswerPath(provider string, auth types.SimplePrinciple, assistantId uint64, assistantConversationId uint64, toPhone string) string {
 	switch auth.Type() {
 	case "project":

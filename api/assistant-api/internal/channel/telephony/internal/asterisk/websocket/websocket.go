@@ -319,21 +319,19 @@ func (aws *asteriskWebsocketStreamer) hangupViaARI() error {
 		return fmt.Errorf("vault credential is nil")
 	}
 
-	ariConfig, err := aws.getARIConfig(vaultCredential)
-	if err != nil {
-		return fmt.Errorf("failed to get ARI config: %w", err)
-	}
+	credMap := vaultCredential.GetValue().AsMap()
 
-	// Build ARI DELETE channels endpoint URL
-	ariURL := fmt.Sprintf("%s://%s:%d/ari/channels/%s",
-		ariConfig.ARIScheme, ariConfig.ARIHost, ariConfig.ARIPort, aws.channelName)
+	ariURL, _ := credMap["ari_url"].(string)
+	ariURL = fmt.Sprintf("%s/ari/channels", ariURL)
+	user, _ := credMap["ari_user"].(string)
+	password, _ := credMap["ari_password"].(string)
 
 	req, err := http.NewRequest("DELETE", ariURL, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.SetBasicAuth(ariConfig.ARIUser, ariConfig.ARIPassword)
+	req.SetBasicAuth(user, password)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -348,44 +346,4 @@ func (aws *asteriskWebsocketStreamer) hangupViaARI() error {
 
 	aws.logger.Info("Successfully hung up call via ARI API", "channel", aws.channelName)
 	return nil
-}
-
-// getARIConfig extracts ARI configuration from vault credential
-func (aws *asteriskWebsocketStreamer) getARIConfig(vaultCredential *protos.VaultCredential) (*internal_asterisk.ARIConfig, error) {
-	if vaultCredential == nil {
-		return nil, fmt.Errorf("vault credential is nil")
-	}
-	credMap := vaultCredential.GetValue().AsMap()
-	config := &internal_asterisk.ARIConfig{
-		ARIHost:   "localhost",
-		ARIPort:   8088,
-		ARIScheme: "http",
-	}
-
-	if host, ok := credMap["ari_host"]; ok && host != nil {
-		config.ARIHost = fmt.Sprintf("%v", host)
-	}
-	if port, ok := credMap["ari_port"]; ok && port != nil {
-		switch v := port.(type) {
-		case float64:
-			config.ARIPort = int(v)
-		case int:
-			config.ARIPort = v
-		}
-	}
-	if scheme, ok := credMap["ari_scheme"]; ok && scheme != nil {
-		config.ARIScheme = fmt.Sprintf("%v", scheme)
-	}
-	if user, ok := credMap["ari_user"]; ok && user != nil {
-		config.ARIUser = fmt.Sprintf("%v", user)
-	}
-	if password, ok := credMap["ari_password"]; ok && password != nil {
-		config.ARIPassword = fmt.Sprintf("%v", password)
-	}
-
-	if config.ARIUser == "" || config.ARIPassword == "" {
-		return nil, fmt.Errorf("ARI credentials (ari_user, ari_password) are required")
-	}
-
-	return config, nil
 }
