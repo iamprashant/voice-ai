@@ -6,13 +6,10 @@
 package integration_client_builders
 
 import (
-	"context"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap/zapcore"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
 
@@ -21,32 +18,9 @@ import (
 	"github.com/rapidaai/protos"
 )
 
-// mockLogger implements commons.Logger for testing
-type mockLogger struct{}
-
-func (m *mockLogger) Level() zapcore.Level                                           { return zapcore.DebugLevel }
-func (m *mockLogger) Debug(args ...interface{})                                      {}
-func (m *mockLogger) Debugf(template string, args ...interface{})                    {}
-func (m *mockLogger) Info(args ...interface{})                                       {}
-func (m *mockLogger) Infof(template string, args ...interface{})                     {}
-func (m *mockLogger) Warn(args ...interface{})                                       {}
-func (m *mockLogger) Warnf(template string, args ...interface{})                     {}
-func (m *mockLogger) Error(args ...interface{})                                      {}
-func (m *mockLogger) Errorf(template string, args ...interface{})                    {}
-func (m *mockLogger) DPanic(args ...interface{})                                     {}
-func (m *mockLogger) DPanicf(template string, args ...interface{})                   {}
-func (m *mockLogger) Panic(args ...interface{})                                      {}
-func (m *mockLogger) Panicf(template string, args ...interface{})                    {}
-func (m *mockLogger) Fatal(args ...interface{})                                      {}
-func (m *mockLogger) Fatalf(template string, args ...interface{})                    {}
-func (m *mockLogger) Benchmark(functionName string, duration time.Duration)          {}
-func (m *mockLogger) Tracef(ctx context.Context, format string, args ...interface{}) {}
-func (m *mockLogger) Sync() error                                                    { return nil }
-
-var _ commons.Logger = (*mockLogger)(nil)
-
 func newTestLogger() commons.Logger {
-	return &mockLogger{}
+	lgr, _ := commons.NewApplicationLogger()
+	return lgr
 }
 
 func TestNewChatInputBuilder(t *testing.T) {

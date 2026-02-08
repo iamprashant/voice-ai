@@ -24,6 +24,7 @@ import (
 	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
 	internal_conversation_entity "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
+	sip_infra "github.com/rapidaai/api/assistant-api/sip/infra"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/protos"
 )
@@ -42,7 +43,7 @@ func (at Telephony) String() string {
 	return string(at)
 }
 
-func GetTelephony(at Telephony, cfg *config.AssistantConfig, logger commons.Logger) (internal_type.Telephony, error) {
+func GetTelephony(at Telephony, cfg *config.AssistantConfig, logger commons.Logger, sipServer *sip_infra.Server) (internal_type.Telephony, error) {
 	switch at {
 	case Twilio:
 		return internal_twilio_telephony.NewTwilioTelephony(cfg, logger)
@@ -53,7 +54,7 @@ func GetTelephony(at Telephony, cfg *config.AssistantConfig, logger commons.Logg
 	case Asterisk:
 		return internal_asterisk_telephony.NewAsteriskTelephony(cfg, logger)
 	case SIP:
-		return internal_sip_telephony.NewSIPTelephony(cfg, logger)
+		return internal_sip_telephony.NewSIPTelephony(cfg, logger, sipServer)
 	default:
 		return nil, errors.New("illegal telephony provider")
 	}
@@ -101,16 +102,17 @@ func (at Telephony) AudioSocketStreamer(
 	return nil, errors.New("illegal telephony provider")
 }
 
-func (at Telephony) SipStreamer() (internal_type.TelephonyStreamer, error) {
-	// switch at {
-	// case SIP:
-	// 	return internal_sip_telephony.NewInboundStreamer(callCtx, &internal_sip_telephony.InboundStreamerConfig{
-	// 		Config:       sipConfig,
-	// 		Logger:       m.logger,
-	// 		Session:      session,
-	// 		Assistant:    assistant,
-	// 		Conversation: conversation,
-	// 	})
-	// }
+func (at Telephony) SipStreamer(
+	ctx context.Context,
+	logger commons.Logger,
+	session *sip_infra.Session,
+	config *sip_infra.Config,
+	assistant *internal_assistant_entity.Assistant,
+	conversation *internal_conversation_entity.AssistantConversation,
+) (internal_type.TelephonyStreamer, error) {
+	switch at {
+	case SIP:
+		return internal_sip_telephony.NewInboundStreamer(ctx, config, logger, session, assistant, conversation)
+	}
 	return nil, errors.New("illegal telephony provider")
 }

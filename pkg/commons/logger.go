@@ -26,12 +26,15 @@ type Logger interface {
 	// Standard logging levels
 	Debug(args ...interface{})
 	Debugf(template string, args ...interface{})
+	Debugw(template string, args ...interface{})
 
 	Info(args ...interface{})
 	Infof(template string, args ...interface{})
+	Infow(message string, args ...interface{})
 
 	Warn(args ...interface{})
 	Warnf(template string, args ...interface{})
+	Warnw(template string, args ...interface{})
 
 	Error(args ...interface{})
 	Errorf(template string, args ...interface{})
@@ -312,6 +315,10 @@ func (l *applicationLogger) Debugf(template string, args ...interface{}) {
 	l.sugarLogger.Debugf(template, args...)
 }
 
+func (l *applicationLogger) Debugw(template string, args ...interface{}) {
+	l.sugarLogger.Debugw(template, args...)
+}
+
 func (l *applicationLogger) Info(args ...interface{}) {
 	l.sugarLogger.Info(args...)
 }
@@ -320,12 +327,19 @@ func (l *applicationLogger) Infof(template string, args ...interface{}) {
 	l.sugarLogger.Infof(template, args...)
 }
 
+func (l *applicationLogger) Infow(template string, args ...interface{}) {
+	l.sugarLogger.Infow(template, args...)
+}
+
 func (l *applicationLogger) Warn(args ...interface{}) {
 	l.sugarLogger.Warn(args...)
 }
 
 func (l *applicationLogger) Warnf(template string, args ...interface{}) {
 	l.sugarLogger.Warnf(template, args...)
+}
+func (l *applicationLogger) Warnw(template string, args ...interface{}) {
+	l.sugarLogger.Warnw(template, args...)
 }
 
 func (l *applicationLogger) Error(args ...interface{}) {

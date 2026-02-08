@@ -26,6 +26,7 @@ import (
 	"github.com/rapidaai/api/assistant-api/config"
 	router "github.com/rapidaai/api/assistant-api/router"
 	assistant_sip "github.com/rapidaai/api/assistant-api/sip"
+	sip_infra "github.com/rapidaai/api/assistant-api/sip/infra"
 	assistant_socket "github.com/rapidaai/api/assistant-api/socket"
 	"github.com/rapidaai/pkg/authenticators"
 	web_client "github.com/rapidaai/pkg/clients/web"
@@ -47,6 +48,7 @@ type AppRunner struct {
 	Redis      connectors.RedisConnector
 	Opensearch connectors.OpenSearchConnector
 	Closeable  []func(context.Context) error
+	SIPManager *assistant_sip.SIPManager // Shared SIP manager (nil if SIP not configured)
 }
 
 func main() {
@@ -288,6 +290,7 @@ func (app *AppRunner) Init(ctx context.Context) error {
 			app.Logger.Errorf("Failed to start SIP server: %v", err)
 			return err
 		}
+		app.SIPManager = sipManager
 		app.Closeable = append(app.Closeable, sipManager.Close)
 		app.Logger.Info("SIP server started (multi-tenant)", "address", app.Cfg.SIPConfig.Server, "port", app.Cfg.SIPConfig.Port)
 	}
@@ -309,15 +312,21 @@ func (app *AppRunner) Close(ctx context.Context) {
 
 // all router initialize
 func (g *AppRunner) AllRouters() {
+	// Get shared SIP server (may be nil if SIP not configured)
+	var sipServer *sip_infra.Server
+	if g.SIPManager != nil {
+		sipServer = g.SIPManager.GetServer()
+	}
+
 	router.AssistantApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis, g.Opensearch)
 	router.HealthCheckRoutes(g.Cfg, g.E, g.Logger, g.Postgres)
 	router.KnowledgeApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis, g.Opensearch)
 	router.DocumentApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis, g.Opensearch)
-	router.AssistantConversationApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis, g.Opensearch)
+	router.AssistantConversationApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis, g.Opensearch, sipServer)
 	router.AssistantDeploymentApiRoute(g.Cfg, g.S, g.Logger, g.Postgres)
 
 	// rpc call handle by gin handler
-	router.TalkCallbackApiRoute(g.Cfg, g.E, g.Logger, g.Postgres, g.Redis, g.Opensearch)
+	router.TalkCallbackApiRoute(g.Cfg, g.E, g.Logger, g.Postgres, g.Redis, g.Opensearch, sipServer)
 
 }
 

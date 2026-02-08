@@ -28,6 +28,8 @@ type RedisConnector interface {
 	Cmd(context.Context, string, []string) *RedisResponse
 	// multi key commands
 	Cmds(ctx context.Context, cmd string, args *[]string) *RedisResponse
+	// GetConnection returns the underlying redis client for advanced operations (Lua scripts, sets, etc.)
+	GetConnection() *redis.Client
 }
 
 type RedisPostgresCacheConnector interface {

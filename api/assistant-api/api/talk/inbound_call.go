@@ -54,7 +54,7 @@ func (cApi *ConversationApi) Callback(c *gin.Context) {
 	}
 
 	tlp := c.Param("telephony")
-	_telephony, err := telephony.GetTelephony(telephony.Telephony(tlp), cApi.cfg, cApi.logger)
+	_telephony, err := telephony.GetTelephony(telephony.Telephony(tlp), cApi.cfg, cApi.logger, cApi.sipServer)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid telephony"})
 		return
@@ -99,7 +99,7 @@ func (cApi *ConversationApi) CallReciever(c *gin.Context) {
 	}
 
 	tlp := c.Param("telephony")
-	_telephony, err := telephony.GetTelephony(telephony.Telephony(tlp), cApi.cfg, cApi.logger)
+	_telephony, err := telephony.GetTelephony(telephony.Telephony(tlp), cApi.cfg, cApi.logger, cApi.sipServer)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Telephony is not connected"})
 		return

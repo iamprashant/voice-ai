@@ -86,7 +86,7 @@ func TestGetTelephonyWithInvalidTypes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			telephony, err := GetTelephony(tt.provider, cfg, mockLogger)
+			telephony, err := GetTelephony(tt.provider, cfg, mockLogger, nil)
 
 			assert.Error(t, err, "expected error for provider: %s", tt.provider)
 			assert.Nil(t, telephony, "telephony should be nil for invalid provider")
@@ -101,7 +101,7 @@ func TestGetTelephonyWithNilConfig(t *testing.T) {
 
 	// Factory creates the telephony object with nil config
 	// The validation happens at runtime when the config is used
-	telephony, err := GetTelephony(Twilio, nil, mockLogger)
+	telephony, err := GetTelephony(Twilio, nil, mockLogger, nil)
 	// The factory doesn't validate nil config at creation time
 	// so it may succeed or fail depending on the provider implementation
 	if telephony != nil && err != nil {
@@ -115,7 +115,7 @@ func TestGetTelephonyWithNilLogger(t *testing.T) {
 
 	// Factory creates the telephony object with nil logger
 	// The validation happens at runtime when the logger is used
-	telephony, err := GetTelephony(Twilio, cfg, nil)
+	telephony, err := GetTelephony(Twilio, cfg, nil, nil)
 	// The factory doesn't validate nil logger at creation time
 	// so it may succeed or fail depending on the provider implementation
 	if telephony != nil && err != nil {
@@ -138,7 +138,7 @@ func TestAllTelephonyProvidersCallFactory(t *testing.T) {
 	for _, provider := range telephonyTypes {
 		t.Run(provider.String(), func(t *testing.T) {
 			// Just ensure factory can be called without panic
-			_, _ = GetTelephony(provider, cfg, mockLogger)
+			_, _ = GetTelephony(provider, cfg, mockLogger, nil)
 		})
 	}
 }
@@ -181,7 +181,7 @@ func TestGetTelephonyErrorMessages(t *testing.T) {
 
 	for _, provider := range invalidProviders {
 		t.Run("Error_"+provider.String(), func(t *testing.T) {
-			_, err := GetTelephony(provider, cfg, mockLogger)
+			_, err := GetTelephony(provider, cfg, mockLogger, nil)
 			assert.Error(t, err)
 			assert.Equal(t, "illegal telephony provider", err.Error())
 		})
@@ -196,7 +196,7 @@ func TestTelephonyFactoryConsistency(t *testing.T) {
 
 	// For any invalid type, both return values must follow the pattern:
 	// (nil, error)
-	telephony, err := GetTelephony(Telephony("invalid"), cfg, mockLogger)
+	telephony, err := GetTelephony(Telephony("invalid"), cfg, mockLogger, nil)
 
 	assert.Nil(t, telephony, "telephony must be nil when error occurs")
 	assert.NotNil(t, err, "error must not be nil for invalid provider")
@@ -234,7 +234,7 @@ func BenchmarkGetTelephony(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = GetTelephony(Twilio, cfg, mockLogger)
+		_, _ = GetTelephony(Twilio, cfg, mockLogger, nil)
 	}
 }
 

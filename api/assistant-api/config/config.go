@@ -18,6 +18,7 @@ import (
 // SIPConfig holds the SIP server configuration
 type SIPConfig struct {
 	Server            string `mapstructure:"server"`
+	ExternalIP        string `mapstructure:"external_ip"` // Public/reachable IP for SDP and SIP Contact headers (defaults to Server if empty)
 	Port              int    `mapstructure:"port"`
 	Transport         string `mapstructure:"transport"`
 	RTPPortRangeStart int    `mapstructure:"rtp_port_range_start"`

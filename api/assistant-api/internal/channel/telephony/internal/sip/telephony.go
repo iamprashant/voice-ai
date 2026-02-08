@@ -10,8 +10,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
-	"sync"
+	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rapidaai/api/assistant-api/config"
@@ -25,33 +27,52 @@ import (
 
 // sipTelephony implements the Telephony interface for native SIP
 type sipTelephony struct {
-	mu      sync.RWMutex
-	appCfg  *config.AssistantConfig
-	logger  commons.Logger
-	servers map[string]*sip_infra.Server
+	appCfg       *config.AssistantConfig
+	logger       commons.Logger
+	sharedServer *sip_infra.Server // Shared SIP server for outbound calls (injected from SIPManager)
 }
 
-// NewSIPTelephony creates a new SIP telephony provider
-func NewSIPTelephony(cfg *config.AssistantConfig, logger commons.Logger) (internal_type.Telephony, error) {
+// NewSIPTelephony creates a new SIP telephony provider.
+// sipServer is the shared SIP server instance from SIPManager used for outbound calls.
+func NewSIPTelephony(cfg *config.AssistantConfig, logger commons.Logger, sipServer *sip_infra.Server) (internal_type.Telephony, error) {
 	return &sipTelephony{
-		appCfg:  cfg,
-		logger:  logger,
-		servers: make(map[string]*sip_infra.Server),
+		appCfg:       cfg,
+		logger:       logger,
+		sharedServer: sipServer,
 	}, nil
 }
 
-// ParseConfig parses SIP configuration from vault credentials
+// parseConfig parses SIP provider credentials from vault, then overlays
+// platform operational settings (port, transport, RTP range) from app config.
+// Twilio/providers only give: sip_uri, sip_username, sip_password, sip_realm, sip_domain
+// Our platform provides: port, transport, rtp_port_range from app config
 func (t *sipTelephony) parseConfig(vaultCredential *protos.VaultCredential) (*sip_infra.Config, error) {
 	if vaultCredential == nil || vaultCredential.GetValue() == nil {
 		return nil, fmt.Errorf("vault credential is required")
 	}
 
 	credMap := vaultCredential.GetValue().AsMap()
+	cfg := &sip_infra.Config{}
 
-	cfg := sip_infra.DefaultConfig()
+	// --- Provider credentials (from vault / Twilio) ---
 
-	// Required fields
-	if server, ok := credMap["sip_server"].(string); ok {
+	// Parse sip_uri to extract server and port (e.g. "sip:192.168.1.5:5060")
+	if sipURI, ok := credMap["sip_uri"].(string); ok && sipURI != "" {
+		uri := strings.TrimPrefix(strings.TrimPrefix(sipURI, "sips:"), "sip:")
+		host, portStr, err := net.SplitHostPort(uri)
+		if err != nil {
+			// No port in URI, treat entire string as host
+			cfg.Server = uri
+		} else {
+			cfg.Server = host
+			if p, err := strconv.Atoi(portStr); err == nil {
+				cfg.Port = p
+			}
+		}
+	}
+
+	// Explicit sip_server overrides sip_uri
+	if server, ok := credMap["sip_server"].(string); ok && server != "" {
 		cfg.Server = server
 	}
 	if username, ok := credMap["sip_username"].(string); ok {
@@ -60,28 +81,21 @@ func (t *sipTelephony) parseConfig(vaultCredential *protos.VaultCredential) (*si
 	if password, ok := credMap["sip_password"].(string); ok {
 		cfg.Password = password
 	}
-
-	// Optional fields with defaults
-	if port, ok := credMap["sip_port"].(float64); ok {
-		cfg.Port = int(port)
-	}
-	if transport, ok := credMap["sip_transport"].(string); ok {
-		cfg.Transport = sip_infra.Transport(transport)
-	}
 	if realm, ok := credMap["sip_realm"].(string); ok {
 		cfg.Realm = realm
 	}
 	if domain, ok := credMap["sip_domain"].(string); ok {
 		cfg.Domain = domain
 	}
-	if rtpStart, ok := credMap["rtp_port_range_start"].(float64); ok {
-		cfg.RTPPortRangeStart = int(rtpStart)
-	}
-	if rtpEnd, ok := credMap["rtp_port_range_end"].(float64); ok {
-		cfg.RTPPortRangeEnd = int(rtpEnd)
-	}
-	if srtp, ok := credMap["srtp_enabled"].(bool); ok {
-		cfg.SRTPEnabled = srtp
+
+	// --- Platform operational settings (from app config) ---
+	if t.appCfg.SIPConfig != nil {
+		cfg.ApplyOperationalDefaults(
+			t.appCfg.SIPConfig.Port,
+			sip_infra.Transport(t.appCfg.SIPConfig.Transport),
+			t.appCfg.SIPConfig.RTPPortRangeStart,
+			t.appCfg.SIPConfig.RTPPortRangeEnd,
+		)
 	}
 
 	if err := cfg.Validate(); err != nil {
@@ -89,54 +103,6 @@ func (t *sipTelephony) parseConfig(vaultCredential *protos.VaultCredential) (*si
 	}
 
 	return cfg, nil
-}
-
-// getOrCreateServer gets an existing server or creates a new one for the tenant
-func (t *sipTelephony) getOrCreateServer(ctx context.Context, tenantID string, cfg *sip_infra.Config) (*sip_infra.Server, error) {
-	t.mu.RLock()
-	server, exists := t.servers[tenantID]
-	t.mu.RUnlock()
-
-	if exists && server.IsRunning() {
-		return server, nil
-	}
-
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
-	// Double-check after acquiring write lock
-	if server, exists := t.servers[tenantID]; exists && server.IsRunning() {
-		return server, nil
-	}
-
-	// Create ListenConfig from tenant config
-	listenConfig := &sip_infra.ListenConfig{
-		Address:   cfg.Server,
-		Port:      cfg.Port,
-		Transport: cfg.Transport,
-	}
-
-	// Config resolver returns the tenant config for all calls on this server
-	tenantConfig := cfg
-	configResolver := func(inviteCtx *sip_infra.InviteContext) (*sip_infra.InviteResult, error) {
-		return &sip_infra.InviteResult{
-			Config:      tenantConfig,
-			ShouldAllow: true,
-		}, nil
-	}
-
-	// Create new server
-	newServer, err := sip_infra.NewServer(ctx, &sip_infra.ServerConfig{
-		ListenConfig:   listenConfig,
-		ConfigResolver: configResolver,
-		Logger:         t.logger,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	t.servers[tenantID] = newServer
-	return newServer, nil
 }
 
 // StatusCallback handles status callbacks from SIP events
@@ -202,39 +168,54 @@ func (t *sipTelephony) OutboundCall(
 		), err
 	}
 
-	// Get or create server for this tenant
-	tenantID := fmt.Sprintf("%d", assistantId)
-	server, err := t.getOrCreateServer(context.Background(), tenantID, cfg)
+	// Validate shared server is available and running
+	if t.sharedServer == nil {
+		return append(mtds,
+			types.NewMetadata("telephony.error", "SIP server not initialized"),
+			types.NewMetric("STATUS", "FAILED", utils.Ptr("Status of telephony api")),
+		), fmt.Errorf("shared SIP server not available")
+	}
+	if !t.sharedServer.IsRunning() {
+		return append(mtds,
+			types.NewMetadata("telephony.error", "SIP server not running"),
+			types.NewMetric("STATUS", "FAILED", utils.Ptr("Status of telephony api")),
+		), fmt.Errorf("shared SIP server is not running")
+	}
+
+	// Initiate outbound call via the shared SIP server.
+	// Pass metadata upfront so it is set on the session BEFORE the
+	// handleOutboundDialog goroutine starts. On fast LANs the 200 OK
+	// can arrive before MakeCall returns, causing handleOutboundAnswered
+	// to fail with "outbound session missing assistant_id metadata".
+	callMetadata := map[string]interface{}{
+		"assistant_id":    assistantId,
+		"conversation_id": assistantConversationId,
+		"to_phone":        toPhone,
+		"auth":            auth,
+		"sip_config":      cfg,
+	}
+	session, err := t.sharedServer.MakeCall(context.Background(), cfg, toPhone, fromPhone, callMetadata)
 	if err != nil {
 		return append(mtds,
-			types.NewMetadata("telephony.error", fmt.Sprintf("server error: %s", err.Error())),
+			types.NewMetadata("telephony.error", fmt.Sprintf("call error: %s", err.Error())),
 			types.NewMetric("STATUS", "FAILED", utils.Ptr("Status of telephony api")),
 		), err
 	}
 
-	// Start server if not running
-	if !server.IsRunning() {
-		if err := server.Start(); err != nil {
-			return append(mtds,
-				types.NewMetadata("telephony.error", fmt.Sprintf("server start error: %s", err.Error())),
-				types.NewMetric("STATUS", "FAILED", utils.Ptr("Status of telephony api")),
-			), err
-		}
-	}
-
-	// Note: Actual outbound call initiation requires INVITE sending
-	// This is a placeholder for the full implementation
 	t.logger.Info("SIP outbound call initiated",
 		"to", toPhone,
 		"from", fromPhone,
+		"call_id", session.GetCallID(),
 		"assistant_id", assistantId,
 		"conversation_id", assistantConversationId)
 
 	return append(mtds,
 		types.NewMetadata("telephony.status", "initiated"),
+		types.NewMetadata("telephony.call_id", session.GetCallID()),
 		types.NewEvent("initiated", map[string]interface{}{
 			"to":              toPhone,
 			"from":            fromPhone,
+			"call_id":         session.GetCallID(),
 			"assistant_id":    assistantId,
 			"conversation_id": assistantConversationId,
 		}),
@@ -291,26 +272,4 @@ func (t *sipTelephony) ReceiveCall(c *gin.Context) (*string, []types.Telemetry, 
 		types.NewEvent("webhook", queryParams),
 		types.NewMetric("STATUS", "SUCCESS", utils.Ptr("Status of telephony api")),
 	), nil
-}
-
-// StopServer stops a specific tenant's SIP server
-func (t *sipTelephony) StopServer(tenantID string) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
-	if server, exists := t.servers[tenantID]; exists {
-		server.Stop()
-		delete(t.servers, tenantID)
-	}
-}
-
-// StopAllServers stops all SIP servers
-func (t *sipTelephony) StopAllServers() {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
-	for tenantID, server := range t.servers {
-		server.Stop()
-		delete(t.servers, tenantID)
-	}
 }

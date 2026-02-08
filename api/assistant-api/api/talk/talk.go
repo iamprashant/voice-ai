@@ -14,6 +14,7 @@ import (
 	internal_webrtc "github.com/rapidaai/api/assistant-api/internal/channel/webrtc"
 	internal_services "github.com/rapidaai/api/assistant-api/internal/services"
 	internal_assistant_service "github.com/rapidaai/api/assistant-api/internal/services/assistant"
+	sip_infra "github.com/rapidaai/api/assistant-api/sip/infra"
 	web_client "github.com/rapidaai/pkg/clients/web"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
@@ -31,6 +32,7 @@ type ConversationApi struct {
 	redis      connectors.RedisConnector
 	opensearch connectors.OpenSearchConnector
 	storage    storages.Storage
+	sipServer  *sip_infra.Server // Shared SIP server for outbound calls (may be nil)
 
 	assistantConversationService internal_services.AssistantConversationService
 	assistantService             internal_services.AssistantService
@@ -47,6 +49,7 @@ func NewConversationGRPCApi(config *config.AssistantConfig, logger commons.Logge
 	redis connectors.RedisConnector,
 	opensearch connectors.OpenSearchConnector,
 	vectordb connectors.VectorConnector,
+	sipServer *sip_infra.Server,
 ) assistant_api.TalkServiceServer {
 	return &ConversationGrpcApi{
 		ConversationApi{
@@ -55,6 +58,7 @@ func NewConversationGRPCApi(config *config.AssistantConfig, logger commons.Logge
 			postgres:                     postgres,
 			redis:                        redis,
 			opensearch:                   opensearch,
+			sipServer:                    sipServer,
 			assistantConversationService: internal_assistant_service.NewAssistantConversationService(logger, postgres, storage_files.NewStorage(config.AssetStoreConfig, logger)),
 			assistantService:             internal_assistant_service.NewAssistantService(config, logger, postgres, opensearch),
 			storage:                      storage_files.NewStorage(config.AssetStoreConfig, logger),
@@ -91,6 +95,7 @@ func NewConversationApi(config *config.AssistantConfig, logger commons.Logger,
 	redis connectors.RedisConnector,
 	opensearch connectors.OpenSearchConnector,
 	vectordb connectors.VectorConnector,
+	sipServer *sip_infra.Server,
 ) *ConversationApi {
 	return &ConversationApi{
 		cfg:                          config,
@@ -98,6 +103,7 @@ func NewConversationApi(config *config.AssistantConfig, logger commons.Logger,
 		postgres:                     postgres,
 		redis:                        redis,
 		opensearch:                   opensearch,
+		sipServer:                    sipServer,
 		assistantConversationService: internal_assistant_service.NewAssistantConversationService(logger, postgres, storage_files.NewStorage(config.AssetStoreConfig, logger)),
 		assistantService:             internal_assistant_service.NewAssistantService(config, logger, postgres, opensearch),
 		storage:                      storage_files.NewStorage(config.AssetStoreConfig, logger),

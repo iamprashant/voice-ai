@@ -9,20 +9,20 @@ package sip_infra
 import (
 	"context"
 	"fmt"
+	"net"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/emiago/sipgo"
 	"github.com/google/uuid"
 	"github.com/rapidaai/pkg/commons"
 )
 
 // Session channel buffer sizes
 const (
-	audioInBufferSize  = 100
-	audioOutBufferSize = 100
-	eventBufferSize    = 50
-	errorBufferSize    = 10
+	eventBufferSize = 50
+	errorBufferSize = 10
 )
 
 // SessionConfig holds configuration for creating a session
@@ -43,12 +43,10 @@ type Session struct {
 	config *Config
 	ended  atomic.Bool
 
-	ctx          context.Context
-	cancel       context.CancelFunc
-	audioInChan  chan []byte
-	audioOutChan chan []byte
-	eventChan    chan Event
-	errorChan    chan error
+	ctx       context.Context
+	cancel    context.CancelFunc
+	eventChan chan Event
+	errorChan chan error
 
 	// RTP handling
 	rtpHandler    *RTPHandler
@@ -58,6 +56,21 @@ type Session struct {
 
 	// Codec negotiation result
 	negotiatedCodec *Codec
+
+	// User metadata for passing context between layers (e.g., outbound call info)
+	metadata map[string]interface{}
+
+	// byeReceived is closed when a SIP BYE is received for this session.
+	// Used to notify startCall about early BYE without fully ending the session.
+	// This decouples BYE notification from session teardown, preventing the race
+	// condition where handleOutboundDialog kills the session before startCall
+	// has registered its own context cancellation.
+	byeReceived     chan struct{}
+	byeReceivedOnce sync.Once
+
+	// Outbound dialog session — stored so BYE/re-INVITE handlers can access it.
+	// nil for inbound calls.
+	dialogClientSession *sipgo.DialogClientSession
 }
 
 // NewSession creates a new SIP session
@@ -65,8 +78,16 @@ func NewSession(ctx context.Context, cfg *SessionConfig) (*Session, error) {
 	if cfg.Config == nil {
 		return nil, fmt.Errorf("%w: config is required", ErrInvalidConfig)
 	}
-	if err := cfg.Config.Validate(); err != nil {
-		return nil, err
+	// Use ValidateRTP for inbound calls (no username/password needed)
+	// Use full Validate for outbound calls
+	if cfg.Direction == CallDirectionOutbound {
+		if err := cfg.Config.Validate(); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := cfg.Config.ValidateRTP(); err != nil {
+			return nil, err
+		}
 	}
 
 	sessionCtx, cancel := context.WithCancel(ctx)
@@ -95,11 +116,10 @@ func NewSession(ctx context.Context, cfg *SessionConfig) (*Session, error) {
 		config:          cfg.Config,
 		ctx:             sessionCtx,
 		cancel:          cancel,
-		audioInChan:     make(chan []byte, audioInBufferSize),
-		audioOutChan:    make(chan []byte, audioOutBufferSize),
 		eventChan:       make(chan Event, eventBufferSize),
 		errorChan:       make(chan error, errorBufferSize),
 		negotiatedCodec: codec,
+		byeReceived:     make(chan struct{}),
 	}
 
 	return session, nil
@@ -201,8 +221,13 @@ func (s *Session) isValidTransition(from, to CallState) bool {
 }
 
 // emitEvent sends an event to the event channel (non-blocking)
+// Safe to call after session has ended — silently drops the event.
 func (s *Session) emitEvent(eventType EventType, data map[string]interface{}) {
+	if s.ended.Load() {
+		return
+	}
 	event := NewEvent(eventType, s.info.CallID, data)
+	defer func() { recover() }() // guard against closed channel race
 	select {
 	case s.eventChan <- event:
 	default:
@@ -227,6 +252,29 @@ func (s *Session) SetLocalRTP(addr string, port int) {
 	s.info.LocalRTPAddress = fmt.Sprintf("%s:%d", addr, port)
 }
 
+// GetLocalRTP returns the local RTP IP and port for this session.
+func (s *Session) GetLocalRTP() (string, int) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	// Parse IP from the stored LocalRTPAddress ("ip:port" format)
+	addr := s.info.LocalRTPAddress
+	if addr == "" {
+		return "", s.rtpLocalPort
+	}
+	host, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		return addr, s.rtpLocalPort
+	}
+	return host, s.rtpLocalPort
+}
+
+// GetRTPLocalPort returns the local RTP port bound for this session.
+func (s *Session) GetRTPLocalPort() int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.rtpLocalPort
+}
+
 // SetNegotiatedCodec sets the negotiated codec
 func (s *Session) SetNegotiatedCodec(codecName string, sampleRate int) {
 	s.mu.Lock()
@@ -248,7 +296,8 @@ func (s *Session) GetNegotiatedCodec() *Codec {
 	return s.negotiatedCodec
 }
 
-// SetRTPHandler sets the RTP handler for this session
+// SetRTPHandler sets the RTP handler for this session.
+// The Streamer reads/writes directly from/to the RTP handler's audio channels.
 func (s *Session) SetRTPHandler(handler *RTPHandler) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -260,16 +309,6 @@ func (s *Session) GetRTPHandler() *RTPHandler {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.rtpHandler
-}
-
-// AudioIn returns the channel for receiving audio from remote
-func (s *Session) AudioIn() <-chan []byte {
-	return s.audioInChan
-}
-
-// AudioOut returns the channel for sending audio to remote
-func (s *Session) AudioOut() chan<- []byte {
-	return s.audioOutChan
 }
 
 // Events returns the event channel
@@ -287,37 +326,40 @@ func (s *Session) Context() context.Context {
 	return s.ctx
 }
 
-// SendAudio sends audio data to the remote endpoint via RTP
-func (s *Session) SendAudio(data []byte) error {
-	if s.ended.Load() {
-		return ErrSessionClosed
+// SetMetadata stores a key-value pair on the session
+func (s *Session) SetMetadata(key string, value interface{}) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.metadata == nil {
+		s.metadata = make(map[string]interface{})
 	}
-
-	select {
-	case s.audioOutChan <- data:
-		return nil
-	case <-s.ctx.Done():
-		return s.ctx.Err()
-	default:
-		return ErrBufferFull
-	}
+	s.metadata[key] = value
 }
 
-// ReceiveAudio receives audio data from the remote endpoint
-func (s *Session) ReceiveAudio() ([]byte, error) {
-	if s.ended.Load() {
-		return nil, ErrSessionClosed
+// GetMetadata retrieves a value by key from session metadata
+func (s *Session) GetMetadata(key string) (interface{}, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if s.metadata == nil {
+		return nil, false
 	}
+	v, ok := s.metadata[key]
+	return v, ok
+}
 
-	select {
-	case data, ok := <-s.audioInChan:
-		if !ok {
-			return nil, ErrSessionClosed
-		}
-		return data, nil
-	case <-s.ctx.Done():
-		return nil, s.ctx.Err()
-	}
+// SetDialogClientSession stores the outbound DialogClientSession on this session.
+// This allows BYE and re-INVITE handlers to interact with the sipgo dialog.
+func (s *Session) SetDialogClientSession(ds *sipgo.DialogClientSession) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.dialogClientSession = ds
+}
+
+// GetDialogClientSession returns the outbound DialogClientSession, or nil for inbound calls.
+func (s *Session) GetDialogClientSession() *sipgo.DialogClientSession {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.dialogClientSession
 }
 
 // SendEvent sends an event notification (non-blocking)
@@ -325,6 +367,7 @@ func (s *Session) SendEvent(event Event) {
 	if s.ended.Load() {
 		return
 	}
+	defer func() { recover() }()
 	select {
 	case s.eventChan <- event:
 	default:
@@ -337,6 +380,7 @@ func (s *Session) SendError(err error) {
 	if s.ended.Load() {
 		return
 	}
+	defer func() { recover() }()
 	select {
 	case s.errorChan <- err:
 	default:
@@ -351,7 +395,11 @@ func (s *Session) End() {
 		return // Already ended
 	}
 
-	s.SetState(CallStateEnding)
+	// Only transition through ending if not already in a terminal state
+	// (e.g. already set to CallStateFailed before End() was called)
+	if !s.info.State.IsTerminal() {
+		s.SetState(CallStateEnding)
+	}
 
 	// Stop RTP handler if present
 	s.mu.Lock()
@@ -368,10 +416,14 @@ func (s *Session) End() {
 	// Cancel context
 	s.cancel()
 
+	// Set final state before closing channels to avoid send-on-closed-channel
+	// Skip if already in a terminal state (e.g. failed)
+	if !s.info.State.IsTerminal() {
+		s.SetState(CallStateEnded)
+	}
+
 	// Close channels safely
 	s.closeChannels()
-
-	s.SetState(CallStateEnded)
 
 	if s.logger != nil {
 		s.logger.Info("Session ended",
@@ -387,8 +439,6 @@ func (s *Session) closeChannels() {
 		recover()
 	}()
 
-	close(s.audioInChan)
-	close(s.audioOutChan)
 	close(s.eventChan)
 	close(s.errorChan)
 }
@@ -406,6 +456,22 @@ func (s *Session) IsActive() bool {
 // IsEnded returns whether the session has ended
 func (s *Session) IsEnded() bool {
 	return s.ended.Load()
+}
+
+// NotifyBye signals that a SIP BYE has been received for this session.
+// This is safe to call multiple times — only the first call has effect.
+// It does NOT end the session; it merely notifies listeners (e.g., startCall)
+// that a BYE was received so they can shut down gracefully.
+func (s *Session) NotifyBye() {
+	s.byeReceivedOnce.Do(func() {
+		close(s.byeReceived)
+	})
+}
+
+// ByeReceived returns a channel that is closed when a SIP BYE is received.
+// Use this in select{} to detect early BYE without relying on session.End().
+func (s *Session) ByeReceived() <-chan struct{} {
+	return s.byeReceived
 }
 
 // GetState returns the current session state

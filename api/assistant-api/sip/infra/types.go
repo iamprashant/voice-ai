@@ -24,7 +24,6 @@ var (
 	ErrRTPNotInitialized = errors.New("RTP handler not initialized")
 	ErrSDPParseFailed    = errors.New("failed to parse SDP")
 	ErrCodecNotSupported = errors.New("codec not supported")
-	ErrBufferFull        = errors.New("audio buffer is full")
 	ErrConnectionFailed  = errors.New("SIP connection failed")
 )
 
@@ -77,52 +76,75 @@ func (t Transport) IsValid() bool {
 	}
 }
 
-// Config holds per-tenant SIP configuration from vault credentials
+// Config holds the full SIP configuration, combining:
+//   - Provider credentials (from vault/Twilio): Server, Username, Password, Realm, Domain
+//   - Platform operational settings (from app config): Port, Transport, RTP range, timeouts
 type Config struct {
-	Server            string    `json:"sip_server" mapstructure:"sip_server" validate:"required"`
-	Port              int       `json:"sip_port" mapstructure:"sip_port" validate:"required,min=1,max=65535"`
+	// Provider credentials — from vault (Twilio, SIP trunk provider, etc.)
+	Server   string `json:"sip_server" mapstructure:"sip_server"`
+	Username string `json:"sip_username" mapstructure:"sip_username"`
+	Password string `json:"sip_password" mapstructure:"sip_password"`
+	Realm    string `json:"sip_realm" mapstructure:"sip_realm"`
+	Domain   string `json:"sip_domain,omitempty" mapstructure:"sip_domain"`
+
+	// CallerID overrides the From header user in outbound calls.
+	// For cloud providers (Twilio, Vonage, Telnyx), this should be the E.164 DID number.
+	// For self-hosted PBX (Asterisk, FreeSWITCH), leave empty — defaults to Username
+	// so the From URI matches the auth endpoint (required for PJSIP endpoint resolution).
+	CallerID string `json:"sip_caller_id,omitempty" mapstructure:"sip_caller_id"`
+
+	// Platform operational settings — from app config (not from vault)
+	Port              int       `json:"sip_port" mapstructure:"sip_port"`
 	Transport         Transport `json:"sip_transport" mapstructure:"sip_transport"`
-	Username          string    `json:"sip_username" mapstructure:"sip_username" validate:"required"`
-	Password          string    `json:"sip_password" mapstructure:"sip_password" validate:"required"`
-	Realm             string    `json:"sip_realm" mapstructure:"sip_realm"`
-	RTPPortRangeStart int       `json:"rtp_port_range_start" mapstructure:"rtp_port_range_start" validate:"required,min=1024"`
-	RTPPortRangeEnd   int       `json:"rtp_port_range_end" mapstructure:"rtp_port_range_end" validate:"required,gtfield=RTPPortRangeStart"`
+	RTPPortRangeStart int       `json:"rtp_port_range_start" mapstructure:"rtp_port_range_start"`
+	RTPPortRangeEnd   int       `json:"rtp_port_range_end" mapstructure:"rtp_port_range_end"`
 	SRTPEnabled       bool      `json:"srtp_enabled" mapstructure:"srtp_enabled"`
-	Domain            string    `json:"sip_domain,omitempty" mapstructure:"sip_domain"`
-	// Optional timeout settings
+
+	// Timeout settings — from app config
 	RegisterTimeout  time.Duration `json:"register_timeout,omitempty" mapstructure:"register_timeout"`
 	InviteTimeout    time.Duration `json:"invite_timeout,omitempty" mapstructure:"invite_timeout"`
 	SessionTimeout   time.Duration `json:"session_timeout,omitempty" mapstructure:"session_timeout"`
 	KeepAliveEnabled bool          `json:"keepalive_enabled,omitempty" mapstructure:"keepalive_enabled"`
 }
 
-// DefaultConfig returns a Config with sensible defaults
-func DefaultConfig() *Config {
-	return &Config{
-		Port:              5060,
-		Transport:         TransportUDP,
-		RTPPortRangeStart: 10000,
-		RTPPortRangeEnd:   20000,
-		RegisterTimeout:   30 * time.Second,
-		InviteTimeout:     60 * time.Second,
-		SessionTimeout:    3600 * time.Second,
-		KeepAliveEnabled:  true,
-	}
-}
-
-// Validate validates the SIP configuration
+// Validate validates the full SIP configuration (for outbound calls / registration)
 func (c *Config) Validate() error {
-	if c.Server == "" {
-		return fmt.Errorf("%w: sip_server is required", ErrInvalidConfig)
-	}
-	if c.Port <= 0 || c.Port > 65535 {
-		return fmt.Errorf("%w: sip_port must be between 1 and 65535", ErrInvalidConfig)
+	if err := c.ValidateRTP(); err != nil {
+		return err
 	}
 	if c.Username == "" {
 		return fmt.Errorf("%w: sip_username is required", ErrInvalidConfig)
 	}
 	if c.Password == "" {
 		return fmt.Errorf("%w: sip_password is required", ErrInvalidConfig)
+	}
+	return nil
+}
+
+// ApplyOperationalDefaults fills in unset operational fields (port, transport, RTP range)
+// from the platform's app-level SIP config. These are infrastructure settings, not provider credentials.
+func (c *Config) ApplyOperationalDefaults(port int, transport Transport, rtpStart, rtpEnd int) {
+	if c.Port <= 0 && port > 0 {
+		c.Port = port
+	}
+	if c.Transport == "" && transport != "" {
+		c.Transport = transport
+	}
+	if c.RTPPortRangeStart <= 0 && rtpStart > 0 {
+		c.RTPPortRangeStart = rtpStart
+	}
+	if c.RTPPortRangeEnd <= 0 && rtpEnd > 0 {
+		c.RTPPortRangeEnd = rtpEnd
+	}
+}
+
+// ValidateRTP validates the minimum config needed for inbound calls (server + RTP ports)
+func (c *Config) ValidateRTP() error {
+	if c.Server == "" {
+		return fmt.Errorf("%w: sip_server is required", ErrInvalidConfig)
+	}
+	if c.Port <= 0 || c.Port > 65535 {
+		return fmt.Errorf("%w: sip_port must be between 1 and 65535", ErrInvalidConfig)
 	}
 	if c.RTPPortRangeStart <= 0 || c.RTPPortRangeEnd <= 0 {
 		return fmt.Errorf("%w: rtp_port_range must be specified", ErrInvalidConfig)

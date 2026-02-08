@@ -90,7 +90,7 @@ func (cApi *ConversationGrpcApi) CreatePhoneCall(ctx context.Context, ir *protos
 		return utils.ErrorWithCode[protos.CreatePhoneCallResponse](200, err, "Please check the credential for telephony, please check and try again.")
 	}
 
-	telephony, err := telephony.GetTelephony(telephony.Telephony(assistant.AssistantPhoneDeployment.TelephonyProvider), cApi.cfg, cApi.logger)
+	telephony, err := telephony.GetTelephony(telephony.Telephony(assistant.AssistantPhoneDeployment.TelephonyProvider), cApi.cfg, cApi.logger, cApi.sipServer)
 	if err != nil {
 		cApi.assistantConversationService.ApplyConversationMetrics(ctx, auth, assistant.Id, conversation.Id, []*types.Metric{types.NewStatusMetric(type_enums.RECORD_FAILED)})
 		return utils.ErrorWithCode[protos.CreatePhoneCallResponse](200, err, "Please check the configuration for telephony, please check and try again.")
