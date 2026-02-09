@@ -86,7 +86,7 @@ class WebRTCConfig(_message.Message):
     sampleRate: int
     def __init__(self, iceServers: _Optional[_Iterable[_Union[ICEServer, _Mapping]]] = ..., audioCodec: _Optional[str] = ..., sampleRate: _Optional[int] = ...) -> None: ...
 
-class WebTalkInput(_message.Message):
+class WebTalkRequest(_message.Message):
     __slots__ = ("initialization", "configuration", "message", "signaling", "metadata", "metrics")
     INITIALIZATION_FIELD_NUMBER: _ClassVar[int]
     CONFIGURATION_FIELD_NUMBER: _ClassVar[int]
@@ -102,7 +102,7 @@ class WebTalkInput(_message.Message):
     metrics: _talk_api_pb2.ConversationMerics
     def __init__(self, initialization: _Optional[_Union[_talk_api_pb2.ConversationInitialization, _Mapping]] = ..., configuration: _Optional[_Union[_talk_api_pb2.ConversationConfiguration, _Mapping]] = ..., message: _Optional[_Union[_talk_api_pb2.ConversationUserMessage, _Mapping]] = ..., signaling: _Optional[_Union[ClientSignaling, _Mapping]] = ..., metadata: _Optional[_Union[_talk_api_pb2.ConversationMetadata, _Mapping]] = ..., metrics: _Optional[_Union[_talk_api_pb2.ConversationMerics, _Mapping]] = ...) -> None: ...
 
-class WebTalkOutput(_message.Message):
+class WebTalkResponse(_message.Message):
     __slots__ = ("code", "success", "initialization", "configuration", "interruption", "user", "assistant", "tool", "toolResult", "directive", "error", "signaling", "metadata", "metrics")
     CODE_FIELD_NUMBER: _ClassVar[int]
     SUCCESS_FIELD_NUMBER: _ClassVar[int]

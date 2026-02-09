@@ -11,7 +11,7 @@ const (
 	OpusSampleRate    = 48000
 	OpusFrameDuration = 20   // milliseconds
 	OpusFrameBytes    = 1920 // 960 samples * 2 bytes (20ms at 48kHz)
-	OpusChannels      = 2    // Stereo channels for WebRTC compatibility
+	OpusChannels      = 2    // Opus RTP always signals 2 encoding channels (opus/48000/2) per RFC 7587, even for mono voice
 	OpusPayloadType   = 111  // Standard dynamic payload type for Opus
 	OpusSDPFmtpLine   = "minptime=10;useinbandfec=1;stereo=0;sprop-stereo=0"
 )

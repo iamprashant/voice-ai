@@ -108,7 +108,6 @@ func (spk *genericRequestor) callSpeaking(ctx context.Context, result internal_t
 	switch res := result.(type) {
 	case internal_type.LLMResponseDonePacket:
 		if spk.textToSpeechTransformer != nil {
-
 			if result.ContextId() != spk.messaging.GetID() {
 				return nil
 			}
@@ -121,8 +120,12 @@ func (spk *genericRequestor) callSpeaking(ctx context.Context, result internal_t
 			if err := spk.textToSpeechTransformer.Transform(spk.Context(), res); err != nil {
 				spk.logger.Errorf("speak: failed to send flush to text to speech transformer error: %v", err)
 			}
+			return nil
 		}
-
+		if err := spk.Notify(ctx, &protos.ConversationAssistantMessage{Time: timestamppb.Now(), Id: res.ContextId(), Completed: true, Message: &protos.ConversationAssistantMessage_Text{Text: res.Text}}); err != nil {
+			spk.logger.Tracef(ctx, "error while outputting chunk to the user: %w", err)
+		}
+		return nil
 	case internal_type.LLMResponseDeltaPacket:
 		if result.ContextId() != spk.messaging.GetID() {
 			return nil
@@ -138,8 +141,12 @@ func (spk *genericRequestor) callSpeaking(ctx context.Context, result internal_t
 			if err := spk.textToSpeechTransformer.Transform(spk.Context(), res); err != nil {
 				spk.logger.Errorf("speak: failed to send flush to text to speech transformer error: %v", err)
 			}
+			if err := spk.Notify(ctx, &protos.ConversationAssistantMessage{Time: timestamppb.Now(), Id: res.ContextId(), Completed: true, Message: &protos.ConversationAssistantMessage_Text{Text: res.Text}}); err != nil {
+				spk.logger.Tracef(ctx, "error while outputting chunk to the user: %w", err)
+			}
+			return nil
 		}
-		if err := spk.Notify(ctx, &protos.ConversationAssistantMessage{Time: timestamppb.Now(), Id: res.ContextId(), Completed: true, Message: &protos.ConversationAssistantMessage_Text{Text: res.Text}}); err != nil {
+		if err := spk.Notify(ctx, &protos.ConversationAssistantMessage{Time: timestamppb.Now(), Id: res.ContextId(), Completed: false, Message: &protos.ConversationAssistantMessage_Text{Text: res.Text}}); err != nil {
 			spk.logger.Tracef(ctx, "error while outputting chunk to the user: %w", err)
 		}
 	default:
@@ -208,7 +215,7 @@ func (talking *genericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 			// do not abrupt it just send it to the assembler
 
 			// starting the timer for idle timeout as bot has finished responding
-			if talking.messaging.GetInputMode().Text() {
+			if talking.messaging.GetMode().Text() {
 				// stop idle timeout as bot has started responding
 				talking.startIdleTimeoutTimer(talking.Context())
 			}
@@ -229,6 +236,9 @@ func (talking *genericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 
 			if err := talking.callTextAggregator(ctx, internal_type.LLMResponseDeltaPacket{ContextID: vl.ContextId(), Text: vl.Text}); err != nil {
 				talking.logger.Debugf("unable to send static packet to aggregator %v", err)
+				if err := talking.callSpeaking(ctx, internal_type.LLMResponseDeltaPacket{ContextID: vl.ContextId(), Text: vl.Text}); err != nil {
+					talking.logger.Errorf("speaking error: %v", err)
+				}
 			}
 
 			if err := talking.messaging.Transition(internal_adapter_request_customizers.LLMGenerated); err != nil {
@@ -236,6 +246,9 @@ func (talking *genericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 			}
 			if err := talking.callTextAggregator(ctx, internal_type.LLMResponseDonePacket{ContextID: vl.ContextId()}); err != nil {
 				talking.logger.Debugf("unable to send static packet to aggregator %v", err)
+				if err := talking.callSpeaking(ctx, internal_type.LLMResponseDonePacket{ContextID: vl.ContextId(), Text: vl.Text}); err != nil {
+					talking.logger.Errorf("speaking error: %v", err)
+				}
 			}
 
 			continue
@@ -252,11 +265,6 @@ func (talking *genericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				// calling end of speech analyzer
 				if err := talking.callEndOfSpeech(ctx, vl); err != nil {
 					talking.logger.Errorf("end of speech error: %v", err)
-				}
-				//
-				// recorder interrupted
-				if err := talking.callRecording(ctx, vl); err != nil {
-					talking.logger.Errorf("recorder error: %v", err)
 				}
 
 				// let all the providers know about interruption
@@ -284,10 +292,6 @@ func (talking *genericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 					talking.logger.Errorf("end of speech error: %v", err)
 				}
 				//
-				// recorder interrupted
-				if err := talking.callRecording(ctx, vl); err != nil {
-					talking.logger.Errorf("recorder error: %v", err)
-				}
 
 				// let all the providers know about interruption
 				if err := talking.interruptAllProvider(ctx, vl); err != nil {
@@ -390,7 +394,7 @@ func (talking *genericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 			}
 
 			// starting the timer for idle timeout as bot has finished responding
-			if talking.messaging.GetInputMode().Text() {
+			if talking.messaging.GetMode().Text() {
 				// stop idle timeout as bot has started responding
 				talking.startIdleTimeoutTimer(talking.Context())
 			}
@@ -436,7 +440,7 @@ func (talking *genericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 
 			// resetting idle timer as bot has sponken
 			// starting the timer for idle timeout as bot has finished responding
-			if talking.messaging.GetInputMode().Audio() {
+			if talking.messaging.GetMode().Audio() {
 				// stop idle timeout as bot has started responding
 				talking.startIdleTimeoutTimer(talking.Context())
 			}

@@ -17,10 +17,8 @@ import (
 type Messaging interface {
 	GetID() string
 	Transition(state InteractionState) error
-	GetInputMode() type_enums.MessageMode
-	SwitchInputMode(mm type_enums.MessageMode)
-	GetOutputMode() type_enums.MessageMode
-	SwitchOutputMode(mm type_enums.MessageMode)
+	GetMode() type_enums.MessageMode
+	SwitchMode(mm type_enums.MessageMode)
 }
 
 type InteractionState int
@@ -62,18 +60,15 @@ type messaging struct {
 
 	// rw mutex
 	mutex sync.RWMutex
-
-	inputMode  type_enums.MessageMode
-	outputMode type_enums.MessageMode
+	mode  type_enums.MessageMode
 }
 
 func NewMessaging(logger commons.Logger) Messaging {
 	return &messaging{
-		logger:     logger,
-		in:         uuid.NewString(),
-		inputMode:  type_enums.TextMode,
-		outputMode: type_enums.TextMode,
-		state:      Unknown,
+		logger: logger,
+		in:     uuid.NewString(),
+		mode:   type_enums.TextMode,
+		state:  Unknown,
 	}
 }
 
@@ -81,24 +76,14 @@ func NewMessaging(logger commons.Logger) Messaging {
 // Input and output mode handling
 // ============================================================================
 
-func (ms *messaging) GetOutputMode() type_enums.MessageMode {
-	return ms.outputMode
+func (ms *messaging) GetMode() type_enums.MessageMode {
+	return ms.mode
 }
 
-func (ms *messaging) SwitchOutputMode(mm type_enums.MessageMode) {
+func (ms *messaging) SwitchMode(mm type_enums.MessageMode) {
 	ms.mutex.Lock()
 	defer ms.mutex.Unlock()
-	ms.outputMode = mm
-}
-
-func (ms *messaging) GetInputMode() type_enums.MessageMode {
-	return ms.inputMode
-}
-
-func (ms *messaging) SwitchInputMode(mm type_enums.MessageMode) {
-	ms.mutex.Lock()
-	defer ms.mutex.Unlock()
-	ms.inputMode = mm
+	ms.mode = mm
 }
 
 func (ms *messaging) GetID() string {

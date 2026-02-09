@@ -227,8 +227,8 @@ func (m *SIPManager) vaultConfigResolver(ctx *sip_infra.SIPRequestContext) (*sip
 		return sip_infra.Reject(500, "Middleware chain incomplete"), nil
 	}
 
-	// Fetch SIP config from vault
-	sipConfig, err := m.fetchSIPConfigFromVault(auth, assistant)
+	// Fetch both SIP config and vault credential from vault
+	sipConfig, vaultCred, err := m.fetchSIPConfigAndVaultCredential(auth, assistant)
 	if err != nil {
 		m.logger.Error("SIP: failed to resolve config", "call_id", ctx.CallID, "method", ctx.Method, "error", err)
 		return sip_infra.Reject(500, "Failed to resolve SIP configuration"), nil
@@ -242,9 +242,10 @@ func (m *SIPManager) vaultConfigResolver(ctx *sip_infra.SIPRequestContext) (*sip
 
 	// Pass auth/assistant/config to session via Extra
 	return sip_infra.AllowWithExtra(sipConfig, map[string]interface{}{
-		"auth":       auth,
-		"assistant":  assistant,
-		"sip_config": sipConfig,
+		"auth":             auth,
+		"assistant":        assistant,
+		"sip_config":       sipConfig,
+		"vault_credential": vaultCred,
 	}), nil
 }
 
@@ -524,7 +525,7 @@ func (m *SIPManager) startCall(ctx context.Context, session *sip_infra.Session, 
 	// Create SIP streamer (uses existing session's RTP handler)
 	streamer, err := internal_telephony.Telephony(internal_telephony.SIP).
 		SipStreamer(
-			callCtx, m.logger, session, sipConfig, assistant, conversation,
+			callCtx, m.logger, session, sipConfig, assistant, conversation, session.GetVaultCredential(),
 		)
 	if err != nil {
 		m.logger.Error("Failed to create SIP streamer", "error", err, "call_id", callID)
@@ -645,9 +646,10 @@ func (m *SIPManager) HandleIncomingCall(
 
 	// Create SIP streamer
 	// TODO: HandleIncomingCall needs a session from SIP server — this path is for webhook-based calls
+	// TODO: Also need to pass vault credential here — currently nil for webhook-based calls
 	sipCtx, cancel := context.WithCancel(ctx)
 	streamer, err := internal_telephony.Telephony(internal_telephony.SIP).SipStreamer(
-		sipCtx, m.logger, nil, sipConfig, assistant, conversation,
+		sipCtx, m.logger, nil, sipConfig, assistant, conversation, nil,
 	)
 	if err != nil {
 		cancel()
@@ -811,6 +813,43 @@ func (m *SIPManager) fetchSIPConfigFromVault(auth types.SimplePrinciple, assista
 	}
 
 	return sipConfig, nil
+}
+
+// fetchSIPConfigAndVaultCredential fetches both the SIP config and the raw vault credential.
+// Returns (*sip_infra.Config, *protos.VaultCredential, error)
+func (m *SIPManager) fetchSIPConfigAndVaultCredential(auth types.SimplePrinciple, assistant *internal_assistant_entity.Assistant) (*sip_infra.Config, *protos.VaultCredential, error) {
+	if assistant.AssistantPhoneDeployment == nil {
+		return nil, nil, fmt.Errorf("assistant has no phone deployment configured")
+	}
+
+	opts := assistant.AssistantPhoneDeployment.GetOptions()
+	credentialID, err := opts.GetUint64("rapida.credential_id")
+	if err != nil {
+		return nil, nil, fmt.Errorf("no credential_id in phone deployment: %w", err)
+	}
+
+	vaultCred, err := m.vaultClient.GetCredential(m.ctx, auth, credentialID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to fetch vault credential %d: %w", credentialID, err)
+	}
+
+	// Parse provider credentials from vault
+	sipConfig, err := GetSIPConfigFromVault(vaultCred)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to parse SIP config from vault: %w", err)
+	}
+
+	// Overlay platform operational settings from app config
+	if m.cfg.SIPConfig != nil {
+		sipConfig.ApplyOperationalDefaults(
+			m.cfg.SIPConfig.Port,
+			sip_infra.Transport(m.cfg.SIPConfig.Transport),
+			m.cfg.SIPConfig.RTPPortRangeStart,
+			m.cfg.SIPConfig.RTPPortRangeEnd,
+		)
+	}
+
+	return sipConfig, vaultCred, nil
 }
 
 // GetSIPConfigFromVault extracts SIP provider credentials from vault.

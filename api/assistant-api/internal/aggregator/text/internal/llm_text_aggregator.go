@@ -3,7 +3,7 @@
 //
 // Licensed under GPL-2.0 with Rapida Additional Terms.
 // See LICENSE.md or contact sales@rapida.ai for commercial usage.
-package internal_default_aggregator
+package internal_aggregator
 
 import (
 	"context"
@@ -17,8 +17,8 @@ import (
 	"github.com/rapidaai/pkg/utils"
 )
 
-// textAggregator implements sentence-level aggregation for streaming text.
-type textAggregator struct {
+// llmTextAggregator implements sentence-level aggregation for streaming text.
+type llmTextAggregator struct {
 	logger commons.Logger
 	ctx    context.Context
 
@@ -49,8 +49,8 @@ type textAggregator struct {
 //	if err != nil {
 //		return err
 //	}
-func NewDefaultLLMTextAggregator(context context.Context, logger commons.Logger, options utils.Option) (internal_type.LLMTextAggregator, error) {
-	st := &textAggregator{
+func NewLLMTextAggregator(context context.Context, logger commons.Logger, options utils.Option) (internal_type.LLMTextAggregator, error) {
+	st := &llmTextAggregator{
 		ctx:          context,
 		logger:       logger,
 		result:       make(chan internal_type.Packet, 32), // Increased buffer for better throughput
@@ -64,7 +64,7 @@ func NewDefaultLLMTextAggregator(context context.Context, logger commons.Logger,
 
 // initializeBoundaries sets up the boundary regex from configuration options.
 // It safely handles missing or invalid boundary configurations.
-func (st *textAggregator) initializeBoundaries(options utils.Option, logger commons.Logger) error {
+func (st *llmTextAggregator) initializeBoundaries(options utils.Option, logger commons.Logger) error {
 	boundariesRaw, err := options.GetString("speaker.sentence.boundaries")
 	if err != nil || boundariesRaw == "" {
 		return nil
@@ -120,7 +120,7 @@ func filterBoundaries(boundaries []string) []string {
 //		Text:   "Hello world.",
 //		IsComplete: true,
 //	})
-func (st *textAggregator) Aggregate(ctx context.Context, sentences ...internal_type.LLMPacket) error {
+func (st *llmTextAggregator) Aggregate(ctx context.Context, sentences ...internal_type.LLMPacket) error {
 	// Process all sentences with lock held once, then emit without lock
 	st.mu.Lock()
 	st.toEmitBuffer = st.toEmitBuffer[:0] // Reset reusable buffer
@@ -147,7 +147,7 @@ func (st *textAggregator) Aggregate(ctx context.Context, sentences ...internal_t
 
 // extractAndQueueLocked extracts complete sentences from the input.
 // MUST be called with lock held. Appends results to st.toEmitBuffer.
-func (st *textAggregator) extractAndQueueLocked(sentence internal_type.LLMPacket) {
+func (st *llmTextAggregator) extractAndQueueLocked(sentence internal_type.LLMPacket) {
 	switch input := sentence.(type) {
 	case internal_type.LLMResponseDeltaPacket:
 		// Handle context switch - just clean buffer, do NOT emit
@@ -182,7 +182,7 @@ func (st *textAggregator) extractAndQueueLocked(sentence internal_type.LLMPacket
 
 // extractTextsByBoundaryLocked extracts all sentences that end at boundaries.
 // MUST be called with lock held. Appends to st.toEmitBuffer.
-func (st *textAggregator) extractTextsByBoundaryLocked(contextId string) {
+func (st *llmTextAggregator) extractTextsByBoundaryLocked(contextId string) {
 	text := st.buffer.String()
 
 	// Find all boundaries at once instead of iterating
@@ -220,7 +220,7 @@ func (st *textAggregator) extractTextsByBoundaryLocked(contextId string) {
 //	for sentence := range aggregator.Result() {
 //		fmt.Println(sentence.Text)
 //	}
-func (st *textAggregator) Result() <-chan internal_type.Packet {
+func (st *llmTextAggregator) Result() <-chan internal_type.Packet {
 	return st.result
 }
 
@@ -230,7 +230,7 @@ func (st *textAggregator) Result() <-chan internal_type.Packet {
 // to Aggregate() will panic when trying to send on the closed channel.
 //
 // It is safe to call Close() multiple times; subsequent calls are no-ops.
-func (st *textAggregator) Close() error {
+func (st *llmTextAggregator) Close() error {
 	st.mu.Lock()
 	defer st.mu.Unlock()
 
@@ -248,7 +248,7 @@ func (st *textAggregator) Close() error {
 }
 
 // String returns a string representation of the aggregator for debugging.
-func (st *textAggregator) String() string {
+func (st *llmTextAggregator) String() string {
 	st.mu.Lock()
 	defer st.mu.Unlock()
 

@@ -17,6 +17,7 @@ import (
 	"github.com/emiago/sipgo"
 	"github.com/google/uuid"
 	"github.com/rapidaai/pkg/commons"
+	"github.com/rapidaai/protos"
 )
 
 // Session channel buffer sizes
@@ -27,11 +28,14 @@ const (
 
 // SessionConfig holds configuration for creating a session
 type SessionConfig struct {
-	Config    *Config
-	Direction CallDirection
-	CallID    string // Optional: if empty, a new UUID will be generated
-	Codec     *Codec
-	Logger    commons.Logger
+	Config          *Config
+	Direction       CallDirection
+	CallID          string // Optional: if empty, a new UUID will be generated
+	Codec           *Codec
+	Logger          commons.Logger
+	Auth            interface{}             // Authentication principal (types.SimplePrinciple)
+	Assistant       interface{}             // Assistant entity (*internal_assistant_entity.Assistant)
+	VaultCredential *protos.VaultCredential // Vault-resolved SIP provider credential
 }
 
 // Session manages a single SIP call session
@@ -59,6 +63,11 @@ type Session struct {
 
 	// User metadata for passing context between layers (e.g., outbound call info)
 	metadata map[string]interface{}
+
+	// Authentication and authorization context - available in all session methods
+	auth            interface{}             // Authentication principal (types.SimplePrinciple)
+	assistant       interface{}             // Assistant entity (*internal_assistant_entity.Assistant)
+	vaultCredential *protos.VaultCredential // Vault-resolved SIP provider credential
 
 	// byeReceived is closed when a SIP BYE is received for this session.
 	// Used to notify startCall about early BYE without fully ending the session.
@@ -119,6 +128,9 @@ func NewSession(ctx context.Context, cfg *SessionConfig) (*Session, error) {
 		eventChan:       make(chan Event, eventBufferSize),
 		errorChan:       make(chan error, errorBufferSize),
 		negotiatedCodec: codec,
+		auth:            cfg.Auth,
+		assistant:       cfg.Assistant,
+		vaultCredential: cfg.VaultCredential,
 		byeReceived:     make(chan struct{}),
 	}
 
@@ -360,6 +372,30 @@ func (s *Session) GetDialogClientSession() *sipgo.DialogClientSession {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.dialogClientSession
+}
+
+// GetAuth returns the authentication principal (types.SimplePrinciple) for this session.
+// Available in all session methods after session creation.
+func (s *Session) GetAuth() interface{} {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.auth
+}
+
+// GetAssistant returns the assistant entity for this session.
+// Available in all session methods after session creation.
+func (s *Session) GetAssistant() interface{} {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.assistant
+}
+
+// GetVaultCredential returns the vault-resolved SIP provider credential for this session.
+// Available in all session methods after session creation.
+func (s *Session) GetVaultCredential() *protos.VaultCredential {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.vaultCredential
 }
 
 // SendEvent sends an event notification (non-blocking)

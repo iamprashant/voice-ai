@@ -29,7 +29,7 @@ const (
 // WebRTC Service for browser-based real-time communication.
 type WebRTCClient interface {
 	// Bi-directional streaming RPC for WebRTC-based conversation
-	WebTalk(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[WebTalkInput, WebTalkOutput], error)
+	WebTalk(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[WebTalkRequest, WebTalkResponse], error)
 }
 
 type webRTCClient struct {
@@ -40,18 +40,18 @@ func NewWebRTCClient(cc grpc.ClientConnInterface) WebRTCClient {
 	return &webRTCClient{cc}
 }
 
-func (c *webRTCClient) WebTalk(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[WebTalkInput, WebTalkOutput], error) {
+func (c *webRTCClient) WebTalk(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[WebTalkRequest, WebTalkResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	stream, err := c.cc.NewStream(ctx, &WebRTC_ServiceDesc.Streams[0], WebRTC_WebTalk_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[WebTalkInput, WebTalkOutput]{ClientStream: stream}
+	x := &grpc.GenericClientStream[WebTalkRequest, WebTalkResponse]{ClientStream: stream}
 	return x, nil
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type WebRTC_WebTalkClient = grpc.BidiStreamingClient[WebTalkInput, WebTalkOutput]
+type WebRTC_WebTalkClient = grpc.BidiStreamingClient[WebTalkRequest, WebTalkResponse]
 
 // WebRTCServer is the server API for WebRTC service.
 // All implementations should embed UnimplementedWebRTCServer
@@ -60,7 +60,7 @@ type WebRTC_WebTalkClient = grpc.BidiStreamingClient[WebTalkInput, WebTalkOutput
 // WebRTC Service for browser-based real-time communication.
 type WebRTCServer interface {
 	// Bi-directional streaming RPC for WebRTC-based conversation
-	WebTalk(grpc.BidiStreamingServer[WebTalkInput, WebTalkOutput]) error
+	WebTalk(grpc.BidiStreamingServer[WebTalkRequest, WebTalkResponse]) error
 }
 
 // UnimplementedWebRTCServer should be embedded to have
@@ -70,7 +70,7 @@ type WebRTCServer interface {
 // pointer dereference when methods are called.
 type UnimplementedWebRTCServer struct{}
 
-func (UnimplementedWebRTCServer) WebTalk(grpc.BidiStreamingServer[WebTalkInput, WebTalkOutput]) error {
+func (UnimplementedWebRTCServer) WebTalk(grpc.BidiStreamingServer[WebTalkRequest, WebTalkResponse]) error {
 	return status.Errorf(codes.Unimplemented, "method WebTalk not implemented")
 }
 func (UnimplementedWebRTCServer) testEmbeddedByValue() {}
@@ -94,11 +94,11 @@ func RegisterWebRTCServer(s grpc.ServiceRegistrar, srv WebRTCServer) {
 }
 
 func _WebRTC_WebTalk_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(WebRTCServer).WebTalk(&grpc.GenericServerStream[WebTalkInput, WebTalkOutput]{ServerStream: stream})
+	return srv.(WebRTCServer).WebTalk(&grpc.GenericServerStream[WebTalkRequest, WebTalkResponse]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type WebRTC_WebTalkServer = grpc.BidiStreamingServer[WebTalkInput, WebTalkOutput]
+type WebRTC_WebTalkServer = grpc.BidiStreamingServer[WebTalkRequest, WebTalkResponse]
 
 // WebRTC_ServiceDesc is the grpc.ServiceDesc for WebRTC service.
 // It's only intended for direct use with grpc.RegisterService,

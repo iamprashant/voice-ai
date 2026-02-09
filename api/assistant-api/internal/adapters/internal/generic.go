@@ -269,7 +269,7 @@ func (gr *genericRequestor) GetArgs() map[string]interface{} {
 	return gr.args
 }
 
-func (gr *genericRequestor) GetOptions() map[string]interface{} {
+func (gr *genericRequestor) GetOptions() utils.Option {
 	return gr.options
 }
 

@@ -41,8 +41,8 @@ class WebRTCStub(object):
         """
         self.WebTalk = channel.stream_stream(
                 '/talk_api.WebRTC/WebTalk',
-                request_serializer=webrtc__pb2.WebTalkInput.SerializeToString,
-                response_deserializer=webrtc__pb2.WebTalkOutput.FromString,
+                request_serializer=webrtc__pb2.WebTalkRequest.SerializeToString,
+                response_deserializer=webrtc__pb2.WebTalkResponse.FromString,
                 _registered_method=True)
 
 
@@ -66,8 +66,8 @@ def add_WebRTCServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'WebTalk': grpc.stream_stream_rpc_method_handler(
                     servicer.WebTalk,
-                    request_deserializer=webrtc__pb2.WebTalkInput.FromString,
-                    response_serializer=webrtc__pb2.WebTalkOutput.SerializeToString,
+                    request_deserializer=webrtc__pb2.WebTalkRequest.FromString,
+                    response_serializer=webrtc__pb2.WebTalkResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -100,8 +100,8 @@ class WebRTC(object):
             request_iterator,
             target,
             '/talk_api.WebRTC/WebTalk',
-            webrtc__pb2.WebTalkInput.SerializeToString,
-            webrtc__pb2.WebTalkOutput.FromString,
+            webrtc__pb2.WebTalkRequest.SerializeToString,
+            webrtc__pb2.WebTalkResponse.FromString,
             options,
             channel_credentials,
             insecure,

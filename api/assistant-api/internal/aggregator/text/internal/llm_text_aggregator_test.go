@@ -4,7 +4,7 @@
 // Licensed under GPL-2.0 with Rapida Additional Terms.
 // See LICENSE.md or contact sales@rapida.ai for commercial usage.
 
-package internal_default_aggregator
+package internal_aggregator
 
 import (
 	"context"
@@ -55,7 +55,7 @@ func collectResults(ctx context.Context, resultChan <-chan internal_type.Packet)
 
 // Tests
 
-func TestNewDefaultLLMTextAggregator(t *testing.T) {
+func TestNewLLMTextAggregator(t *testing.T) {
 	tests := []struct {
 		name           string
 		boundaries     string
@@ -93,7 +93,7 @@ func TestNewDefaultLLMTextAggregator(t *testing.T) {
 			logger, _ := commons.NewApplicationLogger()
 			opts := newMockOptions(tt.boundaries)
 
-			aggregator, err := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+			aggregator, err := NewLLMTextAggregator(t.Context(), logger, opts)
 			if tt.shouldError && err != nil {
 				return
 			}
@@ -107,7 +107,7 @@ func TestNewDefaultLLMTextAggregator(t *testing.T) {
 
 			defer aggregator.Close()
 
-			st := aggregator.(*textAggregator)
+			st := aggregator.(*llmTextAggregator)
 			if st.hasBoundaries != tt.expectedBounds {
 				t.Errorf("expected hasBoundaries=%v, got %v", tt.expectedBounds, st.hasBoundaries)
 			}
@@ -118,7 +118,7 @@ func TestNewDefaultLLMTextAggregator(t *testing.T) {
 func TestSingleText(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	aggregator, _ := NewLLMTextAggregator(t.Context(), logger, opts)
 	defer aggregator.Close()
 
 	ctx := context.Background()
@@ -152,7 +152,7 @@ func TestSingleText(t *testing.T) {
 func TestMultipleTexts(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	aggregator, _ := NewLLMTextAggregator(t.Context(), logger, opts)
 	defer aggregator.Close()
 
 	ctx := context.Background()
@@ -205,7 +205,7 @@ func TestMultipleBoundaries(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+		aggregator, _ := NewLLMTextAggregator(t.Context(), logger, opts)
 
 		// Count results through channel
 		resultCount := 0
@@ -242,7 +242,7 @@ func TestMultipleBoundaries(t *testing.T) {
 func TestContextSwitching(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	aggregator, _ := NewLLMTextAggregator(t.Context(), logger, opts)
 	defer aggregator.Close()
 
 	ctx := context.Background()
@@ -298,7 +298,7 @@ func TestContextSwitching(t *testing.T) {
 func TestIsCompleteFlag(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	aggregator, _ := NewLLMTextAggregator(t.Context(), logger, opts)
 	defer aggregator.Close()
 
 	ctx := context.Background()
@@ -347,7 +347,7 @@ func TestIsCompleteFlag(t *testing.T) {
 func TestEmptyInput(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	aggregator, _ := NewLLMTextAggregator(t.Context(), logger, opts)
 	defer aggregator.Close()
 
 	ctx := context.Background()
@@ -370,7 +370,7 @@ func TestEmptyInput(t *testing.T) {
 func TestNoBoundariesDefined(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions("")
-	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	aggregator, _ := NewLLMTextAggregator(t.Context(), logger, opts)
 	defer aggregator.Close()
 
 	ctx := context.Background()
@@ -411,7 +411,7 @@ func TestNoBoundariesDefined(t *testing.T) {
 func TestContextCancellation(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	aggregator, _ := NewLLMTextAggregator(t.Context(), logger, opts)
 	defer aggregator.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -439,7 +439,7 @@ func TestContextCancellation(t *testing.T) {
 func TestConcurrentContexts(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	aggregator, _ := NewLLMTextAggregator(t.Context(), logger, opts)
 	defer aggregator.Close()
 
 	ctx := context.Background()
@@ -480,7 +480,7 @@ func TestConcurrentContexts(t *testing.T) {
 func TestBufferStateMaintenance(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	aggregator, _ := NewLLMTextAggregator(t.Context(), logger, opts)
 	defer aggregator.Close()
 
 	ctx := context.Background()
@@ -520,7 +520,7 @@ func TestBufferStateMaintenance(t *testing.T) {
 func TestWhitespaceHandling(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	aggregator, _ := NewLLMTextAggregator(t.Context(), logger, opts)
 	defer aggregator.Close()
 
 	ctx := context.Background()
@@ -553,7 +553,7 @@ func TestWhitespaceHandling(t *testing.T) {
 func TestMultipleClose(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	aggregator, _ := NewLLMTextAggregator(t.Context(), logger, opts)
 
 	// Close multiple times should not panic
 	err1 := aggregator.Close()
@@ -567,7 +567,7 @@ func TestMultipleClose(t *testing.T) {
 func TestResultChannelClosure(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	aggregator, _ := NewLLMTextAggregator(t.Context(), logger, opts)
 
 	resultChan := aggregator.Result()
 	aggregator.Close()
@@ -584,7 +584,7 @@ func TestSpecialCharacterBoundaries(t *testing.T) {
 
 	// Test with regex special characters
 	opts := newMockOptions(".?!*+")
-	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	aggregator, _ := NewLLMTextAggregator(t.Context(), logger, opts)
 	defer aggregator.Close()
 
 	ctx := context.Background()
@@ -607,7 +607,7 @@ func TestSpecialCharacterBoundaries(t *testing.T) {
 func TestLargeBatch(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	aggregator, _ := NewLLMTextAggregator(t.Context(), logger, opts)
 	defer aggregator.Close()
 
 	ctx := context.Background()
@@ -632,7 +632,7 @@ func TestLargeBatch(t *testing.T) {
 func TestLLMStreamingInput(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".!?")
-	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	aggregator, _ := NewLLMTextAggregator(t.Context(), logger, opts)
 	defer aggregator.Close()
 
 	ctx := context.Background()
@@ -734,7 +734,7 @@ func TestLLMStreamingInput(t *testing.T) {
 func TestLLMStreamingWithPauses(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".!?")
-	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	aggregator, _ := NewLLMTextAggregator(t.Context(), logger, opts)
 	defer aggregator.Close()
 
 	ctx := context.Background()
@@ -776,7 +776,7 @@ func TestLLMStreamingWithPauses(t *testing.T) {
 func TestLLMStreamingWithContextSwitch(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".!?")
-	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	aggregator, _ := NewLLMTextAggregator(t.Context(), logger, opts)
 	defer aggregator.Close()
 
 	ctx := context.Background()
@@ -829,7 +829,7 @@ func TestLLMStreamingWithContextSwitch(t *testing.T) {
 func TestLLMStreamingForcedCompletion(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".!?")
-	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	aggregator, _ := NewLLMTextAggregator(t.Context(), logger, opts)
 	defer aggregator.Close()
 
 	ctx := context.Background()
@@ -879,7 +879,7 @@ func TestLLMStreamingForcedCompletion(t *testing.T) {
 func TestLLMStreamingUnformattedButComplete(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".!?") // boundaries exist but are NOT used
-	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	aggregator, _ := NewLLMTextAggregator(t.Context(), logger, opts)
 	defer aggregator.Close()
 
 	ctx := context.Background()
@@ -946,10 +946,10 @@ func TestLLMStreamingUnformattedButComplete(t *testing.T) {
 func TestStringRepresentation(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := newMockOptions(".")
-	aggregator, _ := NewDefaultLLMTextAggregator(t.Context(), logger, opts)
+	aggregator, _ := NewLLMTextAggregator(t.Context(), logger, opts)
 	defer aggregator.Close()
 
-	st := aggregator.(*textAggregator)
+	st := aggregator.(*llmTextAggregator)
 	str := st.String()
 
 	if str == "" {

@@ -157,16 +157,25 @@ func (r *genericRequestor) closeSessionResources(ctx context.Context) {
 	// Close speech-to-text listener
 	utils.Go(r.Context(), func() {
 		defer waitGroup.Done()
-		if err := r.disconnectMicrophone(ctx); err != nil {
+		if err := r.disconnectSpeechToText(ctx); err != nil {
 			r.logger.Tracef(ctx, "failed to close input transformer: %+v", err)
 		}
+
+		if err := r.disconnectEndOfSpeech(ctx); err != nil {
+			r.logger.Tracef(ctx, "failed to close end of speech: %+v", err)
+		}
+
 	})
 
 	// Close text-to-speech speaker
 	utils.Go(r.Context(), func() {
 		defer waitGroup.Done()
-		if err := r.disconnectSpeaker(); err != nil {
+		if err := r.disconnectTextToSpeech(ctx); err != nil {
 			r.logger.Tracef(ctx, "failed to close output transformer: %+v", err)
+		}
+
+		if err := r.disconnectTextAggregator(); err != nil {
+			r.logger.Tracef(ctx, "failed to close text aggregator: %+v", err)
 		}
 	})
 
@@ -177,7 +186,6 @@ func (r *genericRequestor) closeSessionResources(ctx context.Context) {
 // total duration and completion status.
 func (r *genericRequestor) flushFinalMetrics() {
 	conversationDuration := time.Since(r.StartedAt)
-
 	metrics := []*types.Metric{
 		{
 			Name:        type_enums.TIME_TAKEN.String(),
@@ -268,7 +276,11 @@ func (r *genericRequestor) resumeSession(
 	errGroup, _ := errgroup.WithContext(ctx)
 
 	errGroup.Go(func() error {
-		return r.initializeExecutor(ctx, config)
+		if err := r.assistantExecutor.Initialize(ctx, r, config); err != nil {
+			r.logger.Tracef(ctx, "failed to initialize executor: %+v", err)
+			return err
+		}
+		return nil
 	})
 
 	errGroup.Go(func() error {
@@ -277,12 +289,64 @@ func (r *genericRequestor) resumeSession(
 	})
 
 	errGroup.Go(func() error {
-		r.connectSpeakerAndInitializeBehavior(ctx)
+		if config.GetStreamMode() == protos.StreamMode_STREAM_MODE_AUDIO {
+			if err := r.initializeTextToSpeech(ctx); err != nil {
+				r.logger.Tracef(ctx, "failed to initialize output: %+v", err)
+			}
+		}
+		if err := r.initializeTextAggregator(ctx); err != nil {
+			r.logger.Errorf("unable to initialize sentence assembler with error %v", err)
+		}
+		if err := r.initializeBehavior(ctx); err != nil {
+			r.logger.Errorf("failed to initialize assistant behavior: %+v", err)
+		}
 		return nil
 	})
 
 	// Start non-critical background tasks (not a new session)
-	r.startBackgroundTasks(ctx, false)
+
+	// Initialize audio recorder when both input and output are configured
+	utils.Go(ctx, func() {
+		rc, err := internal_audio_recorder.GetRecorder(r.logger)
+		if err != nil {
+			r.logger.Tracef(ctx, "failed to initialize audio recorder: %+v", err)
+			return
+		}
+		r.recorder = rc
+	})
+
+	// Establish speech-to-text listener connection
+	utils.Go(ctx, func() {
+		if config.GetStreamMode() == protos.StreamMode_STREAM_MODE_AUDIO {
+			if err := r.initializeSpeechToText(ctx); err != nil {
+				r.logger.Tracef(ctx, "failed to connect listener: %+v", err)
+			}
+		}
+		if err := r.initializeEndOfSpeech(ctx); err != nil {
+			r.logger.Tracef(ctx, "failed to initialize input: %+v", err)
+		}
+	})
+
+	// Update conversation status metric
+	utils.Go(ctx, func() {
+		r.onAddMetrics(r.Auth(), &types.Metric{
+			Name:        type_enums.STATUS.String(),
+			Value:       type_enums.RECORD_IN_PROGRESS.String(),
+			Description: "Conversation is currently in progress",
+		})
+	})
+
+	// Store client information from gRPC context
+	utils.Go(ctx, func() {
+		r.storeClientInformation(ctx)
+	})
+
+	// Trigger begin conversation hooks for new sessions only
+	utils.Go(ctx, func() {
+		if err := r.OnBeginConversation(); err != nil {
+			r.logger.Errorf("failed to execute begin conversation hooks: %+v", err)
+		}
+	})
 
 	// Trigger resume conversation hooks
 	if err := r.OnResumeConversation(); err != nil {
@@ -317,7 +381,11 @@ func (r *genericRequestor) createSession(
 	errGroup, _ := errgroup.WithContext(ctx)
 
 	errGroup.Go(func() error {
-		return r.initializeExecutor(ctx, config)
+		if err := r.assistantExecutor.Initialize(ctx, r, config); err != nil {
+			r.logger.Tracef(ctx, "failed to initialize executor: %+v", err)
+			return err
+		}
+		return nil
 	})
 
 	errGroup.Go(func() error {
@@ -326,47 +394,67 @@ func (r *genericRequestor) createSession(
 	})
 
 	errGroup.Go(func() error {
-		r.connectSpeakerAndInitializeBehavior(ctx)
+		if config.GetStreamMode() == protos.StreamMode_STREAM_MODE_AUDIO {
+			if err := r.initializeTextToSpeech(ctx); err != nil {
+				r.logger.Tracef(ctx, "failed to initialize output: %+v", err)
+			}
+		}
+		if err := r.initializeTextAggregator(ctx); err != nil {
+			r.logger.Errorf("unable to initialize sentence assembler with error %v", err)
+		}
+		if err := r.initializeBehavior(ctx); err != nil {
+			r.logger.Errorf("failed to initialize assistant behavior: %+v", err)
+		}
 		return nil
 	})
 
 	// Start non-critical background tasks
-	r.startBackgroundTasks(ctx, true)
+	// Initialize audio recorder when both input and output are configured
+	utils.Go(ctx, func() {
+		rc, err := internal_audio_recorder.GetRecorder(r.logger)
+		if err != nil {
+			r.logger.Tracef(ctx, "failed to initialize audio recorder: %+v", err)
+			return
+		}
+		r.recorder = rc
+	})
+
+	// Establish speech-to-text listener connection
+	utils.Go(ctx, func() {
+		if config.GetStreamMode() == protos.StreamMode_STREAM_MODE_AUDIO {
+			if err := r.initializeSpeechToText(ctx); err != nil {
+				r.logger.Tracef(ctx, "failed to initialize input: %+v", err)
+			}
+		}
+
+		if err := r.initializeEndOfSpeech(ctx); err != nil {
+			r.logger.Tracef(ctx, "failed to initialize input: %+v", err)
+		}
+
+	})
+
+	// Update conversation status metric
+	utils.Go(ctx, func() {
+		r.onAddMetrics(r.Auth(), &types.Metric{
+			Name:        type_enums.STATUS.String(),
+			Value:       type_enums.RECORD_IN_PROGRESS.String(),
+			Description: "Conversation is currently in progress",
+		})
+	})
+
+	// Store client information from gRPC context
+	utils.Go(ctx, func() {
+		r.storeClientInformation(ctx)
+	})
+
+	// Trigger begin conversation hooks for new sessions only
+	utils.Go(ctx, func() {
+		if err := r.OnBeginConversation(); err != nil {
+			r.logger.Errorf("failed to execute begin conversation hooks: %+v", err)
+		}
+	})
 
 	return errGroup.Wait()
-}
-
-// =============================================================================
-// Session Setup Helpers
-// =============================================================================
-
-// configureAudioModes extracts audio configurations from stream settings
-// and switches the messaging system to the appropriate input/output modes.
-//
-// Returns the audio configurations for both input (microphone) and output (speaker).
-func (r *genericRequestor) configureAudioModes(
-	inputConfig, outputConfig *protos.StreamConfig,
-) (audioInput *protos.AudioConfig, audioOutput *protos.AudioConfig) {
-	audioInput = inputConfig.GetAudio()
-	if audioInput != nil {
-		r.messaging.SwitchInputMode(type_enums.AudioMode)
-	}
-
-	audioOutput = outputConfig.GetAudio()
-	if audioOutput != nil {
-		r.messaging.SwitchOutputMode(type_enums.AudioMode)
-	}
-
-	return audioInput, audioOutput
-}
-
-// initializeExecutor sets up the LLM executor for processing conversation messages.
-func (r *genericRequestor) initializeExecutor(ctx context.Context, config *protos.ConversationInitialization) error {
-	if err := r.assistantExecutor.Initialize(ctx, r, config); err != nil {
-		r.logger.Tracef(ctx, "failed to initialize executor: %+v", err)
-		return err
-	}
-	return nil
 }
 
 // notifyConfiguration sends the initial conversation configuration to the client.
@@ -393,76 +481,6 @@ func (r *genericRequestor) notifyConfiguration(
 		Time:         timestamppb.Now(),
 	}); err != nil {
 		r.logger.Errorf("failed to send configuration notification: %v", err)
-	}
-}
-
-// connectSpeakerAndInitializeBehavior establishes the speaker connection
-// and initializes assistant behavior (greeting, timeouts, etc.).
-func (r *genericRequestor) connectSpeakerAndInitializeBehavior(ctx context.Context) {
-	if err := r.connectSpeaker(ctx); err != nil {
-		r.logger.Tracef(ctx, "failed to connect speaker: %+v", err)
-	}
-	if err := r.initializeBehavior(ctx); err != nil {
-		r.logger.Errorf("failed to initialize assistant behavior: %+v", err)
-	}
-}
-
-// startBackgroundTasks initiates non-critical background operations for session setup.
-//
-// These tasks run asynchronously and do not block session initialization:
-//   - Audio recorder initialization
-//   - Listener (speech-to-text) connection
-//   - Status metric updates
-//   - Client information storage
-//   - Begin conversation hooks (for new sessions only)
-//
-// Parameters:
-//   - ctx: Context for the background operations
-//   - audioInputConfig: Audio configuration for the listener
-//   - audioOutputConfig: Audio configuration for the recorder
-//   - isNewSession: Whether this is a new session (triggers OnBeginConversation)
-func (r *genericRequestor) startBackgroundTasks(
-	ctx context.Context,
-	isNewSession bool,
-) {
-	// Initialize audio recorder when both input and output are configured
-	utils.Go(ctx, func() {
-		rc, err := internal_audio_recorder.GetRecorder(r.logger)
-		if err != nil {
-			r.logger.Tracef(ctx, "failed to initialize audio recorder: %+v", err)
-			return
-		}
-		r.recorder = rc
-	})
-
-	// Establish speech-to-text listener connection
-	utils.Go(ctx, func() {
-		if err := r.connectMicrophone(ctx); err != nil {
-			r.logger.Tracef(ctx, "failed to connect listener: %+v", err)
-		}
-	})
-
-	// Update conversation status metric
-	utils.Go(ctx, func() {
-		r.onAddMetrics(r.Auth(), &types.Metric{
-			Name:        type_enums.STATUS.String(),
-			Value:       type_enums.RECORD_IN_PROGRESS.String(),
-			Description: "Conversation is currently in progress",
-		})
-	})
-
-	// Store client information from gRPC context
-	utils.Go(ctx, func() {
-		r.storeClientInformation(ctx)
-	})
-
-	// Trigger begin conversation hooks for new sessions only
-	if isNewSession {
-		utils.Go(ctx, func() {
-			if err := r.OnBeginConversation(); err != nil {
-				r.logger.Errorf("failed to execute begin conversation hooks: %+v", err)
-			}
-		})
 	}
 }
 

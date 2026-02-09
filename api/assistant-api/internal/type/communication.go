@@ -79,7 +79,7 @@ type Communication interface {
 	// metadata management
 	GetMetadata() map[string]interface{}
 	GetArgs() map[string]interface{}
-	GetOptions() map[string]interface{}
+	GetOptions() utils.Option
 
 	//
 	GetKnowledge(knowledgeId uint64) (*internal_knowledge_gorm.Knowledge, error)

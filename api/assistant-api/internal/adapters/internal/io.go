@@ -15,8 +15,6 @@ import (
 	internal_audio "github.com/rapidaai/api/assistant-api/internal/audio"
 	internal_denoiser "github.com/rapidaai/api/assistant-api/internal/denoiser"
 	internal_end_of_speech "github.com/rapidaai/api/assistant-api/internal/end_of_speech"
-	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
-	internal_adapter_telemetry "github.com/rapidaai/api/assistant-api/internal/telemetry"
 	internal_telemetry "github.com/rapidaai/api/assistant-api/internal/telemetry"
 	internal_transformer "github.com/rapidaai/api/assistant-api/internal/transformer"
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
@@ -41,18 +39,54 @@ func (io *genericRequestor) Input(message *protos.ConversationUserMessage) error
 // Init initializes the audio talking system for a given assistant persona.
 // It sets up both audio input and output transformer.
 // This function is typically called at the beginning of a communication session.
-func (listening *genericRequestor) connectMicrophone(ctx context.Context) error {
+func (listening *genericRequestor) initializeSpeechToText(ctx context.Context) error {
 	eGroup, ctx := errgroup.WithContext(ctx)
 	options := utils.Option{"microphone.eos.timeout": 500}
+	// only initialize speech to text if the mode is audio or both
 	transformerConfig, _ := listening.GetSpeechToTextTransformer()
 	if transformerConfig != nil {
 		options = utils.MergeMaps(options, transformerConfig.GetOptions())
 		eGroup.Go(func() error {
-			err := listening.initializeSpeechToText(ctx, transformerConfig, options)
+			//
+			ctx, span, _ := listening.Tracer().StartSpan(ctx, utils.AssistantListenConnectStage)
+			defer span.EndSpan(ctx, utils.AssistantListenConnectStage)
+
+			span.AddAttributes(ctx,
+				internal_telemetry.KV{K: "options", V: internal_telemetry.JSONValue(options)},
+				internal_telemetry.KV{K: "provider", V: internal_telemetry.StringValue(transformerConfig.AudioProvider)},
+			)
+
+			credentialId, err := options.GetUint64("rapida.credential_id")
 			if err != nil {
-				listening.logger.Errorf("unable to initialize transformer %+v", err)
+				listening.logger.Errorf("unable to find credential from options %+v", err)
+				return err
 			}
+			credential, err := listening.VaultCaller().GetCredential(ctx, listening.Auth(), credentialId)
+			if err != nil {
+				listening.logger.Errorf("Api call to find credential failed %+v", err)
+				return err
+			}
+
+			atransformer, err := internal_transformer.GetSpeechToTextTransformer(
+				listening.Context(),
+				listening.logger,
+				transformerConfig.AudioProvider,
+				credential,
+				internal_audio.NewLinear16khzMonoAudioConfig(),
+				func(pkt ...internal_type.Packet) error { return listening.OnPacket(ctx, pkt...) },
+				options)
+			if err != nil {
+				listening.logger.Errorf("unable to create input audio transformer with error %v", err)
+				return err
+			}
+			err = atransformer.Initialize()
+			if err != nil {
+				listening.logger.Errorf("unable to initilize transformer %v", err)
+				return err
+			}
+			listening.speechToTextTransformer = atransformer
 			return nil
+
 		})
 
 		eGroup.Go(func() error {
@@ -72,85 +106,39 @@ func (listening *genericRequestor) connectMicrophone(ctx context.Context) error 
 		})
 
 	}
-
-	eGroup.Go(func() error {
-		err := listening.initializeEndOfSpeech(ctx, options)
-		if err != nil {
-			listening.logger.Errorf("illegal input audio transformer, check the config and re-init")
-		}
-		return nil
-	})
-
 	if err := eGroup.Wait(); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (listening *genericRequestor) disconnectMicrophone(ctx context.Context) error {
+func (listening *genericRequestor) disconnectSpeechToText(ctx context.Context) error {
 	if listening.speechToTextTransformer != nil {
 		if err := listening.speechToTextTransformer.Close(ctx); err != nil {
 			listening.logger.Warnf("cancel all output transformer with error %v", err)
 		}
 	}
-
-	if listening.endOfSpeech != nil {
-		if err := listening.endOfSpeech.Close(); err != nil {
-			listening.logger.Warnf("cancel end of speech with error %v", err)
-		}
-	}
-
 	if listening.vad != nil {
 		if err := listening.vad.Close(); err != nil {
 			listening.logger.Warnf("cancel vad with error %v", err)
 		}
 	}
+	if listening.denoiser != nil {
+		if err := listening.denoiser.Close(); err != nil {
+			listening.logger.Warnf("cancel denoiser with error %v", err)
+		}
+	}
 	return nil
+
 }
 
-func (listening *genericRequestor) initializeSpeechToText(ctx context.Context, transformerConfig *internal_assistant_entity.AssistantDeploymentAudio, options utils.Option) error {
-	ctx, span, _ := listening.Tracer().StartSpan(ctx, utils.AssistantListenConnectStage)
-	defer span.EndSpan(ctx, utils.AssistantListenConnectStage)
-
-	span.AddAttributes(ctx,
-		internal_telemetry.KV{K: "options", V: internal_telemetry.JSONValue(options)},
-		internal_telemetry.KV{K: "provider", V: internal_telemetry.StringValue(transformerConfig.AudioProvider)},
-	)
-
-	credentialId, err := options.GetUint64("rapida.credential_id")
-	if err != nil {
-		listening.logger.Errorf("unable to find credential from options %+v", err)
-		return err
-	}
-	credential, err := listening.VaultCaller().GetCredential(ctx, listening.Auth(), credentialId)
-	if err != nil {
-		listening.logger.Errorf("Api call to find credential failed %+v", err)
-		return err
-	}
-
-	atransformer, err := internal_transformer.GetSpeechToTextTransformer(
-		listening.Context(),
-		listening.logger,
-		transformerConfig.AudioProvider,
-		credential,
-		internal_audio.NewLinear16khzMonoAudioConfig(),
-		func(pkt ...internal_type.Packet) error { return listening.OnPacket(ctx, pkt...) },
-		options)
-	if err != nil {
-		listening.logger.Errorf("unable to create input audio transformer with error %v", err)
-		return err
-	}
-	err = atransformer.Initialize()
-	if err != nil {
-		listening.logger.Errorf("unable to initilize transformer %v", err)
-		return err
-	}
-	listening.speechToTextTransformer = atransformer
-	return nil
-}
-
-func (listening *genericRequestor) initializeEndOfSpeech(ctx context.Context, options utils.Option) error {
+func (listening *genericRequestor) initializeEndOfSpeech(ctx context.Context) error {
 	start := time.Now()
+	options := utils.Option{"microphone.eos.timeout": 500}
+	transformerConfig, _ := listening.GetSpeechToTextTransformer()
+	if transformerConfig != nil {
+		options = utils.MergeMaps(options, transformerConfig.GetOptions())
+	}
 
 	endOfSpeech, err := internal_end_of_speech.GetEndOfSpeech(ctx,
 		listening.logger,
@@ -165,6 +153,15 @@ func (listening *genericRequestor) initializeEndOfSpeech(ctx context.Context, op
 	return nil
 }
 
+func (listening *genericRequestor) disconnectEndOfSpeech(ctx context.Context) error {
+	if listening.endOfSpeech != nil {
+		if err := listening.endOfSpeech.Close(); err != nil {
+			listening.logger.Warnf("cancel end of speech with error %v", err)
+		}
+	}
+	return nil
+}
+
 func (listening *genericRequestor) initializeDenoiser(ctx context.Context, options utils.Option) error {
 	denoise, err := internal_denoiser.GetDenoiser(listening.Context(), listening.logger, internal_audio.NewLinear16khzMonoAudioConfig(), options)
 	if err != nil {
@@ -176,107 +173,95 @@ func (listening *genericRequestor) initializeDenoiser(ctx context.Context, optio
 
 func (listening *genericRequestor) initializeVAD(ctx context.Context, options utils.Option,
 ) error {
-	start := time.Now()
 	vad, err := internal_vad.GetVAD(listening.Context(), listening.logger, internal_audio.NewLinear16khzMonoAudioConfig(), listening.OnPacket, options)
 	if err != nil {
 		listening.logger.Errorf("error wile intializing vad %+v", err)
 		return err
 	}
 	listening.vad = vad
-	listening.logger.Benchmark("listen.initializeVAD", time.Since(start))
 	return nil
 }
 
-// Init initializes the audio talking system for a given assistant persona.
-// It sets up both audio input and output transformer.
-// This function is typically called at the beginning of a communication session.
-func (spk *genericRequestor) connectSpeaker(ctx context.Context) error {
+func (spk *genericRequestor) initializeTextToSpeech(context context.Context) error {
 	speakerOpts := spk.GetOptions()
 	var wg sync.WaitGroup
-	// initialize audio output transformer
 	outputTransformer, _ := spk.GetTextToSpeechTransformer()
+	// connect text to speech transformer if configured and mode is audio
 	if outputTransformer != nil {
 		speakerOpts = utils.MergeMaps(outputTransformer.GetOptions())
+
+		// context with span
+		context, span, _ := spk.Tracer().StartSpan(context, utils.AssistantSpeakConnectStage)
+		defer span.EndSpan(context, utils.AssistantSpeakConnectStage)
+		span.AddAttributes(context,
+			internal_telemetry.KV{
+				K: "options", V: internal_telemetry.JSONValue(speakerOpts),
+			},
+			internal_telemetry.KV{
+				K: "provider", V: internal_telemetry.StringValue(outputTransformer.GetName()),
+			},
+		)
+
+		//
 		wg.Add(1)
-		utils.Go(ctx, func() {
+		utils.Go(context, func() {
 			defer wg.Done()
-			if err := spk.initializeTextToSpeech(ctx, outputTransformer, speakerOpts); err != nil {
-				spk.logger.Errorf("unable to initialize text to speech transformer with error %v", err)
-				return
+			credentialId, err := speakerOpts.GetUint64("rapida.credential_id")
+			if err != nil {
+				spk.logger.Errorf("unable to find credential from options %+v", err)
 			}
+			credential, err := spk.VaultCaller().GetCredential(context, spk.Auth(), credentialId)
+			if err != nil {
+				spk.logger.Errorf("Api call to find credential failed %+v", err)
+			}
+
+			atransformer, err := internal_transformer.GetTextToSpeechTransformer(
+				context, spk.logger,
+				outputTransformer.GetName(),
+				credential, internal_audio.NewLinear16khzMonoAudioConfig(),
+				func(pkt ...internal_type.Packet) error { return spk.OnPacket(context, pkt...) },
+				speakerOpts)
+			if err != nil {
+				spk.logger.Errorf("unable to create input audio transformer with error %v", err)
+			}
+			if err := atransformer.Initialize(); err != nil {
+				spk.logger.Errorf("unable to initilize transformer %v", err)
+			}
+			spk.textToSpeechTransformer = atransformer
 		})
 	}
-	//
-
-	wg.Add(1)
-	utils.Go(ctx, func() {
-		defer wg.Done()
-		if err := spk.initializeTextAggregator(ctx, speakerOpts); err != nil {
-			spk.logger.Errorf("unable to initialize sentence assembler with error %v", err)
-			return
-		}
-	})
 
 	wg.Wait()
 	return nil
+
 }
 
-func (spk *genericRequestor) disconnectSpeaker() error {
+func (spk *genericRequestor) disconnectTextToSpeech(ctx context.Context) error {
 	if spk.textToSpeechTransformer != nil {
-		if err := spk.textToSpeechTransformer.Close(spk.Context()); err != nil {
+		if err := spk.textToSpeechTransformer.Close(ctx); err != nil {
 			spk.logger.Errorf("cancel all output transformer with error %v", err)
 		}
 	}
-	if spk.textAggregator != nil {
-		spk.textAggregator.Close()
-	}
 	return nil
 }
 
-func (spk *genericRequestor) initializeTextToSpeech(context context.Context, transformerConfig *internal_assistant_entity.AssistantDeploymentAudio, speakerOpts utils.Option) error {
-	context, span, _ := spk.Tracer().StartSpan(context, utils.AssistantSpeakConnectStage)
-	defer span.EndSpan(context, utils.AssistantSpeakConnectStage)
-	span.AddAttributes(context,
-		internal_adapter_telemetry.KV{
-			K: "options", V: internal_adapter_telemetry.JSONValue(speakerOpts),
-		},
-		internal_adapter_telemetry.KV{
-			K: "provider", V: internal_adapter_telemetry.StringValue(transformerConfig.AudioProvider),
-		},
-	)
-	credentialId, err := speakerOpts.GetUint64("rapida.credential_id")
-	if err != nil {
-		spk.logger.Errorf("unable to find credential from options %+v", err)
-		return err
+// Initialize the text aggregator for assembling sentences from tokens.
+func (spk *genericRequestor) initializeTextAggregator(ctx context.Context) error {
+	speakerOpts := spk.GetOptions()
+	outputTransformer, _ := spk.GetTextToSpeechTransformer()
+	if outputTransformer != nil {
+		speakerOpts = utils.MergeMaps(outputTransformer.GetOptions())
 	}
-	credential, err := spk.VaultCaller().GetCredential(context, spk.Auth(), credentialId)
-	if err != nil {
-		spk.logger.Errorf("Api call to find credential failed %+v", err)
-		return err
-	}
-
-	atransformer, err := internal_transformer.GetTextToSpeechTransformer(
-		context, spk.logger,
-		transformerConfig.GetName(),
-		credential, internal_audio.NewLinear16khzMonoAudioConfig(),
-		func(pkt ...internal_type.Packet) error { return spk.OnPacket(context, pkt...) },
-		speakerOpts)
-	if err != nil {
-		spk.logger.Errorf("unable to create input audio transformer with error %v", err)
-		return err
-	}
-	if err := atransformer.Initialize(); err != nil {
-		spk.logger.Errorf("unable to initilize transformer %v", err)
-		return err
-	}
-	spk.textToSpeechTransformer = atransformer
-	return nil
-}
-
-func (spk *genericRequestor) initializeTextAggregator(ctx context.Context, options utils.Option) error {
-	if textAggregator, err := internal_sentence_aggregator.GetLLMTextAggregator(spk.Context(), spk.logger, options); err == nil {
+	if textAggregator, err := internal_sentence_aggregator.GetLLMTextAggregator(spk.Context(), spk.logger, speakerOpts); err == nil {
 		spk.textAggregator = textAggregator
 		go spk.onAssembleSentence(spk.Context())
+	}
+	return nil
+}
+
+func (spk *genericRequestor) disconnectTextAggregator() error {
+	if spk.textAggregator != nil {
+		spk.textAggregator.Close()
 	}
 	return nil
 }

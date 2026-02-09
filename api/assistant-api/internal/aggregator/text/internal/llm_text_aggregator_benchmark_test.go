@@ -4,7 +4,7 @@
 // Licensed under GPL-2.0 with Rapida Additional Terms.
 // See LICENSE.md or contact sales@rapida.ai for commercial usage.
 
-package internal_default_aggregator
+package internal_aggregator
 
 import (
 	"context"
@@ -16,8 +16,8 @@ import (
 	"github.com/rapidaai/pkg/utils"
 )
 
-// BenchmarkNewDefaultLLMTextAggregator measures the creation time of a aggregator
-func BenchmarkNewDefaultLLMTextAggregator(b *testing.B) {
+// BenchmarkNewLLMTextAggregator measures the creation time of a aggregator
+func BenchmarkNewLLMTextAggregator(b *testing.B) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := utils.Option{"speaker.sentence.boundaries": ".,?!"}
 
@@ -25,13 +25,13 @@ func BenchmarkNewDefaultLLMTextAggregator(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
+		aggregator, _ := NewLLMTextAggregator(b.Context(), logger, opts)
 		aggregator.Close()
 	}
 }
 
-// BenchmarkNewDefaultLLMTextAggregatorNoBoundaries measures creation without boundaries
-func BenchmarkNewDefaultLLMTextAggregatorNoBoundaries(b *testing.B) {
+// BenchmarkNewLLMTextAggregatorNoBoundaries measures creation without boundaries
+func BenchmarkNewLLMTextAggregatorNoBoundaries(b *testing.B) {
 	logger, _ := commons.NewApplicationLogger()
 	opts := utils.Option{}
 
@@ -39,7 +39,7 @@ func BenchmarkNewDefaultLLMTextAggregatorNoBoundaries(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
+		aggregator, _ := NewLLMTextAggregator(b.Context(), logger, opts)
 		aggregator.Close()
 	}
 }
@@ -54,7 +54,7 @@ func BenchmarkSingleTextTokenization(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
+		aggregator, _ := NewLLMTextAggregator(b.Context(), logger, opts)
 		aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 			ContextID: "speaker1",
 			Text:      "Hello world.",
@@ -79,7 +79,7 @@ func BenchmarkMultipleTexts(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
+		aggregator, _ := NewLLMTextAggregator(b.Context(), logger, opts)
 		for _, s := range sentences {
 			aggregator.Aggregate(ctx, s)
 		}
@@ -104,7 +104,7 @@ func BenchmarkLargeTexts(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
+		aggregator, _ := NewLLMTextAggregator(b.Context(), logger, opts)
 		aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 			ContextID: "speaker1",
 			Text:      largeText,
@@ -130,7 +130,7 @@ func BenchmarkMultipleBoundaries(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
+		aggregator, _ := NewLLMTextAggregator(b.Context(), logger, opts)
 		for _, s := range testTexts {
 			aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 				ContextID: "speaker1",
@@ -151,7 +151,7 @@ func BenchmarkContextSwitching(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
+		aggregator, _ := NewLLMTextAggregator(b.Context(), logger, opts)
 		for speaker := 0; speaker < 5; speaker++ {
 			for j := 0; j < 3; j++ {
 				aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
@@ -174,7 +174,7 @@ func BenchmarkResultChannelConsumption(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
+		aggregator, _ := NewLLMTextAggregator(b.Context(), logger, opts)
 
 		// Send sentences
 		for j := 0; j < 10; j++ {
@@ -198,7 +198,7 @@ func BenchmarkCompleteFlag(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
+		aggregator, _ := NewLLMTextAggregator(b.Context(), logger, opts)
 		aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 			ContextID: "speaker1",
 			Text:      "This is a test",
@@ -220,7 +220,7 @@ func BenchmarkBufferingWithoutBoundaries(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
+		aggregator, _ := NewLLMTextAggregator(b.Context(), logger, opts)
 		for j := 0; j < 5; j++ {
 			aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 				ContextID: "speaker1",
@@ -250,7 +250,7 @@ func BenchmarkStreamingLargeText(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
+		aggregator, _ := NewLLMTextAggregator(b.Context(), logger, opts)
 		for _, chunk := range chunks {
 			aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 				ContextID: "speaker1",
@@ -270,7 +270,7 @@ func BenchmarkClosing(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
+		aggregator, _ := NewLLMTextAggregator(b.Context(), logger, opts)
 		aggregator.Close()
 	}
 }
@@ -285,7 +285,7 @@ func BenchmarkEmptyAndCompleteFlush(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
+		aggregator, _ := NewLLMTextAggregator(b.Context(), logger, opts)
 		// Send empty with complete flag
 		aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 			ContextID: "speaker1",
@@ -307,7 +307,7 @@ func BenchmarkComplexScenario(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
+		aggregator, _ := NewLLMTextAggregator(b.Context(), logger, opts)
 
 		// Simulate a realistic conversation
 		conversationTurns := []struct {
@@ -349,7 +349,7 @@ func BenchmarkParallelProcessing(b *testing.B) {
 
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
+			aggregator, _ := NewLLMTextAggregator(b.Context(), logger, opts)
 			aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 				ContextID: "speaker1",
 				Text:      "Hello world.",
@@ -371,7 +371,7 @@ func BenchmarkWhitespaceProcessing(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		aggregator, _ := NewDefaultLLMTextAggregator(b.Context(), logger, opts)
+		aggregator, _ := NewLLMTextAggregator(b.Context(), logger, opts)
 		aggregator.Aggregate(ctx, internal_type.LLMResponseDeltaPacket{
 			ContextID: "speaker1",
 			Text:      textWithWhitespace,

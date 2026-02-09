@@ -18,6 +18,7 @@ import (
 	"github.com/emiago/sipgo"
 	"github.com/emiago/sipgo/sip"
 	"github.com/rapidaai/pkg/commons"
+	"github.com/rapidaai/protos"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -607,13 +608,24 @@ func (s *Server) handleInvite(req *sip.Request, tx sip.ServerTransaction) {
 		negotiatedCodec = &CodecPCMU
 	}
 
-	// Create session with resolved tenant config
+	// Extract vault credential from resolved extra for direct session access
+	var vaultCredential *protos.VaultCredential
+	if vaultCredVal, ok := resolvedExtra["vault_credential"]; ok {
+		if vaultCred, ok := vaultCredVal.(*protos.VaultCredential); ok {
+			vaultCredential = vaultCred
+		}
+	}
+
+	// Create session with resolved tenant config and middleware state
 	session, err := NewSession(s.ctx, &SessionConfig{
-		Config:    tenantConfig,
-		Direction: CallDirectionInbound,
-		CallID:    callID,
-		Codec:     negotiatedCodec,
-		Logger:    s.logger,
+		Config:          tenantConfig,
+		Direction:       CallDirectionInbound,
+		CallID:          callID,
+		Codec:           negotiatedCodec,
+		Logger:          s.logger,
+		Auth:            resolvedExtra["auth"],
+		Assistant:       resolvedExtra["assistant"],
+		VaultCredential: vaultCredential,
 	})
 	if err != nil {
 		s.logger.Error("Failed to create session", "error", err, "call_id", callID)
@@ -621,8 +633,8 @@ func (s *Server) handleInvite(req *sip.Request, tx sip.ServerTransaction) {
 		return
 	}
 
-	// Propagate middleware-resolved state (auth, assistant, etc.) onto the session
-	// so the onInvite handler can access it via session.GetMetadata().
+	// Also propagate all middleware-resolved state to metadata for backward compatibility
+	// so the onInvite handler can access it via session.GetMetadata() if needed.
 	for k, v := range resolvedExtra {
 		session.SetMetadata(k, v)
 	}
@@ -1445,13 +1457,35 @@ func (s *Server) MakeCall(ctx context.Context, cfg *Config, toURI, fromURI strin
 	// Extract call ID from the dialog's INVITE request
 	callID := dialogSession.InviteRequest.CallID().Value()
 
-	// Create our internal session
+	// Extract auth, assistant, and vault credential from metadata for direct session access
+	var sessionAuth interface{}
+	var sessionAssistant interface{}
+	var sessionVaultCred *protos.VaultCredential
+
+	if metadata != nil {
+		if val, ok := metadata["auth"]; ok {
+			sessionAuth = val
+		}
+		if val, ok := metadata["assistant"]; ok {
+			sessionAssistant = val
+		}
+		if vaultCredVal, ok := metadata["vault_credential"]; ok {
+			if vaultCred, ok := vaultCredVal.(*protos.VaultCredential); ok {
+				sessionVaultCred = vaultCred
+			}
+		}
+	}
+
+	// Create our internal session with auth and assistant context
 	session, err := NewSession(ctx, &SessionConfig{
-		Config:    cfg,
-		Direction: CallDirectionOutbound,
-		CallID:    callID,
-		Codec:     &CodecPCMU,
-		Logger:    s.logger,
+		Config:          cfg,
+		Direction:       CallDirectionOutbound,
+		CallID:          callID,
+		Codec:           &CodecPCMU,
+		Logger:          s.logger,
+		Auth:            sessionAuth,
+		Assistant:       sessionAssistant,
+		VaultCredential: sessionVaultCred,
 	})
 	if err != nil {
 		dialogSession.Close()
@@ -1472,6 +1506,7 @@ func (s *Server) MakeCall(ctx context.Context, cfg *Config, toURI, fromURI strin
 	// which reads this metadata. On fast LANs the 200 OK can arrive before the caller
 	// of MakeCall gets a chance to set metadata, causing a race condition where
 	// handleOutboundAnswered fails with "outbound session missing assistant_id metadata".
+	// Also retain auth/assistant/sip_config in metadata for backward compatibility.
 	for k, v := range metadata {
 		session.SetMetadata(k, v)
 	}

@@ -17,9 +17,11 @@ class StreamMode(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     STREAM_MODE_UNSPECIFIED: _ClassVar[StreamMode]
     STREAM_MODE_TEXT: _ClassVar[StreamMode]
     STREAM_MODE_AUDIO: _ClassVar[StreamMode]
+    STREAM_MODE_BOTH: _ClassVar[StreamMode]
 STREAM_MODE_UNSPECIFIED: StreamMode
 STREAM_MODE_TEXT: StreamMode
 STREAM_MODE_AUDIO: StreamMode
+STREAM_MODE_BOTH: StreamMode
 
 class ConversationToolCall(_message.Message):
     __slots__ = ("id", "toolId", "name", "args", "time")
@@ -211,10 +213,10 @@ class ConversationInitialization(_message.Message):
     def __init__(self, assistantConversationId: _Optional[int] = ..., assistant: _Optional[_Union[_common_pb2.AssistantDefinition, _Mapping]] = ..., time: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., metadata: _Optional[_Mapping[str, _any_pb2.Any]] = ..., args: _Optional[_Mapping[str, _any_pb2.Any]] = ..., options: _Optional[_Mapping[str, _any_pb2.Any]] = ..., streamMode: _Optional[_Union[StreamMode, str]] = ..., phone: _Optional[_Union[PhoneIdentity, _Mapping]] = ..., web: _Optional[_Union[WebIdentity, _Mapping]] = ...) -> None: ...
 
 class ConversationConfiguration(_message.Message):
-    __slots__ = ("type",)
-    TYPE_FIELD_NUMBER: _ClassVar[int]
-    type: StreamMode
-    def __init__(self, type: _Optional[_Union[StreamMode, str]] = ...) -> None: ...
+    __slots__ = ("streamMode",)
+    STREAMMODE_FIELD_NUMBER: _ClassVar[int]
+    streamMode: StreamMode
+    def __init__(self, streamMode: _Optional[_Union[StreamMode, str]] = ...) -> None: ...
 
 class ConversationInterruption(_message.Message):
     __slots__ = ("id", "type", "time")
