@@ -24,14 +24,13 @@ import (
 )
 
 func (md *genericRequestor) OnBeginConversation(ctx context.Context) error {
-	utils.Go(ctx, func() {
-		for _, webhook := range md.assistant.AssistantWebhooks {
-			if slices.Contains(webhook.AssistantEvents, utils.ConversationBegin.Get()) {
-				arguments := md.Parse(utils.ConversationBegin, webhook.GetBody())
-				md.Webhook(ctx, utils.ConversationBegin.Get(), arguments, webhook)
-			}
+
+	for _, webhook := range md.assistant.AssistantWebhooks {
+		if slices.Contains(webhook.AssistantEvents, utils.ConversationBegin.Get()) {
+			arguments := md.Parse(utils.ConversationBegin, webhook.GetBody())
+			md.Webhook(ctx, utils.ConversationBegin.Get(), arguments, webhook)
 		}
-	})
+	}
 	return nil
 }
 

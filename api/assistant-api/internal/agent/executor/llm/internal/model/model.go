@@ -58,7 +58,6 @@ func (executor *modelAssistantExecutor) Initialize(ctx context.Context, communic
 	defer span.EndSpan(ctx, utils.AssistantAgentConnectStage)
 
 	g, gCtx := errgroup.WithContext(ctx)
-
 	var providerCredential *protos.VaultCredential
 	var conversationLogs []*protos.Message
 
@@ -115,6 +114,7 @@ func (executor *modelAssistantExecutor) Initialize(ctx context.Context, communic
 	// Start listener goroutine - handles server responses and connection close
 	utils.Go(ctx, func() {
 		if err := executor.listen(ctx, communication); err != nil && ctx.Err() == nil {
+			executor.logger.Errorf("Stream listener error: %v", err)
 			communication.OnPacket(ctx, internal_type.DirectivePacket{
 				Directive: protos.ConversationDirective_END_CONVERSATION,
 				Arguments: map[string]interface{}{"reason": err.Error()},

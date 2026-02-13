@@ -93,6 +93,7 @@ func (listening *genericRequestor) initializeSpeechToText(ctx context.Context) e
 
 	}
 	if err := eGroup.Wait(); err != nil {
+		listening.logger.Errorf("illegal init %+v", err)
 		return err
 	}
 	return nil

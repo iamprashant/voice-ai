@@ -172,9 +172,11 @@ func (tc *genericRequestor) onSetMetadata(ctx context.Context, auth types.Simple
 		modified[k] = v
 	}
 	utils.Go(ctx, func() {
+		dbCtx, cancel := context.WithTimeout(context.Background(), dbWriteTimeout)
+		defer cancel()
 		start := time.Now()
 		tc.conversationService.ApplyConversationMetadata(
-			ctx,
+			dbCtx,
 			auth, tc.assistant.Id, tc.assistantConversation.Id, types.NewMetadataList(modified))
 		tc.logger.Benchmark("genericRequestor.SetMetadata", time.Since(start))
 	})
@@ -182,8 +184,10 @@ func (tc *genericRequestor) onSetMetadata(ctx context.Context, auth types.Simple
 }
 
 func (tc *genericRequestor) onAddMetadata(ctx context.Context, metadata ...*protos.Metadata) error {
+	dbCtx, cancel := context.WithTimeout(context.Background(), dbWriteTimeout)
+	defer cancel()
 	_, err := tc.conversationService.ApplyConversationMetadata(
-		ctx,
+		dbCtx,
 		tc.auth,
 		tc.assistant.Id,
 		tc.assistantConversation.Id,
@@ -196,8 +200,10 @@ func (tc *genericRequestor) onAddMetadata(ctx context.Context, metadata ...*prot
 }
 
 func (tc *genericRequestor) onAddMetrics(ctx context.Context, metrics ...*protos.Metric) error {
+	dbCtx, cancel := context.WithTimeout(context.Background(), dbWriteTimeout)
+	defer cancel()
 	_, err := tc.conversationService.ApplyConversationMetrics(
-		ctx,
+		dbCtx,
 		tc.auth,
 		tc.assistant.Id,
 		tc.assistantConversation.Id,
@@ -210,7 +216,9 @@ func (tc *genericRequestor) onAddMetrics(ctx context.Context, metrics ...*protos
 }
 
 func (deb *genericRequestor) onMessageMetric(ctx context.Context, messageId string, metrics []*protos.Metric) error {
-	if _, err := deb.conversationService.ApplyMessageMetrics(ctx, deb.Auth(), deb.Conversation().Id, messageId, types.ToMetrics(metrics)); err != nil {
+	dbCtx, cancel := context.WithTimeout(context.Background(), dbWriteTimeout)
+	defer cancel()
+	if _, err := deb.conversationService.ApplyMessageMetrics(dbCtx, deb.Auth(), deb.Conversation().Id, messageId, types.ToMetrics(metrics)); err != nil {
 		deb.logger.Errorf("error updating metrics for message: %v", err)
 		return err
 	}

@@ -98,10 +98,9 @@ type genericRequestor struct {
 	assistantConversation *internal_conversation_entity.AssistantConversation
 	histories             []internal_type.MessagePacket
 
-	args      map[string]interface{}
-	metadata  map[string]interface{}
-	options   map[string]interface{}
-	StartedAt time.Time
+	args     map[string]interface{}
+	metadata map[string]interface{}
+	options  map[string]interface{}
 
 	// experience
 	idleTimeoutTimer *time.Timer
@@ -160,7 +159,9 @@ func (dm *genericRequestor) Source() utils.RapidaSource {
 
 func (deb *genericRequestor) onCreateMessage(ctx context.Context, msg internal_type.MessagePacket) error {
 	deb.histories = append(deb.histories, msg)
-	_, err := deb.conversationService.CreateConversationMessage(ctx, deb.Auth(), deb.Source(), deb.Assistant().Id, deb.Assistant().AssistantProviderId, deb.Conversation().Id, msg.ContextId(), msg.Role(), msg.Content())
+	dbCtx, cancel := context.WithTimeout(context.Background(), dbWriteTimeout)
+	defer cancel()
+	_, err := deb.conversationService.CreateConversationMessage(dbCtx, deb.Auth(), deb.Source(), deb.Assistant().Id, deb.Assistant().AssistantProviderId, deb.Conversation().Id, msg.ContextId(), msg.Role(), msg.Content())
 	if err != nil {
 		deb.logger.Error("unable to create message for the user")
 		return err
@@ -270,7 +271,9 @@ func (dm *genericRequestor) GetHistories() []internal_type.MessagePacket {
 }
 
 func (gr *genericRequestor) CreateConversationRecording(ctx context.Context, body []byte) error {
-	if _, err := gr.conversationService.CreateConversationRecording(ctx, gr.auth, gr.assistant.Id, gr.assistantConversation.Id, body); err != nil {
+	dbCtx, cancel := context.WithTimeout(context.Background(), dbWriteTimeout)
+	defer cancel()
+	if _, err := gr.conversationService.CreateConversationRecording(dbCtx, gr.auth, gr.assistant.Id, gr.assistantConversation.Id, body); err != nil {
 		gr.logger.Errorf("unable to create recording for the conversation id %d with error : %v", err)
 		return err
 	}

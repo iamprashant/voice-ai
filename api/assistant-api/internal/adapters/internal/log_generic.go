@@ -22,7 +22,9 @@ func (kr *genericRequestor) CreateKnowledgeLog(ctx context.Context, knowledgeId 
 	additionalData map[string]string,
 	status type_enums.RecordState,
 	request, response []byte) error {
-	_, err := kr.knowledgeService.CreateLog(ctx, kr.Auth(), knowledgeId, retrievalMethod, topK, scoreThreshold, documentCount, timeTaken, additionalData, status, request, response)
+	dbCtx, cancel := context.WithTimeout(context.Background(), dbWriteTimeout)
+	defer cancel()
+	_, err := kr.knowledgeService.CreateLog(dbCtx, kr.Auth(), knowledgeId, retrievalMethod, topK, scoreThreshold, documentCount, timeTaken, additionalData, status, request, response)
 	return err
 }
 
@@ -34,7 +36,9 @@ func (cr *genericRequestor) CreateWebhookLog(
 	retryCount uint32,
 	status type_enums.RecordState,
 	request, response []byte) error {
-	_, err := cr.webhookService.CreateLog(ctx, cr.auth, webhookID, cr.assistant.Id, cr.assistantConversation.Id, httpUrl, httpMethod, event, responseStatus, timeTaken, retryCount, status, request, response)
+	dbCtx, cancel := context.WithTimeout(context.Background(), dbWriteTimeout)
+	defer cancel()
+	_, err := cr.webhookService.CreateLog(dbCtx, cr.auth, webhookID, cr.assistant.Id, cr.assistantConversation.Id, httpUrl, httpMethod, event, responseStatus, timeTaken, retryCount, status, request, response)
 	return err
 }
 
@@ -77,8 +81,10 @@ func (cr *genericRequestor) GetConversationLogs(ctx context.Context) []*protos.M
 }
 
 func (cr *genericRequestor) CreateConversationMessageLog(ctx context.Context, messageid string, in, out *protos.Message, metrics []*protos.Metric) error {
+	dbCtx, cancel := context.WithTimeout(context.Background(), dbWriteTimeout)
+	defer cancel()
 	cr.conversationService.CreateLLMAction(
-		ctx,
+		dbCtx,
 		cr.Auth(),
 		cr.assistant.Id,
 		cr.assistantConversation.Id,
@@ -90,8 +96,10 @@ func (cr *genericRequestor) CreateConversationMessageLog(ctx context.Context, me
 func (cr *genericRequestor) CreateConversationToolLog(
 	ctx context.Context,
 	messageid string, in, out map[string]interface{}, metrics []*protos.Metric) error {
+	dbCtx, cancel := context.WithTimeout(context.Background(), dbWriteTimeout)
+	defer cancel()
 	cr.conversationService.CreateToolAction(
-		ctx,
+		dbCtx,
 		cr.Auth(),
 		cr.assistant.Id,
 		cr.assistantConversation.Id,
@@ -109,8 +117,10 @@ func (cr *genericRequestor) CreateToolLog(
 	status type_enums.RecordState,
 	timeTaken int64,
 	request, response []byte) error {
+	dbCtx, cancel := context.WithTimeout(context.Background(), dbWriteTimeout)
+	defer cancel()
 	_, err := cr.assistantToolService.CreateLog(
-		ctx, cr.Auth(), cr.assistant.Id,
+		dbCtx, cr.Auth(), cr.assistant.Id,
 		cr.assistantConversation.Id, toolId, messageId, toolName, timeTaken, executionMethod,
 		status, request, response,
 	)

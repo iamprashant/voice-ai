@@ -12,7 +12,6 @@ package adapter_internal
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
 
@@ -35,6 +34,11 @@ import (
 const (
 	// clientInfoMetadataKey is the metadata key used to store client information.
 	clientInfoMetadataKey = "talk.client_information"
+
+	// dbWriteTimeout is the maximum duration allowed for database write operations
+	// (inserts, updates, metric flushes). Uses a background context so that writes
+	// are not cancelled by the caller's context lifecycle.
+	dbWriteTimeout = 1 * time.Second
 )
 
 // =============================================================================
@@ -63,26 +67,7 @@ func (r *genericRequestor) Disconnect(ctx context.Context) {
 
 	// Phase 1: Close all session resources concurrently
 	var waitGroup sync.WaitGroup
-	waitGroup.Add(3)
-
-	// Flush final conversation metrics
-	utils.Go(ctx, func() {
-		defer waitGroup.Done()
-		conversationDuration := time.Since(r.StartedAt)
-		metrics := []*protos.Metric{
-			{
-				Name:        type_enums.TIME_TAKEN.String(),
-				Value:       fmt.Sprintf("%d", int64(conversationDuration)),
-				Description: "Total conversation duration in nanoseconds",
-			},
-			{
-				Name:        type_enums.STATUS.String(),
-				Value:       type_enums.RECORD_COMPLETE.String(),
-				Description: "Final conversation status",
-			},
-		}
-		r.onAddMetrics(ctx, metrics...)
-	})
+	waitGroup.Add(2)
 
 	// Close speech-to-text listener
 	utils.Go(ctx, func() {
@@ -323,15 +308,10 @@ func (r *genericRequestor) resumeSession(
 
 	// Trigger begin conversation hooks for new sessions only
 	utils.Go(ctx, func() {
-		if err := r.OnBeginConversation(ctx); err != nil {
-			r.logger.Errorf("failed to execute begin conversation hooks: %+v", err)
+		if err := r.OnResumeConversation(ctx); err != nil {
+			r.logger.Errorf("failed to execute resume conversation hooks: %v", err)
 		}
 	})
-
-	// Trigger resume conversation hooks
-	if err := r.OnResumeConversation(ctx); err != nil {
-		r.logger.Errorf("failed to execute resume conversation hooks: %v", err)
-	}
 
 	return errGroup.Wait()
 }
@@ -360,6 +340,7 @@ func (r *genericRequestor) createSession(
 	// Initialize critical components concurrently
 	errGroup, _ := errgroup.WithContext(ctx)
 
+	// blocking initialization of assistant executor to ensure it's ready before processing any input or output
 	errGroup.Go(func() error {
 		if err := r.assistantExecutor.Initialize(ctx, r, config); err != nil {
 			r.logger.Tracef(ctx, "failed to initialize executor: %+v", err)
@@ -368,11 +349,13 @@ func (r *genericRequestor) createSession(
 		return nil
 	})
 
+	// blocking initialization of assistant executor to ensure it's ready before processing any input or output
 	errGroup.Go(func() error {
 		r.notifyConfiguration(ctx, config, conversation, assistant)
 		return nil
 	})
 
+	// blocking initialization of assistant executor to ensure it's ready before processing any input or output
 	errGroup.Go(func() error {
 		if config.GetStreamMode() == protos.StreamMode_STREAM_MODE_AUDIO {
 			if err := r.initializeTextToSpeech(ctx); err != nil {
@@ -406,7 +389,6 @@ func (r *genericRequestor) createSession(
 				r.logger.Tracef(ctx, "failed to initialize input: %+v", err)
 			}
 		}
-
 		if err := r.initializeEndOfSpeech(ctx); err != nil {
 			r.logger.Tracef(ctx, "failed to initialize input: %+v", err)
 		}
