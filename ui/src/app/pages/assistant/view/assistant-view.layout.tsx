@@ -61,7 +61,6 @@ export const AssistantViewLayout: FC<HTMLAttributes<HTMLDivElement>> = () => {
     goToAssistantPreviewCall,
     goToCreateAssistantVersion,
     goToCreateAssistantAgentKitVersion,
-    goToCreateAssistantWebsocketVersion,
     goToAssistantListing,
     goToManageAssistant,
   } = useGlobalNavigation();

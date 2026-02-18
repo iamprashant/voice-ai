@@ -58,7 +58,7 @@ func (listening *genericRequestor) initializeSpeechToText(ctx context.Context) e
 				listening.logger,
 				transformerConfig.AudioProvider,
 				credential,
-				internal_audio.NewLinear16khzMonoAudioConfig(),
+				internal_audio.RAPIDA_INTERNAL_AUDIO_CONFIG,
 				func(pkt ...internal_type.Packet) error { return listening.OnPacket(ctx, pkt...) },
 				options)
 			if err != nil {
@@ -150,7 +150,7 @@ func (listening *genericRequestor) disconnectEndOfSpeech(ctx context.Context) er
 }
 
 func (listening *genericRequestor) initializeDenoiser(ctx context.Context, options utils.Option) error {
-	denoise, err := internal_denoiser.GetDenoiser(ctx, listening.logger, internal_audio.NewLinear16khzMonoAudioConfig(), options)
+	denoise, err := internal_denoiser.GetDenoiser(ctx, listening.logger, internal_audio.RAPIDA_INTERNAL_AUDIO_CONFIG, options)
 	if err != nil {
 		listening.logger.Errorf("error wile intializing denoiser %+v", err)
 	}
@@ -160,7 +160,7 @@ func (listening *genericRequestor) initializeDenoiser(ctx context.Context, optio
 
 func (listening *genericRequestor) initializeVAD(ctx context.Context, options utils.Option,
 ) error {
-	vad, err := internal_vad.GetVAD(ctx, listening.logger, internal_audio.NewLinear16khzMonoAudioConfig(), listening.OnPacket, options)
+	vad, err := internal_vad.GetVAD(ctx, listening.logger, internal_audio.RAPIDA_INTERNAL_AUDIO_CONFIG, listening.OnPacket, options)
 	if err != nil {
 		listening.logger.Errorf("error wile intializing vad %+v", err)
 		return err
@@ -205,7 +205,7 @@ func (spk *genericRequestor) initializeTextToSpeech(context context.Context) err
 			atransformer, err := internal_transformer.GetTextToSpeechTransformer(
 				context, spk.logger,
 				outputTransformer.GetName(),
-				credential, internal_audio.NewLinear16khzMonoAudioConfig(),
+				credential, internal_audio.RAPIDA_INTERNAL_AUDIO_CONFIG,
 				func(pkt ...internal_type.Packet) error { return spk.OnPacket(context, pkt...) },
 				speakerOpts)
 			if err != nil {

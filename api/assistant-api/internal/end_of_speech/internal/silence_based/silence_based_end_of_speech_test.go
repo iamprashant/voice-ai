@@ -208,7 +208,7 @@ func TestConcurrentAnalyze(t *testing.T) {
 	// Simply verify no panic occurred
 }
 
-func TestContextCancelPreventsCallback(t *testing.T) {
+func TestContextCancelStillFiresCallback(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	called := make(chan internal_type.EndOfSpeechPacket, 1)
 	callback := func(ctx context.Context, res ...internal_type.Packet) error {
@@ -226,22 +226,28 @@ func TestContextCancelPreventsCallback(t *testing.T) {
 		return nil
 	}
 
-	opts := newTestOpts(map[string]any{"microphone.eos.timeout": 300.0})
+	opts := newTestOpts(map[string]any{"microphone.eos.timeout": 150.0})
 	svcIface, err := NewSilenceBasedEndOfSpeech(logger, callback, opts)
 	if err != nil {
 		t.Fatalf("new: %v", err)
 	}
 
 	parentCtx, cancel := context.WithCancel(context.Background())
-	if err := svcIface.Analyze(parentCtx, userInput("bye")); err != nil {
+	// Send an STT packet (timer-based, not fireNow) so the timer must fire after cancel
+	if err := svcIface.Analyze(parentCtx, sttInput("bye", true)); err != nil {
 		t.Fatalf("analyze: %v", err)
 	}
+	// Cancel the context before the silence timer fires
 	cancel()
 
+	// The callback should still fire with a fallback background context
 	select {
-	case <-called:
-		t.Fatal("callback should not have been called after context cancel")
+	case res := <-called:
+		if res.Speech != "bye" {
+			t.Fatalf("unexpected speech: %v", res.Speech)
+		}
 	case <-time.After(500 * time.Millisecond):
+		t.Fatal("callback should have been called even after context cancel")
 	}
 }
 

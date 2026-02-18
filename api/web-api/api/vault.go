@@ -61,7 +61,6 @@ func NewVaultGRPC(config *config.WebAppConfig, oauthCfg *config.OAuth2Config, lo
 }
 
 func (wVault *webVaultGRPCApi) CreateProviderCredential(ctx context.Context, irRequest *protos.CreateProviderCredentialRequest) (*protos.GetCredentialResponse, error) {
-	wVault.logger.Debugf("CreateProviderCredential from grpc with requestPayload %v, %v", irRequest, ctx)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(ctx)
 	if !isAuthenticated && !iAuth.HasProject() {
 		wVault.logger.Errorf("CreateProviderCredential from grpc with unauthenticated request")
@@ -146,7 +145,6 @@ func (wVault *webVaultGRPCApi) GetAllOrganizationCredential(c context.Context, i
 }
 
 func (wVault *webVaultGRPCApi) GetOauth2Credential(ctx context.Context, request *protos.GetCredentialRequest) (*protos.GetCredentialResponse, error) {
-	wVault.logger.Debugf("GetOauth2VaultCredential from grpc with requestPayload %v, %v", request, ctx)
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(ctx)
 	if !isAuthenticated && !iAuth.HasProject() {
 		wVault.logger.Errorf("GetAllProviderCredential from grpc with unauthenticated request")
@@ -176,7 +174,6 @@ func (wVault *webVaultGRPCApi) GetOauth2Credential(ctx context.Context, request 
 }
 
 func (wVault *webVaultGRPCApi) GetCredential(ctx context.Context, request *protos.GetCredentialRequest) (*protos.GetCredentialResponse, error) {
-	wVault.logger.Debugf("GetProviderCredential from grpc with requestPayload %v, %v", request, ctx)
 	iAuth, isAuthenticated := types.GetSimplePrincipleGRPC(ctx)
 	if !isAuthenticated && !iAuth.HasProject() {
 		wVault.logger.Errorf("GetCredentialRequest from grpc with unauthenticated request")

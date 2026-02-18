@@ -40,6 +40,7 @@ func (d *deepgramSttCallback) Open(or *msginterfaces.OpenResponse) error {
 
 // Handle incoming transcription messages from Deepgram
 func (d *deepgramSttCallback) Message(mr *msginterfaces.MessageResponse) error {
+	d.logger.Debugf("Received message from Deepgram: %+v", mr)
 	for _, alternative := range mr.Channel.Alternatives {
 		if alternative.Transcript != "" {
 

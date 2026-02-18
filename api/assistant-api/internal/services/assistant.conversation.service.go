@@ -298,7 +298,7 @@ type AssistantConversationService interface {
 		auth types.SimplePrinciple,
 		assistantId uint64,
 		assistantConversationId uint64,
-		body []byte,
+		user, system []byte,
 	) (*internal_conversation_entity.AssistantConversationRecording, error)
 
 	ApplyConversationTelephonyEvent(

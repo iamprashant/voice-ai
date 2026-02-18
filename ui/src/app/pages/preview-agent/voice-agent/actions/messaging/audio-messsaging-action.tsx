@@ -47,7 +47,8 @@ export const AudioMessagingAction: FC<AudioMessagingActionProps> = ({
     0.85, // Higher hiPass for more treble
   );
 
-  const { isConnected, handleDisconnectAgent } = useConnectAgent(voiceAgent);
+  const { isConnected, isConnecting, handleDisconnectAgent } =
+    useConnectAgent(voiceAgent);
   const { handleTextToggle } = useInputModeToggleAgent(voiceAgent);
   const { isMuted, handleToggleMute } = useMuteAgent(voiceAgent);
 
@@ -214,13 +215,20 @@ export const AudioMessagingAction: FC<AudioMessagingActionProps> = ({
           <button
             aria-label="Stoping Voice"
             type="button"
-            disabled={!isConnected}
+            disabled={!isConnected && !isConnecting}
             onClick={async () => {
               await handleDisconnectAgent();
             }}
             className="cursor-pointer group h-9 px-3 flex flex-row items-center justify-center transition-all duration-300 hover:opacity-80 overflow-hidden w-fit bg-red-500 text-white"
           >
-            {isConnected ? (
+            {isConnecting ? (
+              <>
+                <Spinner className="w-4 h-4 !border-white" />
+                <span className="max-w-0 group-hover:max-w-xs transition-all duration-200 origin-left scale-x-0 group-hover:scale-x-100 group-hover:opacity-100 opacity-0 whitespace-nowrap text-sm overflow-hidden group-hover:ml-2 font-medium">
+                  Connecting
+                </span>
+              </>
+            ) : isConnected ? (
               <>
                 <StopCircleIcon className="w-4 h-4 !border-white" />
                 <span className="max-w-0 group-hover:max-w-xs transition-all duration-200 origin-left scale-x-0 group-hover:scale-x-100 group-hover:opacity-100 opacity-0 whitespace-nowrap text-sm overflow-hidden group-hover:ml-2 font-medium">
@@ -229,9 +237,9 @@ export const AudioMessagingAction: FC<AudioMessagingActionProps> = ({
               </>
             ) : (
               <>
-                <Spinner className="w-4 h-4 !border-white" />
+                <StopCircleIcon className="w-4 h-4 !border-white opacity-50" />
                 <span className="max-w-0 group-hover:max-w-xs transition-all duration-200 origin-left scale-x-0 group-hover:scale-x-100 group-hover:opacity-100 opacity-0 whitespace-nowrap text-sm overflow-hidden group-hover:ml-2 font-medium">
-                  Connecting
+                  Stop
                 </span>
               </>
             )}

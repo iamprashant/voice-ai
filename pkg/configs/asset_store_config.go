@@ -18,6 +18,7 @@ const (
 type AssetStoreConfig struct {
 	StorageType       string     `mapstructure:"storage_type" validate:"required"`
 	StoragePathPrefix string     `mapstructure:"storage_path_prefix"`
+	PublicUrlPrefix   *string    `mapstructure:"public_url_prefix"`
 	Auth              *AwsConfig `mapstructure:"auth"`
 }
 

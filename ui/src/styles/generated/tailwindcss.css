@@ -560,6 +560,9 @@
   .z-999999 {
     z-index: 999999;
   }
+  .z-\[1\] {
+    z-index: 1;
+  }
   .z-\[2\] {
     z-index: 2;
   }
@@ -3667,10 +3670,6 @@
   .border-\[4\.5px\] {
     border-style: var(--tw-border-style);
     border-width: 4.5px;
-  }
-  .border-x {
-    border-inline-style: var(--tw-border-style);
-    border-inline-width: 1px;
   }
   .border-x-0 {
     border-inline-style: var(--tw-border-style);

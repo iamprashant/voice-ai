@@ -36,7 +36,6 @@ type InternalCaller interface {
 type Logger interface {
 	CreateWebhookLog(ctx context.Context, webhookID uint64, httpUrl, httpMethod, event string, responseStatus int64, timeTaken int64, retryCount uint32, status type_enums.RecordState, request, response []byte) error
 	CreateToolLog(ctx context.Context, toolId uint64, messageId string, toolName string, executionMethod string, status type_enums.RecordState, timeTaken int64, request, response []byte) error
-	CreateConversationRecording(ctx context.Context, body []byte) error
 }
 
 type Communication interface {

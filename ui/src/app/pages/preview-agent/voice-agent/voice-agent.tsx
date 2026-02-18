@@ -243,10 +243,10 @@ export const VoiceAgentDebugger: FC<{
     if (!callbackRegisteredRef.current) {
       callbackRegisteredRef.current = true; // Mark the callback as registered
       voiceAgent.registerCallback({
-        onAction(arg) {
+        onDirective(arg) {
           setEvents(prevEvents => [
             ...prevEvents,
-            { type: 'action', payload: arg },
+            { type: 'directive', payload: arg },
           ]);
         },
         onConfiguration: args => {
@@ -293,17 +293,17 @@ export const VoiceAgentDebugger: FC<{
             <>
               {assistant && (
                 <div className="flex flex-col w-full h-full flex-1 grow">
-                  <div className="p-4 text-sm leading-normal">
+                  <div className="p-4 text-sm leading-normal text-muted">
                     <div className="flex flex-row justify-between items-center text-sm tracking-wider">
                       <h3>Name</h3>
                     </div>
-                    <div className="py-2 text-sm leading-normal">
+                    <div className="py-2 text-sm font-mono tracking-wider lowercase leading-normal font-medium">
                       {assistant.getName()}
                     </div>
                     <div className="mt-4 flex flex-row justify-between items-center text-sm tracking-wider">
                       <h3>Executor</h3>
                     </div>
-                    <div className="py-2 text-sm leading-normal">
+                    <div className="py-2 text-sm font-mono tracking-wider lowercase leading-normal font-medium">
                       {assistant.hasAssistantprovideragentkit() && 'Agentkit'}
                       {assistant.hasAssistantproviderwebsocket() && 'Websocket'}
                       {assistant.hasAssistantprovidermodel() && 'Model'}
@@ -313,7 +313,7 @@ export const VoiceAgentDebugger: FC<{
                         <div className="flex mt-4 flex-row justify-between items-center text-sm tracking-wider">
                           <h3>Description</h3>
                         </div>
-                        <div className="py-2 text-sm leading-normal">
+                        <div className="py-2 text-sm font-mono tracking-wider lowercase leading-normal font-medium">
                           {assistant.getDescription()}
                         </div>
                       </>

@@ -270,10 +270,10 @@ func (dm *genericRequestor) GetHistories() []internal_type.MessagePacket {
 	return dm.histories
 }
 
-func (gr *genericRequestor) CreateConversationRecording(ctx context.Context, body []byte) error {
+func (gr *genericRequestor) CreateConversationRecording(ctx context.Context, user, assistant []byte) error {
 	dbCtx, cancel := context.WithTimeout(context.Background(), dbWriteTimeout)
 	defer cancel()
-	if _, err := gr.conversationService.CreateConversationRecording(dbCtx, gr.auth, gr.assistant.Id, gr.assistantConversation.Id, body); err != nil {
+	if _, err := gr.conversationService.CreateConversationRecording(dbCtx, gr.auth, gr.assistant.Id, gr.assistantConversation.Id, user, assistant); err != nil {
 		gr.logger.Errorf("unable to create recording for the conversation id %d with error : %v", err)
 		return err
 	}

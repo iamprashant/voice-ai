@@ -14,7 +14,6 @@ import { ActionableEmptyMessage } from '@/app/components/container/message/actio
 import { PageHeaderBlock } from '@/app/components/blocks/page-header-block';
 import { PageTitleBlock } from '@/app/components/blocks/page-title-block';
 import { PaginationButtonBlock } from '@/app/components/blocks/pagination-button-block';
-import { AudioPlayer } from '@/app/components/audio-player';
 import {
   getMetadataValueOrDefault,
   getStatusMetric,
@@ -22,6 +21,7 @@ import {
 } from '@/utils/metadata';
 import { StatusIndicator } from '@/app/components/indicators/status';
 import { toHumanReadableDateTime } from '@/utils/date';
+import { AudioPlayer } from '@/app/components/audio-player';
 
 export const ConversationMessages: FC<{
   conversation: AssistantConversation;
@@ -110,6 +110,16 @@ export const ConversationMessages: FC<{
 
   return (
     <div className="flex-1 flex flex-col h-full relative">
+      {conversation.getRecordingsList().map((x, idx) => {
+        return (
+          <div key={`idx`}>
+            <PageHeaderBlock className="border-b sticky top-0 z-[2]">
+              <PageTitleBlock>Recordings</PageTitleBlock>
+            </PageHeaderBlock>
+            <AudioPlayer key={idx} recording={x} />
+          </div>
+        );
+      })}
       <PageHeaderBlock className="border-b sticky top-0 z-[2]">
         <PageTitleBlock>All messages</PageTitleBlock>
         <PaginationButtonBlock>
@@ -135,9 +145,6 @@ export const ConversationMessages: FC<{
         </PaginationButtonBlock>
       </PageHeaderBlock>
 
-      {conversation.getRecordingsList().map((x, idx) => {
-        return <AudioPlayer key={idx} src={x.getRecordingurl()} />;
-      })}
       {conversations.length === 0 && (
         <div className="my-auto mx-auto">
           <ActionableEmptyMessage

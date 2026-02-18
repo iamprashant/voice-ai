@@ -237,7 +237,7 @@ class ConversationInterruption(_message.Message):
     def __init__(self, id: _Optional[str] = ..., type: _Optional[_Union[ConversationInterruption.InterruptionType, str]] = ..., time: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
 
 class ConversationDisconnection(_message.Message):
-    __slots__ = ("id", "type", "reason", "time")
+    __slots__ = ("type", "time")
     class DisconnectionType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
         __slots__ = ()
         DISCONNECTION_TYPE_UNSPECIFIED: _ClassVar[ConversationDisconnection.DisconnectionType]
@@ -246,15 +246,11 @@ class ConversationDisconnection(_message.Message):
     DISCONNECTION_TYPE_UNSPECIFIED: ConversationDisconnection.DisconnectionType
     DISCONNECTION_TYPE_TOOL: ConversationDisconnection.DisconnectionType
     DISCONNECTION_TYPE_USER: ConversationDisconnection.DisconnectionType
-    ID_FIELD_NUMBER: _ClassVar[int]
     TYPE_FIELD_NUMBER: _ClassVar[int]
-    REASON_FIELD_NUMBER: _ClassVar[int]
     TIME_FIELD_NUMBER: _ClassVar[int]
-    id: str
     type: ConversationDisconnection.DisconnectionType
-    reason: str
     time: _timestamp_pb2.Timestamp
-    def __init__(self, id: _Optional[str] = ..., type: _Optional[_Union[ConversationDisconnection.DisconnectionType, str]] = ..., reason: _Optional[str] = ..., time: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
+    def __init__(self, type: _Optional[_Union[ConversationDisconnection.DisconnectionType, str]] = ..., time: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
 
 class ConversationAssistantMessage(_message.Message):
     __slots__ = ("audio", "text", "id", "completed", "time")
@@ -301,18 +297,20 @@ class ConversationModeChange(_message.Message):
     def __init__(self, mode: _Optional[_Union[ConversationModeChange.ModeType, str]] = ..., time: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
 
 class AssistantTalkRequest(_message.Message):
-    __slots__ = ("initialization", "configuration", "message", "metadata", "metric")
+    __slots__ = ("initialization", "configuration", "message", "metadata", "metric", "disconnection")
     INITIALIZATION_FIELD_NUMBER: _ClassVar[int]
     CONFIGURATION_FIELD_NUMBER: _ClassVar[int]
     MESSAGE_FIELD_NUMBER: _ClassVar[int]
     METADATA_FIELD_NUMBER: _ClassVar[int]
     METRIC_FIELD_NUMBER: _ClassVar[int]
+    DISCONNECTION_FIELD_NUMBER: _ClassVar[int]
     initialization: ConversationInitialization
     configuration: ConversationConfiguration
     message: ConversationUserMessage
     metadata: ConversationMetadata
     metric: ConversationMetric
-    def __init__(self, initialization: _Optional[_Union[ConversationInitialization, _Mapping]] = ..., configuration: _Optional[_Union[ConversationConfiguration, _Mapping]] = ..., message: _Optional[_Union[ConversationUserMessage, _Mapping]] = ..., metadata: _Optional[_Union[ConversationMetadata, _Mapping]] = ..., metric: _Optional[_Union[ConversationMetric, _Mapping]] = ...) -> None: ...
+    disconnection: ConversationDisconnection
+    def __init__(self, initialization: _Optional[_Union[ConversationInitialization, _Mapping]] = ..., configuration: _Optional[_Union[ConversationConfiguration, _Mapping]] = ..., message: _Optional[_Union[ConversationUserMessage, _Mapping]] = ..., metadata: _Optional[_Union[ConversationMetadata, _Mapping]] = ..., metric: _Optional[_Union[ConversationMetric, _Mapping]] = ..., disconnection: _Optional[_Union[ConversationDisconnection, _Mapping]] = ...) -> None: ...
 
 class AssistantTalkResponse(_message.Message):
     __slots__ = ("code", "success", "initialization", "configuration", "interruption", "user", "assistant", "toolCall", "toolResult", "directive", "metadata", "metric", "disconnection", "error")

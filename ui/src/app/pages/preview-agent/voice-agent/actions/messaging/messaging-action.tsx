@@ -1,17 +1,13 @@
-import { FC, HTMLAttributes, useCallback, useState } from 'react';
+import { FC, HTMLAttributes } from 'react';
 import {
   Assistant,
   Channel,
-  useConnectAgent,
   useInputModeToggleAgent,
   VoiceAgent,
 } from '@rapidaai/react';
 import { cn } from '@/utils';
-import { MicOff, Phone, PhoneOff } from 'lucide-react';
-import { Spinner } from '@/app/components/loader/spinner';
 import { AudioMessagingAction } from './audio-messsaging-action';
 import { SimpleMessagingAction } from './simple-messaging-action';
-import { ICancelButton, IRedBGButton } from '@/app/components/form/button';
 
 /**
  *

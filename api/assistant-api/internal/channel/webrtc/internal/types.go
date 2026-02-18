@@ -6,30 +6,6 @@
 
 package webrtc_internal
 
-// DisconnectReason describes why a WebRTC session was torn down.
-type DisconnectReason string
-
-const (
-	DisconnectReasonNormal           DisconnectReason = "normal"            // clean end-of-conversation directive
-	DisconnectReasonTool             DisconnectReason = "tool"              // tool directive with "end_conversation" signal
-	DisconnectReasonClientDisconnect DisconnectReason = "client_disconnect" // client sent disconnect signal
-	DisconnectReasonConnectionFailed DisconnectReason = "connection_failed" // ICE/DTLS failure
-	DisconnectReasonPeerDisconnected DisconnectReason = "peer_disconnected" // transient network loss (not recovered)
-	DisconnectReasonGRPCClosed       DisconnectReason = "grpc_closed"       // gRPC stream closed (EOF)
-	DisconnectReasonGRPCError        DisconnectReason = "grpc_error"        // gRPC stream error
-	DisconnectReasonContextCancelled DisconnectReason = "context_cancelled" // parent context cancelled
-	DisconnectReasonUnknown          DisconnectReason = "unknown"
-)
-
-// Metric name constants for WebRTC streamer-level metrics.
-const (
-	MetricStatus           = "STATUS"
-	MetricSessionDuration  = "TIME_TAKEN"
-	MetricDisconnectReason = "DISCONNECT_REASON"
-	MetricAudioDuration    = "AUDIO_DURATION_MS"
-	MetricSessionID        = "WEBRTC_SESSION_ID"
-)
-
 // Opus audio constants (WebRTC standard: 48kHz)
 const (
 	OpusSampleRate    = 48000
@@ -37,14 +13,13 @@ const (
 	OpusFrameBytes    = 1920 // 960 samples * 2 bytes (20ms at 48kHz)
 	OpusChannels      = 2    // Opus RTP always signals 2 encoding channels (opus/48000/2) per RFC 7587, even for mono voice
 	OpusPayloadType   = 111  // Standard dynamic payload type for Opus
-	OpusSDPFmtpLine   = "minptime=10;useinbandfec=1;stereo=0;sprop-stereo=0"
+	OpusSDPFmtpLine   = "minptime=10;useinbandfec=1;stereo=0;sprop-stereo=0;ptime=20"
 )
 
 // Channel and buffer sizes
 const (
 	InputChannelSize     = 500  // Buffered channel for incoming messages (~10s of 20ms audio frames)
 	OutputChannelSize    = 1500 // Buffered channel for outgoing messages (~30s of 20ms audio frames)
-	ErrorChannelSize     = 1    // Error channel buffer
 	RTPBufferSize        = 1500 // Max RTP packet size (MTU)
 	MaxConsecutiveErrors = 50   // Max read errors before stopping
 	InputBufferThreshold = 3200 // 100ms at 16kHz (32 bytes/ms * 100ms) — larger chunks = fewer channel writes

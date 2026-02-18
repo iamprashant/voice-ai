@@ -6,10 +6,12 @@ import { ArrowDownToLine, Pause, Play, Volume2, VolumeX } from 'lucide-react';
 import { Tooltip } from '@/app/components/base/tooltip';
 import { cn } from '@/utils';
 import { Slider } from '@/app/components/form/slider';
+import { AssistantConversationRecording } from '@rapidaai/react';
 
 type AudioPlayerProps = {
-  src: string;
-  progressColor?: string;
+  recording: AssistantConversationRecording;
+  assistantProgressColor?: string;
+  userProgressColor?: string;
   cursorColor?: string;
   buttonsColor?: string;
   barWidth?: number;
@@ -25,9 +27,10 @@ type AudioPlayerProps = {
 };
 
 export const AudioPlayer: FC<AudioPlayerProps> = ({
-  src,
-  progressColor = 'blue',
-  cursorColor = 'blue',
+  recording,
+  assistantProgressColor = '#3b82f6',
+  userProgressColor = '#10b981',
+  cursorColor = '#3b82f6',
   barWidth = 2,
   barRadius = 2,
   barGap = 1,
@@ -37,8 +40,12 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
   onPause,
   onVolumeChange,
 }) => {
-  const waveformRef = useRef<HTMLDivElement | null>(null);
-  const wavesurfer = useRef<WaveSurfer | null>(null);
+  const assistantWaveformRef = useRef<HTMLDivElement | null>(null);
+  const userWaveformRef = useRef<HTMLDivElement | null>(null);
+  const timelineRef = useRef<HTMLDivElement | null>(null);
+  const assistantWavesurfer = useRef<WaveSurfer | null>(null);
+  const userWavesurfer = useRef<WaveSurfer | null>(null);
+  const sharedAudioContext = useRef<AudioContext | null>(null);
 
   const [playing, setPlaying] = useState<boolean>(false);
   const [volume, setVolume] = useState<number>(1);
@@ -46,76 +53,182 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
   const [, setCurrentTime] = useState<string>('0:00');
   const [, setDuration] = useState<string>('0:00');
   const [playBackSpeed, setPlayBackSpeed] = useState(playbackSpeeds[0]);
+  const [bothReady, setBothReady] = useState<boolean>(false);
+  const readyCount = useRef<number>(0);
+
+  const baseUrl = recording.getRecordingurl();
+  const recordingId = recording.getId();
+  const assistantSrc = `${baseUrl}/assistant-${recordingId}.wav`;
+  const userSrc = `${baseUrl}/user-${recordingId}.wav`;
 
   useEffect(() => {
-    if (waveformRef.current) {
-      wavesurfer.current = WaveSurfer.create({
-        container: waveformRef.current,
-        // waveColor,
-        progressColor,
-        cursorColor,
-        barWidth,
-        barGap,
-        barRadius,
-        height,
-        normalize: true,
-        audioRate: playBackSpeed,
-        plugins: [
-          TimelinePlugin.create({
-            timeInterval: 1,
-          }),
-        ],
+    if (!sharedAudioContext.current) {
+      sharedAudioContext.current = new AudioContext();
+    }
+  }, []);
+
+  const createWaveSurferOptions = (
+    container: HTMLDivElement,
+    progressColor: string,
+  ) => ({
+    container,
+    progressColor,
+    cursorColor,
+    barWidth,
+    barGap,
+    barRadius,
+    height,
+    normalize: true,
+    audioRate: playBackSpeed,
+    backend: 'WebAudio' as const,
+    audioContext: sharedAudioContext.current!,
+    plugins: [],
+  });
+
+  useEffect(() => {
+    readyCount.current = 0;
+    setBothReady(false);
+
+    const onTrackReady = () => {
+      readyCount.current += 1;
+      if (readyCount.current >= 2) {
+        setBothReady(true);
+      }
+    };
+
+    if (assistantWaveformRef.current) {
+      assistantWavesurfer.current = WaveSurfer.create({
+        ...createWaveSurferOptions(
+          assistantWaveformRef.current,
+          assistantProgressColor,
+        ),
+        ...(timelineRef.current
+          ? {
+              plugins: [
+                TimelinePlugin.create({
+                  timeInterval: 1,
+                  container: timelineRef.current,
+                }),
+              ],
+            }
+          : {}),
+      });
+      assistantWavesurfer.current.load(assistantSrc);
+
+      assistantWavesurfer.current.on('ready', () => {
+        setDuration(
+          formatTime(assistantWavesurfer.current?.getDuration() || 0),
+        );
+        onTrackReady();
       });
 
-      wavesurfer.current.load(src);
-
-      wavesurfer.current.on('ready', () => {
-        setDuration(formatTime(wavesurfer.current?.getDuration() || 0));
+      assistantWavesurfer.current.on('audioprocess', () => {
+        setCurrentTime(
+          formatTime(assistantWavesurfer.current?.getCurrentTime() || 0),
+        );
       });
 
-      wavesurfer.current.on('audioprocess', () => {
-        setCurrentTime(formatTime(wavesurfer.current?.getCurrentTime() || 0));
+      // Sync user waveform cursor when assistant is seeked (click/drag)
+      assistantWavesurfer.current.on('seeking', (currentTime: number) => {
+        if (userWavesurfer.current) {
+          const userDuration = userWavesurfer.current.getDuration();
+          if (userDuration > 0) {
+            userWavesurfer.current.seekTo(currentTime / userDuration);
+          }
+        }
+      });
+
+      assistantWavesurfer.current.on('finish', () => {
+        userWavesurfer.current?.pause();
+        setPlaying(false);
+      });
+    }
+
+    if (userWaveformRef.current) {
+      userWavesurfer.current = WaveSurfer.create(
+        createWaveSurferOptions(userWaveformRef.current, userProgressColor),
+      );
+      userWavesurfer.current.load(userSrc);
+
+      userWavesurfer.current.on('ready', () => {
+        onTrackReady();
+      });
+
+      userWavesurfer.current.on('finish', () => {
+        assistantWavesurfer.current?.pause();
+        setPlaying(false);
       });
     }
 
     return () => {
-      wavesurfer.current?.destroy();
+      assistantWavesurfer.current?.destroy();
+      userWavesurfer.current?.destroy();
     };
-  }, [src, progressColor, cursorColor, barWidth, barRadius, barGap, height]);
+  }, [
+    assistantSrc,
+    userSrc,
+    assistantProgressColor,
+    userProgressColor,
+    cursorColor,
+    barWidth,
+    barRadius,
+    barGap,
+    height,
+  ]);
 
   useEffect(() => {
-    if (wavesurfer.current) {
-      wavesurfer.current.setPlaybackRate(playBackSpeed);
-    }
+    assistantWavesurfer.current?.setPlaybackRate(playBackSpeed);
+    userWavesurfer.current?.setPlaybackRate(playBackSpeed);
   }, [playBackSpeed]);
 
-  const togglePlay = () => {
-    if (wavesurfer.current) {
-      wavesurfer.current.playPause();
-      setPlaying(!playing);
-      if (playing) {
-        onPause?.();
-      } else {
-        onPlay?.();
-      }
+  const togglePlay = async () => {
+    if (!bothReady || !assistantWavesurfer.current || !userWavesurfer.current) {
+      return;
     }
+
+    // Resume the shared AudioContext if it's suspended (browser autoplay policy)
+    if (sharedAudioContext.current?.state === 'suspended') {
+      await sharedAudioContext.current.resume();
+    }
+
+    if (playing) {
+      assistantWavesurfer.current.pause();
+      userWavesurfer.current.pause();
+      onPause?.();
+    } else {
+      // Sync user track position to match assistant track before playing
+      const currentTime = assistantWavesurfer.current.getCurrentTime();
+      const userDuration = userWavesurfer.current.getDuration();
+      if (userDuration > 0) {
+        userWavesurfer.current.seekTo(currentTime / userDuration);
+      }
+
+      // Fire both play calls together using Promise.all on the shared AudioContext
+      // so they start on the same audio clock tick
+      await Promise.all([
+        assistantWavesurfer.current.play(),
+        userWavesurfer.current.play(),
+      ]);
+      onPlay?.();
+    }
+    setPlaying(!playing);
   };
 
   const handleVolume = (newVolume: number) => {
-    // const newVolume = parseFloat(e);
-    if (wavesurfer.current) {
-      if (muted) {
-        setMuted(false);
-      }
-      wavesurfer.current.setVolume(newVolume);
+    if (assistantWavesurfer.current && userWavesurfer.current) {
+      if (muted) setMuted(false);
+      assistantWavesurfer.current.setVolume(newVolume);
+      userWavesurfer.current.setVolume(newVolume);
       setVolume(newVolume);
       onVolumeChange?.(newVolume);
     }
   };
 
   const toggleMute = () => {
-    if (wavesurfer.current) {
-      wavesurfer.current.setVolume(muted ? volume : 0);
+    if (assistantWavesurfer.current && userWavesurfer.current) {
+      const newVolume = muted ? volume : 0;
+      assistantWavesurfer.current.setVolume(newVolume);
+      userWavesurfer.current.setVolume(newVolume);
       setMuted(!muted);
     }
   };
@@ -126,14 +239,14 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
     return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
-  const handleDownloadAudio = async () => {
+  const handleDownloadAudio = async (src: string, label: string) => {
     try {
       const response = await fetch(src);
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'conversation-complete-recording.wav';
+      link.download = `${label}-${recordingId}.wav`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -145,16 +258,35 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
 
   return (
     <div className={`flex w-full flex-col items-center rounded-lg`}>
-      <div ref={waveformRef} className="w-full z-0" />
+      {/* Overlapped waveforms */}
+      <div className="relative w-full" style={{ height }}>
+        <div
+          ref={userWaveformRef}
+          className="absolute inset-0 z-[1] pointer-events-none"
+          style={{ opacity: 0.5 }}
+        />
+        <div
+          ref={assistantWaveformRef}
+          className="absolute inset-0 z-[2]"
+          style={{ opacity: 0.7 }}
+        />
+      </div>
+
+      {/* Timeline (rendered outside the overlapped area) */}
+      <div ref={timelineRef} className="w-full" />
+
+      {/* Controls */}
       <div className="flex w-full flex-col justify-between gap-3 md:flex-row md:items-center bg-white dark:bg-gray-900 border-y">
+        {/* Play + volume control */}
         <div className="flex items-center justify-between divide-x border-r">
-          <IButton type="button" onClick={togglePlay}>
+          <IButton type="button" onClick={togglePlay} disabled={!bothReady}>
             {playing ? (
               <Pause className="w-4 h-4" strokeWidth={1.5} />
             ) : (
               <Play className="w-4 h-4" strokeWidth={1.5} />
             )}
           </IButton>
+
           <Tooltip
             content={
               <Slider
@@ -178,12 +310,15 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
             </IButton>
           </Tooltip>
         </div>
+
+        {/* Speed + download */}
         <div className="flex items-center justify-between divide-x border-l">
           {playbackSpeeds.map(speed => (
             <IButton
               key={speed}
               onClick={() => setPlayBackSpeed(speed)}
               className={cn(
+                'rounded-none',
                 speed === playBackSpeed &&
                   'bg-blue-600 text-white hover:bg-blue-600!',
               )}
@@ -192,11 +327,20 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
             </IButton>
           ))}
           <IButton
-            onClick={handleDownloadAudio}
+            onClick={() => handleDownloadAudio(assistantSrc, 'assistant')}
             type="button"
-            className="border-x"
+            className="rounded-none"
           >
-            <ArrowDownToLine className="h-4 w-4 mr-1" /> <span>Audio</span>
+            <ArrowDownToLine className="h-4 w-4 mr-1" strokeWidth={1.5} />{' '}
+            <span>Assistant</span>
+          </IButton>
+          <IButton
+            onClick={() => handleDownloadAudio(userSrc, 'user')}
+            type="button"
+            className="rounded-none"
+          >
+            <ArrowDownToLine className="h-4 w-4 mr-1" strokeWidth={1.5} />{' '}
+            <span>User</span>
           </IButton>
         </div>
       </div>

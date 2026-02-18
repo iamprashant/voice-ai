@@ -1,7 +1,4 @@
-import {
-  GreenNoticeBlock,
-  YellowNoticeBlock,
-} from '@/app/components/container/message/notice-block';
+import { GreenNoticeBlock } from '@/app/components/container/message/notice-block';
 import { Dropdown } from '@/app/components/dropdown';
 import { IBlueBGArrowButton } from '@/app/components/form/button';
 import { ErrorMessage } from '@/app/components/form/error-message';

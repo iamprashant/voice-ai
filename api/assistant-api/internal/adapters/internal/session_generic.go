@@ -175,12 +175,12 @@ func (r *genericRequestor) Connect(
 func (r *genericRequestor) persistRecording(ctx context.Context) {
 	if r.recorder != nil {
 		utils.Go(ctx, func() {
-			_, systemAudio, err := r.recorder.Persist()
+			userAudio, systemAudio, err := r.recorder.Persist()
 			if err != nil {
 				r.logger.Tracef(ctx, "failed to persist audio recording: %+v", err)
 				return
 			}
-			if err = r.CreateConversationRecording(ctx, systemAudio); err != nil {
+			if err = r.CreateConversationRecording(ctx, userAudio, systemAudio); err != nil {
 				r.logger.Tracef(ctx, "failed to create conversation recording record: %+v", err)
 			}
 		})
@@ -254,18 +254,30 @@ func (r *genericRequestor) resumeSession(
 	})
 
 	errGroup.Go(func() error {
-		if config.GetStreamMode() == protos.StreamMode_STREAM_MODE_AUDIO {
-			if err := r.initializeTextToSpeech(ctx); err != nil {
-				r.logger.Tracef(ctx, "failed to initialize output: %+v", err)
-			}
-		}
 		if err := r.initializeTextAggregator(ctx); err != nil {
 			r.logger.Errorf("unable to initialize sentence assembler with error %v", err)
 		}
-		if err := r.initializeBehavior(ctx); err != nil {
-			r.logger.Errorf("failed to initialize assistant behavior: %+v", err)
+		return nil
+	})
+
+	// tts is important and speed up the first message
+	errGroup.Go(func() error {
+		switch config.StreamMode {
+		case protos.StreamMode_STREAM_MODE_TEXT:
+			r.messaging.SwitchMode(type_enums.TextMode)
+		case protos.StreamMode_STREAM_MODE_AUDIO:
+			r.initializeTextToSpeech(ctx)
+			r.initializeBehavior(ctx)
+			r.messaging.SwitchMode(type_enums.AudioMode)
 		}
 		return nil
+	})
+
+	utils.Go(ctx, func() {
+		switch config.StreamMode {
+		case protos.StreamMode_STREAM_MODE_AUDIO:
+			r.initializeSpeechToText(ctx)
+		}
 	})
 
 	// Start non-critical background tasks (not a new session)
@@ -282,11 +294,6 @@ func (r *genericRequestor) resumeSession(
 
 	// Establish speech-to-text listener connection
 	utils.Go(ctx, func() {
-		if config.GetStreamMode() == protos.StreamMode_STREAM_MODE_AUDIO {
-			if err := r.initializeSpeechToText(ctx); err != nil {
-				r.logger.Tracef(ctx, "failed to connect listener: %+v", err)
-			}
-		}
 		if err := r.initializeEndOfSpeech(ctx); err != nil {
 			r.logger.Tracef(ctx, "failed to initialize input: %+v", err)
 		}
@@ -355,20 +362,31 @@ func (r *genericRequestor) createSession(
 		return nil
 	})
 
+	errGroup.Go(func() error {
+		switch config.StreamMode {
+		case protos.StreamMode_STREAM_MODE_TEXT:
+			r.messaging.SwitchMode(type_enums.TextMode)
+		case protos.StreamMode_STREAM_MODE_AUDIO:
+			r.initializeTextToSpeech(ctx)
+			r.initializeBehavior(ctx)
+			r.messaging.SwitchMode(type_enums.AudioMode)
+		}
+		return nil
+	})
+
 	// blocking initialization of assistant executor to ensure it's ready before processing any input or output
 	errGroup.Go(func() error {
-		if config.GetStreamMode() == protos.StreamMode_STREAM_MODE_AUDIO {
-			if err := r.initializeTextToSpeech(ctx); err != nil {
-				r.logger.Tracef(ctx, "failed to initialize output: %+v", err)
-			}
-		}
 		if err := r.initializeTextAggregator(ctx); err != nil {
 			r.logger.Errorf("unable to initialize sentence assembler with error %v", err)
 		}
-		if err := r.initializeBehavior(ctx); err != nil {
-			r.logger.Errorf("failed to initialize assistant behavior: %+v", err)
-		}
 		return nil
+	})
+
+	utils.Go(ctx, func() {
+		switch config.StreamMode {
+		case protos.StreamMode_STREAM_MODE_AUDIO:
+			r.initializeSpeechToText(ctx)
+		}
 	})
 
 	// Start non-critical background tasks
@@ -382,13 +400,7 @@ func (r *genericRequestor) createSession(
 		r.recorder = rc
 	})
 
-	// Establish speech-to-text listener connection
 	utils.Go(ctx, func() {
-		if config.GetStreamMode() == protos.StreamMode_STREAM_MODE_AUDIO {
-			if err := r.initializeSpeechToText(ctx); err != nil {
-				r.logger.Tracef(ctx, "failed to initialize input: %+v", err)
-			}
-		}
 		if err := r.initializeEndOfSpeech(ctx); err != nil {
 			r.logger.Tracef(ctx, "failed to initialize input: %+v", err)
 		}
@@ -415,7 +427,6 @@ func (r *genericRequestor) createSession(
 			r.logger.Errorf("failed to execute begin conversation hooks: %+v", err)
 		}
 	})
-
 	return errGroup.Wait()
 }
 

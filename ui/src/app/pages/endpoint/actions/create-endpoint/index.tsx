@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useRapidaStore } from '@/hooks';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { useNavigate } from 'react-router-dom';
@@ -7,7 +7,6 @@ import { Helmet } from '@/app/components/helmet';
 import {
   IBlueBGArrowButton,
   ICancelButton,
-  SimpleButton,
 } from '@/app/components/form/button';
 import { TabForm } from '@/app/components/form/tab-form';
 import {
@@ -40,7 +39,7 @@ import {
   BlueNoticeBlock,
   YellowNoticeBlock,
 } from '@/app/components/container/message/notice-block';
-import { ArrowUpRight, ExternalLink, Info, MoveRight } from 'lucide-react';
+import { ArrowUpRight, ExternalLink, Info } from 'lucide-react';
 import { ConfigureEndpointPromptDialog } from '@/app/components/base/modal/configure-endpoint-prompt-modal/index';
 
 /**

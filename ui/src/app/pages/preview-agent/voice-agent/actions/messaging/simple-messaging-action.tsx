@@ -4,7 +4,7 @@ import {
   useInputModeToggleAgent,
   VoiceAgent,
 } from '@rapidaai/react';
-import { AudioLines, Send, StopCircleIcon } from 'lucide-react';
+import { AudioLines, Loader2, Send, StopCircleIcon } from 'lucide-react';
 import { FC, HTMLAttributes } from 'react';
 import { useForm } from 'react-hook-form';
 import { cn } from '@/utils';
@@ -22,8 +22,12 @@ export const SimpleMessagingAction: FC<SimpleMessagingAcitonProps> = ({
   placeholder,
 }) => {
   const { handleVoiceToggle } = useInputModeToggleAgent(voiceAgent);
-  const { handleConnectAgent, handleDisconnectAgent, isConnected } =
-    useConnectAgent(voiceAgent);
+  const {
+    handleConnectAgent,
+    handleDisconnectAgent,
+    isConnected,
+    isConnecting,
+  } = useConnectAgent(voiceAgent);
 
   const {
     register,
@@ -79,26 +83,34 @@ export const SimpleMessagingAction: FC<SimpleMessagingAcitonProps> = ({
               <button
                 aria-label="Starting Voice"
                 type="button"
+                disabled={isConnecting}
                 onClick={async () => {
                   await handleVoiceToggle();
                   !isConnected && (await handleConnectAgent());
                 }}
                 className="group h-9 px-3 flex flex-row items-center justify-center transition-all duration-300 hover:opacity-80 overflow-hidden w-fit bg-blue-600 dark:bg-blue-500 text-white"
               >
-                <AudioLines
-                  className="w-4.5 h-4.5 flex-shrink-0"
-                  strokeWidth={1.5}
-                />
+                {isConnecting ? (
+                  <Loader2
+                    className="w-4.5 h-4.5 flex-shrink-0 animate-spin"
+                    strokeWidth={1.5}
+                  />
+                ) : (
+                  <AudioLines
+                    className="w-4.5 h-4.5 flex-shrink-0"
+                    strokeWidth={1.5}
+                  />
+                )}
                 <span className="text-sm overflow-hidden ml-2 font-medium">
-                  Voice
+                  {isConnecting ? 'Connecting...' : 'Voice'}
                 </span>
               </button>
             )}
-            {isConnected && (
+            {(isConnected || isConnecting) && (
               <button
                 aria-label="Stoping Voice"
                 type="button"
-                disabled={!isConnected}
+                disabled={!isConnected && !isConnecting}
                 onClick={async () => {
                   await handleDisconnectAgent();
                 }}

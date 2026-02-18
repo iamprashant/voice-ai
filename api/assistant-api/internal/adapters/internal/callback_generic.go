@@ -108,7 +108,7 @@ func (spk *genericRequestor) callSpeaking(ctx context.Context, result internal_t
 
 	switch res := result.(type) {
 	case internal_type.LLMResponseDonePacket:
-		if spk.textToSpeechTransformer != nil {
+		if spk.textToSpeechTransformer != nil && spk.messaging.GetMode().Audio() {
 			if result.ContextId() != spk.messaging.GetID() {
 				return nil
 			}
@@ -131,7 +131,7 @@ func (spk *genericRequestor) callSpeaking(ctx context.Context, result internal_t
 		if result.ContextId() != spk.messaging.GetID() {
 			return nil
 		}
-		if spk.textToSpeechTransformer != nil {
+		if spk.textToSpeechTransformer != nil && spk.messaging.GetMode().Audio() {
 			ctx, span, _ := spk.Tracer().StartSpan(ctx, utils.AssistantSpeakingStage)
 			defer span.EndSpan(ctx, utils.AssistantSpeakingStage)
 			span.AddAttributes(ctx,
@@ -190,7 +190,7 @@ func (talking *genericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				vl.NoiseReduced = true
 				dnOut, _, err := talking.denoiser.Denoise(ctx, vl.Audio)
 				if err != nil {
-					talking.logger.Warnf("error while denoising process | will process actual audio byte")
+					talking.logger.Warnf("error while denoising process | will process actual audio byte %+v", err)
 					talking.OnPacket(ctx, vl)
 				} else {
 					vl.Audio = dnOut
@@ -253,7 +253,6 @@ func (talking *genericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 
 			continue
 		case internal_type.InterruptionPacket:
-
 			ctx, span, _ := talking.Tracer().StartSpan(ctx, utils.AssistantUtteranceStage)
 			defer span.EndSpan(ctx, utils.AssistantUtteranceStage)
 
@@ -335,7 +334,6 @@ func (talking *genericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 			talking.Notify(ctx, &protos.ConversationUserMessage{Id: vl.ContextID, Message: &protos.ConversationUserMessage_Text{Text: vl.Speech}, Completed: false, Time: timestamppb.New(time.Now())})
 			continue
 		case internal_type.EndOfSpeechPacket:
-
 			ctx, span, _ := talking.Tracer().StartSpan(ctx, utils.AssistantUtteranceStage)
 			span.EndSpan(ctx,
 				utils.AssistantUtteranceStage,

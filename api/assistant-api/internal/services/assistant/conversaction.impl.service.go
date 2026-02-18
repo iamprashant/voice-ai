@@ -529,7 +529,7 @@ func (conversationService *assistantConversationService) CreateConversationRecor
 	auth types.SimplePrinciple,
 	assistantId,
 	assistantConversationId uint64,
-	body []byte,
+	user, assistant []byte,
 ) (*internal_conversation_entity.AssistantConversationRecording, error) {
 	start := time.Now()
 	db := conversationService.postgres.DB(ctx)
@@ -537,8 +537,11 @@ func (conversationService *assistantConversationService) CreateConversationRecor
 	s3Prefix := conversationService.ObjectPrefix(*auth.GetCurrentOrganizationId(), *auth.GetCurrentProjectId())
 	recordingId := gorm_generator.ID()
 
-	key := conversationService.ObjectKey(s3Prefix, recordingId, fmt.Sprintf("recording-%d.wav", assistantConversationId))
-	conversationService.storage.Store(ctx, key, body)
+	key := conversationService.ObjectKey(s3Prefix, assistantConversationId, fmt.Sprintf("user-%d.wav", recordingId))
+	conversationService.storage.Store(ctx, key, user)
+
+	key = conversationService.ObjectKey(s3Prefix, assistantConversationId, fmt.Sprintf("assistant-%d.wav", recordingId))
+	conversationService.storage.Store(ctx, key, assistant)
 
 	conversationRecording := &internal_conversation_entity.AssistantConversationRecording{
 		Audited: gorm_models.Audited{
@@ -550,7 +553,7 @@ func (conversationService *assistantConversationService) CreateConversationRecor
 		},
 		AssistantId:             assistantId,
 		AssistantConversationId: assistantConversationId,
-		RecordingUrl:            key,
+		RecordingUrl:            fmt.Sprintf("%s/%d/", s3Prefix, assistantConversationId),
 	}
 	if auth.GetUserId() != nil {
 		conversationRecording.Mutable.CreatedBy = *auth.GetUserId()
@@ -566,7 +569,7 @@ func (conversationService *assistantConversationService) CreateConversationRecor
 }
 
 func (eService *assistantConversationService) ObjectKey(keyPrefix string, conversationId uint64, objName string) string {
-	return fmt.Sprintf("%s/%d__%s", keyPrefix, conversationId, objName)
+	return fmt.Sprintf("%s/%d/%s", keyPrefix, conversationId, objName)
 }
 
 func (eService *assistantConversationService) ObjectPrefix(orgId, projectId uint64) string {
