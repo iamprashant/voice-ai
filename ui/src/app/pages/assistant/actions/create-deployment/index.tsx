@@ -254,7 +254,7 @@ export const ConfigureAssistantDeploymentPage = () => {
                     navi.goToConfigureDebugger(assistantId!);
                   }}
                 >
-                  <span className="mr-2">Edit Debugger</span>
+                  <span className="mr-2 text-sm/6">Edit Debugger</span>
                   <Plus className="w-4 h-4 " />
                 </IButton>
                 <IButton
@@ -262,7 +262,7 @@ export const ConfigureAssistantDeploymentPage = () => {
                     navi.goToAssistantPreview(assistantId!);
                   }}
                 >
-                  <span className="mr-2">Preview</span>
+                  <span className="mr-2 text-sm/6">Preview</span>
                   <ExternalLink className="w-4 h-4 " />
                 </IButton>
                 <IButton onClick={() => setIsExpanded(!isExpanded)}>
@@ -326,11 +326,11 @@ export const ConfigureAssistantDeploymentPage = () => {
                     navi.goToConfigureApi(assistantId!);
                   }}
                 >
-                  <span className="mr-2">Edit Api</span>
+                  <span className="mr-2 text-sm/6">Edit Api</span>
                   <Plus className="w-4 h-4 " />
                 </IButton>
                 <IButton onClick={() => setIsApiExpanded(!isApiExpanded)}>
-                  <span className="mr-2">Instruction</span>
+                  <span className="mr-2 text-sm/6">Instruction</span>
                   <Code className="w-4 h-4 " />
                 </IButton>
               </div>
@@ -434,7 +434,7 @@ export const ConfigureAssistantDeploymentPage = () => {
                     navi.goToConfigureCall(assistantId!);
                   }}
                 >
-                  <span className="mr-2">Edit Phone Call</span>
+                  <span className="mr-2 text-sm/6">Edit Phone Call</span>
                   <Plus className="w-4 h-4 " />
                 </IButton>
                 <IButton
@@ -442,11 +442,11 @@ export const ConfigureAssistantDeploymentPage = () => {
                     navi.goToAssistantPreviewCall(assistantId!);
                   }}
                 >
-                  <span className="mr-2">Preview</span>
+                  <span className="mr-2 text-sm/6">Preview</span>
                   <ExternalLink className="w-4 h-4 " />
                 </IButton>
                 <IButton onClick={() => setIsPhoneExpanded(!isPhoneExpanded)}>
-                  <span className="mr-2">Inbound Instruction</span>
+                  <span className="mr-2 text-sm/6">Inbound Instruction</span>
                   <Code className="w-4 h-4 " />
                 </IButton>
               </div>
@@ -526,11 +526,11 @@ export const ConfigureAssistantDeploymentPage = () => {
                     navi.goToConfigureWeb(assistantId!);
                   }}
                 >
-                  <span className="mr-2">Edit Widget</span>
+                  <span className="mr-2 text-sm/6">Edit Widget</span>
                   <Plus className="w-4 h-4 " />
                 </IButton>
                 <IButton onClick={() => setIsWidgetExpanded(!isWidgetExpanded)}>
-                  <span className="mr-2">Instruction</span>
+                  <span className="mr-2 text-sm/6">Instruction</span>
                   <Code className="w-4 h-4 " />
                 </IButton>
               </div>

@@ -18,7 +18,7 @@ import { CONFIG } from '@/configs';
 import { useRapidaStore } from '@/hooks';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { InputVarType } from '@/models/common';
-import { cn } from '@/utils';
+import { cn, randomMeaningfullName } from '@/utils';
 import { getStatusMetric } from '@/utils/metadata';
 import {
   AgentConfig,
@@ -64,7 +64,9 @@ export const PublicPreviewVoiceAgent = () => {
       agentConfig={new AgentConfig(
         assistantId,
         new InputOptions([Channel.Audio, Channel.Text], Channel.Text),
-      ).addMetadata('authId', StringToAny('' + (authId || 'public_user')))}
+      )
+        .addMetadata('authId', StringToAny('' + (authId || 'public_user')))
+        .setUserIdentifier(authId || randomMeaningfullName('public'))}
     />
   );
 };
@@ -92,6 +94,7 @@ export const PreviewVoiceAgent = () => {
         assistantId,
         new InputOptions([Channel.Audio, Channel.Text], Channel.Text),
       )
+        .setUserIdentifier(authId, user.name)
         .addKeywords([user.name])
         .addMetadata('authId', StringToAny(authId))
         .addMetadata('projectId', StringToAny(projectId))}

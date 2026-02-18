@@ -122,7 +122,6 @@ func (r *genericRequestor) Disconnect(ctx context.Context) {
 // Parameters:
 //   - ctx: Context for cancellation and deadline propagation
 //   - auth: Authentication principal containing user/organization credentials
-//   - identifier: Unique session identifier (e.g., phone number, client ID)
 //   - config: Conversation configuration including assistant details and audio settings
 //
 // Returns:
@@ -249,11 +248,6 @@ func (r *genericRequestor) resumeSession(
 	})
 
 	errGroup.Go(func() error {
-		r.notifyConfiguration(ctx, config, conversation, assistant)
-		return nil
-	})
-
-	errGroup.Go(func() error {
 		if err := r.initializeTextAggregator(ctx); err != nil {
 			r.logger.Errorf("unable to initialize sentence assembler with error %v", err)
 		}
@@ -320,6 +314,7 @@ func (r *genericRequestor) resumeSession(
 		}
 	})
 
+	r.notifyConfiguration(ctx, config, conversation, assistant)
 	return errGroup.Wait()
 }
 
@@ -353,12 +348,6 @@ func (r *genericRequestor) createSession(
 			r.logger.Tracef(ctx, "failed to initialize executor: %+v", err)
 			return err
 		}
-		return nil
-	})
-
-	// blocking initialization of assistant executor to ensure it's ready before processing any input or output
-	errGroup.Go(func() error {
-		r.notifyConfiguration(ctx, config, conversation, assistant)
 		return nil
 	})
 
@@ -427,6 +416,7 @@ func (r *genericRequestor) createSession(
 			r.logger.Errorf("failed to execute begin conversation hooks: %+v", err)
 		}
 	})
+	r.notifyConfiguration(ctx, config, conversation, assistant)
 	return errGroup.Wait()
 }
 
