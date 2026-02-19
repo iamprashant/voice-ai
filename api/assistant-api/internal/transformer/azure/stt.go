@@ -54,7 +54,6 @@ func NewAzureSpeechToText(
 	}
 
 	childCtx, cancel := context.WithCancel(ctx)
-
 	return &azureSpeechToText{
 		ctx:         childCtx,
 		ctxCancel:   cancel,

@@ -26,7 +26,7 @@ import (
 // It sets up both audio input and output transformer.
 // This function is typically called at the beginning of a communication session.
 func (listening *genericRequestor) initializeSpeechToText(ctx context.Context) error {
-	eGroup, ctx := errgroup.WithContext(ctx)
+	eGroup, ectx := errgroup.WithContext(ctx)
 	options := utils.Option{"microphone.eos.timeout": 500}
 	// only initialize speech to text if the mode is audio or both
 	transformerConfig, _ := listening.GetSpeechToTextTransformer()
@@ -34,10 +34,10 @@ func (listening *genericRequestor) initializeSpeechToText(ctx context.Context) e
 		options = utils.MergeMaps(options, transformerConfig.GetOptions())
 		eGroup.Go(func() error {
 			//
-			ctx, span, _ := listening.Tracer().StartSpan(ctx, utils.AssistantListenConnectStage)
-			defer span.EndSpan(ctx, utils.AssistantListenConnectStage)
+			spanCtx, span, _ := listening.Tracer().StartSpan(ectx, utils.AssistantListenConnectStage)
+			defer span.EndSpan(spanCtx, utils.AssistantListenConnectStage)
 
-			span.AddAttributes(ctx,
+			span.AddAttributes(spanCtx,
 				internal_telemetry.KV{K: "options", V: internal_telemetry.JSONValue(options)},
 				internal_telemetry.KV{K: "provider", V: internal_telemetry.StringValue(transformerConfig.AudioProvider)},
 			)
@@ -47,12 +47,15 @@ func (listening *genericRequestor) initializeSpeechToText(ctx context.Context) e
 				listening.logger.Errorf("unable to find credential from options %+v", err)
 				return err
 			}
-			credential, err := listening.VaultCaller().GetCredential(ctx, listening.Auth(), credentialId)
+			credential, err := listening.VaultCaller().GetCredential(spanCtx, listening.Auth(), credentialId)
 			if err != nil {
 				listening.logger.Errorf("Api call to find credential failed %+v", err)
 				return err
 			}
 
+			// Use the original session ctx (not errgroup's ectx) so the
+			// transformer's stream lifecycle is tied to the session, not
+			// the short-lived errgroup that finishes after init.
 			atransformer, err := internal_transformer.GetSpeechToTextTransformer(
 				ctx,
 				listening.logger,
