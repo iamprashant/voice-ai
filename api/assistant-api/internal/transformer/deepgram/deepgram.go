@@ -13,44 +13,33 @@ import (
 
 	commons "github.com/rapidaai/pkg/commons"
 	utils "github.com/rapidaai/pkg/utils"
+	"github.com/rapidaai/protos"
 
 	interfaces "github.com/deepgram/deepgram-go-sdk/v3/pkg/client/interfaces"
-	protos "github.com/rapidaai/protos"
 )
 
 func (dg *deepgramOption) GetEncoding() string {
-	switch dg.audioConfig.GetAudioFormat() {
-	case protos.AudioConfig_LINEAR16:
-		return "linear16"
-	case protos.AudioConfig_MuLaw8:
-		return "mulaw"
-	default:
-		return "linear16"
-	}
-
+	return "linear16"
 }
 
 type deepgramOption struct {
-	key         string
-	logger      commons.Logger
-	mdlOpts     utils.Option
-	audioConfig *protos.AudioConfig
+	key     string
+	logger  commons.Logger
+	mdlOpts utils.Option
 }
 
 func NewDeepgramOption(
 	logger commons.Logger,
 	vaultCredential *protos.VaultCredential,
-	audioConfig *protos.AudioConfig,
 	opts utils.Option) (*deepgramOption, error) {
 	cx, ok := vaultCredential.GetValue().AsMap()["key"]
 	if !ok {
 		return nil, fmt.Errorf("illegal vault config")
 	}
 	return &deepgramOption{
-		key:         cx.(string),
-		logger:      logger,
-		mdlOpts:     opts,
-		audioConfig: audioConfig,
+		key:     cx.(string),
+		logger:  logger,
+		mdlOpts: opts,
 	}, nil
 }
 
@@ -71,7 +60,7 @@ func (dgOpt *deepgramOption) SpeechToTextOptions() *interfaces.LiveTranscription
 		Punctuate:      true,
 		NoDelay:        true,
 		Encoding:       dgOpt.GetEncoding(),
-		SampleRate:     int(dgOpt.audioConfig.GetSampleRate()),
+		SampleRate:     16000,
 		Diarize:        false,
 		Multichannel:   false,
 	}
@@ -132,7 +121,7 @@ func (dgOpt *deepgramOption) SpeechToTextOptions() *interfaces.LiveTranscription
 func (dgOpt *deepgramOption) GetTextToSpeechConnectionString() string {
 	params := url.Values{}
 	params.Add("encoding", dgOpt.GetEncoding())
-	params.Add("sample_rate", fmt.Sprintf("%d", dgOpt.audioConfig.GetSampleRate()))
+	params.Add("sample_rate", "16000")
 	if model, err := dgOpt.mdlOpts.GetString("speak.voice.id"); err == nil {
 		params.Add("model", model)
 	}

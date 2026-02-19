@@ -14,7 +14,6 @@ import (
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/utils"
-	"github.com/rapidaai/protos"
 )
 
 type openaiSpeechToText struct {
@@ -50,7 +49,6 @@ func (o *openaiSpeechToText) Transform(ctx context.Context, byt internal_type.Us
 func NewOpenaiSpeechToText(
 	ctx context.Context,
 	logger commons.Logger,
-	audioConfig *protos.AudioConfig,
 	onPacket func(pkt ...internal_type.Packet) error,
 	opts utils.Option,
 ) (internal_type.SpeechToTextTransformer, error) {

@@ -39,10 +39,10 @@ type elevenlabsTTS struct {
 	onPacket   func(pkt ...internal_type.Packet) error
 }
 
-func NewElevenlabsTextToSpeech(ctx context.Context, logger commons.Logger, credential *protos.VaultCredential, audioConfig *protos.AudioConfig,
+func NewElevenlabsTextToSpeech(ctx context.Context, logger commons.Logger, credential *protos.VaultCredential,
 	onPacket func(pkt ...internal_type.Packet) error,
 	opts utils.Option) (internal_type.TextToSpeechTransformer, error) {
-	eleOpts, err := NewElevenLabsOption(logger, credential, audioConfig, opts)
+	eleOpts, err := NewElevenLabsOption(logger, credential, opts)
 	if err != nil {
 		logger.Errorf("elevenlabs-tts: intializing elevenlabs failed %+v", err)
 		return nil, err

@@ -26,37 +26,26 @@ const (
 )
 
 func (co *cartesiaOption) GetEncoding() string {
-	switch co.audioConfig.GetAudioFormat() {
-	case protos.AudioConfig_LINEAR16:
-		return "pcm_s16le"
-	case protos.AudioConfig_MuLaw8:
-		return "pcm_mulaw"
-	default:
-		fmt.Printf("Warning: Invalid encoding option '%s'. Using default (linear16).", co.audioConfig.GetAudioFormat())
-		return "pcm_s16le"
-	}
+	return "pcm_s16le"
 }
 
 type cartesiaOption struct {
-	key         string
-	mdlOpts     utils.Option
-	logger      commons.Logger
-	audioConfig *protos.AudioConfig
+	key     string
+	mdlOpts utils.Option
+	logger  commons.Logger
 }
 
 func NewCartesiaOption(logger commons.Logger,
 	vltC *protos.VaultCredential,
-	audioConfig *protos.AudioConfig,
 	opts utils.Option) (*cartesiaOption, error) {
 	cx, ok := vltC.GetValue().AsMap()["key"]
 	if !ok {
 		return nil, fmt.Errorf("unable to get config parameters from vaults")
 	}
 	return &cartesiaOption{
-		logger:      logger,
-		mdlOpts:     opts,
-		audioConfig: audioConfig,
-		key:         cx.(string),
+		logger:  logger,
+		mdlOpts: opts,
+		key:     cx.(string),
 	}, nil
 }
 
@@ -73,7 +62,7 @@ func (co *cartesiaOption) GetTextToSpeechInput(
 		OutputFormat: cartesia_internal.TextToSpeechOutputFormat{
 			Container:  "raw",
 			Encoding:   co.GetEncoding(),
-			SampleRate: int(co.audioConfig.GetSampleRate()),
+			SampleRate: 16000,
 		},
 		Transcript:    transcript,
 		AddTimestamps: false,
@@ -118,7 +107,7 @@ func (co *cartesiaOption) GetSpeechToTextConnectionString() string {
 	params.Add("api_key", co.key)
 	params.Add("cartesia_version", CARTESIA_API_VERSION)
 	params.Add("encoding", co.GetEncoding())
-	params.Add("sample_rate", fmt.Sprintf("%d", co.audioConfig.GetSampleRate()))
+	params.Add("sample_rate", "16000")
 	// Check and add language
 	if language, err := co.mdlOpts.GetString("listen.language"); err == nil {
 		params.Add("language", language)

@@ -44,11 +44,10 @@ func NewAzureSpeechToText(
 	ctx context.Context,
 	logger commons.Logger,
 	credential *protos.VaultCredential,
-	audioConfig *protos.AudioConfig,
 	onPacket func(pkt ...internal_type.Packet) error,
 	opts utils.Option,
 ) (internal_type.SpeechToTextTransformer, error) {
-	azureOpt, err := NewAzureOption(logger, credential, audioConfig, opts)
+	azureOpt, err := NewAzureOption(logger, credential, opts)
 	if err != nil {
 		logger.Errorf("azure-stt: unable to initialize azure option: %v", err)
 		return nil, err

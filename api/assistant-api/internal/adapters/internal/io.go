@@ -58,7 +58,6 @@ func (listening *genericRequestor) initializeSpeechToText(ctx context.Context) e
 				listening.logger,
 				transformerConfig.AudioProvider,
 				credential,
-				internal_audio.RAPIDA_INTERNAL_AUDIO_CONFIG,
 				func(pkt ...internal_type.Packet) error { return listening.OnPacket(ctx, pkt...) },
 				options)
 			if err != nil {
@@ -205,7 +204,7 @@ func (spk *genericRequestor) initializeTextToSpeech(context context.Context) err
 			atransformer, err := internal_transformer.GetTextToSpeechTransformer(
 				context, spk.logger,
 				outputTransformer.GetName(),
-				credential, internal_audio.RAPIDA_INTERNAL_AUDIO_CONFIG,
+				credential,
 				func(pkt ...internal_type.Packet) error { return spk.OnPacket(context, pkt...) },
 				speakerOpts)
 			if err != nil {

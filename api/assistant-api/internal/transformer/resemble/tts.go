@@ -41,11 +41,10 @@ func NewResembleTextToSpeech(
 	ctx context.Context,
 	logger commons.Logger,
 	credential *protos.VaultCredential,
-	audioConfig *protos.AudioConfig,
 	onPacket func(pkt ...internal_type.Packet) error,
 	opts utils.Option,
 ) (internal_type.TextToSpeechTransformer, error) {
-	rsmblOpts, err := NewResembleOption(logger, credential, audioConfig, opts)
+	rsmblOpts, err := NewResembleOption(logger, credential, opts)
 	if err != nil {
 		logger.Errorf("resemble-tts: initializing resembleai failed %+v", err)
 		return nil, err

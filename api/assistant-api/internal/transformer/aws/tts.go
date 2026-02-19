@@ -22,7 +22,6 @@ type awsSpeechToTextTransformer struct {
 
 func NewAWSTextToSpeech(ctx context.Context, logger commons.Logger,
 	vaultCredential *protos.VaultCredential,
-	audioConfig *protos.AudioConfig,
 	onPacket func(pkt ...internal_type.Packet) error,
 	opts utils.Option) (internal_type.TextToSpeechTransformer, error) {
 	return nil, nil

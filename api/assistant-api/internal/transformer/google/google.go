@@ -29,14 +29,13 @@ const (
 type googleOption struct {
 	logger       commons.Logger
 	clientOptons []option.ClientOption
-	audioConfig  *protos.AudioConfig
 	mdlOpts      utils.Option
 	projectId    string
 }
 
 // NewGoogleOption initializes googleOption with provided credentials, audio configurations, and options.
 // Improves error handling and logging for better debugging and robustness.
-func NewGoogleOption(logger commons.Logger, vaultCredential *protos.VaultCredential, audioConfig *protos.AudioConfig, opts utils.Option) (*googleOption, error) {
+func NewGoogleOption(logger commons.Logger, vaultCredential *protos.VaultCredential, opts utils.Option) (*googleOption, error) {
 
 	co := make([]option.ClientOption, 0)
 	var projectID string
@@ -64,7 +63,6 @@ func NewGoogleOption(logger commons.Logger, vaultCredential *protos.VaultCredent
 		logger:       logger,
 		mdlOpts:      opts,
 		clientOptons: co,
-		audioConfig:  audioConfig,
 		projectId:    projectID,
 	}, nil
 }
@@ -77,14 +75,12 @@ func (gO *googleOption) GetClientOptions() []option.ClientOption {
 // SpeechToTextOptions generates a configuration for Google Speech-to-Text streaming recognition.
 // Default language and model are used unless overridden via mdlOpts.
 func (gog *googleOption) SpeechToTextOptions() *speechpb.StreamingRecognitionConfig {
-	audioEncoding := gog.GetSpeechToTextEncoding(gog.audioConfig.GetAudioFormat())
-
 	opts := &speechpb.StreamingRecognitionConfig{
 		Config: &speechpb.RecognitionConfig{
 			DecodingConfig: &speechpb.RecognitionConfig_ExplicitDecodingConfig{
 				ExplicitDecodingConfig: &speechpb.ExplicitDecodingConfig{
-					Encoding:          audioEncoding,
-					SampleRateHertz:   int32(gog.audioConfig.GetSampleRate()),
+					Encoding:          speechpb.ExplicitDecodingConfig_LINEAR16,
+					SampleRateHertz:   16000,
 					AudioChannelCount: 1,
 				},
 			},
@@ -133,15 +129,13 @@ func (gog *googleOption) SpeechToTextOptions() *speechpb.StreamingRecognitionCon
 
 // TextToSpeechOptions generates a configuration for Google Text-to-Speech streaming synthesis.
 func (goog *googleOption) TextToSpeechOptions() *texttospeechpb.StreamingSynthesizeConfig {
-	audioEncoding := goog.GetTextToSpeechEncodingByName(goog.audioConfig.GetAudioFormat())
-
 	options := &texttospeechpb.StreamingSynthesizeConfig{
 		Voice: &texttospeechpb.VoiceSelectionParams{
 			Name: DefaultVoice,
 		},
 		StreamingAudioConfig: &texttospeechpb.StreamingAudioConfig{
-			AudioEncoding:   audioEncoding,
-			SampleRateHertz: int32(goog.audioConfig.GetSampleRate()),
+			AudioEncoding:   texttospeechpb.AudioEncoding_PCM,
+			SampleRateHertz: 16000,
 		},
 	}
 
@@ -153,33 +147,6 @@ func (goog *googleOption) TextToSpeechOptions() *texttospeechpb.StreamingSynthes
 	}
 
 	return options
-}
-
-// GetSpeechToTextEncodingFromString maps internal_audio.AudioFormat to Google's Speech-to-Text encoding.
-
-// GetTextToSpeechEncodingByName maps internal_audio.AudioFormat to Google's Text-to-Speech encoding.
-func (gog *googleOption) GetTextToSpeechEncodingByName(encoding protos.AudioConfig_AudioFormat) texttospeechpb.AudioEncoding {
-	switch encoding {
-	case protos.AudioConfig_LINEAR16:
-		return texttospeechpb.AudioEncoding_PCM
-	case protos.AudioConfig_MuLaw8:
-		return texttospeechpb.AudioEncoding_MULAW
-	default:
-		return texttospeechpb.AudioEncoding_PCM
-	}
-}
-
-// GetAudioEncoding returns audio encoding for both SpeechToText and TextToSpeech based on internal_audio.AudioFormat.
-// Reduces repetitive logic in audio encoding handling.
-func (gog *googleOption) GetSpeechToTextEncoding(audioFormat protos.AudioConfig_AudioFormat) speechpb.ExplicitDecodingConfig_AudioEncoding {
-	switch audioFormat {
-	case protos.AudioConfig_LINEAR16:
-		return speechpb.ExplicitDecodingConfig_LINEAR16
-	case protos.AudioConfig_MuLaw8:
-		return speechpb.ExplicitDecodingConfig_MULAW
-	default:
-		return speechpb.ExplicitDecodingConfig_LINEAR16
-	}
 }
 
 func (gog *googleOption) GetRecognizer() string {

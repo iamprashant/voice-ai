@@ -41,11 +41,11 @@ func (*googleTextToSpeech) Name() string {
 }
 
 // NewGoogleTextToSpeech creates a new instance of googleTextToSpeech.
-func NewGoogleTextToSpeech(ctx context.Context, logger commons.Logger, credential *protos.VaultCredential, audioConfig *protos.AudioConfig,
+func NewGoogleTextToSpeech(ctx context.Context, logger commons.Logger, credential *protos.VaultCredential,
 	onPacket func(pkt ...internal_type.Packet) error,
 	opts utils.Option) (internal_type.TextToSpeechTransformer, error) {
 	// Initialize Google TTS options.
-	googleOption, err := NewGoogleOption(logger, credential, audioConfig, opts)
+	googleOption, err := NewGoogleOption(logger, credential, opts)
 	if err != nil {
 		// Log and return error if initialization fails.
 		logger.Errorf("intializing google failed %+v", err)

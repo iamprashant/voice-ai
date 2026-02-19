@@ -33,13 +33,18 @@ const (
 	rtpLogInterval = 50
 )
 
-// Streamer implements the TelephonyStreamer interface using native SIP signaling and RTP
-// No WebSocket needed - uses sipgo for signaling, RTP/UDP for audio
+// Streamer implements the TelephonyStreamer interface using native SIP signaling and RTP.
+// No WebSocket needed — uses sipgo for signaling, RTP/UDP for audio.
+//
+// SIP manages its own context (derived from a parent session context) and
+// concurrency primitives (RWMutex + atomic.Bool) because its lifecycle is
+// tied to the SIP session rather than a simple background context.
 type Streamer struct {
-	streamer   internal_telephony_base.BaseTelephonyStreamer
-	mu         sync.RWMutex
-	closed     atomic.Bool
-	logger     commons.Logger
+	internal_telephony_base.BaseTelephonyStreamer
+
+	mu     sync.RWMutex
+	closed atomic.Bool
+
 	config     *sip_infra.Config
 	session    *sip_infra.Session
 	server     *sip_infra.Server
@@ -47,6 +52,8 @@ type Streamer struct {
 
 	codec *sip_infra.Codec
 
+	// SIP uses its own context derived from the session/parent context,
+	// overriding the BaseStreamer context.
 	ctx    context.Context
 	cancel context.CancelFunc
 
@@ -54,8 +61,8 @@ type Streamer struct {
 	configSent  atomic.Bool
 }
 
-// NewInboundStreamer creates a streamer for an inbound SIP call using an existing session
-// This does NOT create a new SIP server - it uses the session's RTP handler from the global server
+// NewInboundStreamer creates a streamer for an inbound SIP call using an existing session.
+// This does NOT create a new SIP server — it uses the session's RTP handler from the global server.
 func NewInboundStreamer(ctx context.Context,
 	config *sip_infra.Config,
 	logger commons.Logger,
@@ -79,15 +86,21 @@ func NewInboundStreamer(ctx context.Context,
 		pcmu := sip_infra.CodecPCMU
 		codec = &pcmu
 	}
+
+	// SIP streamer doesn't use channel-based I/O from BaseStreamer;
+	// it manages its own inputBuffer and RTP-based output. The base
+	// options are kept minimal.
 	s := &Streamer{
-		logger:     logger,
+		BaseTelephonyStreamer: internal_telephony_base.NewBaseTelephonyStreamer(
+			logger, assistant, conversation, vlt,
+			internal_telephony_base.WithSourceAudioConfig(internal_audio.NewMulaw8khzMonoAudioConfig()),
+		),
 		config:     config,
 		session:    session,
 		rtpHandler: rtpHandler,
 		codec:      codec,
 		ctx:        streamerCtx,
 		cancel:     cancel,
-		streamer:   internal_telephony_base.NewBaseTelephonyStreamer(logger, assistant, conversation, vlt),
 	}
 
 	// Start audio forwarding from RTP handler
@@ -103,8 +116,8 @@ func NewInboundStreamer(ctx context.Context,
 	return s, nil
 }
 
-// NewStreamer creates a new native SIP streamer for outbound calls
-// Uses sipgo for SIP signaling and RTP for audio transport - no WebSocket needed
+// NewOutboundStreamer creates a new native SIP streamer for outbound calls.
+// Uses sipgo for SIP signaling and RTP for audio transport — no WebSocket needed.
 func NewOutboundStreamer(ctx context.Context,
 	config *sip_infra.Config,
 	logger commons.Logger,
@@ -115,8 +128,12 @@ func NewOutboundStreamer(ctx context.Context,
 	streamerCtx, cancel := context.WithCancel(ctx)
 
 	pcmu := sip_infra.CodecPCMU
+
 	s := &Streamer{
-		logger: logger,
+		BaseTelephonyStreamer: internal_telephony_base.NewBaseTelephonyStreamer(
+			logger, assistant, conversation, nil,
+			internal_telephony_base.WithSourceAudioConfig(internal_audio.NewMulaw8khzMonoAudioConfig()),
+		),
 		config: config,
 		codec:  &pcmu,
 		ctx:    streamerCtx,
@@ -189,7 +206,7 @@ func (s *Streamer) handleInvite(session *sip_infra.Session, fromURI, toURI strin
 		LocalPort:   rtpPort,
 		PayloadType: codec.PayloadType,
 		ClockRate:   codec.ClockRate,
-		Logger:      s.logger,
+		Logger:      s.Logger,
 	})
 	if err != nil {
 		s.server.ReleaseRTPPort(rtpPort)
@@ -212,7 +229,7 @@ func (s *Streamer) handleInvite(session *sip_infra.Session, fromURI, toURI strin
 	// Start audio forwarding
 	go s.forwardIncomingAudio()
 
-	s.logger.Infow("SIP call established",
+	s.Logger.Infow("SIP call established",
 		"call_id", session.GetCallID(),
 		"from", fromURI,
 		"to", toURI,
@@ -222,12 +239,12 @@ func (s *Streamer) handleInvite(session *sip_infra.Session, fromURI, toURI strin
 }
 
 func (s *Streamer) handleBye(session *sip_infra.Session) error {
-	s.logger.Infow("BYE received, closing streamer", "call_id", session.GetCallID())
+	s.Logger.Infow("BYE received, closing streamer", "call_id", session.GetCallID())
 	return s.Close()
 }
 
 func (s *Streamer) handleError(session *sip_infra.Session, err error) {
-	s.logger.Error("SIP error occurred",
+	s.Logger.Error("SIP error occurred",
 		"call_id", session.GetCallID(),
 		"error", err)
 }
@@ -238,21 +255,21 @@ func (s *Streamer) forwardIncomingAudio() {
 	s.mu.RUnlock()
 
 	if rtpHandler == nil {
-		s.logger.Error("forwardIncomingAudio: RTP handler is nil")
+		s.Logger.Error("forwardIncomingAudio: RTP handler is nil")
 		return
 	}
 
-	s.logger.Debug("forwardIncomingAudio: Started listening for RTP audio")
+	s.Logger.Debug("forwardIncomingAudio: Started listening for RTP audio")
 	packetCount := 0
 
 	for {
 		select {
 		case <-s.ctx.Done():
-			s.logger.Debug("forwardIncomingAudio: Context cancelled", "total_packets", packetCount)
+			s.Logger.Debug("forwardIncomingAudio: Context cancelled", "total_packets", packetCount)
 			return
 		case audioData, ok := <-rtpHandler.AudioIn():
 			if !ok {
-				s.logger.Debug("forwardIncomingAudio: Audio channel closed", "total_packets", packetCount)
+				s.Logger.Debug("forwardIncomingAudio: Audio channel closed", "total_packets", packetCount)
 				return
 			}
 			packetCount++
@@ -263,7 +280,7 @@ func (s *Streamer) forwardIncomingAudio() {
 
 			// Log periodically (every 50 packets = ~1 second)
 			if packetCount%rtpLogInterval == 1 {
-				s.logger.Debug("forwardIncomingAudio: Buffered audio",
+				s.Logger.Debug("forwardIncomingAudio: Buffered audio",
 					"packet_count", packetCount,
 					"buffer_size", bufLen,
 					"chunk_size", len(audioData))
@@ -283,7 +300,7 @@ func (s *Streamer) Recv() (internal_type.Stream, error) {
 
 	// Send connection/config request on first call
 	if s.configSent.CompareAndSwap(false, true) {
-		return s.streamer.CreateConnectionRequest(), nil
+		return s.CreateConnectionRequest(), nil
 	}
 
 	// Calculate buffer threshold based on codec sample rate
@@ -314,11 +331,8 @@ func (s *Streamer) Recv() (internal_type.Stream, error) {
 			s.inputBuffer = s.inputBuffer[bufferSizeThreshold:]
 			s.mu.Unlock()
 
-			return &protos.ConversationUserMessage{
-				Message: &protos.ConversationUserMessage_Audio{
-					Audio: audioData,
-				},
-			}, nil
+			// Resample from native µ-law 8kHz to linear16 16kHz for downstream
+			return s.CreateVoiceRequest(audioData), nil
 		}
 		s.mu.Unlock()
 
@@ -359,16 +373,16 @@ func (s *Streamer) Send(response internal_type.Stream) error {
 	case *protos.ConversationAssistantMessage:
 		switch content := data.Message.(type) {
 		case *protos.ConversationAssistantMessage_Audio:
-			s.logger.Debug("Send: Received audio output from assistant", "audio_size", len(content.Audio))
+			s.Logger.Debug("Send: Received audio output from assistant", "audio_size", len(content.Audio))
 			return s.sendAudio(content.Audio)
 		}
 	case *protos.ConversationInterruption:
-		s.logger.Debug("Send: Received interruption", "type", data.Type)
+		s.Logger.Debug("Send: Received interruption", "type", data.Type)
 		if data.Type == protos.ConversationInterruption_INTERRUPTION_TYPE_WORD {
 			return s.handleInterruption()
 		}
 	case *protos.ConversationDirective:
-		s.logger.Debug("Send: Received directive", "type", data.GetType())
+		s.Logger.Debug("Send: Received directive", "type", data.GetType())
 		if data.GetType() == protos.ConversationDirective_END_CONVERSATION {
 			return s.Close()
 		}
@@ -399,7 +413,7 @@ func (s *Streamer) sendAudio(audioData []byte) error {
 	case <-s.ctx.Done():
 		return s.ctx.Err()
 	default:
-		s.logger.Warn("sendAudio: RTP output channel full, dropping audio", "size", len(audioData))
+		s.Logger.Warn("sendAudio: RTP output channel full, dropping audio", "size", len(audioData))
 		return nil
 	}
 }
@@ -409,7 +423,7 @@ func (s *Streamer) handleInterruption() error {
 	s.inputBuffer = nil // Clear input buffer on interruption
 	s.mu.Unlock()
 
-	s.logger.Debug("Handled interruption, cleared audio buffers")
+	s.Logger.Debug("Handled interruption, cleared audio buffers")
 	return nil
 }
 
@@ -447,7 +461,7 @@ func (s *Streamer) Close() error {
 	// Stop RTP handler
 	if rtpHandler != nil {
 		if err := rtpHandler.Stop(); err != nil {
-			s.logger.Warn("Error stopping RTP handler", "error", err)
+			s.Logger.Warn("Error stopping RTP handler", "error", err)
 		}
 	}
 
@@ -461,7 +475,7 @@ func (s *Streamer) Close() error {
 		session.End()
 	}
 
-	s.logger.Infow("SIP streamer closed")
+	s.Logger.Infow("SIP streamer closed")
 	return nil
 }
 

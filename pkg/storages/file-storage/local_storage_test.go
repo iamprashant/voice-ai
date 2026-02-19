@@ -165,6 +165,6 @@ func TestLocalFileStorage_GetUrl(t *testing.T) {
 
 	assert.NoError(t, result.Error)
 	assert.Equal(t, configs.LOCAL, result.StorageType)
-	expectedPath := filepath.Join("file://", tempDir, key)
+	expectedPath := "file://" + filepath.Join("/", tempDir, key)
 	assert.Equal(t, expectedPath, result.CompletePath)
 }

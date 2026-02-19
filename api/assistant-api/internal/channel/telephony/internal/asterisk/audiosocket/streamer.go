@@ -21,26 +21,22 @@ import (
 	internal_conversation_entity "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/commons"
-	"github.com/rapidaai/pkg/utils"
 	"github.com/rapidaai/protos"
 )
 
 // Streamer implements AudioSocket media streaming over TCP.
 type Streamer struct {
-	logger         commons.Logger
-	streamer       internal_telephony_base.BaseTelephonyStreamer
+	internal_telephony_base.BaseTelephonyStreamer
+
 	conn           net.Conn
 	reader         *bufio.Reader
 	writer         *bufio.Writer
 	writeMu        sync.Mutex
 	audioProcessor *AudioProcessor
-	assistant      *internal_assistant_entity.Assistant
-	conversation   *internal_conversation_entity.AssistantConversation
-	inputBuffer    *bytes.Buffer
-	inputMu        sync.Mutex
-	ctx            context.Context
-	cancel         context.CancelFunc
 
+	// AudioSocket manages its own context for output lifecycle control.
+	ctx          context.Context
+	cancel       context.CancelFunc
 	outputCtx    context.Context
 	outputCancel context.CancelFunc
 
@@ -72,17 +68,15 @@ func NewStreamer(
 	ctx, cancel := context.WithCancel(context.Background())
 
 	as := &Streamer{
-		logger:         logger,
+		BaseTelephonyStreamer: internal_telephony_base.NewBaseTelephonyStreamer(
+			logger, assistant, conversation, vlt,
+		),
 		conn:           conn,
-		streamer:       internal_telephony_base.NewBaseTelephonyStreamer(logger, assistant, conversation, vlt),
 		reader:         reader,
 		writer:         writer,
 		audioProcessor: audioProcessor,
 		outputCtx:      ctx,
 		outputCancel:   cancel,
-		assistant:      assistant,
-		conversation:   conversation,
-		inputBuffer:    new(bytes.Buffer),
 		ctx:            ctx,
 		cancel:         cancel,
 	}
@@ -99,9 +93,9 @@ func (as *Streamer) SetInitialUUID(uuid string) {
 }
 
 func (as *Streamer) sendProcessedInputAudio(audio []byte) {
-	as.inputMu.Lock()
-	as.inputBuffer.Write(audio)
-	as.inputMu.Unlock()
+	as.WithInputBuffer(func(buf *bytes.Buffer) {
+		buf.Write(audio)
+	})
 }
 
 func (as *Streamer) sendAudioChunk(chunk *AudioChunk) error {
@@ -133,15 +127,7 @@ func (as *Streamer) Recv() (internal_type.Stream, error) {
 	}
 	if !as.configSent && as.initialUUID != "" {
 		as.configSent = true
-		return as.streamer.CreateConnectionRequest(), nil
-		// &protos.ConversationInitialization{
-		// 	AssistantConversationId: as.conversation.Id,
-		// 	Assistant: &protos.AssistantDefinition{
-		// 		AssistantId: as.assistant.Id,
-		// 		Version:     utils.GetVersionString(as.assistant.AssistantProviderId),
-		// 	},
-		// 	StreamMode: protos.StreamMode_STREAM_MODE_AUDIO,
-		// }, nil
+		return as.CreateConnectionRequest(), nil
 	}
 	for {
 		frame, err := ReadFrame(as.reader)
@@ -158,28 +144,29 @@ func (as *Streamer) Recv() (internal_type.Stream, error) {
 			if !as.configSent {
 				as.configSent = true
 				return &protos.ConversationInitialization{
-					AssistantConversationId: as.conversation.Id,
-					Assistant: &protos.AssistantDefinition{
-						AssistantId: as.assistant.Id,
-						Version:     utils.GetVersionString(as.assistant.AssistantProviderId),
-					},
-					StreamMode: protos.StreamMode_STREAM_MODE_AUDIO,
+					AssistantConversationId: as.GetConversationId(),
+					Assistant:               as.GetAssistantDefinition(),
+					StreamMode:              protos.StreamMode_STREAM_MODE_AUDIO,
 				}, nil
 			}
 		case FrameTypeAudio:
 			if err := as.audioProcessor.ProcessInputAudio(frame.Payload); err != nil {
-				as.logger.Debug("Failed to process input audio", "error", err.Error())
+				as.Logger.Debug("Failed to process input audio", "error", err.Error())
 				continue
 			}
 
-			as.inputMu.Lock()
-			if as.inputBuffer.Len() > 0 {
-				audioRequest := &protos.ConversationUserMessage{Message: &protos.ConversationUserMessage_Audio{Audio: as.inputBuffer.Bytes()}}
-				as.inputBuffer.Reset()
-				as.inputMu.Unlock()
+			var audioRequest *protos.ConversationUserMessage
+			as.WithInputBuffer(func(buf *bytes.Buffer) {
+				if buf.Len() > 0 {
+					audioRequest = &protos.ConversationUserMessage{
+						Message: &protos.ConversationUserMessage_Audio{Audio: buf.Bytes()},
+					}
+					buf.Reset()
+				}
+			})
+			if audioRequest != nil {
 				return audioRequest, nil
 			}
-			as.inputMu.Unlock()
 		case FrameTypeSilence:
 			// Silence frame, no action needed
 		case FrameTypeHangup:

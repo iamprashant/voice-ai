@@ -20,16 +20,14 @@ const (
 )
 
 type resembleOption struct {
-	logger      commons.Logger
-	audioConfig *protos.AudioConfig
-	modelOpts   utils.Option
-	key         string
-	projectId   string
+	logger    commons.Logger
+	modelOpts utils.Option
+	key       string
+	projectId string
 }
 
 func NewResembleOption(logger commons.Logger,
-	vaultCredential *protos.VaultCredential,
-	audioConfig *protos.AudioConfig, option utils.Option) (*resembleOption, error) {
+	vaultCredential *protos.VaultCredential, option utils.Option) (*resembleOption, error) {
 
 	credentialsMap := vaultCredential.GetValue().AsMap()
 	cx, ok := credentialsMap["key"]
@@ -42,11 +40,10 @@ func NewResembleOption(logger commons.Logger,
 		return nil, fmt.Errorf("resemble: illegal vault config")
 	}
 	return &resembleOption{
-		logger:      logger,
-		audioConfig: audioConfig,
-		modelOpts:   option,
-		key:         cx.(string),
-		projectId:   prj.(string),
+		logger:    logger,
+		modelOpts: option,
+		key:       cx.(string),
+		projectId: prj.(string),
 	}, nil
 }
 
@@ -59,14 +56,7 @@ func (ro *resembleOption) GetProject() string {
 }
 
 func (ro *resembleOption) GetEncoding() string {
-	switch ro.audioConfig.GetAudioFormat() {
-	case protos.AudioConfig_LINEAR16:
-		return "PCM_16"
-	case protos.AudioConfig_MuLaw8:
-		return "MULAW"
-	default:
-		return "PCM_16"
-	}
+	return "PCM_16"
 }
 
 func (ro *resembleOption) GetTextToSpeechRequest(contextId, text string) map[string]interface{} {
@@ -77,7 +67,7 @@ func (ro *resembleOption) GetTextToSpeechRequest(contextId, text string) map[str
 		"data":            text,
 		"binary_response": true,
 		"precision":       ro.GetEncoding(),
-		"sample_rate":     ro.audioConfig.GetSampleRate(),
+		"sample_rate":     16000,
 	}
 
 }

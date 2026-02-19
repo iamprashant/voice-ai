@@ -17,7 +17,7 @@ import (
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/utils"
-	protos "github.com/rapidaai/protos"
+	"github.com/rapidaai/protos"
 )
 
 type cartesiaSpeechToText struct {
@@ -39,10 +39,9 @@ func (*cartesiaSpeechToText) Name() string {
 }
 
 func NewCartesiaSpeechToText(ctx context.Context, logger commons.Logger, credential *protos.VaultCredential,
-	audioConfig *protos.AudioConfig,
 	onPacket func(pkt ...internal_type.Packet) error,
 	opts utils.Option) (internal_type.SpeechToTextTransformer, error) {
-	cartesiaOpts, err := NewCartesiaOption(logger, credential, audioConfig, opts)
+	cartesiaOpts, err := NewCartesiaOption(logger, credential, opts)
 	if err != nil {
 		logger.Errorf("cartesia-stt: intializing cartesia failed %+v", err)
 		return nil, err

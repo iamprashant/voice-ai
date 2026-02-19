@@ -12,9 +12,6 @@ import (
 	"fmt"
 	"net/url"
 
-	internal_audio "github.com/rapidaai/api/assistant-api/internal/audio"
-	internal_audio_resampler "github.com/rapidaai/api/assistant-api/internal/audio/resampler"
-	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/utils"
 	"github.com/rapidaai/protos"
@@ -28,31 +25,23 @@ const (
 )
 
 type sarvamOption struct {
-	logger      commons.Logger
-	audioConfig *protos.AudioConfig
-	modelOpts   utils.Option
-	key         string
-	encoder     *base64.Encoding
-	resampler   internal_type.AudioResampler
+	logger    commons.Logger
+	modelOpts utils.Option
+	key       string
+	encoder   *base64.Encoding
 }
 
-func NewSarvamOption(logger commons.Logger, vaultCredential *protos.VaultCredential, audioConfig *protos.AudioConfig, option utils.Option) (*sarvamOption, error) {
+func NewSarvamOption(logger commons.Logger, vaultCredential *protos.VaultCredential, option utils.Option) (*sarvamOption, error) {
 	cx, ok := vaultCredential.GetValue().AsMap()["key"]
 	if !ok {
 		return nil, fmt.Errorf("sarvam: illegal vault config")
 	}
 
-	resampler, err := internal_audio_resampler.GetResampler(logger)
-	if err != nil {
-		return nil, err
-	}
 	return &sarvamOption{
-		logger:      logger,
-		audioConfig: audioConfig,
-		modelOpts:   option,
-		key:         cx.(string),
-		encoder:     base64.StdEncoding,
-		resampler:   resampler,
+		logger:    logger,
+		modelOpts: option,
+		key:       cx.(string),
+		encoder:   base64.StdEncoding,
 	}, nil
 }
 
@@ -75,17 +64,11 @@ func (ro *sarvamOption) configureTextToSpeech() map[string]interface{} {
 		"data": map[string]interface{}{
 			"target_language_code": "en-IN",
 			"speaker":              "anushka",
-			"speech_sample_rate":   ro.audioConfig.GetSampleRate(),
+			"speech_sample_rate":   16000,
 			"output_audio_codec":   "linear16",
 		},
 	}
 
-	if ro.audioConfig.GetAudioFormat() == protos.AudioConfig_LINEAR16 {
-		configMsg["data"].(map[string]interface{})["output_audio_codec"] = "linear16"
-	}
-	if ro.audioConfig.GetAudioFormat() == protos.AudioConfig_MuLaw8 {
-		configMsg["data"].(map[string]interface{})["output_audio_codec"] = "mulaw"
-	}
 	// Dynamically update configMsg based on options
 	if language, err := ro.modelOpts.GetString("speak.language"); err == nil {
 		configMsg["data"].(map[string]interface{})["target_language_code"] = language
@@ -97,15 +80,10 @@ func (ro *sarvamOption) configureTextToSpeech() map[string]interface{} {
 }
 
 func (ro *sarvamOption) speechToTextMessage(in []byte) ([]byte, error) {
-	sarvamInputAudio := internal_audio.NewLinear16khzMonoAudioConfig()
-	btm, err := ro.resampler.Resample(in, ro.audioConfig, sarvamInputAudio)
-	if err != nil {
-		return nil, fmt.Errorf("error during resampling: %w", err)
-	}
 	payload := map[string]interface{}{
 		"audio": map[string]interface{}{
-			"data":              ro.encoder.EncodeToString(btm),
-			"sample_rate":       sarvamInputAudio.GetSampleRate(),
+			"data":              ro.encoder.EncodeToString(in),
+			"sample_rate":       16000,
 			"encoding":          "audio/wav",
 			"input_audio_codec": "pcm_s16le",
 		},

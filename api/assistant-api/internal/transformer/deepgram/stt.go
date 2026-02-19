@@ -40,10 +40,9 @@ func (*deepgramSTT) Name() string {
 }
 
 func NewDeepgramSpeechToText(ctx context.Context, logger commons.Logger, vaultCredential *protos.VaultCredential,
-	audioConfig *protos.AudioConfig,
 	onPacket func(pkt ...internal_type.Packet) error,
 	opts utils.Option) (internal_type.SpeechToTextTransformer, error) {
-	deepgramOpts, err := NewDeepgramOption(logger, vaultCredential, audioConfig, opts)
+	deepgramOpts, err := NewDeepgramOption(logger, vaultCredential, opts)
 	if err != nil {
 		logger.Errorf("deepgram-stt: Key from credential failed %+v", err)
 		return nil, err

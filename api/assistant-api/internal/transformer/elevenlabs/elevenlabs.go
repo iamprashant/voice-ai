@@ -20,35 +20,25 @@ const (
 )
 
 func (elabs *elevenLabsOption) GetEncoding() string {
-	switch elabs.audioConfig.GetAudioFormat() {
-	case protos.AudioConfig_LINEAR16:
-		return "pcm_16000"
-	case protos.AudioConfig_MuLaw8:
-		return "ulaw_8000"
-	default:
-		return "pcm_16000"
-	}
+	return "pcm_16000"
 }
 
 type elevenLabsOption struct {
-	key         string
-	logger      commons.Logger
-	mdlOpts     utils.Option
-	audioConfig *protos.AudioConfig
+	key     string
+	logger  commons.Logger
+	mdlOpts utils.Option
 }
 
 func NewElevenLabsOption(logger commons.Logger, vaultCredential *protos.VaultCredential,
-	audioConfig *protos.AudioConfig,
 	opts utils.Option) (*elevenLabsOption, error) {
 	cx, ok := vaultCredential.GetValue().AsMap()["key"]
 	if !ok {
 		return nil, fmt.Errorf("elevenLabs: illegal vault config")
 	}
 	return &elevenLabsOption{
-		key:         cx.(string),
-		audioConfig: audioConfig,
-		mdlOpts:     opts,
-		logger:      logger,
+		key:     cx.(string),
+		mdlOpts: opts,
+		logger:  logger,
 	}, nil
 }
 
