@@ -31,7 +31,7 @@ func (authenticator *projectAuthenticator) Claim(ctx context.Context, claimToken
 	start := time.Now()
 	ath, err := authenticator.authClient.ScopeAuthorize(ctx, claimToken, "project")
 	if err != nil {
-		authenticator.logger.Errorf("error while claim %v", err)
+		authenticator.logger.Debugf("error while claim %v", err)
 		return nil, err
 	}
 	authenticator.logger.Benchmark("Benchmarking: projectAuthenticator.Claim", time.Since(start))

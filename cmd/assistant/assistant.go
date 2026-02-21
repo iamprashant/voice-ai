@@ -26,6 +26,7 @@ import (
 	"github.com/rapidaai/api/assistant-api/config"
 	router "github.com/rapidaai/api/assistant-api/router"
 	assistant_sip "github.com/rapidaai/api/assistant-api/sip"
+	sip_infra "github.com/rapidaai/api/assistant-api/sip/infra"
 	assistant_socket "github.com/rapidaai/api/assistant-api/socket"
 	"github.com/rapidaai/pkg/authenticators"
 	web_client "github.com/rapidaai/pkg/clients/web"
@@ -41,6 +42,7 @@ import (
 type AppRunner struct {
 	E          *gin.Engine
 	S          *grpc.Server
+	SIP        *sip_infra.Server
 	Cfg        *config.AssistantConfig
 	Logger     commons.Logger
 	Postgres   connectors.PostgresConnector
@@ -127,14 +129,14 @@ func main() {
 		panic(err)
 	}
 
+	// add all engine which required to run in same application like grpc server, http server, socket server etc.
+	appRunner.AllEngine(ctx)
+
 	// add all middleware depends on configurations
 	appRunner.AllMiddlewares(ctx)
 
 	// all router add all handlers which required to resolve the service request
 	appRunner.AllRouters(ctx)
-
-	// add all engine which required to run in same application like grpc server, http server, socket server etc.
-	appRunner.AllEngine(ctx)
 
 	// all engine start all required engine like grpc server, http server, socket server etc.
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", appRunner.Cfg.Host, appRunner.Cfg.Port))
@@ -298,32 +300,32 @@ func (g *AppRunner) AllRouters(ctx context.Context) error {
 	router.HealthCheckRoutes(g.Cfg, g.E, g.Logger, g.Postgres)
 	router.KnowledgeApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis, g.Opensearch)
 	router.DocumentApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis, g.Opensearch)
-	router.AssistantConversationApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis, g.Opensearch)
+	router.AssistantConversationApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis, g.Opensearch, g.SIP)
 	router.AssistantDeploymentApiRoute(g.Cfg, g.S, g.Logger, g.Postgres)
-	router.TalkCallbackApiRoute(g.Cfg, g.E, g.Logger, g.Postgres, g.Redis, g.Opensearch)
+	router.TalkCallbackApiRoute(g.Cfg, g.E, g.Logger, g.Postgres, g.Redis, g.Opensearch, g.SIP)
 	return nil
 }
 
 // engine allow to start mutlile service in same application like grpc server, http server, socket server etc.
 func (app *AppRunner) AllEngine(ctx context.Context) error {
-	if app.Cfg.AudioSocketConfig != nil {
-		audioManager := assistant_socket.NewAudioSocketEngine(app.Cfg, app.Logger, app.Postgres, app.Redis, app.Opensearch)
-		if err := audioManager.Connect(ctx); err != nil {
-			return err
-		}
-		app.Closeable = append(app.Closeable, audioManager.Disconnect)
-	}
 
-	// Start SIP server for inbound calls (multi-tenant)
-	// Server listens on shared address, tenant config resolved per-call from assistant deployment
+	// SIP is optional and only started if configured. It listens for SIP calls from telephony providers for both inbound call handling and outbound call dispatch.
 	if app.Cfg.SIPConfig != nil {
 		sipManager := assistant_sip.NewSIPEngine(app.Cfg, app.Logger, app.Postgres, app.Redis, app.Opensearch, app.Opensearch)
 		if err := sipManager.Connect(ctx); err != nil {
 			app.Logger.Errorf("Failed to start SIP server: %v", err)
 			return err
 		}
+		app.SIP = sipManager.GetServer()
 		app.Closeable = append(app.Closeable, sipManager.Disconnect)
-		app.Logger.Info("SIP server started (multi-tenant)", "address", app.Cfg.SIPConfig.Server, "port", app.Cfg.SIPConfig.Port)
+	}
+	// AudioSocket is optional and only started if configured. It listens for TCP connections from telephony providers for audio streaming in calls.
+	if app.Cfg.AudioSocketConfig != nil {
+		socketEngine := assistant_socket.NewAudioSocketEngine(app.Cfg, app.Logger, app.Postgres, app.Redis, app.Opensearch)
+		if err := socketEngine.Connect(ctx); err != nil {
+			return err
+		}
+		app.Closeable = append(app.Closeable, socketEngine.Disconnect)
 	}
 
 	return nil

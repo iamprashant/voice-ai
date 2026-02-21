@@ -408,11 +408,26 @@ func (m *SIPEngine) handleOutboundAnswered(session *sip_infra.Session, fromURI, 
 		"assistant_id", assistantID,
 		"conversation_id", conversationID)
 
+	// Early BYE check — if BYE already arrived (e.g., Asterisk Dial() timeout
+	// race), skip expensive DB work and return immediately.
+	if isByeReceived(session) {
+		m.logger.Warnw("BYE already received before outbound context resolution — aborting",
+			"call_id", callID)
+		return fmt.Errorf("call ended before setup (early BYE)")
+	}
+
 	// Load assistant — still needed for AssistantProviderId and the fallback CreateConversation path.
 	assistant, err := m.assistantService.Get(m.ctx, auth, assistantID, utils.GetVersionDefinition("latest"),
 		&internal_services.GetAssistantOption{InjectPhoneDeployment: true})
 	if err != nil {
 		return fmt.Errorf("failed to get assistant for outbound call: %w", err)
+	}
+
+	// Check again after DB query — BYE may have arrived during the ~20ms query.
+	if isByeReceived(session) {
+		m.logger.Warnw("BYE received during outbound context resolution — aborting",
+			"call_id", callID)
+		return fmt.Errorf("call ended during setup (BYE during assistant lookup)")
 	}
 
 	// Verify the conversation exists; if not, create a fallback.
@@ -524,11 +539,14 @@ func (m *SIPEngine) startCall(ctx context.Context, session *sip_infra.Session, c
 
 	// Check if BYE arrived before we registered. If so, handleBye (sip.go) couldn't
 	// find us in m.sessions to cancel callCtx. Cancel it now ourselves.
+	// For outbound calls, handleBye does NOT call session.End() (to avoid killing
+	// startCall prematurely), so we must check ByeReceived() rather than IsEnded().
 	select {
 	case <-session.ByeReceived():
-		m.logger.Infow("BYE was received before startCall registered — cancelling call context",
+		m.logger.Infow("BYE was received before startCall registered — aborting call setup",
 			"call_id", callID)
 		cancel()
+		return
 	default:
 	}
 
@@ -551,7 +569,8 @@ func (m *SIPEngine) startCall(ctx context.Context, session *sip_infra.Session, c
 	}
 
 	// Checkpoint: BYE may have arrived during streamer creation.
-	if session.IsEnded() {
+	// For outbound calls, handleBye does NOT call session.End(), so also check ByeReceived().
+	if session.IsEnded() || isByeReceived(session) {
 		if closeable, ok := streamer.(io.Closer); ok {
 			closeable.Close()
 		}
@@ -591,6 +610,19 @@ func (m *SIPEngine) startCall(ctx context.Context, session *sip_infra.Session, c
 	}
 
 	m.logger.Infow("SIP call ended", "call_id", callID)
+}
+
+// isByeReceived does a non-blocking check on whether a SIP BYE has been received
+// for the given session. For outbound calls, handleBye does NOT call session.End()
+// (to avoid killing startCall prematurely), so this is the correct way to detect
+// an early BYE during outbound call setup.
+func isByeReceived(session *sip_infra.Session) bool {
+	select {
+	case <-session.ByeReceived():
+		return true
+	default:
+		return false
+	}
 }
 
 // handleBye processes SIP BYE requests

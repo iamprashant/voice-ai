@@ -103,7 +103,11 @@ func (aws *asteriskWebsocketStreamer) Recv() (internal_type.Stream, error) {
 
 	switch messageType {
 	case websocket.BinaryMessage:
-		return aws.handleAudioData(message)
+		msg, err := aws.handleAudioData(message)
+		if msg == nil {
+			return nil, err
+		}
+		return msg, err
 	case websocket.TextMessage:
 		event, err := internal_asterisk.ParseAsteriskEvent(string(message))
 		if err != nil {

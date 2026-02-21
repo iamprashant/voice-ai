@@ -66,7 +66,11 @@ func (vng *vonageWebsocketStreamer) Recv() (internal_type.Stream, error) {
 		}
 
 	case websocket.BinaryMessage:
-		return vng.handleMediaEvent(message)
+		msg, err := vng.handleMediaEvent(message)
+		if msg == nil {
+			return nil, err
+		}
+		return msg, err
 	default:
 		vng.Logger.Warn("Unhandled message type", "type", messageType)
 		return nil, nil

@@ -24,6 +24,14 @@ import (
 	openapi "github.com/twilio/twilio-go/rest/api/v2010"
 )
 
+// RAPIDA_AUDIO_CONFIG is the internal Rapida audio format (linear16 16kHz).
+// TTS output arrives in this format and must be resampled to mulaw 8kHz
+// before sending to Twilio.
+var RAPIDA_AUDIO_CONFIG = internal_audio.NewLinear16khzMonoAudioConfig()
+
+// MULAW_8K_AUDIO_CONFIG is the Twilio-native audio format.
+var MULAW_8K_AUDIO_CONFIG = internal_audio.NewMulaw8khzMonoAudioConfig()
+
 type twilioWebsocketStreamer struct {
 	internal_telephony_base.BaseTelephonyStreamer
 
@@ -58,12 +66,16 @@ func (tws *twilioWebsocketStreamer) Recv() (internal_type.Stream, error) {
 	}
 	switch mediaEvent.Event {
 	case "connected":
-		return tws.CreateConnectionRequest(), nil
+		return nil, nil
 	case "start":
 		tws.handleStartEvent(mediaEvent)
-		return nil, nil
+		return tws.CreateConnectionRequest(), nil
 	case "media":
-		return tws.handleMediaEvent(mediaEvent)
+		msg, err := tws.handleMediaEvent(mediaEvent)
+		if msg == nil {
+			return nil, err
+		}
+		return msg, err
 	case "stop":
 		tws.Logger.Info("Twilio stream stopped")
 		tws.connection.Close()
@@ -76,11 +88,21 @@ func (tws *twilioWebsocketStreamer) Recv() (internal_type.Stream, error) {
 }
 
 func (tws *twilioWebsocketStreamer) Send(response internal_type.Stream) error {
+	if tws.connection == nil {
+		return nil
+	}
 	switch data := response.(type) {
 	case *protos.ConversationAssistantMessage:
 		switch content := data.Message.(type) {
 		case *protos.ConversationAssistantMessage_Audio:
-			audioData := content.Audio
+			// Resample from internal Rapida format (linear16 16kHz) to Twilio format (mulaw 8kHz)
+			audioData, err := tws.Resampler().Resample(content.Audio, RAPIDA_AUDIO_CONFIG, MULAW_8K_AUDIO_CONFIG)
+			if err != nil {
+				tws.Logger.Warnw("Failed to resample output audio to mulaw 8kHz, forwarding raw bytes",
+					"error", err.Error(),
+				)
+				audioData = content.Audio
+			}
 
 			var sendErr error
 			tws.WithOutputBuffer(func(buf *bytes.Buffer) {
@@ -156,8 +178,10 @@ func (tws *twilioWebsocketStreamer) GetConversationUuid() string {
 }
 
 func (tws *twilioWebsocketStreamer) Cancel() error {
-	tws.connection.Close()
-	tws.connection = nil
+	if tws.connection != nil {
+		tws.connection.Close()
+		tws.connection = nil
+	}
 	return nil
 }
 
@@ -176,6 +200,9 @@ func (tws *twilioWebsocketStreamer) handleMediaEvent(mediaEvent internal_twilio.
 			buf.Reset()
 		}
 	})
+	if audioRequest == nil {
+		return nil, nil
+	}
 	return audioRequest, nil
 }
 

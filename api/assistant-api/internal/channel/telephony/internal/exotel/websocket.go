@@ -65,7 +65,11 @@ func (exotel *exotelWebsocketStreamer) Recv() (internal_type.Stream, error) {
 		exotel.handleStartEvent(mediaEvent)
 		return nil, nil
 	case "media":
-		return exotel.handleMediaEvent(mediaEvent)
+		msg, err := exotel.handleMediaEvent(mediaEvent)
+		if msg == nil {
+			return nil, err
+		}
+		return msg, err
 	case "dtmf":
 		return nil, nil
 	case "stop":
