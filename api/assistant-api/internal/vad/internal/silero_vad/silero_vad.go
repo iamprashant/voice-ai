@@ -189,7 +189,6 @@ func createDetector(options utils.Option) (*speech.Detector, error) {
 		MinSilenceDurationMs: defaultMinSilenceDurationMs,
 		SpeechPadMs:          defaultSpeechPadMs,
 	}
-
 	return speech.NewDetector(config)
 }
 

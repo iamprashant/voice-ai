@@ -1,7 +1,4 @@
-import {
-  GreenNoticeBlock,
-  YellowNoticeBlock,
-} from '@/app/components/container/message/notice-block';
+import { GreenNoticeBlock } from '@/app/components/container/message/notice-block';
 import { Dropdown } from '@/app/components/dropdown';
 import { IBlueBGArrowButton } from '@/app/components/form/button';
 import { ErrorMessage } from '@/app/components/form/error-message';
@@ -21,7 +18,7 @@ import { CONFIG } from '@/configs';
 import { useRapidaStore } from '@/hooks';
 import { useCurrentCredential } from '@/hooks/use-credential';
 import { InputVarType } from '@/models/common';
-import { cn } from '@/utils';
+import { cn, randomMeaningfullName } from '@/utils';
 import { getStatusMetric } from '@/utils/metadata';
 import {
   AgentConfig,
@@ -67,7 +64,9 @@ export const PublicPreviewVoiceAgent = () => {
       agentConfig={new AgentConfig(
         assistantId,
         new InputOptions([Channel.Audio, Channel.Text], Channel.Text),
-      ).addMetadata('authId', StringToAny('' + (authId || 'public_user')))}
+      )
+        .addMetadata('authId', StringToAny('' + (authId || 'public_user')))
+        .setUserIdentifier(authId || randomMeaningfullName('public'))}
     />
   );
 };
@@ -95,6 +94,7 @@ export const PreviewVoiceAgent = () => {
         assistantId,
         new InputOptions([Channel.Audio, Channel.Text], Channel.Text),
       )
+        .setUserIdentifier(authId, user.name)
         .addKeywords([user.name])
         .addMetadata('authId', StringToAny(authId))
         .addMetadata('projectId', StringToAny(projectId))}
@@ -216,6 +216,7 @@ export const PreviewPhoneAgent = () => {
     { name: 'Vietnam', value: '+84', code: 'VN' },
     { name: 'Yemen', value: '+967', code: 'YE' },
     { name: 'Zimbabwe', value: '+263', code: 'ZW' },
+    { name: 'Other', value: '', code: 'OTH' },
   ];
   const [country, setCountry] = useState({
     name: 'Singapore',
@@ -270,17 +271,21 @@ export const PreviewPhoneAgent = () => {
   }
 
   const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, ''); // Remove non-digit characters
-    setPhoneNumber(value);
+    // const value = e.target.value.replace(/\D/g, ''); // Remove non-digit characters
+    setPhoneNumber(e.target.value);
     setError('');
   };
 
   const validatePhoneNumber = () => {
-    if (!country.value) {
+    if (!country.name) {
       setError('Please select a country');
       return false;
     }
-    if (phoneNumber.length < 7 || phoneNumber.length > 15) {
+
+    if (
+      (country.name !== 'Other' && phoneNumber.length < 7) ||
+      phoneNumber.length > 15
+    ) {
       setError('Please enter a valid phone number for call.');
       return false;
     }
@@ -398,7 +403,6 @@ export const PreviewPhoneAgent = () => {
               </div>
             </div>
           </div>
-
           <div className="w-[500px] border-l h-dvh overflow-auto">
             <div className="px-4 py-4 text-sm leading-normal ">
               <div className="flex flex-row justify-between items-center text-sm tracking-wider">
@@ -418,7 +422,7 @@ export const PreviewPhoneAgent = () => {
                 </>
               )}
             </div>
-            {variables.length > 0 ? (
+            {variables.length > 0 && (
               <InputGroup
                 title="Arguments"
                 className="m-0 border-x-0 rounded-none"
@@ -482,10 +486,6 @@ export const PreviewPhoneAgent = () => {
                   })}
                 </div>
               </InputGroup>
-            ) : (
-              <YellowNoticeBlock>
-                Assistant do not accept any arguments.
-              </YellowNoticeBlock>
             )}
             <InputGroup
               title="Deployment"

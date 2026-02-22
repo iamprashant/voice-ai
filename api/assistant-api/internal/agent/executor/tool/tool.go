@@ -56,16 +56,16 @@ func (executor *toolExecutor) getTool(name string) (internal_tool.ToolCaller, bo
 }
 
 // initializeLocalTool creates a tool caller for local execution methods
-func (executor *toolExecutor) initializeLocalTool(logger commons.Logger, toolOpts *internal_assistant_entity.AssistantTool, communication internal_type.Communication) (internal_tool.ToolCaller, error) {
+func (executor *toolExecutor) initializeLocalTool(ctx context.Context, logger commons.Logger, toolOpts *internal_assistant_entity.AssistantTool, communication internal_type.Communication) (internal_tool.ToolCaller, error) {
 	switch toolOpts.ExecutionMethod {
 	case "knowledge_retrieval":
-		return internal_tool_local.NewKnowledgeRetrievalToolCaller(logger, toolOpts, communication)
+		return internal_tool_local.NewKnowledgeRetrievalToolCaller(ctx, logger, toolOpts, communication)
 	case "api_request":
-		return internal_tool_local.NewApiRequestToolCaller(logger, toolOpts, communication)
+		return internal_tool_local.NewApiRequestToolCaller(ctx, logger, toolOpts, communication)
 	case "endpoint_request":
-		return internal_tool_local.NewEndpointToolCaller(logger, toolOpts, communication)
+		return internal_tool_local.NewEndpointToolCaller(ctx, logger, toolOpts, communication)
 	case "end_of_conversation":
-		return internal_tool_local.NewEndOfConversationCaller(logger, toolOpts, communication)
+		return internal_tool_local.NewEndOfConversationCaller(ctx, logger, toolOpts, communication)
 	default:
 		return nil, errors.New("illegal tool action provided")
 	}
@@ -91,7 +91,7 @@ func (executor *toolExecutor) initializeTools(ctx context.Context, tools []*inte
 				executor.registerTool(caller, def)
 			}
 		default:
-			caller, err := executor.initializeLocalTool(executor.logger, tool, communication)
+			caller, err := executor.initializeLocalTool(ctx, executor.logger, tool, communication)
 			if err != nil {
 				executor.logger.Errorf("Failed to initialize local tool %s: %v", tool.Name, err)
 				continue
@@ -103,7 +103,7 @@ func (executor *toolExecutor) initializeTools(ctx context.Context, tools []*inte
 				continue
 			}
 
-			tracer.AddAttributes(communication.Context(), internal_adapter_telemetry.KV{K: caller.Name(), V: internal_adapter_telemetry.StringValue(caller.ExecutionMethod())})
+			tracer.AddAttributes(ctx, internal_adapter_telemetry.KV{K: caller.Name(), V: internal_adapter_telemetry.StringValue(caller.ExecutionMethod())})
 			executor.registerTool(caller, def)
 		}
 
@@ -217,6 +217,6 @@ func (executor *toolExecutor) log(ctx context.Context, toolCaller internal_tool.
 		}
 		i, _ := json.Marshal(in)
 		o, _ := json.Marshal(out)
-		communication.CreateToolLog(toolCaller.Id(), assistantConversationMessageId, toolCaller.Name(), toolCaller.ExecutionMethod(), recordStatus, timeTaken, i, o)
+		communication.CreateToolLog(ctx, toolCaller.Id(), assistantConversationMessageId, toolCaller.Name(), toolCaller.ExecutionMethod(), recordStatus, timeTaken, i, o)
 	})
 }

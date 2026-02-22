@@ -14,6 +14,7 @@ import (
 	"io"
 	"math"
 	"sync"
+	"time"
 
 	internal_agent_executor "github.com/rapidaai/api/assistant-api/internal/agent/executor"
 	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
@@ -53,7 +54,7 @@ func (e *agentkitExecutor) Name() string {
 }
 
 // Initialize establishes the gRPC connection and starts the listener.
-func (e *agentkitExecutor) Initialize(ctx context.Context, comm internal_type.Communication, cfg *protos.ConversationConfiguration) error {
+func (e *agentkitExecutor) Initialize(ctx context.Context, comm internal_type.Communication, cfg *protos.ConversationInitialization) error {
 	_, span, _ := comm.Tracer().StartSpan(ctx, utils.AssistantAgentConnectStage, internal_adapter_telemetry.KV{K: "executor", V: internal_adapter_telemetry.StringValue(e.Name())})
 	defer span.EndSpan(ctx, utils.AssistantAgentConnectStage)
 
@@ -154,10 +155,10 @@ func (e *agentkitExecutor) send(req *protos.TalkInput) error {
 }
 
 // sendConfiguration sends the initial configuration.
-func (e *agentkitExecutor) sendConfiguration(assistantId uint64, assistantProviderID uint64, ConversationID uint64, cfg *protos.ConversationConfiguration) error {
+func (e *agentkitExecutor) sendConfiguration(assistantId uint64, assistantProviderID uint64, ConversationID uint64, cfg *protos.ConversationInitialization) error {
 	return e.send(&protos.TalkInput{
-		Request: &protos.TalkInput_Configuration{
-			Configuration: &protos.ConversationConfiguration{
+		Request: &protos.TalkInput_Initialization{
+			Initialization: &protos.ConversationInitialization{
 				AssistantConversationId: ConversationID,
 				Assistant: &protos.AssistantDefinition{
 					AssistantId: assistantId,
@@ -166,8 +167,9 @@ func (e *agentkitExecutor) sendConfiguration(assistantId uint64, assistantProvid
 				Args:         cfg.GetArgs(),
 				Metadata:     cfg.GetMetadata(),
 				Options:      cfg.GetOptions(),
-				InputConfig:  cfg.GetInputConfig(),
-				OutputConfig: cfg.GetOutputConfig(),
+				StreamMode:   cfg.GetStreamMode(),
+				UserIdentity: cfg.GetUserIdentity(),
+				Time:         timestamppb.New(time.Now()),
 			},
 		},
 	})

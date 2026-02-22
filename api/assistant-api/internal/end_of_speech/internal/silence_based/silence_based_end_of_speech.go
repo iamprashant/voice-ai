@@ -196,7 +196,6 @@ func (eos *SilenceBasedEOS) worker() {
 
 	for {
 		select {
-
 		case <-eos.stopCh:
 			cleanup()
 			return
@@ -242,7 +241,6 @@ func (eos *SilenceBasedEOS) worker() {
 
 		case <-timerC:
 			eos.mu.Lock()
-
 			// stale timer check
 			if eos.state.callbackFired || gen != eos.state.generation {
 				eos.mu.Unlock()
@@ -254,7 +252,6 @@ func (eos *SilenceBasedEOS) worker() {
 			cbCtx := ctx
 			cleanup()
 			eos.mu.Unlock()
-
 			eos.fire(cbCtx, seg)
 		}
 	}
@@ -262,11 +259,17 @@ func (eos *SilenceBasedEOS) worker() {
 
 // fire triggers the callback and enqueues reset
 func (eos *SilenceBasedEOS) fire(ctx context.Context, seg SpeechSegment) {
-	if ctx.Err() != nil {
-		return
-	}
 	if seg.Text == "" {
 		return
+	}
+
+	// Use a detached context for the callback. The original context from the
+	// Analyze call is typically cancelled by the time the silence timer fires,
+	// which would silently prevent the end-of-speech callback from ever being
+	// invoked. Since EOS detection is inherently asynchronous (timer-based),
+	// the callback must not depend on the original request context's lifetime.
+	if ctx.Err() != nil {
+		ctx = context.Background()
 	}
 
 	_ = eos.callback(ctx, internal_type.EndOfSpeechPacket{

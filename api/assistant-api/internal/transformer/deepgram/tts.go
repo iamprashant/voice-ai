@@ -42,11 +42,11 @@ type deepgramTTS struct {
 	normalizer internal_type.TextNormalizer
 }
 
-func NewDeepgramTextToSpeech(ctx context.Context, logger commons.Logger, credential *protos.VaultCredential, audioConfig *protos.AudioConfig,
+func NewDeepgramTextToSpeech(ctx context.Context, logger commons.Logger, credential *protos.VaultCredential,
 	onPacket func(pkt ...internal_type.Packet) error,
 	opts utils.Option) (internal_type.TextToSpeechTransformer, error) {
 
-	dGoptions, err := NewDeepgramOption(logger, credential, audioConfig, opts)
+	dGoptions, err := NewDeepgramOption(logger, credential, opts)
 	if err != nil {
 		logger.Errorf("deepgram-tts: error while intializing deepgram text to speech")
 		return nil, err

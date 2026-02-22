@@ -1,3 +1,5 @@
+import datetime
+
 from google.protobuf import timestamp_pb2 as _timestamp_pb2
 import app.bridges.artifacts.protos.common_pb2 as _common_pb2
 from google.protobuf import struct_pb2 as _struct_pb2
@@ -31,7 +33,7 @@ class AssistantTool(_message.Message):
     status: str
     createdDate: _timestamp_pb2.Timestamp
     updatedDate: _timestamp_pb2.Timestamp
-    def __init__(self, id: _Optional[int] = ..., assistantId: _Optional[int] = ..., name: _Optional[str] = ..., description: _Optional[str] = ..., fields: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., executionMethod: _Optional[str] = ..., executionOptions: _Optional[_Iterable[_Union[_common_pb2.Metadata, _Mapping]]] = ..., status: _Optional[str] = ..., createdDate: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., updatedDate: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
+    def __init__(self, id: _Optional[int] = ..., assistantId: _Optional[int] = ..., name: _Optional[str] = ..., description: _Optional[str] = ..., fields: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., executionMethod: _Optional[str] = ..., executionOptions: _Optional[_Iterable[_Union[_common_pb2.Metadata, _Mapping]]] = ..., status: _Optional[str] = ..., createdDate: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updatedDate: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
 
 class CreateAssistantToolRequest(_message.Message):
     __slots__ = ("assistantId", "name", "description", "fields", "executionMethod", "executionOptions")
@@ -203,4 +205,4 @@ class AssistantToolLog(_message.Message):
     assistantToolId: int
     assistantToolName: str
     assistantTool: AssistantTool
-    def __init__(self, id: _Optional[int] = ..., action: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., request: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., response: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., status: _Optional[str] = ..., createdDate: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., updatedDate: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., assistantId: _Optional[int] = ..., projectId: _Optional[int] = ..., organizationId: _Optional[int] = ..., assistantConversationId: _Optional[int] = ..., assistantConversationMessageId: _Optional[str] = ..., assetPrefix: _Optional[str] = ..., executionMethod: _Optional[str] = ..., timeTaken: _Optional[int] = ..., assistantToolId: _Optional[int] = ..., assistantToolName: _Optional[str] = ..., assistantTool: _Optional[_Union[AssistantTool, _Mapping]] = ...) -> None: ...
+    def __init__(self, id: _Optional[int] = ..., action: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., request: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., response: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., status: _Optional[str] = ..., createdDate: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updatedDate: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., assistantId: _Optional[int] = ..., projectId: _Optional[int] = ..., organizationId: _Optional[int] = ..., assistantConversationId: _Optional[int] = ..., assistantConversationMessageId: _Optional[str] = ..., assetPrefix: _Optional[str] = ..., executionMethod: _Optional[str] = ..., timeTaken: _Optional[int] = ..., assistantToolId: _Optional[int] = ..., assistantToolName: _Optional[str] = ..., assistantTool: _Optional[_Union[AssistantTool, _Mapping]] = ...) -> None: ...

@@ -24,7 +24,7 @@ func (afkTool *endOfConversationCaller) Call(ctx context.Context, contextID, too
 	return internal_tool.Result("Disconnected successfully.", true)
 }
 
-func NewEndOfConversationCaller(logger commons.Logger, toolOptions *internal_assistant_entity.AssistantTool, communcation internal_type.Communication,
+func NewEndOfConversationCaller(ctx context.Context, logger commons.Logger, toolOptions *internal_assistant_entity.AssistantTool, communcation internal_type.Communication,
 ) (internal_tool.ToolCaller, error) {
 	return &endOfConversationCaller{
 		toolCaller: toolCaller{

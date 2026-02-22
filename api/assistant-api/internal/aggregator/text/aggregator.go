@@ -8,7 +8,7 @@ package internal_sentence_aggregator
 import (
 	"context"
 
-	internal_default_aggregator "github.com/rapidaai/api/assistant-api/internal/aggregator/text/internal/default"
+	internal_default_aggregator "github.com/rapidaai/api/assistant-api/internal/aggregator/text/internal"
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/utils"
@@ -29,6 +29,6 @@ func GetLLMTextAggregator(
 	typ, _ := options.GetString(OptionsKeyTextAggregator)
 	switch TextAggregatorType(typ) {
 	default:
-		return internal_default_aggregator.NewDefaultLLMTextAggregator(context, logger, options)
+		return internal_default_aggregator.NewLLMTextAggregator(context, logger, options)
 	}
 }

@@ -110,8 +110,9 @@ func (rnd *rnnoiseDenoiser) Denoise(ctx context.Context, input []byte) ([]byte, 
 }
 
 // Close releases resources
-func (d *rnnoiseDenoiser) Flush() {
+func (d *rnnoiseDenoiser) Close() error {
 	if d.rnNoise != nil {
 		d.rnNoise.Close()
 	}
+	return nil
 }

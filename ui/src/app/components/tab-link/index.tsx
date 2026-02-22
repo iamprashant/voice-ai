@@ -42,7 +42,7 @@ export const TabLink: FC<LinkTabProps> = ({ to, children, className }) => {
         );
       }}
     >
-      <div className="px-6 py-2 font-medium whitespace-nowrap tracking-wide text-pretty">
+      <div className="px-6 py-2 font-semibold text-[13px] whitespace-nowrap tracking-wide text-pretty gap-3 flex items-center uppercase">
         {children}
       </div>
     </NavLink>

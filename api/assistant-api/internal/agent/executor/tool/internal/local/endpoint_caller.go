@@ -27,6 +27,7 @@ type endpointToolCaller struct {
 }
 
 func NewEndpointToolCaller(
+	ctx context.Context,
 	logger commons.Logger,
 	toolOptions *internal_assistant_entity.AssistantTool,
 	communcation internal_type.Communication,

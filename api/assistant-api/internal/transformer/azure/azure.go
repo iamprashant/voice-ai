@@ -21,7 +21,6 @@ import (
 type azureOption struct {
 	logger          commons.Logger
 	mdlOpts         utils.Option
-	audioConfig     *protos.AudioConfig
 	endpoint        string
 	subscriptionKey string
 }
@@ -29,7 +28,6 @@ type azureOption struct {
 func NewAzureOption(
 	logger commons.Logger,
 	vaultCredential *protos.VaultCredential,
-	audioConfig *protos.AudioConfig,
 	options utils.Option,
 ) (*azureOption, error) {
 	subscriptionKey, ok := vaultCredential.GetValue().AsMap()["subscription_key"]
@@ -43,7 +41,6 @@ func NewAzureOption(
 	return &azureOption{
 		logger:          logger,
 		mdlOpts:         options,
-		audioConfig:     audioConfig,
 		endpoint:        endpoint.(string),
 		subscriptionKey: subscriptionKey.(string),
 	}, nil
@@ -85,29 +82,10 @@ func (az *azureOption) TextToSpeechOption() (*speech.SpeechConfig, error) {
 }
 
 func (az *azureOption) GetSpeechSynthesisOutputFormat() common.SpeechSynthesisOutputFormat {
-	switch az.audioConfig.GetAudioFormat() {
-	case protos.AudioConfig_MuLaw8:
-		return common.Raw8Khz8BitMonoMULaw
-	case protos.AudioConfig_LINEAR16:
-		if az.audioConfig.GetSampleRate() == 8000 {
-			return common.Raw8Khz16BitMonoPcm
-		}
-		return common.Raw16Khz16BitMonoPcm
-	default:
-		return common.Raw16Khz16BitMonoPcm
-	}
+	return common.Raw16Khz16BitMonoPcm
 }
 
 func (az *azureOption) GetAudioStreamFormat() *audio.AudioStreamFormat {
-	switch az.audioConfig.GetAudioFormat() {
-	case protos.AudioConfig_MuLaw8:
-		v, _ := audio.GetWaveFormat(uint32(az.audioConfig.SampleRate), uint8(8), uint8(1), audio.WaveMULAW)
-		return v
-	case protos.AudioConfig_LINEAR16:
-		v, _ := audio.GetWaveFormat(uint32(az.audioConfig.SampleRate), uint8(16), 1, audio.WavePCM)
-		return v
-	default:
-		v, _ := audio.GetWaveFormat(uint32(az.audioConfig.SampleRate), uint8(16), 1, audio.WavePCM)
-		return v
-	}
+	v, _ := audio.GetWaveFormat(16000, uint8(16), 1, audio.WavePCM)
+	return v
 }

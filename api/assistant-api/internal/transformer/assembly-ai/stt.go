@@ -37,14 +37,12 @@ type assemblyaiSTT struct {
 }
 
 func NewAssemblyaiSpeechToText(ctx context.Context, logger commons.Logger, credential *protos.VaultCredential,
-	audioConfig *protos.AudioConfig,
 	onPacket func(pkt ...internal_type.Packet) error,
 	opts utils.Option,
 ) (internal_type.SpeechToTextTransformer, error) {
 	ayOptions, err := NewAssemblyaiOption(
 		logger,
 		credential,
-		audioConfig,
 		opts,
 	)
 	if err != nil {

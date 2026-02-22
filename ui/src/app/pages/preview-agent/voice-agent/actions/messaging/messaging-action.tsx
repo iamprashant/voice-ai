@@ -30,7 +30,6 @@ export const MessagingAction: FC<MessageActionProps> = ({
   ...attr
 }) => {
   const { channel } = useInputModeToggleAgent(attr.voiceAgent);
-
   return (
     <div className={cn(className)}>
       {channel === Channel.Audio ? (

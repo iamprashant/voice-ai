@@ -19,7 +19,6 @@ func NewRevaiTextToSpeech(
 	ctx context.Context,
 	logger commons.Logger,
 	credential *protos.VaultCredential,
-	audioConfig *protos.AudioConfig,
 	onPacket func(pkt ...internal_type.Packet) error,
 	opts utils.Option) (internal_type.TextToSpeechTransformer, error) {
 	return nil, nil

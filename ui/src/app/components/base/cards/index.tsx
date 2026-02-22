@@ -49,7 +49,7 @@ export const CardTitle: FC<CardTitleProps> = ({
 }) => {
   return (
     <div className={cn('capitalize', className)}>
-      <span className="">
+      <span className="text-sm/6 font-medium">
         {title}
         {children}
       </span>

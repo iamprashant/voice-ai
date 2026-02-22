@@ -22,5 +22,5 @@ type Denoiser interface {
 	// switching between different audio streams. It ensures that any buffered
 	// data or state information is reset, preparing the denoiser for processing
 	// new, unrelated audio data.
-	Flush()
+	Close() error
 }

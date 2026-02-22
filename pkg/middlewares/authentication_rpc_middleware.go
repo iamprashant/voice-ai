@@ -17,18 +17,28 @@ import (
 
 func NewAuthenticationMiddleware(resolver types.Authenticator, logger commons.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Get the token from the request header
+		// Get the token from the request header, URL param, or query param
+		// Query param is needed for WebSocket connections (browsers can't set custom WS headers)
 		authToken := c.Param(types.AUTHORIZATION_KEY)
 		if authToken == "" {
 			authToken = c.GetHeader(types.AUTHORIZATION_KEY)
+		}
+		if authToken == "" {
+			authToken = c.Query(types.AUTHORIZATION_KEY)
 		}
 		authId := c.GetHeader(types.AUTH_KEY)
 		if authId == "" {
 			authId = c.Param(types.AUTH_KEY)
 		}
+		if authId == "" {
+			authId = c.Query(types.AUTH_KEY)
+		}
 		projectId := c.GetHeader(types.PROJECT_KEY)
 		if projectId == "" {
 			projectId = c.Param(types.PROJECT_KEY)
+		}
+		if projectId == "" {
+			projectId = c.Query(types.PROJECT_KEY)
 		}
 		if authToken == "" {
 			c.Next() // Continue processing the request without authentication

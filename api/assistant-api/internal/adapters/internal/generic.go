@@ -1,0 +1,283 @@
+// Copyright (c) 2023-2025 RapidaAI
+// Author: Prashant Srivastav <prashant@rapida.ai>
+//
+// Licensed under GPL-2.0 with Rapida Additional Terms.
+// See LICENSE.md or contact sales@rapida.ai for commercial usage.
+package adapter_internal
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/rapidaai/api/assistant-api/config"
+	internal_adapter_request_customizers "github.com/rapidaai/api/assistant-api/internal/adapters/customizers"
+	"github.com/rapidaai/protos"
+
+	internal_assistant_telemetry "github.com/rapidaai/api/assistant-api/internal/telemetry/assistant"
+	internal_assistant_telemetry_exporters "github.com/rapidaai/api/assistant-api/internal/telemetry/assistant/exporters"
+	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
+
+	internal_agent_embeddings "github.com/rapidaai/api/assistant-api/internal/agent/embedding"
+	internal_agent_executor "github.com/rapidaai/api/assistant-api/internal/agent/executor"
+	internal_agent_executor_llm "github.com/rapidaai/api/assistant-api/internal/agent/executor/llm"
+	internal_agent_rerankers "github.com/rapidaai/api/assistant-api/internal/agent/reranker"
+	internal_assistant_entity "github.com/rapidaai/api/assistant-api/internal/entity/assistants"
+	internal_conversation_entity "github.com/rapidaai/api/assistant-api/internal/entity/conversations"
+	internal_knowledge_gorm "github.com/rapidaai/api/assistant-api/internal/entity/knowledges"
+	internal_services "github.com/rapidaai/api/assistant-api/internal/services"
+	internal_assistant_service "github.com/rapidaai/api/assistant-api/internal/services/assistant"
+	internal_knowledge_service "github.com/rapidaai/api/assistant-api/internal/services/knowledge"
+	internal_telemetry "github.com/rapidaai/api/assistant-api/internal/telemetry"
+	endpoint_client "github.com/rapidaai/pkg/clients/endpoint"
+	integration_client "github.com/rapidaai/pkg/clients/integration"
+	web_client "github.com/rapidaai/pkg/clients/web"
+	"github.com/rapidaai/pkg/parsers"
+
+	//
+	"github.com/rapidaai/pkg/commons"
+	"github.com/rapidaai/pkg/connectors"
+	"github.com/rapidaai/pkg/storages"
+	"github.com/rapidaai/pkg/types"
+	type_enums "github.com/rapidaai/pkg/types/enums"
+	"github.com/rapidaai/pkg/utils"
+)
+
+type genericRequestor struct {
+	logger   commons.Logger
+	config   *config.AssistantConfig
+	source   utils.RapidaSource
+	auth     types.SimplePrinciple
+	streamer internal_type.Streamer
+
+	// service
+	assistantService     internal_services.AssistantService
+	conversationService  internal_services.AssistantConversationService
+	webhookService       internal_services.AssistantWebhookService
+	knowledgeService     internal_services.KnowledgeService
+	assistantToolService internal_services.AssistantToolService
+
+	//
+	opensearch    connectors.OpenSearchConnector
+	vectordb      connectors.VectorConnector
+	queryEmbedder internal_agent_embeddings.QueryEmbedding
+	textReranker  internal_agent_rerankers.TextReranking
+
+	// managing event
+	tracer internal_telemetry.VoiceAgentTracer
+
+	// integration client
+	integrationClient integration_client.IntegrationServiceClient
+	vaultClient       web_client.VaultClient
+	deploymentClient  endpoint_client.DeploymentServiceClient
+
+	// io related
+	messaging internal_adapter_request_customizers.Messaging
+
+	// listening
+	speechToTextTransformer internal_type.SpeechToTextTransformer
+
+	// audio intelligence
+	endOfSpeech internal_type.EndOfSpeech
+	vad         internal_type.Vad
+	denoiser    internal_type.Denoiser
+
+	// speak
+	textToSpeechTransformer internal_type.TextToSpeechTransformer
+	textAggregator          internal_type.LLMTextAggregator
+
+	recorder       internal_type.Recorder
+	templateParser parsers.StringTemplateParser
+
+	// executor
+	assistantExecutor internal_agent_executor.AssistantExecutor
+
+	// states
+	assistant             *internal_assistant_entity.Assistant
+	assistantConversation *internal_conversation_entity.AssistantConversation
+	histories             []internal_type.MessagePacket
+
+	args     map[string]interface{}
+	metadata map[string]interface{}
+	options  map[string]interface{}
+
+	// experience
+	idleTimeoutTimer *time.Timer
+	idleTimeoutCount uint64
+	maxSessionTimer  *time.Timer
+}
+
+func NewGenericRequestor(
+	ctx context.Context,
+	config *config.AssistantConfig,
+	logger commons.Logger, source utils.RapidaSource,
+	postgres connectors.PostgresConnector, opensearch connectors.OpenSearchConnector,
+	redis connectors.RedisConnector, storage storages.Storage, streamer internal_type.Streamer,
+) *genericRequestor {
+	return &genericRequestor{
+		logger:   logger,
+		config:   config,
+		source:   source,
+		streamer: streamer,
+		// services
+		assistantService:     internal_assistant_service.NewAssistantService(config, logger, postgres, opensearch),
+		knowledgeService:     internal_knowledge_service.NewKnowledgeService(config, logger, postgres, storage),
+		conversationService:  internal_assistant_service.NewAssistantConversationService(logger, postgres, storage),
+		webhookService:       internal_assistant_service.NewAssistantWebhookService(logger, postgres, storage),
+		assistantToolService: internal_assistant_service.NewAssistantToolService(logger, postgres, storage),
+		templateParser:       parsers.NewPongo2StringTemplateParser(logger),
+		//
+
+		opensearch:    opensearch,
+		vectordb:      opensearch,
+		queryEmbedder: internal_agent_embeddings.NewQueryEmbedding(logger, config, redis),
+		textReranker:  internal_agent_rerankers.NewTextReranker(logger, config, redis),
+
+		// clients
+		integrationClient: integration_client.NewIntegrationServiceClientGRPC(&config.AppConfig, logger, redis),
+		deploymentClient:  endpoint_client.NewDeploymentServiceClientGRPC(&config.AppConfig, logger, redis),
+		vaultClient:       web_client.NewVaultClientGRPC(&config.AppConfig, logger, redis),
+
+		//
+		tracer:            internal_assistant_telemetry.NewInMemoryTracer(logger, internal_assistant_telemetry_exporters.NewOpensearchAssistantTraceExporter(logger, &config.AppConfig, opensearch)),
+		messaging:         internal_adapter_request_customizers.NewMessaging(logger),
+		assistantExecutor: internal_agent_executor_llm.NewAssistantExecutor(logger),
+
+		//
+		histories: make([]internal_type.MessagePacket, 0),
+		metadata:  make(map[string]interface{}),
+		args:      make(map[string]interface{}),
+		options:   make(map[string]interface{}),
+	}
+}
+
+// GetSource implements internal_adapter_requests.Messaging.
+func (dm *genericRequestor) Source() utils.RapidaSource {
+	return dm.source
+}
+
+func (deb *genericRequestor) onCreateMessage(ctx context.Context, msg internal_type.MessagePacket) error {
+	deb.histories = append(deb.histories, msg)
+	dbCtx, cancel := context.WithTimeout(context.Background(), dbWriteTimeout)
+	defer cancel()
+	_, err := deb.conversationService.CreateConversationMessage(dbCtx, deb.Auth(), deb.Source(), deb.Assistant().Id, deb.Assistant().AssistantProviderId, deb.Conversation().Id, msg.ContextId(), msg.Role(), msg.Content())
+	if err != nil {
+		deb.logger.Error("unable to create message for the user")
+		return err
+	}
+	return nil
+}
+
+func (dm *genericRequestor) Tracer() internal_telemetry.VoiceAgentTracer {
+	return dm.tracer
+}
+
+func (gr *genericRequestor) GetAssistantConversation(ctx context.Context, auth types.SimplePrinciple, assistantId uint64, assistantConversationId uint64) (*internal_conversation_entity.AssistantConversation, error) {
+	return gr.conversationService.GetConversation(ctx, auth, assistantId, assistantConversationId, &internal_services.GetConversationOption{
+		InjectContext:  true,
+		InjectArgument: true,
+		InjectMetadata: true,
+		InjectOption:   true,
+		InjectMetric:   false},
+	)
+}
+
+func (r *genericRequestor) identifier(config *protos.ConversationInitialization) string {
+	r.logger.Debugf("testing -> %+v", config.GetUserIdentity())
+	switch identity := config.GetUserIdentity().(type) {
+	case *protos.ConversationInitialization_Phone:
+		return identity.Phone.GetPhoneNumber()
+	case *protos.ConversationInitialization_Web:
+		return identity.Web.GetUserId()
+	default:
+		return uuid.NewString()
+	}
+}
+
+func (talking *genericRequestor) BeginConversation(ctx context.Context, assistant *internal_assistant_entity.Assistant, direction type_enums.ConversationDirection, config *protos.ConversationInitialization) (*internal_conversation_entity.AssistantConversation, error) {
+	talking.logger.Debugf("testing -> %+v", talking.identifier(config))
+	talking.assistant = assistant
+	conversation, err := talking.conversationService.CreateConversation(ctx, talking.Auth(), talking.identifier(config), assistant.Id, assistant.AssistantProviderId, direction, talking.Source())
+	if err != nil {
+		return conversation, err
+	}
+
+	if arguments, err := utils.AnyMapToInterfaceMap(config.GetArgs()); err == nil {
+		talking.args = arguments
+		utils.Go(ctx, func() {
+			talking.conversationService.ApplyConversationArgument(ctx, talking.Auth(), assistant.Id, conversation.Id, arguments)
+		})
+	}
+	if options, err := utils.AnyMapToInterfaceMap(config.GetOptions()); err == nil {
+		talking.options = options
+		utils.Go(ctx, func() {
+			talking.conversationService.ApplyConversationOption(ctx, talking.Auth(), assistant.Id, conversation.Id, options)
+		})
+	}
+	if metadata, err := utils.AnyMapToInterfaceMap(config.GetMetadata()); err == nil {
+		talking.metadata = metadata
+		utils.Go(ctx, func() {
+			talking.conversationService.ApplyConversationMetadata(ctx, talking.Auth(), assistant.Id, conversation.Id, types.NewMetadataList(metadata))
+		})
+	}
+	talking.assistantConversation = conversation
+	return conversation, err
+}
+
+func (talking *genericRequestor) ResumeConversation(ctx context.Context, assistant *internal_assistant_entity.Assistant, config *protos.ConversationInitialization) (*internal_conversation_entity.AssistantConversation, error) {
+	talking.assistant = assistant
+	conversation, err := talking.GetAssistantConversation(ctx, talking.Auth(), assistant.Id, config.GetAssistantConversationId())
+	if err != nil {
+		talking.logger.Errorf("failed to get assistant conversation: %+v", err)
+		return nil, err
+	}
+	if conversation == nil {
+		talking.logger.Errorf("conversation not found: %d", config.GetAssistantConversationId())
+		return nil, fmt.Errorf("conversation not found: %d", config.GetAssistantConversationId())
+	}
+	talking.assistantConversation = conversation
+	talking.args = conversation.GetArguments()
+	talking.options = conversation.GetOptions()
+	talking.metadata = conversation.GetMetadatas()
+	return conversation, nil
+}
+
+func (talking *genericRequestor) IntegrationCaller() integration_client.IntegrationServiceClient {
+	return talking.integrationClient
+
+}
+
+func (talking *genericRequestor) VaultCaller() web_client.VaultClient {
+	return talking.vaultClient
+}
+
+func (talking *genericRequestor) DeploymentCaller() endpoint_client.DeploymentServiceClient {
+	return talking.deploymentClient
+}
+
+func (talking *genericRequestor) GetKnowledge(ctx context.Context, knowledgeId uint64) (*internal_knowledge_gorm.Knowledge, error) {
+	return talking.knowledgeService.Get(ctx, talking.auth, knowledgeId)
+}
+
+func (gr *genericRequestor) GetArgs() map[string]interface{} {
+	return gr.args
+}
+
+func (gr *genericRequestor) GetOptions() utils.Option {
+	return gr.options
+}
+
+func (dm *genericRequestor) GetHistories() []internal_type.MessagePacket {
+	return dm.histories
+}
+
+func (gr *genericRequestor) CreateConversationRecording(ctx context.Context, user, assistant []byte) error {
+	dbCtx, cancel := context.WithTimeout(context.Background(), dbWriteTimeout)
+	defer cancel()
+	if _, err := gr.conversationService.CreateConversationRecording(dbCtx, gr.auth, gr.assistant.Id, gr.assistantConversation.Id, user, assistant); err != nil {
+		gr.logger.Errorf("unable to create recording for the conversation id %d with error : %v", err)
+		return err
+	}
+	return nil
+}

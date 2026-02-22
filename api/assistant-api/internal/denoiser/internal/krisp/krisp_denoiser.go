@@ -26,6 +26,6 @@ func (krisp *krispDenoiser) Denoise(ctx context.Context, input []byte) ([]byte, 
 	panic("not yet implimented")
 }
 
-func (krisp *krispDenoiser) Flush() {
+func (krisp *krispDenoiser) Close() error {
 	panic("not yet implimented")
 }

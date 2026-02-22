@@ -42,12 +42,11 @@ func NewSarvamSpeechToText(
 	ctx context.Context,
 	logger commons.Logger,
 	credential *protos.VaultCredential,
-	audioConfig *protos.AudioConfig,
 	onPacket func(pkt ...internal_type.Packet) error,
 	opts utils.Option,
 ) (internal_type.SpeechToTextTransformer, error) {
 
-	sarvamOpts, err := NewSarvamOption(logger, credential, audioConfig, opts)
+	sarvamOpts, err := NewSarvamOption(logger, credential, opts)
 	if err != nil {
 		logger.Errorf("sarvam-stt: initializing sarvam failed %+v", err)
 		return nil, err

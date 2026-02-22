@@ -9,5 +9,6 @@ import "context"
 
 type Recorder interface {
 	Record(context.Context, Packet) error
-	Persist() ([]byte, error)
+	// Persist saves the recorded audio and returns user and system audio data.
+	Persist() ([]byte, []byte, error)
 }

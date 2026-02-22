@@ -38,7 +38,7 @@ export const Tab: FC<TabProps> = ({
                     : 'hover:bg-blue-500/5 hover:text-blue-500',
                 )}
               >
-                <div className="px-6 py-2 font-medium text-sm/6 whitespace-nowrap tracking-wide text-pretty gap-3 flex items-center uppercase">
+                <div className="px-6 py-2 font-semibold text-[13px] whitespace-nowrap tracking-wide text-pretty gap-3 flex items-center uppercase">
                   {ix.labelIcon}
                   {ix.label}
                 </div>

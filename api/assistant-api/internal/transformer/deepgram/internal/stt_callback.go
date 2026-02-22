@@ -42,7 +42,6 @@ func (d *deepgramSttCallback) Open(or *msginterfaces.OpenResponse) error {
 func (d *deepgramSttCallback) Message(mr *msginterfaces.MessageResponse) error {
 	for _, alternative := range mr.Channel.Alternatives {
 		if alternative.Transcript != "" {
-
 			if v, err := d.options.GetFloat64("listen.threshold"); err == nil {
 				if float32(alternative.Confidence) < float32(v) {
 					d.onPacket(

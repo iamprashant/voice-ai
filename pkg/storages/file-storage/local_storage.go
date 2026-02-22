@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/configs"
@@ -81,8 +82,14 @@ func (lfs *localFileStorage) Store(ctx context.Context, key string, fileContent 
 
 func (lfs *localFileStorage) GetUrl(ctx context.Context, key string) storages.StorageOutput {
 	lfs.logger.Debugf("localstorage.getUrl with file path name %s", key)
+	if lfs.config.PublicUrlPrefix != nil {
+		return storages.StorageOutput{
+			CompletePath: strings.TrimRight(*lfs.config.PublicUrlPrefix, "/") + "/" + strings.TrimLeft(key, "/"),
+			StorageType:  configs.LOCAL,
+		}
+	}
 	return storages.StorageOutput{
-		CompletePath: path.Join("file://", lfs.config.StoragePathPrefix, key),
+		CompletePath: "file://" + path.Join(lfs.config.StoragePathPrefix, key),
 		StorageType:  configs.LOCAL,
 	}
 }

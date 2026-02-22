@@ -46,7 +46,7 @@ func (e *websocketExecutor) Name() string {
 }
 
 // Initialize establishes the WebSocket connection and starts the listener.
-func (e *websocketExecutor) Initialize(ctx context.Context, comm internal_type.Communication, cfg *protos.ConversationConfiguration) error {
+func (e *websocketExecutor) Initialize(ctx context.Context, comm internal_type.Communication, cfg *protos.ConversationInitialization) error {
 	_, span, _ := comm.Tracer().StartSpan(ctx, utils.AssistantAgentConnectStage, internal_adapter_telemetry.KV{K: "executor", V: internal_adapter_telemetry.StringValue(e.Name())})
 	defer span.EndSpan(ctx, utils.AssistantAgentConnectStage)
 
@@ -118,7 +118,7 @@ func (e *websocketExecutor) send(msg Request) error {
 }
 
 // sendConfiguration sends the initial configuration.
-func (e *websocketExecutor) sendConfiguration(assistantId uint64, assistantProviderID uint64, conversationID uint64, cfg *protos.ConversationConfiguration) error {
+func (e *websocketExecutor) sendConfiguration(assistantId uint64, assistantProviderID uint64, conversationID uint64, cfg *protos.ConversationInitialization) error {
 	return e.send(Request{
 		Type:      TypeConfiguration,
 		Timestamp: time.Now().UnixMilli(),

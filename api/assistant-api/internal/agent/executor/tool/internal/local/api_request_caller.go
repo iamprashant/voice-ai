@@ -53,7 +53,7 @@ func (afkTool *apiRequestToolCaller) Call(ctx context.Context, contextID, toolId
 	return internal_tool.JustResult(v)
 }
 
-func NewApiRequestToolCaller(logger commons.Logger, toolOptions *internal_assistant_entity.AssistantTool, communcation internal_type.Communication) (internal_tool.ToolCaller, error) {
+func NewApiRequestToolCaller(ctx context.Context, logger commons.Logger, toolOptions *internal_assistant_entity.AssistantTool, communcation internal_type.Communication) (internal_tool.ToolCaller, error) {
 	opts := toolOptions.GetOptions()
 	endpoint, err := opts.GetString("tool.endpoint")
 	if err != nil {

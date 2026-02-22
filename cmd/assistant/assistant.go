@@ -25,6 +25,9 @@ import (
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/rapidaai/api/assistant-api/config"
 	router "github.com/rapidaai/api/assistant-api/router"
+	assistant_sip "github.com/rapidaai/api/assistant-api/sip"
+	sip_infra "github.com/rapidaai/api/assistant-api/sip/infra"
+	assistant_socket "github.com/rapidaai/api/assistant-api/socket"
 	"github.com/rapidaai/pkg/authenticators"
 	web_client "github.com/rapidaai/pkg/clients/web"
 	"github.com/rapidaai/pkg/commons"
@@ -39,6 +42,7 @@ import (
 type AppRunner struct {
 	E          *gin.Engine
 	S          *grpc.Server
+	SIP        *sip_infra.Server
 	Cfg        *config.AssistantConfig
 	Logger     commons.Logger
 	Postgres   connectors.PostgresConnector
@@ -125,11 +129,16 @@ func main() {
 		panic(err)
 	}
 
+	// add all engine which required to run in same application like grpc server, http server, socket server etc.
+	appRunner.AllEngine(ctx)
+
 	// add all middleware depends on configurations
-	appRunner.AllMiddlewares()
+	appRunner.AllMiddlewares(ctx)
 
 	// all router add all handlers which required to resolve the service request
-	appRunner.AllRouters()
+	appRunner.AllRouters(ctx)
+
+	// all engine start all required engine like grpc server, http server, socket server etc.
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", appRunner.Cfg.Host, appRunner.Cfg.Port))
 	if err != nil {
 		log.Fatalf("Failed to create connection tcp %v", err)
@@ -137,7 +146,6 @@ func main() {
 	}
 
 	defer appRunner.Close(ctx)
-
 	cmuxListener := cmux.New(listener)
 	http2GRPCFilteredListener := cmuxListener.Match(cmux.HTTP2())
 	grpcFilteredListener := cmuxListener.Match(
@@ -269,6 +277,7 @@ func (app *AppRunner) Init(ctx context.Context) error {
 	app.Closeable = append(app.Closeable, app.Opensearch.Disconnect)
 	app.Closeable = append(app.Closeable, app.Postgres.Disconnect)
 	app.Closeable = append(app.Closeable, app.Redis.Disconnect)
+
 	return nil
 }
 
@@ -286,25 +295,49 @@ func (app *AppRunner) Close(ctx context.Context) {
 }
 
 // all router initialize
-func (g *AppRunner) AllRouters() {
+func (g *AppRunner) AllRouters(ctx context.Context) error {
 	router.AssistantApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis, g.Opensearch)
 	router.HealthCheckRoutes(g.Cfg, g.E, g.Logger, g.Postgres)
 	router.KnowledgeApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis, g.Opensearch)
 	router.DocumentApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis, g.Opensearch)
-	router.AssistantConversationApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis, g.Opensearch)
+	router.AssistantConversationApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis, g.Opensearch, g.SIP)
 	router.AssistantDeploymentApiRoute(g.Cfg, g.S, g.Logger, g.Postgres)
+	router.TalkCallbackApiRoute(g.Cfg, g.E, g.Logger, g.Postgres, g.Redis, g.Opensearch, g.SIP)
+	return nil
+}
 
-	// rpc call handle by gin handler
-	router.TalkCallbackApiRoute(g.Cfg, g.E, g.Logger, g.Postgres, g.Redis, g.Opensearch)
+// engine allow to start mutlile service in same application like grpc server, http server, socket server etc.
+func (app *AppRunner) AllEngine(ctx context.Context) error {
 
+	// SIP is optional and only started if configured. It listens for SIP calls from telephony providers for both inbound call handling and outbound call dispatch.
+	if app.Cfg.SIPConfig != nil {
+		sipManager := assistant_sip.NewSIPEngine(app.Cfg, app.Logger, app.Postgres, app.Redis, app.Opensearch, app.Opensearch)
+		if err := sipManager.Connect(ctx); err != nil {
+			app.Logger.Errorf("Failed to start SIP server: %v", err)
+			return err
+		}
+		app.SIP = sipManager.GetServer()
+		app.Closeable = append(app.Closeable, sipManager.Disconnect)
+	}
+	// AudioSocket is optional and only started if configured. It listens for TCP connections from telephony providers for audio streaming in calls.
+	if app.Cfg.AudioSocketConfig != nil {
+		socketEngine := assistant_socket.NewAudioSocketEngine(app.Cfg, app.Logger, app.Postgres, app.Redis, app.Opensearch)
+		if err := socketEngine.Connect(ctx); err != nil {
+			return err
+		}
+		app.Closeable = append(app.Closeable, socketEngine.Disconnect)
+	}
+
+	return nil
 }
 
 // all middleware
-func (g *AppRunner) AllMiddlewares() {
+func (g *AppRunner) AllMiddlewares(ctx context.Context) error {
 	g.RecoveryMiddleware()
 	g.CorsMiddleware()
 	g.RequestLoggerMiddleware()
 	g.AuthenticationMiddleware()
+	return nil
 }
 
 // Recovery middleware

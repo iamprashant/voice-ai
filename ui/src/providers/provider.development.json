@@ -91,6 +91,61 @@
         ]
     },
     {
+        "code": "asterisk",
+        "name": "Asterisk",
+        "description": "Open-source PBX platform for building custom telephony solutions with SIP/PJSIP support.",
+        "image": "https://www.asterisk.org/wp-content/uploads/asterisk-logo.png",
+        "featureList": [
+            "telephony",
+            "external"
+        ],
+        "configurations": [
+            {
+                "name": "ari_url",
+                "type": "string",
+                "label": "ARI URL (e.g., http://asterisk.example.com:8088)"
+            },
+            {
+                "name": "ari_user",
+                "type": "string",
+                "label": "ARI Username"
+            },
+            {
+                "name": "ari_password",
+                "type": "string",
+                "label": "ARI Password"
+            }
+        ],
+        "website": "https://www.asterisk.org"
+    },
+    {
+        "code": "sip",
+        "name": "SIP Trunk",
+        "description": "Direct SIP trunk connection for voice calls. Connect any SIP-compatible PBX or carrier.",
+        "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQzN1nHTrkeb3jFRiW-hP31P6jhRbg9AjlamQ&s",
+        "featureList": [
+            "telephony",
+            "external"
+        ],
+        "configurations": [
+            {
+                "name": "sip_uri",
+                "type": "string",
+                "label": "SIP URI (e.g., sip:trunk.provider.com:5060)"
+            },
+            {
+                "name": "sip_username",
+                "type": "string",
+                "label": "SIP Username (optional)"
+            },
+            {
+                "name": "sip_password",
+                "type": "string",
+                "label": "SIP Password (optional)"
+            }
+        ]
+    },
+    {
         "code": "twilio",
         "name": "Twilio",
         "description": "Cloud communications platform for building SMS, voice, and messaging applications",

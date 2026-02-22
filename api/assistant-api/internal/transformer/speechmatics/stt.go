@@ -19,7 +19,6 @@ func NewSpeechmaticsSpeechToText(
 	ctx context.Context,
 	logger commons.Logger,
 	credential *protos.VaultCredential,
-	audioConfig *protos.AudioConfig,
 	onPacket func(pkt ...internal_type.Packet) error,
 	opts utils.Option) (internal_type.SpeechToTextTransformer, error) {
 	return nil, nil

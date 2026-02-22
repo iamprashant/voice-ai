@@ -6,7 +6,7 @@ import warnings
 import app.bridges.artifacts.protos.common_pb2 as common__pb2
 import app.bridges.artifacts.protos.talk_api_pb2 as talk__api__pb2
 
-GRPC_GENERATED_VERSION = '1.72.1'
+GRPC_GENERATED_VERSION = '1.78.0'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
@@ -19,7 +19,7 @@ except ImportError:
 if _version_not_supported:
     raise RuntimeError(
         f'The grpc package installed is at version {GRPC_VERSION},'
-        + f' but the generated code in talk_api_pb2_grpc.py depends on'
+        + ' but the generated code in talk_api_pb2_grpc.py depends on'
         + f' grpcio>={GRPC_GENERATED_VERSION}.'
         + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
         + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
@@ -27,7 +27,11 @@ if _version_not_supported:
 
 
 class TalkServiceStub(object):
-    """Talk Service for assistant messaging
+    """============================================================================
+    Talk Service - Primary Assistant Communication
+    ============================================================================
+
+    TalkService provides the main API for assistant conversations.
     """
 
     def __init__(self, channel):
@@ -38,8 +42,8 @@ class TalkServiceStub(object):
         """
         self.AssistantTalk = channel.stream_stream(
                 '/talk_api.TalkService/AssistantTalk',
-                request_serializer=talk__api__pb2.AssistantTalkInput.SerializeToString,
-                response_deserializer=talk__api__pb2.AssistantTalkOutput.FromString,
+                request_serializer=talk__api__pb2.AssistantTalkRequest.SerializeToString,
+                response_deserializer=talk__api__pb2.AssistantTalkResponse.FromString,
                 _registered_method=True)
         self.GetAllAssistantConversation = channel.unary_unary(
                 '/talk_api.TalkService/GetAllAssistantConversation',
@@ -74,7 +78,11 @@ class TalkServiceStub(object):
 
 
 class TalkServiceServicer(object):
-    """Talk Service for assistant messaging
+    """============================================================================
+    Talk Service - Primary Assistant Communication
+    ============================================================================
+
+    TalkService provides the main API for assistant conversations.
     """
 
     def AssistantTalk(self, request_iterator, context):
@@ -131,8 +139,8 @@ def add_TalkServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'AssistantTalk': grpc.stream_stream_rpc_method_handler(
                     servicer.AssistantTalk,
-                    request_deserializer=talk__api__pb2.AssistantTalkInput.FromString,
-                    response_serializer=talk__api__pb2.AssistantTalkOutput.SerializeToString,
+                    request_deserializer=talk__api__pb2.AssistantTalkRequest.FromString,
+                    response_serializer=talk__api__pb2.AssistantTalkResponse.SerializeToString,
             ),
             'GetAllAssistantConversation': grpc.unary_unary_rpc_method_handler(
                     servicer.GetAllAssistantConversation,
@@ -173,7 +181,11 @@ def add_TalkServiceServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class TalkService(object):
-    """Talk Service for assistant messaging
+    """============================================================================
+    Talk Service - Primary Assistant Communication
+    ============================================================================
+
+    TalkService provides the main API for assistant conversations.
     """
 
     @staticmethod
@@ -191,8 +203,8 @@ class TalkService(object):
             request_iterator,
             target,
             '/talk_api.TalkService/AssistantTalk',
-            talk__api__pb2.AssistantTalkInput.SerializeToString,
-            talk__api__pb2.AssistantTalkOutput.FromString,
+            talk__api__pb2.AssistantTalkRequest.SerializeToString,
+            talk__api__pb2.AssistantTalkResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -355,82 +367,6 @@ class TalkService(object):
             '/talk_api.TalkService/CreateBulkPhoneCall',
             talk__api__pb2.CreateBulkPhoneCallRequest.SerializeToString,
             talk__api__pb2.CreateBulkPhoneCallResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-
-class AgentKitStub(object):
-    """AgentKit Service for assistant messaging
-    """
-
-    def __init__(self, channel):
-        """Constructor.
-
-        Args:
-            channel: A grpc.Channel.
-        """
-        self.Talk = channel.stream_stream(
-                '/talk_api.AgentKit/Talk',
-                request_serializer=talk__api__pb2.TalkInput.SerializeToString,
-                response_deserializer=talk__api__pb2.TalkOutput.FromString,
-                _registered_method=True)
-
-
-class AgentKitServicer(object):
-    """AgentKit Service for assistant messaging
-    """
-
-    def Talk(self, request_iterator, context):
-        """Bi-directional streaming RPC for assistant messaging
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-
-def add_AgentKitServicer_to_server(servicer, server):
-    rpc_method_handlers = {
-            'Talk': grpc.stream_stream_rpc_method_handler(
-                    servicer.Talk,
-                    request_deserializer=talk__api__pb2.TalkInput.FromString,
-                    response_serializer=talk__api__pb2.TalkOutput.SerializeToString,
-            ),
-    }
-    generic_handler = grpc.method_handlers_generic_handler(
-            'talk_api.AgentKit', rpc_method_handlers)
-    server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('talk_api.AgentKit', rpc_method_handlers)
-
-
- # This class is part of an EXPERIMENTAL API.
-class AgentKit(object):
-    """AgentKit Service for assistant messaging
-    """
-
-    @staticmethod
-    def Talk(request_iterator,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.stream_stream(
-            request_iterator,
-            target,
-            '/talk_api.AgentKit/Talk',
-            talk__api__pb2.TalkInput.SerializeToString,
-            talk__api__pb2.TalkOutput.FromString,
             options,
             channel_credentials,
             insecure,

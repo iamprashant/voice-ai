@@ -1,3 +1,5 @@
+import datetime
+
 from google.protobuf import struct_pb2 as _struct_pb2
 from google.protobuf import timestamp_pb2 as _timestamp_pb2
 import app.bridges.artifacts.protos.common_pb2 as _common_pb2
@@ -41,7 +43,7 @@ class AuditLog(_message.Message):
     request: _struct_pb2.Struct
     response: _struct_pb2.Struct
     metrics: _containers.RepeatedCompositeFieldContainer[_common_pb2.Metric]
-    def __init__(self, id: _Optional[int] = ..., integrationName: _Optional[str] = ..., assetPrefix: _Optional[str] = ..., responseStatus: _Optional[int] = ..., timeTaken: _Optional[int] = ..., status: _Optional[str] = ..., projectId: _Optional[int] = ..., organizationId: _Optional[int] = ..., credentialId: _Optional[int] = ..., externalAuditMetadatas: _Optional[_Iterable[_Union[_common_pb2.Metadata, _Mapping]]] = ..., createdDate: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., updatedDate: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., request: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., response: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., metrics: _Optional[_Iterable[_Union[_common_pb2.Metric, _Mapping]]] = ...) -> None: ...
+    def __init__(self, id: _Optional[int] = ..., integrationName: _Optional[str] = ..., assetPrefix: _Optional[str] = ..., responseStatus: _Optional[int] = ..., timeTaken: _Optional[int] = ..., status: _Optional[str] = ..., projectId: _Optional[int] = ..., organizationId: _Optional[int] = ..., credentialId: _Optional[int] = ..., externalAuditMetadatas: _Optional[_Iterable[_Union[_common_pb2.Metadata, _Mapping]]] = ..., createdDate: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updatedDate: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., request: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., response: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., metrics: _Optional[_Iterable[_Union[_common_pb2.Metric, _Mapping]]] = ...) -> None: ...
 
 class GetAllAuditLogRequest(_message.Message):
     __slots__ = ("paginate", "criterias", "projectId", "organizationId")

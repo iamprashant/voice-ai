@@ -10,9 +10,13 @@ import (
 
 	"github.com/rapidaai/api/assistant-api/config"
 	internal_adapter "github.com/rapidaai/api/assistant-api/internal/adapters"
-	internal_grpc "github.com/rapidaai/api/assistant-api/internal/grpc"
+	callcontext "github.com/rapidaai/api/assistant-api/internal/callcontext"
+	internal_grpc "github.com/rapidaai/api/assistant-api/internal/channel/grpc"
+	channel_telephony "github.com/rapidaai/api/assistant-api/internal/channel/telephony"
+	internal_webrtc "github.com/rapidaai/api/assistant-api/internal/channel/webrtc"
 	internal_services "github.com/rapidaai/api/assistant-api/internal/services"
 	internal_assistant_service "github.com/rapidaai/api/assistant-api/internal/services/assistant"
+	sip_infra "github.com/rapidaai/api/assistant-api/sip/infra"
 	web_client "github.com/rapidaai/pkg/clients/web"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
@@ -31,13 +35,58 @@ type ConversationApi struct {
 	opensearch connectors.OpenSearchConnector
 	storage    storages.Storage
 
+	callContextStore             callcontext.Store
+	outboundDispatcher           *channel_telephony.OutboundDispatcher
+	inboundDispatcher            *channel_telephony.InboundDispatcher
 	assistantConversationService internal_services.AssistantConversationService
 	assistantService             internal_services.AssistantService
 	vaultClient                  web_client.VaultClient
+	authClient                   web_client.AuthClient
 }
 
 type ConversationGrpcApi struct {
 	ConversationApi
+}
+
+// newConversationApiCore builds the shared ConversationApi. All three public
+// constructors delegate to this so that deps are created exactly once.
+func newConversationApiCore(cfg *config.AssistantConfig, logger commons.Logger,
+	postgres connectors.PostgresConnector,
+	redis connectors.RedisConnector,
+	opensearch connectors.OpenSearchConnector,
+	sipServer *sip_infra.Server,
+) *ConversationApi {
+	store := callcontext.NewStore(postgres, logger)
+	vaultClient := web_client.NewVaultClientGRPC(&cfg.AppConfig, logger, redis)
+	assistantService := internal_assistant_service.NewAssistantService(cfg, logger, postgres, opensearch)
+	fileStorage := storage_files.NewStorage(cfg.AssetStoreConfig, logger)
+	conversationService := internal_assistant_service.NewAssistantConversationService(logger, postgres, fileStorage)
+
+	telephonyDeps := channel_telephony.TelephonyDispatcherDeps{
+		Cfg:                 cfg,
+		Logger:              logger,
+		Store:               store,
+		VaultClient:         vaultClient,
+		AssistantService:    assistantService,
+		ConversationService: conversationService,
+		TelephonyOpt:        channel_telephony.TelephonyOption{SIPServer: sipServer},
+	}
+
+	return &ConversationApi{
+		cfg:                          cfg,
+		logger:                       logger,
+		postgres:                     postgres,
+		redis:                        redis,
+		opensearch:                   opensearch,
+		callContextStore:             store,
+		outboundDispatcher:           channel_telephony.NewOutboundDispatcher(telephonyDeps),
+		inboundDispatcher:            channel_telephony.NewInboundDispatcher(telephonyDeps),
+		assistantConversationService: conversationService,
+		assistantService:             assistantService,
+		storage:                      fileStorage,
+		vaultClient:                  vaultClient,
+		authClient:                   web_client.NewAuthenticator(&cfg.AppConfig, logger, redis),
+	}
 }
 
 func NewConversationGRPCApi(config *config.AssistantConfig, logger commons.Logger,
@@ -45,20 +94,19 @@ func NewConversationGRPCApi(config *config.AssistantConfig, logger commons.Logge
 	redis connectors.RedisConnector,
 	opensearch connectors.OpenSearchConnector,
 	vectordb connectors.VectorConnector,
+	sipServer *sip_infra.Server,
 ) assistant_api.TalkServiceServer {
-	return &ConversationGrpcApi{
-		ConversationApi{
-			cfg:                          config,
-			logger:                       logger,
-			postgres:                     postgres,
-			redis:                        redis,
-			opensearch:                   opensearch,
-			assistantConversationService: internal_assistant_service.NewAssistantConversationService(logger, postgres, storage_files.NewStorage(config.AssetStoreConfig, logger)),
-			assistantService:             internal_assistant_service.NewAssistantService(config, logger, postgres, opensearch),
-			storage:                      storage_files.NewStorage(config.AssetStoreConfig, logger),
-			vaultClient:                  web_client.NewVaultClientGRPC(&config.AppConfig, logger, redis),
-		},
-	}
+	return &ConversationGrpcApi{*newConversationApiCore(config, logger, postgres, redis, opensearch, sipServer)}
+}
+
+func NewWebRtcApi(config *config.AssistantConfig, logger commons.Logger,
+	postgres connectors.PostgresConnector,
+	redis connectors.RedisConnector,
+	opensearch connectors.OpenSearchConnector,
+	vectordb connectors.VectorConnector,
+	sipServer *sip_infra.Server,
+) assistant_api.WebRTCServer {
+	return &ConversationGrpcApi{*newConversationApiCore(config, logger, postgres, redis, opensearch, sipServer)}
 }
 
 func NewConversationApi(config *config.AssistantConfig, logger commons.Logger,
@@ -66,19 +114,9 @@ func NewConversationApi(config *config.AssistantConfig, logger commons.Logger,
 	redis connectors.RedisConnector,
 	opensearch connectors.OpenSearchConnector,
 	vectordb connectors.VectorConnector,
+	sipServer *sip_infra.Server,
 ) *ConversationApi {
-	return &ConversationApi{
-		cfg:                          config,
-		logger:                       logger,
-		postgres:                     postgres,
-		redis:                        redis,
-		opensearch:                   opensearch,
-		assistantConversationService: internal_assistant_service.NewAssistantConversationService(logger, postgres, storage_files.NewStorage(config.AssetStoreConfig, logger)),
-		assistantService:             internal_assistant_service.NewAssistantService(config, logger, postgres, opensearch),
-		storage:                      storage_files.NewStorage(config.AssetStoreConfig, logger),
-		vaultClient:                  web_client.NewVaultClientGRPC(&config.AppConfig, logger, redis),
-	}
-
+	return newConversationApiCore(config, logger, postgres, redis, opensearch, sipServer)
 }
 
 // AssistantTalk handles incoming assistant talk requests.
@@ -98,7 +136,13 @@ func (cApi *ConversationGrpcApi) AssistantTalk(stream assistant_api.TalkService_
 
 	source, ok := utils.GetClientSource(stream.Context())
 	if !ok {
+		cApi.logger.Errorf("unable to resolve the source from the context")
 		return errors.New("illegal source")
+	}
+	streamer, err := internal_grpc.NewGrpcStreamer(stream.Context(), cApi.logger, stream)
+	if err != nil {
+		cApi.logger.Errorf("failed to create grpc streamer: %v", err)
+		return err
 	}
 	talker, err := internal_adapter.GetTalker(
 		source,
@@ -109,16 +153,48 @@ func (cApi *ConversationGrpcApi) AssistantTalk(stream assistant_api.TalkService_
 		cApi.opensearch,
 		cApi.redis,
 		cApi.storage,
-		internal_grpc.NewGrpcUnidirectionalStreamer(stream),
+		streamer,
 	)
 	if err != nil {
+		cApi.logger.Errorf("failed to setup talker: %v", err)
 		return err
 	}
 
-	return talker.
-		Talk(
-			stream.Context(),
-			auth,
-			internal_adapter.Identifier(source, stream.Context(), auth, ""),
-		)
+	return talker.Talk(stream.Context(), auth)
+}
+
+func (cApi *ConversationGrpcApi) WebTalk(stream assistant_api.WebRTC_WebTalkServer) error {
+	auth, isAuthenticated := types.GetSimplePrincipleGRPC(stream.Context())
+	if !isAuthenticated {
+		cApi.logger.Errorf("unable to resolve the authentication object, please check the parameter for authentication")
+		return errors.New("unauthenticated request for messaging")
+	}
+
+	source, ok := utils.GetClientSource(stream.Context())
+	if !ok {
+		cApi.logger.Errorf("unable to resolve the source from the context")
+		return errors.New("illegal source")
+	}
+	streamer, err := internal_webrtc.NewWebRTCStreamer(stream.Context(), cApi.logger, stream)
+	if err != nil {
+		cApi.logger.Errorf("failed to create grpc streamer: %v", err)
+		return err
+	}
+	talker, err := internal_adapter.GetTalker(
+		source,
+		stream.Context(),
+		cApi.cfg,
+		cApi.logger,
+		cApi.postgres,
+		cApi.opensearch,
+		cApi.redis,
+		cApi.storage,
+		streamer,
+	)
+	if err != nil {
+		cApi.logger.Errorf("failed to setup talker: %v", err)
+		return err
+	}
+
+	return talker.Talk(stream.Context(), auth)
 }

@@ -123,7 +123,6 @@ func (orgR *webOrganizationRPCApi) CreateOrganization(c *gin.Context) {
 For creation of organization and
 */
 func (orgG *webOrganizationGRPCApi) CreateOrganization(c context.Context, irRequest *protos.CreateOrganizationRequest) (*protos.CreateOrganizationResponse, error) {
-	orgG.logger.Debugf("CreateOrganization from grpc with requestPayload %v, %v", irRequest, c)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(c)
 	if !isAuthenticated {
 		orgG.logger.Errorf("unauthenticated request for create organization")
@@ -191,7 +190,6 @@ func (orgG *webOrganizationGRPCApi) CreateOrganization(c context.Context, irRequ
 }
 
 func (orgG *webOrganizationGRPCApi) UpdateOrganization(c context.Context, irRequest *protos.UpdateOrganizationRequest) (*protos.UpdateOrganizationResponse, error) {
-	orgG.logger.Debugf("UpdateOrganization from grpc with requestPayload %v, %v", irRequest, c)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(c)
 	if !isAuthenticated {
 		orgG.logger.Errorf("UpdateOrganization from grpc not authenticated")
@@ -220,7 +218,6 @@ func (orgG *webOrganizationGRPCApi) UpdateOrganization(c context.Context, irRequ
 
 // getting all the organization
 func (orgG *webOrganizationGRPCApi) GetOrganization(c context.Context, irRequest *protos.GetOrganizationRequest) (*protos.GetOrganizationResponse, error) {
-	orgG.logger.Debugf("GetOrganization from grpc with requestPayload %v, %v", irRequest, c)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(c)
 	if !isAuthenticated {
 		orgG.logger.Errorf("GetOrganization from grpc not authenticated")
@@ -272,6 +269,5 @@ func (orgG *webOrganizationGRPCApi) GetOrganization(c context.Context, irRequest
 }
 
 func (orgG *webOrganizationGRPCApi) UpdateBillingInformation(c context.Context, irRequest *protos.UpdateBillingInformationRequest) (*protos.BaseResponse, error) {
-	orgG.logger.Debugf("UpdateBillingInformation from grpc with requestPayload %v, %v", irRequest, c)
 	return nil, nil
 }

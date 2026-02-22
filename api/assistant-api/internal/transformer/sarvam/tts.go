@@ -36,10 +36,9 @@ type sarvamTextToSpeech struct {
 }
 
 func NewSarvamTextToSpeech(ctx context.Context, logger commons.Logger, credential *protos.VaultCredential,
-	audioConfig *protos.AudioConfig,
 	onPacket func(pkt ...internal_type.Packet) error,
 	opts utils.Option) (internal_type.TextToSpeechTransformer, error) {
-	sarvamOpts, err := NewSarvamOption(logger, credential, audioConfig, opts)
+	sarvamOpts, err := NewSarvamOption(logger, credential, opts)
 	if err != nil {
 		logger.Errorf("sarvam-tts: initializing sarvam failed %+v", err)
 		return nil, err

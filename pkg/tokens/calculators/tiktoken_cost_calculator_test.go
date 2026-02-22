@@ -381,10 +381,11 @@ func TestTikTokenCostCalculator_Token_LongMessages(t *testing.T) {
 	logger, _ := commons.NewApplicationLogger()
 	calculator := NewTikTokenCostCalculator(logger, "gpt-3.5-turbo")
 
-	longText := make([]byte, 10000) // 10KB of text
-	for i := range longText {
-		longText[i] = 'a'
-	}
+	longText := "lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
+		"Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. " +
+		"Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. " +
+		"Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. " +
+		"Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
 
 	in := []*protos.Message{
 		{

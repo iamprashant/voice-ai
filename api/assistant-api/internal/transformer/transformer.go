@@ -41,35 +41,27 @@ func (at AudioTransformer) String() string {
 	return string(at)
 }
 
-// AudioConfig *protos.AudioConfig
-
-// //
-// OnSpeech func(pkt ...Packet) error
-
-// // options of model
-// ModelOptions utils.Option
-
 func GetTextToSpeechTransformer(ctx context.Context,
 	logger commons.Logger,
 	provider string,
 	credential *protos.VaultCredential,
-	audioConfig *protos.AudioConfig, onPacket func(pkt ...internal_type.Packet) error,
+	onPacket func(pkt ...internal_type.Packet) error,
 	opts utils.Option) (internal_type.TextToSpeechTransformer, error) {
 	switch AudioTransformer(provider) {
 	case DEEPGRAM:
-		return internal_transformer_deepgram.NewDeepgramTextToSpeech(ctx, logger, credential, audioConfig, onPacket, opts)
+		return internal_transformer_deepgram.NewDeepgramTextToSpeech(ctx, logger, credential, onPacket, opts)
 	case AZURE_SPEECH_SERVICE:
-		return internal_transformer_azure.NewAzureTextToSpeech(ctx, logger, credential, audioConfig, onPacket, opts)
+		return internal_transformer_azure.NewAzureTextToSpeech(ctx, logger, credential, onPacket, opts)
 	case CARTESIA:
-		return internal_transformer_cartesia.NewCartesiaTextToSpeech(ctx, logger, credential, audioConfig, onPacket, opts)
+		return internal_transformer_cartesia.NewCartesiaTextToSpeech(ctx, logger, credential, onPacket, opts)
 	case GOOGLE_SPEECH_SERVICE:
-		return internal_transformer_google.NewGoogleTextToSpeech(ctx, logger, credential, audioConfig, onPacket, opts)
+		return internal_transformer_google.NewGoogleTextToSpeech(ctx, logger, credential, onPacket, opts)
 	case REVAI:
-		return internal_transformer_revai.NewRevaiTextToSpeech(ctx, logger, credential, audioConfig, onPacket, opts)
+		return internal_transformer_revai.NewRevaiTextToSpeech(ctx, logger, credential, onPacket, opts)
 	case SARVAM:
-		return internal_transformer_sarvam.NewSarvamTextToSpeech(ctx, logger, credential, audioConfig, onPacket, opts)
+		return internal_transformer_sarvam.NewSarvamTextToSpeech(ctx, logger, credential, onPacket, opts)
 	case ELEVENLABS:
-		return internal_transformer_elevenlabs.NewElevenlabsTextToSpeech(ctx, logger, credential, audioConfig, onPacket, opts)
+		return internal_transformer_elevenlabs.NewElevenlabsTextToSpeech(ctx, logger, credential, onPacket, opts)
 	default:
 		return nil, fmt.Errorf("illegal text to speech idenitfier")
 	}
@@ -79,25 +71,24 @@ func GetSpeechToTextTransformer(ctx context.Context,
 	logger commons.Logger,
 	provider string,
 	credential *protos.VaultCredential,
-	audioConfig *protos.AudioConfig,
 	onPacket func(pkt ...internal_type.Packet) error,
 	opts utils.Option,
 ) (internal_type.SpeechToTextTransformer, error) {
 	switch AudioTransformer(provider) {
 	case DEEPGRAM:
-		return internal_transformer_deepgram.NewDeepgramSpeechToText(ctx, logger, credential, audioConfig, onPacket, opts)
+		return internal_transformer_deepgram.NewDeepgramSpeechToText(ctx, logger, credential, onPacket, opts)
 	case AZURE_SPEECH_SERVICE:
-		return internal_transformer_azure.NewAzureSpeechToText(ctx, logger, credential, audioConfig, onPacket, opts)
+		return internal_transformer_azure.NewAzureSpeechToText(ctx, logger, credential, onPacket, opts)
 	case GOOGLE_SPEECH_SERVICE:
-		return internal_transformer_google.NewGoogleSpeechToText(ctx, logger, credential, audioConfig, onPacket, opts)
+		return internal_transformer_google.NewGoogleSpeechToText(ctx, logger, credential, onPacket, opts)
 	case ASSEMBLYAI:
-		return internal_transformer_assemblyai.NewAssemblyaiSpeechToText(ctx, logger, credential, audioConfig, onPacket, opts)
+		return internal_transformer_assemblyai.NewAssemblyaiSpeechToText(ctx, logger, credential, onPacket, opts)
 	case REVAI:
-		return internal_transformer_revai.NewRevaiSpeechToText(ctx, logger, credential, audioConfig, onPacket, opts)
+		return internal_transformer_revai.NewRevaiSpeechToText(ctx, logger, credential, onPacket, opts)
 	case SARVAM:
-		return internal_transformer_sarvam.NewSarvamSpeechToText(ctx, logger, credential, audioConfig, onPacket, opts)
+		return internal_transformer_sarvam.NewSarvamSpeechToText(ctx, logger, credential, onPacket, opts)
 	case CARTESIA:
-		return internal_transformer_cartesia.NewCartesiaSpeechToText(ctx, logger, credential, audioConfig, onPacket, opts)
+		return internal_transformer_cartesia.NewCartesiaSpeechToText(ctx, logger, credential, onPacket, opts)
 	default:
 		return nil, fmt.Errorf("illegal speech to text idenitfier")
 	}

@@ -137,6 +137,7 @@ services:
     container_name: assistant-api
     ports:
       - "9007:9007"
+      - "4573:4573"  # AudioSocket for Asterisk integration
     env_file:
       - ./docker/assistant-api/.assistant.env
     depends_on:

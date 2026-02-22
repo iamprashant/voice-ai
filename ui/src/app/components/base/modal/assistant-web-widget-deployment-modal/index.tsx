@@ -32,7 +32,7 @@ export function AssistantWebWidgetlDeploymentDialog(
       setModalOpen={props.setModalOpen}
       className="w-2/3 xl:w-1/3 flex-1"
     >
-      <div className="flex items-center p-4 border-b text-base/6 font-medium">
+      <div className="flex items-center p-4 border-b text-sm/6 font-medium">
         <div className="font-medium">Assistant</div>
         <ChevronRight size={18} className="mx-2" />
         <div className="font-medium">Deployment</div>

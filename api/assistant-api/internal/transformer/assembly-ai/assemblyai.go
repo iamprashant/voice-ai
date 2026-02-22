@@ -16,37 +16,27 @@ import (
 )
 
 func (opts *assemblyaiOption) GetEncoding() string {
-	switch opts.audioConfig.GetAudioFormat() {
-	case protos.AudioConfig_LINEAR16:
-		return "pcm_s16le"
-	case protos.AudioConfig_MuLaw8:
-		return "pcm_mulaw"
-	default:
-		return "pcm_s16le"
-	}
+	return "pcm_s16le"
 }
 
 type assemblyaiOption struct {
-	logger      commons.Logger
-	key         string
-	mdlOpts     utils.Option
-	audioConfig *protos.AudioConfig
+	logger  commons.Logger
+	key     string
+	mdlOpts utils.Option
 }
 
 func NewAssemblyaiOption(
 	logger commons.Logger,
 	vaultCredential *protos.VaultCredential,
-	audioConfig *protos.AudioConfig,
 	mdlOpts utils.Option) (*assemblyaiOption, error) {
 	cx, ok := vaultCredential.GetValue().AsMap()["key"]
 	if !ok {
 		return nil, fmt.Errorf("illegal vault config")
 	}
 	return &assemblyaiOption{
-		logger:      logger,
-		mdlOpts:     mdlOpts,
-		audioConfig: audioConfig,
-		key:         cx.(string),
+		logger:  logger,
+		mdlOpts: mdlOpts,
+		key:     cx.(string),
 	}, nil
 }
 
@@ -57,7 +47,7 @@ func (co *assemblyaiOption) GetKey() string {
 func (co *assemblyaiOption) GetSpeechToTextConnectionString() string {
 	baseURL := "wss://streaming.assemblyai.com/v3/ws"
 	params := url.Values{}
-	params.Add("sample_rate", fmt.Sprintf("%d", co.audioConfig.SampleRate))
+	params.Add("sample_rate", "16000")
 	params.Add("encoding", co.GetEncoding())
 	params.Add("format_turns", "true")
 	// Check and add language

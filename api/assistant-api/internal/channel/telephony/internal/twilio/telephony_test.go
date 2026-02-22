@@ -1,0 +1,337 @@
+// Copyright (c) 2023-2025 RapidaAI
+// Author: Prashant Srivastav <prashant@rapida.ai>
+//
+// Licensed under GPL-2.0 with Rapida Additional Terms.
+// See LICENSE.md or contact sales@rapida.ai for commercial usage.
+package internal_twilio_telephony
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"testing"
+
+	"github.com/gin-gonic/gin"
+	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+// TestReceiveCall tests the ReceiveCall method with Twilio webhook parameters
+func TestReceiveCall(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	tests := []struct {
+		name          string
+		queryParams   map[string]string
+		expectedError bool
+		expectedPhone string
+		checkCallInfo func(*testing.T, *internal_type.CallInfo)
+	}{
+		{
+			name: "Valid Twilio webhook with all parameters",
+			queryParams: map[string]string{
+				"Called":        "+13345895552",
+				"ToState":       "AL",
+				"CallerCountry": "US",
+				"Direction":     "inbound",
+				"CallerState":   "PA",
+				"ToZip":         "36303",
+				"CallSid":       "CAf64ab88f90f35581dcb16e60f875ea4a",
+				"To":            "+13345895552",
+				"CallerZip":     "16901",
+				"ToCountry":     "US",
+				"StirVerstat":   "TN-Validation-Passed-B",
+				"CalledZip":     "36303",
+				"ApiVersion":    "2010-04-01",
+				"CalledCity":    "DOTHAN",
+				"CallStatus":    "ringing",
+				"From":          "+15703768754",
+				"AccountSid":    "546789087657890876DFGHJKASHDFBJK",
+				"CalledCountry": "US",
+				"CallerCity":    "MIDDLEBURY CENTER",
+				"ToCity":        "DOTHAN",
+				"FromCountry":   "US",
+				"Caller":        "+15703768754",
+				"FromCity":      "MIDDLEBURY CENTER",
+				"CalledState":   "AL",
+				"FromZip":       "16901",
+				"FromState":     "PA",
+			},
+			expectedError: false,
+			expectedPhone: "+15703768754",
+			checkCallInfo: func(t *testing.T, info *internal_type.CallInfo) {
+				require.NotNil(t, info)
+				assert.Equal(t, "twilio", info.Provider)
+				assert.Equal(t, "SUCCESS", info.Status)
+				assert.Equal(t, "+15703768754", info.CallerNumber)
+				assert.Equal(t, "CAf64ab88f90f35581dcb16e60f875ea4a", info.ChannelUUID)
+
+				// Check StatusInfo
+				assert.Equal(t, "webhook", info.StatusInfo.Event)
+				assert.NotNil(t, info.StatusInfo.Payload)
+				payload, ok := info.StatusInfo.Payload.(map[string]string)
+				require.True(t, ok, "Payload should be map[string]string")
+				assert.Equal(t, "+15703768754", payload["From"])
+				assert.Equal(t, "CAf64ab88f90f35581dcb16e60f875ea4a", payload["CallSid"])
+			},
+		},
+		{
+			name: "Valid webhook with minimal parameters",
+			queryParams: map[string]string{
+				"From":    "+15703768754",
+				"To":      "+13345895552",
+				"CallSid": "CAf64ab88f90f35581dcb16e60f875ea4a",
+			},
+			expectedError: false,
+			expectedPhone: "+15703768754",
+			checkCallInfo: func(t *testing.T, info *internal_type.CallInfo) {
+				require.NotNil(t, info)
+				assert.Equal(t, "twilio", info.Provider)
+				assert.Equal(t, "SUCCESS", info.Status)
+				assert.Equal(t, "CAf64ab88f90f35581dcb16e60f875ea4a", info.ChannelUUID)
+				assert.Equal(t, "webhook", info.StatusInfo.Event)
+				assert.NotNil(t, info.StatusInfo.Payload)
+			},
+		},
+		{
+			name: "Valid webhook without CallSid",
+			queryParams: map[string]string{
+				"From": "+15703768754",
+				"To":   "+13345895552",
+			},
+			expectedError: false,
+			expectedPhone: "+15703768754",
+			checkCallInfo: func(t *testing.T, info *internal_type.CallInfo) {
+				require.NotNil(t, info)
+				assert.Equal(t, "twilio", info.Provider)
+				assert.Equal(t, "SUCCESS", info.Status)
+				assert.Empty(t, info.ChannelUUID, "ChannelUUID should be empty without CallSid")
+				assert.Equal(t, "webhook", info.StatusInfo.Event)
+			},
+		},
+		{
+			name: "Missing 'From' parameter",
+			queryParams: map[string]string{
+				"To":         "+13345895552",
+				"CallSid":    "CAf64ab88f90f35581dcb16e60f875ea4a",
+				"CallStatus": "ringing",
+			},
+			expectedError: true,
+			expectedPhone: "",
+			checkCallInfo: func(t *testing.T, info *internal_type.CallInfo) {
+				// CallInfo should be nil on error
+			},
+		},
+		{
+			name: "Empty 'From' parameter",
+			queryParams: map[string]string{
+				"From": "",
+				"To":   "+13345895552",
+			},
+			expectedError: true,
+			expectedPhone: "",
+			checkCallInfo: func(t *testing.T, info *internal_type.CallInfo) {
+				// CallInfo should be nil on error
+			},
+		},
+		{
+			name: "Only CallSid without From",
+			queryParams: map[string]string{
+				"CallSid":    "CAf64ab88f90f35581dcb16e60f875ea4a",
+				"To":         "+13345895552",
+				"CallStatus": "ringing",
+			},
+			expectedError: true,
+			expectedPhone: "",
+			checkCallInfo: func(t *testing.T, info *internal_type.CallInfo) {
+				// CallInfo should be nil on error
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create test context
+			w := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(w)
+
+			// Build query string
+			queryValues := url.Values{}
+			for key, value := range tt.queryParams {
+				queryValues.Add(key, value)
+			}
+
+			// Create request with query parameters
+			req := httptest.NewRequest(http.MethodGet, "/?"+queryValues.Encode(), nil)
+			c.Request = req
+
+			// Create telephony instance
+			telephony := &twilioTelephony{}
+
+			// Call ReceiveCall
+			callInfo, err := telephony.ReceiveCall(c)
+
+			// Verify error expectation
+			if tt.expectedError {
+				assert.Error(t, err)
+				assert.Nil(t, callInfo)
+			} else {
+				assert.NoError(t, err)
+				require.NotNil(t, callInfo)
+				assert.Equal(t, tt.expectedPhone, callInfo.CallerNumber)
+			}
+
+			// Check CallInfo
+			if tt.checkCallInfo != nil {
+				tt.checkCallInfo(t, callInfo)
+			}
+		})
+	}
+}
+
+// TestReceiveCall_QueryParameterExtraction tests that all query parameters are captured in CallInfo payload
+func TestReceiveCall_QueryParameterExtraction(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	queryParams := map[string]string{
+		"Called":        "+13345895552",
+		"ToState":       "AL",
+		"CallerCountry": "US",
+		"Direction":     "inbound",
+		"CallerState":   "PA",
+		"ToZip":         "36303",
+		"CallSid":       "CAf64ab88f90f35581dcb16e60f875ea4a",
+		"To":            "+13345895552",
+		"CallerZip":     "16901",
+		"ToCountry":     "US",
+		"StirVerstat":   "TN-Validation-Passed-B",
+		"CalledZip":     "36303",
+		"ApiVersion":    "2010-04-01",
+		"CalledCity":    "DOTHAN",
+		"CallStatus":    "ringing",
+		"From":          "+15703768754",
+		"AccountSid":    "546789087657890876DFGHJKASHDFBJK",
+		"CalledCountry": "US",
+		"CallerCity":    "MIDDLEBURY CENTER",
+		"ToCity":        "DOTHAN",
+		"FromCountry":   "US",
+		"Caller":        "+15703768754",
+		"FromCity":      "MIDDLEBURY CENTER",
+		"CalledState":   "AL",
+		"FromZip":       "16901",
+		"FromState":     "PA",
+	}
+
+	queryValues := url.Values{}
+	for key, value := range queryParams {
+		queryValues.Add(key, value)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/?"+queryValues.Encode(), nil)
+	c.Request = req
+
+	telephony := &twilioTelephony{}
+	callInfo, err := telephony.ReceiveCall(c)
+
+	require.NoError(t, err)
+	require.NotNil(t, callInfo)
+
+	// Verify StatusInfo contains webhook event with all query parameters as payload
+	assert.Equal(t, "webhook", callInfo.StatusInfo.Event)
+	require.NotNil(t, callInfo.StatusInfo.Payload, "StatusInfo payload should not be nil")
+
+	payloadMap, ok := callInfo.StatusInfo.Payload.(map[string]string)
+	require.True(t, ok, "Payload should be map[string]string")
+
+	for key, expectedValue := range queryParams {
+		actualValue, exists := payloadMap[key]
+		assert.True(t, exists, "Query param '%s' should be in payload", key)
+		assert.Equal(t, expectedValue, actualValue, "Value for '%s' should match", key)
+	}
+}
+
+// TestReceiveCall_PhoneNumberFormats tests various phone number formats
+func TestReceiveCall_PhoneNumberFormats(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	tests := []struct {
+		name          string
+		phoneNumber   string
+		expectedPhone string
+	}{
+		{
+			name:          "E.164 format with plus",
+			phoneNumber:   "+15703768754",
+			expectedPhone: "+15703768754",
+		},
+		{
+			name:          "10-digit US number",
+			phoneNumber:   "5703768754",
+			expectedPhone: "5703768754",
+		},
+		{
+			name:          "International format",
+			phoneNumber:   "+441234567890",
+			expectedPhone: "+441234567890",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(w)
+
+			queryValues := url.Values{}
+			queryValues.Add("From", tt.phoneNumber)
+			queryValues.Add("To", "+13345895552")
+
+			req := httptest.NewRequest(http.MethodGet, "/?"+queryValues.Encode(), nil)
+			c.Request = req
+
+			telephony := &twilioTelephony{}
+			callInfo, err := telephony.ReceiveCall(c)
+
+			require.NoError(t, err)
+			require.NotNil(t, callInfo)
+			assert.Equal(t, tt.expectedPhone, callInfo.CallerNumber)
+		})
+	}
+}
+
+// TestReceiveCall_CallInfoStructure tests the structure of CallInfo data
+func TestReceiveCall_CallInfoStructure(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	queryValues := url.Values{}
+	queryValues.Add("From", "+15703768754")
+	queryValues.Add("To", "+13345895552")
+	queryValues.Add("CallSid", "CAf64ab88f90f35581dcb16e60f875ea4a")
+	queryValues.Add("CallStatus", "ringing")
+
+	req := httptest.NewRequest(http.MethodGet, "/?"+queryValues.Encode(), nil)
+	c.Request = req
+
+	telephony := &twilioTelephony{}
+	callInfo, err := telephony.ReceiveCall(c)
+
+	require.NoError(t, err)
+	require.NotNil(t, callInfo)
+
+	// Verify CallInfo fields
+	assert.Equal(t, "twilio", callInfo.Provider)
+	assert.Equal(t, "SUCCESS", callInfo.Status)
+	assert.Equal(t, "+15703768754", callInfo.CallerNumber)
+	assert.Equal(t, "CAf64ab88f90f35581dcb16e60f875ea4a", callInfo.ChannelUUID)
+	assert.Empty(t, callInfo.ErrorMessage)
+
+	// Verify StatusInfo
+	assert.Equal(t, "webhook", callInfo.StatusInfo.Event)
+	assert.NotNil(t, callInfo.StatusInfo.Payload)
+}

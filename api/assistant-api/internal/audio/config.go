@@ -5,12 +5,27 @@
 // See LICENSE.md or contact sales@rapida.ai for commercial usage.
 package internal_audio
 
-import "github.com/rapidaai/protos"
+import (
+	"github.com/rapidaai/protos"
+)
+
+var (
+	WEBRTC_AUDIO_CONFIG          = NewLinear48khzMonoAudioConfig()
+	RAPIDA_INTERNAL_AUDIO_CONFIG = NewLinear16khzMonoAudioConfig()
+)
 
 func NewMulaw8khzMonoAudioConfig() *protos.AudioConfig {
 	return &protos.AudioConfig{
 		SampleRate:  8000,
 		AudioFormat: protos.AudioConfig_MuLaw8,
+		Channels:    1,
+	}
+}
+
+func NewLinear48khzMonoAudioConfig() *protos.AudioConfig {
+	return &protos.AudioConfig{
+		SampleRate:  48000,
+		AudioFormat: protos.AudioConfig_LINEAR16,
 		Channels:    1,
 	}
 }

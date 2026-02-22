@@ -9,6 +9,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+
+	"github.com/rapidaai/pkg/utils"
+	"github.com/rapidaai/protos"
 )
 
 type Metadata struct {
@@ -58,4 +61,21 @@ func NewMetadataList(data map[string]interface{}) []*Metadata {
 		metadataList = append(metadataList, NewMetadata(key, value))
 	}
 	return metadataList
+}
+
+func ToMetadata(mtr *protos.Metadata) *Metadata {
+	out := &Metadata{}
+	err := utils.Cast(mtr, out)
+	if err != nil {
+		return nil
+	}
+	return out
+}
+
+func ToMetadatas(mtr []*protos.Metadata) []*Metadata {
+	out := make([]*Metadata, len(mtr))
+	for idx, k := range mtr {
+		out[idx] = ToMetadata(k)
+	}
+	return out
 }

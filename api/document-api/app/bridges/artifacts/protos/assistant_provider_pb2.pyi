@@ -1,3 +1,5 @@
+import datetime
+
 from google.protobuf import timestamp_pb2 as _timestamp_pb2
 import app.bridges.artifacts.protos.common_pb2 as _common_pb2
 from google.protobuf.internal import containers as _containers
@@ -115,7 +117,7 @@ class AssistantProviderAgentkit(_message.Message):
     updatedUser: _common_pb2.User
     createdDate: _timestamp_pb2.Timestamp
     updatedDate: _timestamp_pb2.Timestamp
-    def __init__(self, id: _Optional[int] = ..., description: _Optional[str] = ..., assistantId: _Optional[int] = ..., status: _Optional[str] = ..., url: _Optional[str] = ..., certificate: _Optional[str] = ..., metadata: _Optional[_Mapping[str, str]] = ..., createdBy: _Optional[int] = ..., createdUser: _Optional[_Union[_common_pb2.User, _Mapping]] = ..., updatedBy: _Optional[int] = ..., updatedUser: _Optional[_Union[_common_pb2.User, _Mapping]] = ..., createdDate: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., updatedDate: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
+    def __init__(self, id: _Optional[int] = ..., description: _Optional[str] = ..., assistantId: _Optional[int] = ..., status: _Optional[str] = ..., url: _Optional[str] = ..., certificate: _Optional[str] = ..., metadata: _Optional[_Mapping[str, str]] = ..., createdBy: _Optional[int] = ..., createdUser: _Optional[_Union[_common_pb2.User, _Mapping]] = ..., updatedBy: _Optional[int] = ..., updatedUser: _Optional[_Union[_common_pb2.User, _Mapping]] = ..., createdDate: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updatedDate: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
 
 class AssistantProviderWebsocket(_message.Message):
     __slots__ = ("id", "description", "assistantId", "url", "headers", "parameters", "status", "createdBy", "createdUser", "updatedBy", "updatedUser", "createdDate", "updatedDate")
@@ -159,7 +161,7 @@ class AssistantProviderWebsocket(_message.Message):
     updatedUser: _common_pb2.User
     createdDate: _timestamp_pb2.Timestamp
     updatedDate: _timestamp_pb2.Timestamp
-    def __init__(self, id: _Optional[int] = ..., description: _Optional[str] = ..., assistantId: _Optional[int] = ..., url: _Optional[str] = ..., headers: _Optional[_Mapping[str, str]] = ..., parameters: _Optional[_Mapping[str, str]] = ..., status: _Optional[str] = ..., createdBy: _Optional[int] = ..., createdUser: _Optional[_Union[_common_pb2.User, _Mapping]] = ..., updatedBy: _Optional[int] = ..., updatedUser: _Optional[_Union[_common_pb2.User, _Mapping]] = ..., createdDate: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., updatedDate: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
+    def __init__(self, id: _Optional[int] = ..., description: _Optional[str] = ..., assistantId: _Optional[int] = ..., url: _Optional[str] = ..., headers: _Optional[_Mapping[str, str]] = ..., parameters: _Optional[_Mapping[str, str]] = ..., status: _Optional[str] = ..., createdBy: _Optional[int] = ..., createdUser: _Optional[_Union[_common_pb2.User, _Mapping]] = ..., updatedBy: _Optional[int] = ..., updatedUser: _Optional[_Union[_common_pb2.User, _Mapping]] = ..., createdDate: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updatedDate: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
 
 class AssistantProviderModel(_message.Message):
     __slots__ = ("id", "template", "description", "assistantId", "modelProviderName", "assistantModelOptions", "status", "createdBy", "createdUser", "updatedBy", "updatedUser", "createdDate", "updatedDate")
@@ -189,7 +191,7 @@ class AssistantProviderModel(_message.Message):
     updatedUser: _common_pb2.User
     createdDate: _timestamp_pb2.Timestamp
     updatedDate: _timestamp_pb2.Timestamp
-    def __init__(self, id: _Optional[int] = ..., template: _Optional[_Union[_common_pb2.TextChatCompletePrompt, _Mapping]] = ..., description: _Optional[str] = ..., assistantId: _Optional[int] = ..., modelProviderName: _Optional[str] = ..., assistantModelOptions: _Optional[_Iterable[_Union[_common_pb2.Metadata, _Mapping]]] = ..., status: _Optional[str] = ..., createdBy: _Optional[int] = ..., createdUser: _Optional[_Union[_common_pb2.User, _Mapping]] = ..., updatedBy: _Optional[int] = ..., updatedUser: _Optional[_Union[_common_pb2.User, _Mapping]] = ..., createdDate: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., updatedDate: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
+    def __init__(self, id: _Optional[int] = ..., template: _Optional[_Union[_common_pb2.TextChatCompletePrompt, _Mapping]] = ..., description: _Optional[str] = ..., assistantId: _Optional[int] = ..., modelProviderName: _Optional[str] = ..., assistantModelOptions: _Optional[_Iterable[_Union[_common_pb2.Metadata, _Mapping]]] = ..., status: _Optional[str] = ..., createdBy: _Optional[int] = ..., createdUser: _Optional[_Union[_common_pb2.User, _Mapping]] = ..., updatedBy: _Optional[int] = ..., updatedUser: _Optional[_Union[_common_pb2.User, _Mapping]] = ..., createdDate: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updatedDate: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
 
 class GetAllAssistantProviderRequest(_message.Message):
     __slots__ = ("paginate", "criterias", "assistantId")

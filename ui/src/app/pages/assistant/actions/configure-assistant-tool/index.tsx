@@ -102,7 +102,7 @@ const ConfigureAssistantTool: FC<{ assistantId: string }> = ({
   return (
     <div className="relative flex flex-col flex-1">
       <ConfirmDialogComponent />
-      <PageHeaderBlock>
+      <PageHeaderBlock className="border-b">
         <PageTitleBlock>Configure Tools and MCPs</PageTitleBlock>
         <div className="flex divide-x border-l">
           <IBlueButton

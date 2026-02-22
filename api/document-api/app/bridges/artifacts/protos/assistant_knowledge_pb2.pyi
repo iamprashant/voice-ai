@@ -1,3 +1,5 @@
+import datetime
+
 from google.protobuf import timestamp_pb2 as _timestamp_pb2
 import app.bridges.artifacts.protos.common_pb2 as _common_pb2
 from google.protobuf.internal import containers as _containers
@@ -36,7 +38,7 @@ class AssistantKnowledge(_message.Message):
     createdDate: _timestamp_pb2.Timestamp
     updatedDate: _timestamp_pb2.Timestamp
     status: str
-    def __init__(self, id: _Optional[int] = ..., knowledgeId: _Optional[int] = ..., rerankerEnable: bool = ..., topK: _Optional[int] = ..., scoreThreshold: _Optional[float] = ..., knowledge: _Optional[_Union[_common_pb2.Knowledge, _Mapping]] = ..., retrievalMethod: _Optional[str] = ..., rerankerModelProviderId: _Optional[int] = ..., rerankerModelProviderName: _Optional[str] = ..., assistantKnowledgeRerankerOptions: _Optional[_Iterable[_Union[_common_pb2.Metadata, _Mapping]]] = ..., createdDate: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., updatedDate: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., status: _Optional[str] = ...) -> None: ...
+    def __init__(self, id: _Optional[int] = ..., knowledgeId: _Optional[int] = ..., rerankerEnable: bool = ..., topK: _Optional[int] = ..., scoreThreshold: _Optional[float] = ..., knowledge: _Optional[_Union[_common_pb2.Knowledge, _Mapping]] = ..., retrievalMethod: _Optional[str] = ..., rerankerModelProviderId: _Optional[int] = ..., rerankerModelProviderName: _Optional[str] = ..., assistantKnowledgeRerankerOptions: _Optional[_Iterable[_Union[_common_pb2.Metadata, _Mapping]]] = ..., createdDate: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updatedDate: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., status: _Optional[str] = ...) -> None: ...
 
 class CreateAssistantKnowledgeRequest(_message.Message):
     __slots__ = ("knowledgeId", "assistantId", "rerankerModelProviderId", "rerankerModelProviderName", "assistantKnowledgeRerankerOptions", "topK", "scoreThreshold", "retrievalMethod", "rerankerEnable")

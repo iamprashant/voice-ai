@@ -32,7 +32,7 @@ export function AssistantDebugDeploymentDialog(
       setModalOpen={props.setModalOpen}
       className="w-2/3 xl:w-1/3 flex-1"
     >
-      <div className="flex items-center p-4 border-b text-base/6 font-medium">
+      <div className="flex items-center p-4 border-b text-sm/6 font-medium">
         <div className="font-medium">Assistant</div>
         <ChevronRight size={18} className="mx-2" />
         <div className="font-medium">Deployment</div>
@@ -41,41 +41,12 @@ export function AssistantDebugDeploymentDialog(
       </div>
       <div className="relative overflow-auto h-[calc(100vh-50px)] flex flex-col flex-1">
         <Tab
-          active="Sharing"
+          active="Audio"
           className={cn(
             'text-sm',
             'bg-gray-50 border-b dark:bg-gray-900 dark:border-gray-800 sticky top-0 z-1',
           )}
           tabs={[
-            {
-              label: 'Sharing',
-              element: (
-                <div className="flex-1 px-4 space-y-8">
-                  <FieldSet className="col-span-2">
-                    <div className="font-medium border-b -mx-4 px-4 py-2">
-                      Public Url
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <code className="flex-1 dark:bg-gray-950 bg-gray-100 px-3 py-2 font-mono text-xs min-w-0 overflow-hidden">
-                        {`https://www.rapida.ai/public/assistant/${props.deployment.getAssistantid()}?token={{PROJECT_CRDENTIAL_KEY}}`}
-                      </code>
-                      <div className="flex shrink-0 border divide-x">
-                        <CopyButton className="h-7 w-7">
-                          {`https://www.rapida.ai/public/assistant/2214276472644829184?token={{PROJECT_CRDENTIAL_KEY}}`}
-                        </CopyButton>
-                      </div>
-                    </div>
-                    <InputHelper>
-                      You can add all the additional agent arguments in query
-                      parameters for example if you are expecting argument
-                      <code className="text-red-600">`name`</code>
-                      add{' '}
-                      <code className="text-red-600">`?name=your-name`</code>
-                    </InputHelper>
-                  </FieldSet>
-                </div>
-              ),
-            },
             {
               label: 'Audio',
               element: (

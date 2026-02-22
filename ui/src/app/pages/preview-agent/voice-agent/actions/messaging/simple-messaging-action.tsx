@@ -4,12 +4,10 @@ import {
   useInputModeToggleAgent,
   VoiceAgent,
 } from '@rapidaai/react';
-import { AudioLines, Send } from 'lucide-react';
-import { FC, HTMLAttributes, useEffect, useState } from 'react';
+import { AudioLines, Loader2, Send, StopCircleIcon } from 'lucide-react';
+import { FC, HTMLAttributes } from 'react';
 import { useForm } from 'react-hook-form';
 import { cn } from '@/utils';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Spinner } from '@/app/components/loader/spinner';
 import { ScalableTextarea } from '@/app/components/form/textarea';
 
 interface SimpleMessagingAcitonProps extends HTMLAttributes<HTMLDivElement> {
@@ -23,26 +21,13 @@ export const SimpleMessagingAction: FC<SimpleMessagingAcitonProps> = ({
   assistant,
   placeholder,
 }) => {
-  //   const ctx = useEnsureVoiceAgent();
   const { handleVoiceToggle } = useInputModeToggleAgent(voiceAgent);
-  const { handleConnectAgent, handleDisconnectAgent, isConnected } =
-    useConnectAgent(voiceAgent);
-  const [isLoading, setIsLoading] = useState(false);
-  useEffect(() => {
-    if (!isConnected) {
-      setIsLoading(false);
-    }
-  }, [isConnected]);
-
-  const handleDisconnectClick = async () => {
-    if (isConnected) {
-      setIsLoading(true);
-      await handleDisconnectAgent();
-    } else {
-      //
-      await handleConnectAgent();
-    }
-  };
+  const {
+    handleConnectAgent,
+    handleDisconnectAgent,
+    isConnected,
+    isConnecting,
+  } = useConnectAgent(voiceAgent);
 
   const {
     register,
@@ -60,43 +45,6 @@ export const SimpleMessagingAction: FC<SimpleMessagingAcitonProps> = ({
 
   return (
     <div>
-      <AnimatePresence>
-        <motion.div
-          className={cn(
-            'flex justify-center items-center py-2',
-            !isConnected && 'hidden',
-          )}
-        >
-          <button
-            onClick={async () => {
-              handleDisconnectClick();
-            }}
-            disabled={isLoading}
-            className={cn(
-              'px-3 py-[4px] rounded-[2px] flex items-center space-x-1.5 bg-red-600 text-white border border-red-700/50',
-            )}
-          >
-            {isLoading ? (
-              <Spinner className="border-white!" />
-            ) : (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="w-4 h-4"
-                strokeWidth={1.5}
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm6-2.438c0-.724.588-1.312 1.313-1.312h4.874c.725 0 1.313.588 1.313 1.313v4.874c0 .725-.588 1.313-1.313 1.313H9.564a1.312 1.312 0 0 1-1.313-1.313V9.564Z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            )}
-            <span className="text-sm font-medium">End session</span>
-          </button>
-        </motion.div>
-      </AnimatePresence>
       <form
         className={cn(
           'relative flex items-center gap-4 focus-within:border-primary  dark:border-gray-700 bg-light-background focus-within:bg-white',
@@ -119,29 +67,62 @@ export const SimpleMessagingAction: FC<SimpleMessagingAcitonProps> = ({
         />
 
         <div className="absolute rounded-b-lg right-2 bottom-2 my-auto w-fit">
-          {isValid ? (
-            <button
-              type="submit"
-              className="inline-flex shrink-0 justify-center items-center h-8 w-8 text-white bg-primary hover:bg-primary focus:z-10 focus:outline-hidden focus:bg-primary"
-            >
-              <Send className="shrink-0 w-4 h-4" strokeWidth="1.5" />
-            </button>
-          ) : (
-            <button
-              onClick={async () => {
-                await handleVoiceToggle();
-                !isConnected && (await handleConnectAgent());
-              }}
-              className="voice-action relative flex h-8 px-3 items-center justify-center bg-primary text-white transition-colors focus-visible:outline-hidden focus-visible:outline-black disabled:text-gray-50 disabled:opacity-30 can-hover:hover:opacity-70 min-w-8 p-2"
-            >
-              <div className="flex items-center justify-center mr-1">
-                <AudioLines className="shrink-0 w-4 h-4" strokeWidth="1.5" />
-              </div>
-              <span className="whitespace-nowrap pl-1 pr-1 text-[13px] font-medium">
-                Voice
-              </span>
-            </button>
-          )}
+          <div className="flex flex-row border divide-x">
+            {isValid ? (
+              <button
+                aria-label="Starting Voice"
+                type="submit"
+                className="group h-9 px-3 flex flex-row items-center justify-center transition-all duration-300 hover:opacity-80 overflow-hidden w-fit bg-blue-600 dark:bg-blue-500 text-white"
+              >
+                <Send className="w-4.5 h-4.5 flex-shrink-0" strokeWidth={1.5} />
+                <span className="text-sm overflow-hidden ml-2 font-medium">
+                  Send
+                </span>
+              </button>
+            ) : (
+              <button
+                aria-label="Starting Voice"
+                type="button"
+                disabled={isConnecting}
+                onClick={async () => {
+                  await handleVoiceToggle();
+                  !isConnected && (await handleConnectAgent());
+                }}
+                className="group h-9 px-3 flex flex-row items-center justify-center transition-all duration-300 hover:opacity-80 overflow-hidden w-fit bg-blue-600 dark:bg-blue-500 text-white"
+              >
+                {isConnecting ? (
+                  <Loader2
+                    className="w-4.5 h-4.5 flex-shrink-0 animate-spin"
+                    strokeWidth={1.5}
+                  />
+                ) : (
+                  <AudioLines
+                    className="w-4.5 h-4.5 flex-shrink-0"
+                    strokeWidth={1.5}
+                  />
+                )}
+                <span className="text-sm overflow-hidden ml-2 font-medium">
+                  {isConnecting ? 'Connecting...' : 'Voice'}
+                </span>
+              </button>
+            )}
+            {(isConnected || isConnecting) && (
+              <button
+                aria-label="Stoping Voice"
+                type="button"
+                disabled={!isConnected && !isConnecting}
+                onClick={async () => {
+                  await handleDisconnectAgent();
+                }}
+                className="group h-9 px-3 flex flex-row items-center justify-center transition-all duration-300 hover:opacity-80 overflow-hidden w-fit bg-red-500 text-white"
+              >
+                <StopCircleIcon className="w-4 h-4 !border-white" />
+                <span className="max-w-0 group-hover:max-w-xs transition-all duration-200 origin-left scale-x-0 group-hover:scale-x-100 group-hover:opacity-100 opacity-0 whitespace-nowrap text-sm overflow-hidden group-hover:ml-2 font-medium">
+                  Stop
+                </span>
+              </button>
+            )}
+          </div>
         </div>
       </form>
     </div>

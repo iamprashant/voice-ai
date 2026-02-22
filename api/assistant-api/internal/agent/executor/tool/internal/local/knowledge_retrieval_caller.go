@@ -46,12 +46,14 @@ func (afkTool *knowledgeRetrievalToolCaller) Call(ctx context.Context, contextID
 	if err != nil || in == nil {
 		return internal_tool.Result("Required argument is missing or query, context is missing from argument list", false)
 	} else {
-		knowledges, err := communication.RetrieveToolKnowledge(afkTool.knowledge, contextID, *in, v, &internal_type.KnowledgeRetrieveOption{
-			EmbeddingProviderCredential: afkTool.providerCredential,
-			RetrievalMethod:             afkTool.searchType,
-			TopK:                        afkTool.topK,
-			ScoreThreshold:              float32(afkTool.scoreThreshold),
-		})
+		knowledges, err := communication.RetrieveToolKnowledge(
+			ctx,
+			afkTool.knowledge, contextID, *in, v, &internal_type.KnowledgeRetrieveOption{
+				EmbeddingProviderCredential: afkTool.providerCredential,
+				RetrievalMethod:             afkTool.searchType,
+				TopK:                        afkTool.topK,
+				ScoreThreshold:              float32(afkTool.scoreThreshold),
+			})
 
 		if len(knowledges) == 0 || err != nil {
 			return internal_tool.Result("Not able to find anything in knowledge from given documents.", true)
@@ -69,6 +71,7 @@ func (afkTool *knowledgeRetrievalToolCaller) Call(ctx context.Context, contextID
 }
 
 func NewKnowledgeRetrievalToolCaller(
+	ctx context.Context,
 	logger commons.Logger,
 	toolOptions *internal_assistant_entity.AssistantTool,
 	communcation internal_type.Communication,
@@ -94,7 +97,7 @@ func NewKnowledgeRetrievalToolCaller(
 		return nil, fmt.Errorf("tool.knowledge_id is not a valid number: %v", err)
 	}
 
-	knowledge, err := communcation.GetKnowledge(knowledgeID)
+	knowledge, err := communcation.GetKnowledge(ctx, knowledgeID)
 	if err != nil {
 		logger.Errorf("error while getting knowledge %v", err)
 		return nil, err
@@ -108,7 +111,7 @@ func NewKnowledgeRetrievalToolCaller(
 	providerCredential, err := communcation.
 		VaultCaller().
 		GetCredential(
-			communcation.Context(),
+			ctx,
 			communcation.Auth(),
 			credentialId,
 		)

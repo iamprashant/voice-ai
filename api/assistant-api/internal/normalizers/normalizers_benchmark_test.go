@@ -7,41 +7,15 @@
 package internal_normalizers
 
 import (
-	"context"
 	"strings"
 	"testing"
-	"time"
 
-	"go.uber.org/zap/zapcore"
+	"github.com/rapidaai/pkg/commons"
 )
 
 // =============================================================================
 // Benchmark Mock Logger (minimal implementation for benchmarks)
 // =============================================================================
-
-type benchmarkLogger struct{}
-
-func (m *benchmarkLogger) Level() zapcore.Level                                  { return zapcore.DebugLevel }
-func (m *benchmarkLogger) Debug(args ...interface{})                             {}
-func (m *benchmarkLogger) Debugf(template string, args ...interface{})           {}
-func (m *benchmarkLogger) Info(args ...interface{})                              {}
-func (m *benchmarkLogger) Infof(template string, args ...interface{})            {}
-func (m *benchmarkLogger) Warn(args ...interface{})                              {}
-func (m *benchmarkLogger) Warnf(template string, args ...interface{})            {}
-func (m *benchmarkLogger) Error(args ...interface{})                             {}
-func (m *benchmarkLogger) Errorf(template string, args ...interface{})           {}
-func (m *benchmarkLogger) DPanic(args ...interface{})                            {}
-func (m *benchmarkLogger) DPanicf(template string, args ...interface{})          {}
-func (m *benchmarkLogger) Panic(args ...interface{})                             {}
-func (m *benchmarkLogger) Panicf(template string, args ...interface{})           {}
-func (m *benchmarkLogger) Fatal(args ...interface{})                             {}
-func (m *benchmarkLogger) Fatalf(template string, args ...interface{})           {}
-func (m *benchmarkLogger) Benchmark(functionName string, duration time.Duration) {}
-func (m *benchmarkLogger) Tracef(ctx context.Context, format string, args ...interface{}) {
-}
-func (m *benchmarkLogger) Sync() error { return nil }
-
-var benchLogger = &benchmarkLogger{}
 
 // =============================================================================
 // Sample Input Data for Benchmarks
@@ -70,8 +44,13 @@ var (
 // Individual Normalizer Benchmarks
 // =============================================================================
 
+func benchLogger() commons.Logger {
+	lgr, _ := commons.NewApplicationLogger()
+	return lgr
+}
+
 func BenchmarkCurrencyNormalizer(b *testing.B) {
-	normalizer := NewCurrencyNormalizer(benchLogger)
+	normalizer := NewCurrencyNormalizer(benchLogger())
 
 	b.Run("short", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
@@ -99,7 +78,7 @@ func BenchmarkCurrencyNormalizer(b *testing.B) {
 }
 
 func BenchmarkDateNormalizer(b *testing.B) {
-	normalizer := NewDateNormalizer(benchLogger)
+	normalizer := NewDateNormalizer(benchLogger())
 
 	b.Run("short", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
@@ -127,7 +106,7 @@ func BenchmarkDateNormalizer(b *testing.B) {
 }
 
 func BenchmarkTimeNormalizer(b *testing.B) {
-	normalizer := NewTimeNormalizer(benchLogger)
+	normalizer := NewTimeNormalizer(benchLogger())
 
 	b.Run("short", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
@@ -155,7 +134,7 @@ func BenchmarkTimeNormalizer(b *testing.B) {
 }
 
 func BenchmarkNumberToWordNormalizer(b *testing.B) {
-	normalizer := NewNumberToWordNormalizer(benchLogger)
+	normalizer := NewNumberToWordNormalizer(benchLogger())
 
 	b.Run("short", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
@@ -183,7 +162,7 @@ func BenchmarkNumberToWordNormalizer(b *testing.B) {
 }
 
 func BenchmarkAddressNormalizer(b *testing.B) {
-	normalizer := NewAddressNormalizer(benchLogger)
+	normalizer := NewAddressNormalizer(benchLogger())
 
 	b.Run("short", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
@@ -211,7 +190,7 @@ func BenchmarkAddressNormalizer(b *testing.B) {
 }
 
 func BenchmarkUrlNormalizer(b *testing.B) {
-	normalizer := NewUrlNormalizer(benchLogger)
+	normalizer := NewUrlNormalizer(benchLogger())
 
 	b.Run("short", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
@@ -239,7 +218,7 @@ func BenchmarkUrlNormalizer(b *testing.B) {
 }
 
 func BenchmarkSymbolNormalizer(b *testing.B) {
-	normalizer := NewSymbolNormalizer(benchLogger)
+	normalizer := NewSymbolNormalizer(benchLogger())
 
 	b.Run("short", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
@@ -273,7 +252,7 @@ func BenchmarkSymbolNormalizer(b *testing.B) {
 }
 
 func BenchmarkTechAbbreviationNormalizer(b *testing.B) {
-	normalizer := NewTechAbbreviationNormalizer(benchLogger)
+	normalizer := NewTechAbbreviationNormalizer(benchLogger())
 
 	b.Run("short", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
@@ -301,7 +280,7 @@ func BenchmarkTechAbbreviationNormalizer(b *testing.B) {
 }
 
 func BenchmarkRoleAbbreviationNormalizer(b *testing.B) {
-	normalizer := NewRoleAbbreviationNormalizer(benchLogger)
+	normalizer := NewRoleAbbreviationNormalizer(benchLogger())
 
 	b.Run("short", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
@@ -329,7 +308,7 @@ func BenchmarkRoleAbbreviationNormalizer(b *testing.B) {
 }
 
 func BenchmarkGeneralAbbreviationNormalizer(b *testing.B) {
-	normalizer := NewGeneralAbbreviationNormalizer(benchLogger)
+	normalizer := NewGeneralAbbreviationNormalizer(benchLogger())
 
 	b.Run("short", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
@@ -362,16 +341,16 @@ func BenchmarkGeneralAbbreviationNormalizer(b *testing.B) {
 
 func BenchmarkNormalizerChain(b *testing.B) {
 	normalizers := []Normalizer{
-		NewCurrencyNormalizer(benchLogger),
-		NewDateNormalizer(benchLogger),
-		NewTimeNormalizer(benchLogger),
-		NewNumberToWordNormalizer(benchLogger),
-		NewAddressNormalizer(benchLogger),
-		NewUrlNormalizer(benchLogger),
-		NewTechAbbreviationNormalizer(benchLogger),
-		NewRoleAbbreviationNormalizer(benchLogger),
-		NewGeneralAbbreviationNormalizer(benchLogger),
-		NewSymbolNormalizer(benchLogger),
+		NewCurrencyNormalizer(benchLogger()),
+		NewDateNormalizer(benchLogger()),
+		NewTimeNormalizer(benchLogger()),
+		NewNumberToWordNormalizer(benchLogger()),
+		NewAddressNormalizer(benchLogger()),
+		NewUrlNormalizer(benchLogger()),
+		NewTechAbbreviationNormalizer(benchLogger()),
+		NewRoleAbbreviationNormalizer(benchLogger()),
+		NewGeneralAbbreviationNormalizer(benchLogger()),
+		NewSymbolNormalizer(benchLogger()),
 	}
 
 	applyAll := func(input string) string {
@@ -419,16 +398,16 @@ func BenchmarkNormalizerChain(b *testing.B) {
 
 func BenchmarkNormalizerAllocations(b *testing.B) {
 	normalizers := map[string]Normalizer{
-		"currency": NewCurrencyNormalizer(benchLogger),
-		"date":     NewDateNormalizer(benchLogger),
-		"time":     NewTimeNormalizer(benchLogger),
-		"number":   NewNumberToWordNormalizer(benchLogger),
-		"address":  NewAddressNormalizer(benchLogger),
-		"url":      NewUrlNormalizer(benchLogger),
-		"symbol":   NewSymbolNormalizer(benchLogger),
-		"tech":     NewTechAbbreviationNormalizer(benchLogger),
-		"role":     NewRoleAbbreviationNormalizer(benchLogger),
-		"general":  NewGeneralAbbreviationNormalizer(benchLogger),
+		"currency": NewCurrencyNormalizer(benchLogger()),
+		"date":     NewDateNormalizer(benchLogger()),
+		"time":     NewTimeNormalizer(benchLogger()),
+		"number":   NewNumberToWordNormalizer(benchLogger()),
+		"address":  NewAddressNormalizer(benchLogger()),
+		"url":      NewUrlNormalizer(benchLogger()),
+		"symbol":   NewSymbolNormalizer(benchLogger()),
+		"tech":     NewTechAbbreviationNormalizer(benchLogger()),
+		"role":     NewRoleAbbreviationNormalizer(benchLogger()),
+		"general":  NewGeneralAbbreviationNormalizer(benchLogger()),
 	}
 
 	for name, normalizer := range normalizers {
@@ -446,7 +425,7 @@ func BenchmarkNormalizerAllocations(b *testing.B) {
 // =============================================================================
 
 func BenchmarkInputSizeScaling(b *testing.B) {
-	normalizer := NewSymbolNormalizer(benchLogger)
+	normalizer := NewSymbolNormalizer(benchLogger())
 
 	sizes := []int{10, 100, 1000, 10000}
 	baseText := "Hello 25% world & test + more = result @ place # tag "
@@ -463,10 +442,10 @@ func BenchmarkInputSizeScaling(b *testing.B) {
 
 func BenchmarkChainInputSizeScaling(b *testing.B) {
 	normalizers := []Normalizer{
-		NewCurrencyNormalizer(benchLogger),
-		NewDateNormalizer(benchLogger),
-		NewTimeNormalizer(benchLogger),
-		NewSymbolNormalizer(benchLogger),
+		NewCurrencyNormalizer(benchLogger()),
+		NewDateNormalizer(benchLogger()),
+		NewTimeNormalizer(benchLogger()),
+		NewSymbolNormalizer(benchLogger()),
 	}
 
 	applyAll := func(input string) string {
@@ -495,7 +474,7 @@ func BenchmarkChainInputSizeScaling(b *testing.B) {
 // =============================================================================
 
 func BenchmarkConcurrentNormalization(b *testing.B) {
-	normalizer := NewSymbolNormalizer(benchLogger)
+	normalizer := NewSymbolNormalizer(benchLogger())
 
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
@@ -506,10 +485,10 @@ func BenchmarkConcurrentNormalization(b *testing.B) {
 
 func BenchmarkConcurrentChain(b *testing.B) {
 	normalizers := []Normalizer{
-		NewCurrencyNormalizer(benchLogger),
-		NewDateNormalizer(benchLogger),
-		NewTimeNormalizer(benchLogger),
-		NewSymbolNormalizer(benchLogger),
+		NewCurrencyNormalizer(benchLogger()),
+		NewDateNormalizer(benchLogger()),
+		NewTimeNormalizer(benchLogger()),
+		NewSymbolNormalizer(benchLogger()),
 	}
 
 	applyAll := func(input string) string {
@@ -532,7 +511,7 @@ func BenchmarkConcurrentChain(b *testing.B) {
 // =============================================================================
 
 func BenchmarkWorstCaseCurrency(b *testing.B) {
-	normalizer := NewCurrencyNormalizer(benchLogger)
+	normalizer := NewCurrencyNormalizer(benchLogger())
 	// Many currency values in one string
 	input := strings.Repeat("$1.00 ", 100)
 
@@ -543,7 +522,7 @@ func BenchmarkWorstCaseCurrency(b *testing.B) {
 }
 
 func BenchmarkWorstCaseSymbol(b *testing.B) {
-	normalizer := NewSymbolNormalizer(benchLogger)
+	normalizer := NewSymbolNormalizer(benchLogger())
 	// Many symbols in one string
 	input := strings.Repeat("% & + = @ # ", 100)
 
@@ -554,7 +533,7 @@ func BenchmarkWorstCaseSymbol(b *testing.B) {
 }
 
 func BenchmarkWorstCaseAddress(b *testing.B) {
-	normalizer := NewAddressNormalizer(benchLogger)
+	normalizer := NewAddressNormalizer(benchLogger())
 	// Many address abbreviations
 	input := strings.Repeat("123 Main St 456 Park Ave 789 Oak Rd ", 50)
 
@@ -571,76 +550,76 @@ func BenchmarkWorstCaseAddress(b *testing.B) {
 func BenchmarkNormalizerCreation(b *testing.B) {
 	b.Run("currency", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			NewCurrencyNormalizer(benchLogger)
+			NewCurrencyNormalizer(benchLogger())
 		}
 	})
 
 	b.Run("date", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			NewDateNormalizer(benchLogger)
+			NewDateNormalizer(benchLogger())
 		}
 	})
 
 	b.Run("time", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			NewTimeNormalizer(benchLogger)
+			NewTimeNormalizer(benchLogger())
 		}
 	})
 
 	b.Run("number", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			NewNumberToWordNormalizer(benchLogger)
+			NewNumberToWordNormalizer(benchLogger())
 		}
 	})
 
 	b.Run("address", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			NewAddressNormalizer(benchLogger)
+			NewAddressNormalizer(benchLogger())
 		}
 	})
 
 	b.Run("url", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			NewUrlNormalizer(benchLogger)
+			NewUrlNormalizer(benchLogger())
 		}
 	})
 
 	b.Run("symbol", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			NewSymbolNormalizer(benchLogger)
+			NewSymbolNormalizer(benchLogger())
 		}
 	})
 
 	b.Run("tech", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			NewTechAbbreviationNormalizer(benchLogger)
+			NewTechAbbreviationNormalizer(benchLogger())
 		}
 	})
 
 	b.Run("role", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			NewRoleAbbreviationNormalizer(benchLogger)
+			NewRoleAbbreviationNormalizer(benchLogger())
 		}
 	})
 
 	b.Run("general", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			NewGeneralAbbreviationNormalizer(benchLogger)
+			NewGeneralAbbreviationNormalizer(benchLogger())
 		}
 	})
 
 	b.Run("all_normalizers", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			NewCurrencyNormalizer(benchLogger)
-			NewDateNormalizer(benchLogger)
-			NewTimeNormalizer(benchLogger)
-			NewNumberToWordNormalizer(benchLogger)
-			NewAddressNormalizer(benchLogger)
-			NewUrlNormalizer(benchLogger)
-			NewTechAbbreviationNormalizer(benchLogger)
-			NewRoleAbbreviationNormalizer(benchLogger)
-			NewGeneralAbbreviationNormalizer(benchLogger)
-			NewSymbolNormalizer(benchLogger)
+			NewCurrencyNormalizer(benchLogger())
+			NewDateNormalizer(benchLogger())
+			NewTimeNormalizer(benchLogger())
+			NewNumberToWordNormalizer(benchLogger())
+			NewAddressNormalizer(benchLogger())
+			NewUrlNormalizer(benchLogger())
+			NewTechAbbreviationNormalizer(benchLogger())
+			NewRoleAbbreviationNormalizer(benchLogger())
+			NewGeneralAbbreviationNormalizer(benchLogger())
+			NewSymbolNormalizer(benchLogger())
 		}
 	})
 }
@@ -651,16 +630,16 @@ func BenchmarkNormalizerCreation(b *testing.B) {
 
 func BenchmarkRealWorldTTSInputs(b *testing.B) {
 	normalizers := []Normalizer{
-		NewCurrencyNormalizer(benchLogger),
-		NewDateNormalizer(benchLogger),
-		NewTimeNormalizer(benchLogger),
-		NewNumberToWordNormalizer(benchLogger),
-		NewAddressNormalizer(benchLogger),
-		NewUrlNormalizer(benchLogger),
-		NewTechAbbreviationNormalizer(benchLogger),
-		NewRoleAbbreviationNormalizer(benchLogger),
-		NewGeneralAbbreviationNormalizer(benchLogger),
-		NewSymbolNormalizer(benchLogger),
+		NewCurrencyNormalizer(benchLogger()),
+		NewDateNormalizer(benchLogger()),
+		NewTimeNormalizer(benchLogger()),
+		NewNumberToWordNormalizer(benchLogger()),
+		NewAddressNormalizer(benchLogger()),
+		NewUrlNormalizer(benchLogger()),
+		NewTechAbbreviationNormalizer(benchLogger()),
+		NewRoleAbbreviationNormalizer(benchLogger()),
+		NewGeneralAbbreviationNormalizer(benchLogger()),
+		NewSymbolNormalizer(benchLogger()),
 	}
 
 	applyAll := func(input string) string {

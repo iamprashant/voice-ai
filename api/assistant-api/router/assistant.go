@@ -1,3 +1,9 @@
+// Copyright (c) 2023-2025 RapidaAI
+// Author: Prashant Srivastav <prashant@rapida.ai>
+//
+// Licensed under GPL-2.0 with Rapida Additional Terms.
+// See LICENSE.md or contact sales@rapida.ai for commercial usage.
+
 package assistant_router
 
 import (
@@ -6,6 +12,7 @@ import (
 	assistantDeploymentApi "github.com/rapidaai/api/assistant-api/api/assistant-deployment"
 	assistantTalkApi "github.com/rapidaai/api/assistant-api/api/talk"
 	"github.com/rapidaai/api/assistant-api/config"
+	sip_infra "github.com/rapidaai/api/assistant-api/sip/infra"
 	"github.com/rapidaai/pkg/commons"
 	"github.com/rapidaai/pkg/connectors"
 	workflow_api "github.com/rapidaai/protos"
@@ -48,6 +55,7 @@ func AssistantConversationApiRoute(
 	Postgres connectors.PostgresConnector,
 	Redis connectors.RedisConnector,
 	Opensearch connectors.OpenSearchConnector,
+	sipServer *sip_infra.Server,
 ) {
 	workflow_api.RegisterTalkServiceServer(S,
 		assistantTalkApi.NewConversationGRPCApi(Cfg,
@@ -56,6 +64,16 @@ func AssistantConversationApiRoute(
 			Redis,
 			Opensearch,
 			Opensearch,
+			sipServer,
+		))
+	workflow_api.RegisterWebRTCServer(S,
+		assistantTalkApi.NewWebRtcApi(Cfg,
+			Logger,
+			Postgres,
+			Redis,
+			Opensearch,
+			Opensearch,
+			sipServer,
 		))
 }
 
@@ -63,27 +81,23 @@ func TalkCallbackApiRoute(
 	cfg *config.AssistantConfig, engine *gin.Engine, logger commons.Logger,
 	postgres connectors.PostgresConnector,
 	redis connectors.RedisConnector,
-	opensearch connectors.OpenSearchConnector) {
+	opensearch connectors.OpenSearchConnector,
+	sipServer *sip_infra.Server,
+) {
 	apiv1 := engine.Group("v1/talk")
-	talkRpcApi := assistantTalkApi.NewConversationApi(cfg, logger, postgres, redis, opensearch, opensearch)
+	talkRpcApi := assistantTalkApi.NewConversationApi(cfg, logger, postgres, redis, opensearch, opensearch, sipServer)
 	{
-		// global
+		// global catch-all event logging
 		apiv1.GET("/:telephony/event/:assistantId", talkRpcApi.UnviersalCallback)
 		apiv1.POST("/:telephony/event/:assistantId", talkRpcApi.UnviersalCallback)
 
-		// session event
-		apiv1.GET("/:telephony/usr/event/:assistantId/:conversationId/:authorization/:x-auth-id/:x-project-id", talkRpcApi.Callback)
-		apiv1.POST("/:telephony/usr/event/:assistantId/:conversationId/:authorization/:x-auth-id/:x-project-id", talkRpcApi.Callback)
-		apiv1.GET("/:telephony/prj/event/:assistantId/:conversationId/:x-api-key", talkRpcApi.Callback)
-		apiv1.POST("/:telephony/prj/event/:assistantId/:conversationId/:x-api-key", talkRpcApi.Callback)
-
-		// twilio whatsapp
-		apiv1.POST("/twilio/whatsapp/:assistantToken", talkRpcApi.WhatsappReciever)
-
-		// vonage call
+		// inbound call receiver — webhook from telephony provider, saves call context to Postgres
 		apiv1.GET("/:telephony/call/:assistantId", talkRpcApi.CallReciever)
-		apiv1.GET("/:telephony/usr/:assistantId/:identifier/:conversationId/:authorization/:x-auth-id/:x-project-id", talkRpcApi.CallTalker)
-		apiv1.GET("/:telephony/prj/:assistantId/:identifier/:conversationId/:x-api-key", talkRpcApi.CallTalker)
 
+		// contextId-based routes — all auth, assistant, conversation resolved from Postgres call context
+		// Used by all telephony providers (Twilio, Exotel, Vonage, Asterisk, SIP)
+		apiv1.GET("/:telephony/ctx/:contextId", talkRpcApi.CallTalkerByContext)
+		apiv1.GET("/:telephony/ctx/:contextId/event", talkRpcApi.CallbackByContext)
+		apiv1.POST("/:telephony/ctx/:contextId/event", talkRpcApi.CallbackByContext)
 	}
 }

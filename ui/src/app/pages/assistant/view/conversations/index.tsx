@@ -43,7 +43,6 @@ import { ConversationDirectionIndicator } from '@/app/components/indicators/conv
 import { CopyCell } from '@/app/components/base/tables/copy-cell';
 import { LabelCell } from '@/app/components/base/tables/label-cell';
 import { DateCell } from '@/app/components/base/tables/date-cell';
-import { ConversationIdentifier } from '@/utils';
 import { ConversationTelemetryDialog } from '@/app/components/base/modal/conversation-telemetry-modal';
 import { AssistantConversationTelephonyEventDialog } from '@/app/components/base/modal/assistant-conversation-telephony-event-modal';
 
@@ -371,7 +370,7 @@ export function Conversations({ currentAssistant }: ConversationProps) {
                     'identifier',
                   ) && (
                     <TableCell className="truncate max-w-20">
-                      {ConversationIdentifier(row.getIdentifier())}
+                      {row.getIdentifier()}
                     </TableCell>
                   )}
                   {assistantConversationListAction.visibleColumn('source') && (

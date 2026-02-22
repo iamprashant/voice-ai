@@ -36,10 +36,9 @@ type cartesiaTTS struct {
 }
 
 func NewCartesiaTextToSpeech(ctx context.Context, logger commons.Logger, credential *protos.VaultCredential,
-	audioConfig *protos.AudioConfig,
 	onPacket func(pkt ...internal_type.Packet) error,
 	opts utils.Option) (internal_type.TextToSpeechTransformer, error) {
-	cartesiaOpts, err := NewCartesiaOption(logger, credential, audioConfig, opts)
+	cartesiaOpts, err := NewCartesiaOption(logger, credential, opts)
 	if err != nil {
 		logger.Errorf("intializing cartesia failed %+v", err)
 		return nil, err

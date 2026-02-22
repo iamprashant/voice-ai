@@ -6,7 +6,8 @@
 package internal_type
 
 import (
-	"github.com/rapidaai/pkg/types"
+	"fmt"
+
 	"github.com/rapidaai/protos"
 )
 
@@ -66,16 +67,65 @@ func (f InterruptionPacket) ContextId() string {
 // LLM Packets
 // =============================================================================
 
-// MetricPacket represents a request to send metrics within a specific context.
+// ConversationMetricPacket represents a request to send metrics within a specific context.
+type ConversationMetricPacket struct {
+
+	// ContextID identifies the context to be flushed.
+	ContextID uint64
+
+	// Metrics holds the list of metrics to be sent within the specified context.
+	Metrics []*protos.Metric
+}
+
+func (f ConversationMetricPacket) ContextId() string {
+	return fmt.Sprintf("%d", f.ContextID)
+}
+
+func (f ConversationMetricPacket) ConversationID() uint64 {
+	return f.ContextID
+}
+
+type ConversationMetadataPacket struct {
+
+	// ContextID identifies the context to be flushed.
+	ContextID uint64
+
+	// Metadata holds the list of metadata to be sent within the specified context.
+	Metadata []*protos.Metadata
+}
+
+func (f ConversationMetadataPacket) ContextId() string {
+	return fmt.Sprintf("%d", f.ContextID)
+}
+
+func (f ConversationMetadataPacket) ConversationID() uint64 {
+	return f.ContextID
+}
+
+// ConversationMetricPacket represents a request to send metrics within a specific context.
 type MetricPacket struct {
+
 	// ContextID identifies the context to be flushed.
 	ContextID string
 
 	// Metrics holds the list of metrics to be sent within the specified context.
-	Metrics []*types.Metric
+	Metrics []*protos.Metric
 }
 
 func (f MetricPacket) ContextId() string {
+	return f.ContextID
+}
+
+type MetadataPacket struct {
+
+	// ContextID identifies the context to be flushed.
+	ContextID string
+
+	// Metadata holds the list of metadata to be sent within the specified context.
+	Metadata []*protos.Metadata
+}
+
+func (f MetadataPacket) ContextId() string {
 	return f.ContextID
 }
 

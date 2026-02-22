@@ -10,468 +10,122 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
-	"sort"
 	"sync"
-	"time"
 
+	internal_audio "github.com/rapidaai/api/assistant-api/internal/audio"
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
 	"github.com/rapidaai/pkg/commons"
-	protos "github.com/rapidaai/protos"
 )
 
-// AudioChunk represents a timestamped audio chunk
-type AudioChunk struct {
-	Data      []byte
-	Timestamp time.Time
-	IsSystem  bool // true for system audio, false for user audio
-	Config    *protos.AudioConfig
-	ID        int64 // Add unique identifier for each chunk
+const (
+	AudioBytesPerSample = 2  // LINEAR16 → 2 bytes per sample
+	AudioBitsPerSample  = 16 // LINEAR16 → 16 bits per sample
+	AudioPCMFormat      = 1  // WAV PCM format tag
+)
+
+var audioConfig = internal_audio.RAPIDA_INTERNAL_AUDIO_CONFIG
+
+type trackKind int
+
+const (
+	trackUser trackKind = iota
+	trackSystem
+)
+
+type chunk struct {
+	Data  []byte
+	Track trackKind
 }
 
 type audioRecorder struct {
-	logger           commons.Logger
-	mu               sync.Mutex   // Ensure thread-safe access
-	audioChunks      []AudioChunk // All audio chunks with timestamps
-	interruptionTime *time.Time   // When interruption occurred (nil if no interruption)
-	userConfig       *protos.AudioConfig
-	systemConfig     *protos.AudioConfig
-	chunkIDCounter   int64 // Counter for unique chunk IDs
+	logger commons.Logger
+	mu     sync.Mutex
+	chunks []chunk
 }
 
-func NewDefaultAudioRecorder(logger commons.Logger, userConfig, systemConfig *protos.AudioConfig) (internal_type.Recorder, error) {
-	return &audioRecorder{
-		logger:       logger,
-		audioChunks:  []AudioChunk{},
-		mu:           sync.Mutex{},
-		userConfig:   userConfig,
-		systemConfig: systemConfig,
-	}, nil
+func NewDefaultAudioRecorder(logger commons.Logger) (internal_type.Recorder, error) {
+	return &audioRecorder{logger: logger}, nil
 }
 
+// Record appends audio data. Mutex-guarded so safe to call from goroutines.
+// TTS delivers chunks sequentially, so arrival order is preserved.
 func (r *audioRecorder) Record(ctx context.Context, p internal_type.Packet) error {
 	switch vl := p.(type) {
 	case internal_type.UserAudioPacket:
-		return r.user(vl.Audio)
-	case internal_type.InterruptionPacket:
-		return r.interrupt()
+		return r.push(vl.Audio, trackUser)
 	case internal_type.TextToSpeechAudioPacket:
-		return r.system(vl.AudioChunk)
-	default:
+		return r.push(vl.AudioChunk, trackSystem)
 	}
 	return nil
 }
 
-func (r *audioRecorder) user(in []byte) error {
+func (r *audioRecorder) push(data []byte, track trackKind) error {
+	if len(data) == 0 {
+		return nil
+	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.chunkIDCounter++
-	chunk := AudioChunk{
-		Data:      make([]byte, len(in)),
-		Timestamp: time.Now(),
-		IsSystem:  false,
-		Config:    r.userConfig,
-		ID:        r.chunkIDCounter,
-	}
-	copy(chunk.Data, in)
-	r.audioChunks = append(r.audioChunks, chunk)
-	return nil
-}
-func (r *audioRecorder) interrupt() error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	interruptTime := time.Now()
-	// Check if the last interruption occurred very recently
-	if r.interruptionTime != nil {
-		elapsed := interruptTime.Sub(*r.interruptionTime)
-		if elapsed <= 100*time.Millisecond && elapsed >= 50*time.Millisecond {
-			// r.logger.Info("Interrupt ignored. Too soon after the previous interruption: ", elapsed)
-			// Update interruption time regardless of ignoring
-			r.interruptionTime = &interruptTime
-			return nil
-		}
-	}
-
-	// Update interruption time
-	r.interruptionTime = &interruptTime
-	// r.logger.Info("User interruption detected at ", interruptTime)
-
-	// Remove system audio chunks that would "play" after interruption
-	r.removeInterruptedSystemAudio(interruptTime)
-
+	buf := make([]byte, len(data))
+	copy(buf, data)
+	r.chunks = append(r.chunks, chunk{Data: buf, Track: track})
 	return nil
 }
 
-func (r *audioRecorder) system(out []byte) error {
+func bytesPerSecond() int {
+	return int(audioConfig.SampleRate) * int(audioConfig.Channels) * AudioBytesPerSample
+}
+
+// Persist renders two time-aligned WAV files (user + system).
+// Consecutive same-track chunks are merged; the other track gets silence.
+func (r *audioRecorder) Persist() ([]byte, []byte, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.chunkIDCounter++
-	chunk := AudioChunk{
-		Data:      make([]byte, len(out)),
-		Timestamp: time.Now(),
-		IsSystem:  true,
-		Config:    r.systemConfig,
-		ID:        r.chunkIDCounter,
+	if len(r.chunks) == 0 {
+		return nil, nil, fmt.Errorf("no audio chunks to persist")
 	}
-	copy(chunk.Data, out)
-	r.audioChunks = append(r.audioChunks, chunk)
-	return nil
-}
 
-func (r *audioRecorder) removeInterruptedSystemAudio(interruptTime time.Time) {
-	silencedCount := 0
-	modifiedCount := 0
-
-	// r.logger.Info("Processing interruption at", interruptTime)
-	adjustedInterruptTime := interruptTime
-
-	for i := range r.audioChunks {
-		chunk := &r.audioChunks[i]
-		if !chunk.IsSystem {
-			continue // Only process system audio chunks
-		}
-
-		// Calculate playback times for the chunk
-		playStartTime := r.calculateSystemAudioPlayTime(*chunk)
-		chunkDuration := r.calculateChunkDuration(*chunk)
-		playEndTime := playStartTime.Add(chunkDuration)
-
-		// r.logger.Debug(fmt.Sprintf(
-		// 	"Chunk ID=%d: Plays from %v to %v (Duration: %.2fms, Format: %v, Sample Rate: %d)",
-		// 	chunk.ID, playStartTime, playEndTime, chunkDuration.Seconds()*1000, chunk.Config.Format, chunk.Config.SampleRate,
-		// ))
-
-		// Analyze overlap with the interruption time
-		if playStartTime.After(adjustedInterruptTime) || playStartTime.Equal(adjustedInterruptTime) {
-			// r.logger.Debug(fmt.Sprintf("Chunk ID=%d: No interruption - plays after %v", chunk.ID, adjustedInterruptTime))
-			continue // Chunk starts playing after the interruption, keep it unchanged
-		}
-
-		if playEndTime.Before(adjustedInterruptTime) {
-			// r.logger.Debug(fmt.Sprintf("Chunk ID=%d: No interruption - ends before %v", chunk.ID, adjustedInterruptTime))
-			continue // Chunk ends before the interruption, keep it unchanged
-		}
-
-		if playStartTime.Before(adjustedInterruptTime) && playEndTime.After(adjustedInterruptTime) {
-			// Overlap with interruption: trim or silence the chunk
-			keepDuration := adjustedInterruptTime.Sub(playStartTime)
-
-			if keepDuration > 0 {
-				// Calculate bytes to keep based on duration, sample rate, and format
-				trimmedData := r.trimAudioChunkData(chunk.Data, keepDuration, chunk.Config)
-				// r.logger.Debug(fmt.Sprintf(
-				// 	"Chunk ID=%d: Partially silenced. Keeping %.2fms, silencing %.2fms",
-				// 	chunk.ID,
-				// 	keepDuration.Seconds()*1000,
-				// 	(chunkDuration-keepDuration).Seconds()*1000,
-				// ))
-				chunk.Data = trimmedData
-				modifiedCount++
-			} else {
-				// Fully silence the chunk if no valid duration remains
-				r.logger.Debug(fmt.Sprintf("Chunk ID=%d: Fully silenced", chunk.ID))
-				chunk.Data = r.createSilentAudioData(len(chunk.Data))
-				silencedCount++
-			}
-			continue
+	// Build two PCM buffers in one pass over chunks.
+	var userPCM, systemPCM bytes.Buffer
+	for _, c := range r.chunks {
+		silence := make([]byte, len(c.Data))
+		switch c.Track {
+		case trackUser:
+			userPCM.Write(c.Data)
+			systemPCM.Write(silence)
+		case trackSystem:
+			userPCM.Write(silence)
+			systemPCM.Write(c.Data)
 		}
 	}
 
-	// r.logger.Info(fmt.Sprintf("Interruption processed: silenced %d chunks, modified %d chunks", silencedCount, modifiedCount))
+	r.logger.Info(fmt.Sprintf("Audio timeline: totalBytes=%d, duration=%.2fs, chunks=%d",
+		userPCM.Len(), float64(userPCM.Len())/float64(bytesPerSecond()), len(r.chunks)))
+
+	userWAV, _ := createWAVFile(userPCM.Bytes())
+	systemWAV, _ := createWAVFile(systemPCM.Bytes())
+	return userWAV, systemWAV, nil
 }
 
-func (r *audioRecorder) createSilentAudioData(byteLength int) []byte {
-	// Generate silence: zero bytes for the specified length
-	return make([]byte, byteLength)
-}
-
-func (r *audioRecorder) trimAudioChunkData(data []byte, keepDuration time.Duration, config *protos.AudioConfig) []byte {
-	if config == nil || keepDuration <= 0 {
-		return []byte{}
-	}
-
-	// Calculate bytes per sample based on audio format
-	var bytesPerSample int
-	switch config.GetAudioFormat() {
-	case protos.AudioConfig_LINEAR16:
-		bytesPerSample = 2
-	case protos.AudioConfig_MuLaw8:
-		bytesPerSample = 1
-	default:
-		bytesPerSample = 2 // Default to 16-bit PCM
-	}
-
-	// Calculate bytes per frame (sample + channels)
-	bytesPerFrame := bytesPerSample * int(config.Channels)
-
-	// Calculate total samples to keep based on duration
-	samplesToKeep := int(keepDuration.Seconds() * float64(config.SampleRate))
-
-	// Calculate bytes to keep (ensure frame alignment)
-	bytesToKeep := samplesToKeep * bytesPerFrame
-	bytesToKeep = (bytesToKeep / bytesPerFrame) * bytesPerFrame // Round down to nearest frame boundary
-
-	if bytesToKeep > len(data) {
-		bytesToKeep = len(data) // Ensure data length is not exceeded
-	}
-
-	if bytesToKeep <= 0 {
-		return []byte{} // Return empty if no valid data remains
-	}
-
-	// Return trimmed data
-	trimmedData := make([]byte, bytesToKeep)
-	copy(trimmedData, data[:bytesToKeep])
-
-	return trimmedData
-}
-
-func (r *audioRecorder) calculateSystemAudioPlayTime(targetChunk AudioChunk) time.Time {
-	var latestEndTime time.Time
-	isFirstSystemChunk := true
-
-	for _, chunk := range r.audioChunks {
-		if chunk.ID == targetChunk.ID {
-			break // Stop as soon as target chunk is reached
-		}
-
-		if chunk.IsSystem {
-			playStartTime := latestEndTime
-			if chunk.Timestamp.After(latestEndTime) {
-				playStartTime = chunk.Timestamp
-			}
-			latestEndTime = playStartTime.Add(r.calculateChunkDuration(chunk))
-			isFirstSystemChunk = false
-		}
-	}
-
-	playStartTime := targetChunk.Timestamp
-	if !isFirstSystemChunk && latestEndTime.After(targetChunk.Timestamp) {
-		playStartTime = latestEndTime
-	}
-
-	return playStartTime
-}
-
-func (r *audioRecorder) Persist() ([]byte, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	if len(r.audioChunks) == 0 {
-		// r.logger.Info("No audio chunks to persist")
-		return nil, fmt.Errorf("empty chunk of audio")
-	}
-
-	// Sort chunks by timestamp to maintain chronological order
-	sort.Slice(r.audioChunks, func(i, j int) bool {
-		return r.audioChunks[i].Timestamp.Before(r.audioChunks[j].Timestamp)
-	})
-
-	// Determine the target audio configuration
-	targetConfig := r.getTargetAudioConfig()
-	if targetConfig == nil {
-		return nil, fmt.Errorf("no valid audio configuration found")
-	}
-
-	// Convert and merge all chunks
-	mergedAudio, err := r.mergeAudioChunks(targetConfig)
-	if err != nil {
-		r.logger.Error("Failed to merge audio chunks", err)
-		return nil, err
-	}
-
-	// Create WAV file
-	wavData, err := r.createWAVFile(mergedAudio, targetConfig)
-	if err != nil {
-		r.logger.Error("Failed to create WAV file", err)
-		return nil, err
-	}
-
-	// r.logger.Info(fmt.Sprintf("Persisted audio with %d chunks", len(r.audioChunks)))
-	return wavData, nil
-}
-
-func (r *audioRecorder) getTargetAudioConfig() *protos.AudioConfig {
-	if r.userConfig != nil {
-		return r.userConfig
-	}
-	if r.systemConfig != nil {
-		return r.systemConfig
-	}
-	if len(r.audioChunks) > 0 && r.audioChunks[0].Config != nil {
-		return r.audioChunks[0].Config
-	}
-	return nil
-}
-
-func (r *audioRecorder) mergeAudioChunks(targetConfig *protos.AudioConfig) ([]byte, error) {
-	if len(r.audioChunks) == 0 {
-		return nil, fmt.Errorf("no audio chunks to merge")
-	}
-
-	// Calculate total duration and create timeline
-	startTime := r.audioChunks[0].Timestamp
-	var endTime time.Time
-	for _, chunk := range r.audioChunks {
-		chunkDuration := r.calculateChunkDuration(chunk)
-		chunkEndTime := chunk.Timestamp.Add(chunkDuration)
-		if chunkEndTime.After(endTime) {
-			endTime = chunkEndTime
-		}
-	}
-
-	totalDuration := endTime.Sub(startTime)
-	totalSamples := uint32(totalDuration.Seconds() * float64(targetConfig.SampleRate))
-
-	// Create output buffer (16-bit samples)
-	outputSamples := make([]int32, totalSamples*targetConfig.Channels)
-
-	// Process each chunk and add to the output buffer
-	for _, chunk := range r.audioChunks {
-		err := r.addChunkToOutput(chunk, outputSamples, startTime, targetConfig)
-		if err != nil {
-			return nil, fmt.Errorf("failed to add chunk to output: %v", err)
-		}
-	}
-
-	// Convert int32 samples to 16-bit PCM
-	pcmData := make([]byte, len(outputSamples)*2)
-	for i, sample := range outputSamples {
-		// Clamp to 16-bit range
-		if sample > 32767 {
-			sample = 32767
-		} else if sample < -32768 {
-			sample = -32768
-		}
-		binary.LittleEndian.PutUint16(pcmData[i*2:], uint16(sample))
-	}
-
-	return pcmData, nil
-}
-
-func (r *audioRecorder) calculateChunkDuration(chunk AudioChunk) time.Duration {
-	if chunk.Config == nil {
-		return 0
-	}
-	var bytesPerSample int
-	switch chunk.Config.GetAudioFormat() {
-	case protos.AudioConfig_LINEAR16:
-		bytesPerSample = 2
-	case protos.AudioConfig_MuLaw8:
-		bytesPerSample = 1
-	default:
-		bytesPerSample = 2 // default to 16-bit
-	}
-
-	samples := len(chunk.Data) / (bytesPerSample * int(chunk.Config.GetChannels()))
-	duration := float64(samples) / float64(chunk.Config.SampleRate)
-	return time.Duration(duration * float64(time.Second))
-}
-
-func (r *audioRecorder) addChunkToOutput(chunk AudioChunk, output []int32, startTime time.Time, targetConfig *protos.AudioConfig) error {
-	if chunk.Config == nil {
-		return fmt.Errorf("chunk has no audio configuration")
-	}
-
-	// Convert chunk data to int32 samples
-	chunkSamples, err := r.convertToSamples(chunk.Data, chunk.Config)
-	if err != nil {
-		return err
-	}
-
-	// Find the last non-zero sample in the output buffer
-	lastNonZeroIndex := len(output) - 1
-	for lastNonZeroIndex >= 0 && output[lastNonZeroIndex] == 0 {
-		lastNonZeroIndex--
-	}
-
-	// Determine where to start adding the new samples
-	var startIndex int
-	if chunk.IsSystem {
-		// For system audio, start right after the last non-zero sample
-		startIndex = lastNonZeroIndex + 1
-	} else {
-		// For user audio, use the timestamp-based offset
-		offsetDuration := chunk.Timestamp.Sub(startTime)
-		startIndex = int(offsetDuration.Seconds()*float64(targetConfig.SampleRate)) * int(targetConfig.Channels)
-	}
-
-	// Add samples to output buffer
-	for i, sample := range chunkSamples {
-		outputIndex := startIndex + i
-		if outputIndex >= 0 && outputIndex < len(output) {
-			if chunk.IsSystem {
-				// For system audio, simply place it
-				output[outputIndex] = sample
-			} else {
-				// For user audio, mix with existing audio
-				output[outputIndex] += sample
-			}
-		}
-	}
-
-	return nil
-}
-
-func (r *audioRecorder) convertToSamples(data []byte, config *protos.AudioConfig) ([]int32, error) {
-	var samples []int32
-
-	switch config.AudioFormat {
-	case protos.AudioConfig_LINEAR16:
-		samples = make([]int32, len(data)/2)
-		for i := 0; i < len(samples); i++ {
-			sample := int16(binary.LittleEndian.Uint16(data[i*2:]))
-			samples[i] = int32(sample)
-		}
-	case protos.AudioConfig_MuLaw8:
-		samples = make([]int32, len(data))
-		for i, b := range data {
-			samples[i] = r.muLawToLinear(b)
-		}
-	default:
-		return nil, fmt.Errorf("unsupported audio format: %v", config.AudioFormat.String())
-	}
-
-	return samples, nil
-}
-
-func (r *audioRecorder) muLawToLinear(muLawByte byte) int32 {
-	// μ-law to linear PCM conversion
-	muLawByte = ^muLawByte
-	sign := muLawByte & 0x80
-	exponent := (muLawByte >> 4) & 0x07
-	mantissa := muLawByte & 0x0F
-
-	sample := int32(mantissa<<1 + 33)
-	sample <<= exponent
-	sample -= 33
-
-	if sign != 0 {
-		sample = -sample
-	}
-
-	return sample << 2 // Scale to 16-bit range
-}
-
-func (r *audioRecorder) createWAVFile(pcmData []byte, config *protos.AudioConfig) ([]byte, error) {
+func createWAVFile(pcmData []byte) ([]byte, error) {
 	var buf bytes.Buffer
+	sampleRate := audioConfig.SampleRate
+	channels := audioConfig.Channels
+	bps := int(sampleRate) * int(channels) * AudioBytesPerSample
 
-	// WAV header
-	// RIFF header
 	buf.Write([]byte("RIFF"))
-	binary.Write(&buf, binary.LittleEndian, uint32(36+len(pcmData))) // File size - 8
+	binary.Write(&buf, binary.LittleEndian, uint32(36+len(pcmData)))
 	buf.Write([]byte("WAVE"))
 
-	// fmt chunk
 	buf.Write([]byte("fmt "))
-	binary.Write(&buf, binary.LittleEndian, uint32(16))                                  // fmt chunk size
-	binary.Write(&buf, binary.LittleEndian, uint16(1))                                   // PCM format
-	binary.Write(&buf, binary.LittleEndian, uint16(config.Channels))                     // Number of channels
-	binary.Write(&buf, binary.LittleEndian, uint32(config.SampleRate))                   // Sample rate
-	binary.Write(&buf, binary.LittleEndian, uint32(config.SampleRate*config.Channels*2)) // Byte rate
-	binary.Write(&buf, binary.LittleEndian, uint16(config.Channels*2))                   // Block align
-	binary.Write(&buf, binary.LittleEndian, uint16(16))                                  // Bits per sample
+	binary.Write(&buf, binary.LittleEndian, uint32(16))
+	binary.Write(&buf, binary.LittleEndian, uint16(AudioPCMFormat))
+	binary.Write(&buf, binary.LittleEndian, uint16(channels))
+	binary.Write(&buf, binary.LittleEndian, uint32(sampleRate))
+	binary.Write(&buf, binary.LittleEndian, uint32(bps))
+	binary.Write(&buf, binary.LittleEndian, uint16(AudioBytesPerSample))
+	binary.Write(&buf, binary.LittleEndian, uint16(AudioBitsPerSample))
 
 	// data chunk
 	buf.Write([]byte("data"))

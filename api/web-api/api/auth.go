@@ -787,7 +787,6 @@ func (wAuthApi *webAuthRPCApi) Github(c *gin.Context) {
 
 func (wAuthApi *webAuthGRPCApi) Github(c context.Context, irRequest *protos.SocialAuthenticationRequest) (*protos.AuthenticateResponse, error) {
 	inf, err := wAuthApi.githubConnect.GithubUserInfo(c, irRequest.State, irRequest.Code)
-	wAuthApi.logger.Debugf("github authenticator respose %v", inf)
 	if err != nil {
 		wAuthApi.logger.Errorf("github authentication response %v", err)
 		return nil, err
@@ -839,7 +838,6 @@ func (wAuthApi *webAuthGRPCApi) Google(c context.Context, irRequest *protos.Soci
 }
 
 func (wAuthApi *webAuthGRPCApi) GetAllUser(c context.Context, irRequest *protos.GetAllUserRequest) (*protos.GetAllUserResponse, error) {
-	wAuthApi.logger.Debugf("GetUsers from grpc with requestPayload %v, %v", irRequest, c)
 	iAuth, isAuthenticated := types.GetAuthPrincipleGPRC(c)
 	if !isAuthenticated {
 		return nil, errors.New("unauthenticated request")

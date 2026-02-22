@@ -146,7 +146,6 @@ type AssistantConversationService interface {
 	// anotehr is CRM
 	GetConversation(ctx context.Context,
 		auth types.SimplePrinciple,
-		idenifier string,
 		assistantId uint64,
 		assistantConversationId uint64,
 		opts *GetConversationOption) (*internal_conversation_entity.AssistantConversation, error)
@@ -299,7 +298,7 @@ type AssistantConversationService interface {
 		auth types.SimplePrinciple,
 		assistantId uint64,
 		assistantConversationId uint64,
-		body []byte,
+		user, system []byte,
 	) (*internal_conversation_entity.AssistantConversationRecording, error)
 
 	ApplyConversationTelephonyEvent(

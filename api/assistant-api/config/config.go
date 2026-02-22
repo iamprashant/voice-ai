@@ -15,7 +15,21 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Application config structure
+// SIPConfig holds the SIP server configuration
+type SIPConfig struct {
+	Server            string `mapstructure:"server"`
+	ExternalIP        string `mapstructure:"external_ip"` // Public/reachable IP for SDP and SIP Contact headers (defaults to Server if empty)
+	Port              int    `mapstructure:"port"`
+	Transport         string `mapstructure:"transport"`
+	RTPPortRangeStart int    `mapstructure:"rtp_port_range_start"`
+	RTPPortRangeEnd   int    `mapstructure:"rtp_port_range_end"`
+}
+
+type AudioSocketConfig struct {
+	Host string `mapstructure:"host"`
+	Port int    `mapstructure:"port"`
+}
+
 type AssistantConfig struct {
 	config.AppConfig    `mapstructure:",squash"`
 	PostgresConfig      configs.PostgresConfig   `mapstructure:"postgres" validate:"required"`
@@ -24,6 +38,8 @@ type AssistantConfig struct {
 	WeaviateConfig      configs.WeaviateConfig   `mapstructure:"weaviate"`
 	AssetStoreConfig    configs.AssetStoreConfig `mapstructure:"asset_store" validate:"required"`
 	PublicAssistantHost string                   `mapstructure:"public_assistant_host" validate:"required"`
+	SIPConfig           *SIPConfig               `mapstructure:"sip"`
+	AudioSocketConfig   *AudioSocketConfig       `mapstructure:"audiosocket"`
 }
 
 // reading config and intializing configs for application
@@ -43,16 +59,11 @@ func InitConfig() (*viper.Viper, error) {
 		log.Printf("Error while reading the config")
 	}
 
-	//
-	setDefault(vConfig)
 	if err := vConfig.ReadInConfig(); err != nil && !os.IsNotExist(err) {
 		log.Printf("Reading from env varaibles.")
 	}
 
 	return vConfig, nil
-}
-
-func setDefault(v *viper.Viper) {
 }
 
 // Getting application config from viper
@@ -63,7 +74,6 @@ func GetApplicationConfig(v *viper.Viper) (*AssistantConfig, error) {
 		log.Printf("%+v\n", err)
 		return nil, err
 	}
-
 	// valdating the app config
 	validate := validator.New()
 	err = validate.Struct(&config)

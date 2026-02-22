@@ -1,3 +1,5 @@
+import datetime
+
 from google.protobuf import timestamp_pb2 as _timestamp_pb2
 import app.bridges.artifacts.protos.common_pb2 as _common_pb2
 from google.protobuf import struct_pb2 as _struct_pb2
@@ -63,7 +65,7 @@ class AssistantWebhook(_message.Message):
     updatedUser: _common_pb2.User
     createdDate: _timestamp_pb2.Timestamp
     updatedDate: _timestamp_pb2.Timestamp
-    def __init__(self, id: _Optional[int] = ..., assistantEvents: _Optional[_Iterable[str]] = ..., description: _Optional[str] = ..., httpMethod: _Optional[str] = ..., httpUrl: _Optional[str] = ..., httpHeaders: _Optional[_Mapping[str, str]] = ..., httpBody: _Optional[_Mapping[str, str]] = ..., timeoutSecond: _Optional[int] = ..., executionPriority: _Optional[int] = ..., retryStatusCodes: _Optional[_Iterable[str]] = ..., retryCount: _Optional[int] = ..., assistantId: _Optional[int] = ..., status: _Optional[str] = ..., createdBy: _Optional[int] = ..., createdUser: _Optional[_Union[_common_pb2.User, _Mapping]] = ..., updatedBy: _Optional[int] = ..., updatedUser: _Optional[_Union[_common_pb2.User, _Mapping]] = ..., createdDate: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., updatedDate: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
+    def __init__(self, id: _Optional[int] = ..., assistantEvents: _Optional[_Iterable[str]] = ..., description: _Optional[str] = ..., httpMethod: _Optional[str] = ..., httpUrl: _Optional[str] = ..., httpHeaders: _Optional[_Mapping[str, str]] = ..., httpBody: _Optional[_Mapping[str, str]] = ..., timeoutSecond: _Optional[int] = ..., executionPriority: _Optional[int] = ..., retryStatusCodes: _Optional[_Iterable[str]] = ..., retryCount: _Optional[int] = ..., assistantId: _Optional[int] = ..., status: _Optional[str] = ..., createdBy: _Optional[int] = ..., createdUser: _Optional[_Union[_common_pb2.User, _Mapping]] = ..., updatedBy: _Optional[int] = ..., updatedUser: _Optional[_Union[_common_pb2.User, _Mapping]] = ..., createdDate: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updatedDate: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
 
 class AssistantWebhookLog(_message.Message):
     __slots__ = ("id", "webhookId", "request", "response", "status", "createdDate", "updatedDate", "assistantId", "projectId", "organizationId", "assistantConversationId", "assetPrefix", "event", "responseStatus", "timeTaken", "retryCount", "httpMethod", "httpUrl")
@@ -103,7 +105,7 @@ class AssistantWebhookLog(_message.Message):
     retryCount: int
     httpMethod: str
     httpUrl: str
-    def __init__(self, id: _Optional[int] = ..., webhookId: _Optional[int] = ..., request: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., response: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., status: _Optional[str] = ..., createdDate: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., updatedDate: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., assistantId: _Optional[int] = ..., projectId: _Optional[int] = ..., organizationId: _Optional[int] = ..., assistantConversationId: _Optional[int] = ..., assetPrefix: _Optional[str] = ..., event: _Optional[str] = ..., responseStatus: _Optional[int] = ..., timeTaken: _Optional[int] = ..., retryCount: _Optional[int] = ..., httpMethod: _Optional[str] = ..., httpUrl: _Optional[str] = ...) -> None: ...
+    def __init__(self, id: _Optional[int] = ..., webhookId: _Optional[int] = ..., request: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., response: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., status: _Optional[str] = ..., createdDate: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., updatedDate: _Optional[_Union[datetime.datetime, _timestamp_pb2.Timestamp, _Mapping]] = ..., assistantId: _Optional[int] = ..., projectId: _Optional[int] = ..., organizationId: _Optional[int] = ..., assistantConversationId: _Optional[int] = ..., assetPrefix: _Optional[str] = ..., event: _Optional[str] = ..., responseStatus: _Optional[int] = ..., timeTaken: _Optional[int] = ..., retryCount: _Optional[int] = ..., httpMethod: _Optional[str] = ..., httpUrl: _Optional[str] = ...) -> None: ...
 
 class CreateAssistantWebhookRequest(_message.Message):
     __slots__ = ("assistantEvents", "description", "httpMethod", "httpUrl", "httpHeaders", "httpBody", "timeoutSecond", "retryStatusCodes", "maxRetryCount", "assistantId", "executionPriority")

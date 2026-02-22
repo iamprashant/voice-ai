@@ -36,11 +36,10 @@ type azureTextToSpeech struct {
 }
 
 func NewAzureTextToSpeech(ctx context.Context, logger commons.Logger, credential *protos.VaultCredential,
-	audioConfig *protos.AudioConfig,
 	onPacket func(pkt ...internal_type.Packet) error,
 	opts utils.Option) (internal_type.TextToSpeechTransformer, error) {
 
-	azureOption, err := NewAzureOption(logger, credential, audioConfig, opts)
+	azureOption, err := NewAzureOption(logger, credential, opts)
 	if err != nil {
 		logger.Errorf("azure-tts: Unable to initilize azure option", err)
 		return nil, err

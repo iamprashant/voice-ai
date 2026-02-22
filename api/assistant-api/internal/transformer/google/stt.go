@@ -41,12 +41,12 @@ func (g *googleSpeechToText) Name() string {
 	return "google-speech-to-text"
 }
 
-func NewGoogleSpeechToText(ctx context.Context, logger commons.Logger, credential *protos.VaultCredential, audioConfig *protos.AudioConfig,
+func NewGoogleSpeechToText(ctx context.Context, logger commons.Logger, credential *protos.VaultCredential,
 	onPacket func(pkt ...internal_type.Packet) error,
 	opts utils.Option,
 ) (internal_type.SpeechToTextTransformer, error) {
 	start := time.Now()
-	googleOption, err := NewGoogleOption(logger, credential, audioConfig, opts)
+	googleOption, err := NewGoogleOption(logger, credential, opts)
 	if err != nil {
 		logger.Errorf("google-stt: Error while GoogleOption err: %v", err)
 		return nil, err
@@ -97,11 +97,11 @@ func (g *googleSpeechToText) speechToTextCallback(stram speechpb.Speech_Streamin
 			return
 		default:
 			resp, err := stram.Recv()
-			if err == io.EOF {
-				g.logger.Infof("google-stt: stream ended (EOF)")
-				return
-			}
 			if err != nil {
+				if err == io.EOF {
+					g.logger.Infof("google-stt: stream ended (EOF)")
+					return
+				}
 				g.logger.Errorf("google-stt: recv error: %v", err)
 				return
 			}

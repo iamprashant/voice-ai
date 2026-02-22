@@ -1,0 +1,16 @@
+version: v2
+# The v2 buf.yaml file specifies a local workspace, which consists of at least one module.
+# The buf.yaml file should be placed at the root directory of the workspace, which
+# should generally be the root of your source control repository.
+modules:
+  - path: protos/artifacts
+    lint:
+      use:
+        - STANDARD
+      except:
+        - FIELD_LOWER_SNAKE_CASE
+        - RPC_REQUEST_RESPONSE_UNIQUE
+        - PACKAGE_DIRECTORY_MATCH
+        - PACKAGE_VERSION_SUFFIX
+        - ENUM_VALUE_PREFIX
+        - FILE_LOWER_SNAKE_CASE

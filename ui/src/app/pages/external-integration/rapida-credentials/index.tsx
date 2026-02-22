@@ -132,7 +132,7 @@ export function ProjectCredentialPage() {
   return (
     <>
       <Helmet title="Providers and Models" />
-      <PageHeaderBlock>
+      <PageHeaderBlock className="border-b">
         <div className="flex items-center gap-3">
           <PageTitleBlock>Project Developer Keys</PageTitleBlock>
           <div className="text-xs opacity-75">
@@ -299,7 +299,7 @@ export function PersonalCredentialPage() {
   return (
     <>
       <Helmet title="Providers and Models" />
-      <PageHeaderBlock>
+      <PageHeaderBlock className="border-b">
         <div className="flex items-center gap-3">
           <PageTitleBlock>Personal Tokens</PageTitleBlock>
         </div>

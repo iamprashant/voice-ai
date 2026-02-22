@@ -11,6 +11,14 @@ import {
   ConfigureVonageTelephony,
   ValidateVonageTelephonyOptions,
 } from '@/app/components/providers/telephony/vonage';
+import {
+  ConfigureSIPTelephony,
+  ValidateSIPTelephonyOptions,
+} from '@/app/components/providers/telephony/sip';
+import {
+  ConfigureAsteriskTelephony,
+  ValidateAsteriskTelephonyOptions,
+} from '@/app/components/providers/telephony/asterisk';
 import { Dropdown } from '@/app/components/dropdown';
 import { FormLabel } from '@/app/components/form-label';
 import { FieldSet } from '@/app/components/form/fieldset';
@@ -32,6 +40,10 @@ export const ValidateTelephonyOptions = (
       return ValidateTwilioTelephonyOptions(parameters);
     case 'exotel':
       return ValidateExotelTelephonyOptions(parameters);
+    case 'sip':
+      return ValidateSIPTelephonyOptions(parameters);
+    case 'asterisk':
+      return ValidateAsteriskTelephonyOptions(parameters);
     default:
       return false;
   }
@@ -63,7 +75,6 @@ export const ConfigureTelephonyComponent: React.FC<ProviderComponentProps> = ({
           onParameterChange={onChangeParameter}
         />
       );
-
     case 'twilio':
       return (
         <ConfigureTwilioTelephony
@@ -71,7 +82,20 @@ export const ConfigureTelephonyComponent: React.FC<ProviderComponentProps> = ({
           onParameterChange={onChangeParameter}
         />
       );
-
+    case 'sip':
+      return (
+        <ConfigureSIPTelephony
+          parameters={parameters || []}
+          onParameterChange={onChangeParameter}
+        />
+      );
+    case 'asterisk':
+      return (
+        <ConfigureAsteriskTelephony
+          parameters={parameters || []}
+          onParameterChange={onChangeParameter}
+        />
+      );
     default:
       return null;
   }

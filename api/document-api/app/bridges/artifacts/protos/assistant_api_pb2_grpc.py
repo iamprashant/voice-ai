@@ -11,7 +11,7 @@ import app.bridges.artifacts.protos.assistant_tool_pb2 as assistant__tool__pb2
 import app.bridges.artifacts.protos.assistant_webhook_pb2 as assistant__webhook__pb2
 import app.bridges.artifacts.protos.common_pb2 as common__pb2
 
-GRPC_GENERATED_VERSION = '1.72.1'
+GRPC_GENERATED_VERSION = '1.78.0'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
@@ -24,7 +24,7 @@ except ImportError:
 if _version_not_supported:
     raise RuntimeError(
         f'The grpc package installed is at version {GRPC_VERSION},'
-        + f' but the generated code in assistant_api_pb2_grpc.py depends on'
+        + ' but the generated code in assistant_api_pb2_grpc.py depends on'
         + f' grpcio>={GRPC_GENERATED_VERSION}.'
         + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
         + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'

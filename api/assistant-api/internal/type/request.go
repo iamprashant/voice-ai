@@ -13,5 +13,5 @@ import (
 
 type Talking interface {
 	Communication
-	Talk(ctx context.Context, auth types.SimplePrinciple, identifier string) error
+	Talk(ctx context.Context, auth types.SimplePrinciple) error
 }

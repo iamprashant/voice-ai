@@ -40,10 +40,9 @@ func (*deepgramSTT) Name() string {
 }
 
 func NewDeepgramSpeechToText(ctx context.Context, logger commons.Logger, vaultCredential *protos.VaultCredential,
-	audioConfig *protos.AudioConfig,
 	onPacket func(pkt ...internal_type.Packet) error,
 	opts utils.Option) (internal_type.SpeechToTextTransformer, error) {
-	deepgramOpts, err := NewDeepgramOption(logger, vaultCredential, audioConfig, opts)
+	deepgramOpts, err := NewDeepgramOption(logger, vaultCredential, opts)
 	if err != nil {
 		logger.Errorf("deepgram-stt: Key from credential failed %+v", err)
 		return nil, err
@@ -62,9 +61,12 @@ func NewDeepgramSpeechToText(ctx context.Context, logger commons.Logger, vaultCr
 // The `Initialize` method in the `deepgram` struct is responsible for establishing a connection to the
 // Deepgram service using the WebSocket client `dg.client`.
 func (dg *deepgramSTT) Initialize() error {
-	dgClient, err := client.NewWSUsingCallback(dg.ctx, dg.GetKey(), &interfaces.ClientOptions{APIKey: dg.GetKey(), EnableKeepAlive: true}, dg.SpeechToTextOptions(), deepgram_internal.
-		NewDeepgramSttCallback(dg.logger, dg.onPacket, dg.deepgramOption.mdlOpts))
-
+	dgClient, err := client.NewWSUsingCallback(
+		dg.ctx,
+		dg.GetKey(),
+		&interfaces.ClientOptions{APIKey: dg.GetKey(), EnableKeepAlive: true},
+		dg.SpeechToTextOptions(), deepgram_internal.NewDeepgramSttCallback(dg.logger, dg.onPacket, dg.deepgramOption.mdlOpts))
+	dg.logger.Debugf("deepgram-stt: options %+v", dg.SpeechToTextOptions())
 	if err != nil {
 		dg.logger.Errorf("deepgram-stt: unable create dg client with error %+v", err.Error())
 		return err
