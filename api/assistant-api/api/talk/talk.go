@@ -56,7 +56,7 @@ func newConversationApiCore(cfg *config.AssistantConfig, logger commons.Logger,
 	opensearch connectors.OpenSearchConnector,
 	sipServer *sip_infra.Server,
 ) *ConversationApi {
-	store := callcontext.NewStore(redis, logger)
+	store := callcontext.NewStore(postgres, logger)
 	vaultClient := web_client.NewVaultClientGRPC(&cfg.AppConfig, logger, redis)
 	assistantService := internal_assistant_service.NewAssistantService(cfg, logger, postgres, opensearch)
 	fileStorage := storage_files.NewStorage(cfg.AssetStoreConfig, logger)

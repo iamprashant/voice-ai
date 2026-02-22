@@ -26,7 +26,7 @@ func (cApi *ConversationApi) UnviersalCallback(c *gin.Context) {
 	cApi.logger.Debugf("event body: %s", string(body))
 }
 
-// CallbackByContext handles status callback webhooks using a contextId stored in Redis.
+// CallbackByContext handles status callback webhooks using a contextId stored in Postgres.
 // The contextId resolves to the full call context (auth, assistant, conversation, provider).
 // The context is NOT deleted — callbacks fire multiple times during a call.
 // Route: GET/POST /:telephony/ctx/:contextId/event
@@ -48,7 +48,7 @@ func (cApi *ConversationApi) CallbackByContext(c *gin.Context) {
 
 // CallReciever handles incoming calls for the given assistant.
 // The telephony provider sends a webhook when an inbound call arrives.
-// This handler creates a conversation, saves a CallContext to Redis, and returns
+// This handler creates a conversation, saves a CallContext to Postgres, and returns
 // provider-specific instructions (TwiML, NCCO, contextId) to answer the call.
 // @Router /v1/talk/:telephony/call/:assistantId [get]
 // @Summary Receive call for given assistant
@@ -81,7 +81,7 @@ func (cApi *ConversationApi) CallReciever(c *gin.Context) {
 	}
 }
 
-// CallTalkerByContext handles WebSocket connections using a contextId stored in Redis.
+// CallTalkerByContext handles WebSocket connections using a contextId stored in Postgres.
 // The contextId was returned by CallReciever (inbound) or CreatePhoneCall (outbound).
 // All auth, assistant, conversation, and provider info is resolved from the call context.
 // Route: GET /:telephony/ctx/:contextId
@@ -126,4 +126,7 @@ func (cApi *ConversationApi) CallTalkerByContext(c *gin.Context) {
 	if err := talker.Talk(c, cc.ToAuth()); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid talk"})
 	}
+
+	// Mark call context as completed now that the call has ended
+	cApi.inboundDispatcher.CompleteCallSession(c, contextID)
 }

@@ -343,7 +343,7 @@ func (m *SIPEngine) handleInvite(session *sip_infra.Session, fromURI, toURI stri
 	_, _ = m.assistantConversationService.ApplyConversationMetadata(m.ctx, auth, assistant.Id, conversation.Id,
 		[]*types.Metadata{types.NewMetadata("sip.caller_uri", fromURI)})
 
-	// Build CallContext for the streamer — no Redis store needed for SIP inbound
+	// Build CallContext for the streamer — SIP inbound handles media directly (no store lookup needed)
 	cc := &callcontext.CallContext{
 		AssistantID:         assistant.Id,
 		ConversationID:      conversation.Id,

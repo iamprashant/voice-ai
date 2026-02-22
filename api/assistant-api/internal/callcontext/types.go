@@ -7,132 +7,69 @@
 package internal_callcontext
 
 import (
-	"fmt"
-	"strconv"
+	"time"
 
+	gorm_generator "github.com/rapidaai/pkg/models/gorm/generators"
 	"github.com/rapidaai/pkg/types"
 	"github.com/rapidaai/pkg/utils"
+	"gorm.io/gorm"
 )
 
-const redisKeyPrefix = "call:ctx:"
+// Call context status constants.
+const (
+	StatusPending   = "pending"   // Inbound: created, waiting for media connection
+	StatusQueued    = "queued"    // Outbound: created, waiting for provider to connect media
+	StatusClaimed   = "claimed"   // Media connection established (AudioSocket/WebSocket)
+	StatusCompleted = "completed" // Call ended normally
+	StatusFailed    = "failed"    // Call setup or execution failed
+)
 
 // CallContext holds all the information needed to resolve a call session.
 // It bridges the gap between the HTTP call-setup request (inbound webhook or outbound gRPC)
 // and the AudioSocket/WebSocket connection that follows.
+//
+// Stored in Postgres (call_contexts table). The status field provides atomic
+// claiming: only one media connection can transition pending→claimed.
 type CallContext struct {
-	ContextID      string `mapstructure:"context_id"`
-	AssistantID    uint64 `mapstructure:"assistant_id"`
-	ConversationID uint64 `mapstructure:"conversation_id"`
-	ProjectID      uint64 `mapstructure:"project_id"`
-	OrganizationID uint64 `mapstructure:"organization_id"`
-	AuthToken      string `mapstructure:"auth_token"`
-	AuthType       string `mapstructure:"auth_type"`
-	Provider       string `mapstructure:"provider"`
-	Direction      string `mapstructure:"direction"`
-	CallerNumber   string `mapstructure:"caller_number"`
-	CalleeNumber   string `mapstructure:"callee_number"`
-	FromNumber     string `mapstructure:"from_number"`
-	Status         string `mapstructure:"status"`
+	Id             uint64    `json:"id" gorm:"type:bigint;primaryKey;<-:create"`
+	ContextID      string    `json:"contextId" gorm:"column:context_id;type:varchar(36);not null;uniqueIndex"`
+	Status         string    `json:"status" gorm:"column:status;type:varchar(20);not null;default:pending"`
+	AssistantID    uint64    `json:"assistantId" gorm:"column:assistant_id;type:bigint;not null"`
+	ConversationID uint64    `json:"conversationId" gorm:"column:conversation_id;type:bigint;not null"`
+	ProjectID      uint64    `json:"projectId" gorm:"column:project_id;type:bigint;not null;default:0"`
+	OrganizationID uint64    `json:"organizationId" gorm:"column:organization_id;type:bigint;not null;default:0"`
+	AuthToken      string    `json:"-" gorm:"column:auth_token;type:text;not null;default:''"`
+	AuthType       string    `json:"authType" gorm:"column:auth_type;type:varchar(50);not null;default:''"`
+	Provider       string    `json:"provider" gorm:"column:provider;type:varchar(50);not null;default:''"`
+	Direction      string    `json:"direction" gorm:"column:direction;type:varchar(20);not null;default:''"`
+	CallerNumber   string    `json:"callerNumber" gorm:"column:caller_number;type:varchar(50);not null;default:''"`
+	CalleeNumber   string    `json:"calleeNumber" gorm:"column:callee_number;type:varchar(50);not null;default:''"`
+	FromNumber     string    `json:"fromNumber" gorm:"column:from_number;type:varchar(50);not null;default:''"`
+	CreatedDate    time.Time `json:"createdDate" gorm:"type:timestamp;not null;default:NOW();<-:create"`
+	UpdatedDate    time.Time `json:"updatedDate" gorm:"type:timestamp;default:null"`
 
 	// AssistantProviderId is the version identifier for the assistant provider.
 	// Stored so that streamer can build AssistantDefinition without re-fetching from DB.
-	AssistantProviderId uint64 `mapstructure:"assistant_provider_id"`
+	AssistantProviderId uint64 `json:"assistantProviderId" gorm:"column:assistant_provider_id;type:bigint;not null;default:0"`
 
 	// ChannelUUID is the provider-specific call identifier (Twilio CallSid, Vonage UUID,
 	// Asterisk channel ID, SIP Call-ID, etc.). Stored so that any telephony operation
 	// (transfer, disconnect, hold) can reference the live call on the provider.
-	ChannelUUID string `mapstructure:"channel_uuid"`
+	ChannelUUID string `json:"channelUuid" gorm:"column:channel_uuid;type:varchar(200);not null;default:''"`
 }
 
-// RedisKey returns the Redis key for this call context instance.
-func (cc *CallContext) RedisKey() string {
-	return redisKeyPrefix + cc.ContextID
+func (CallContext) TableName() string {
+	return "call_contexts"
 }
 
-// RedisKey returns the Redis key for a given contextId (package-level helper).
-func RedisKey(contextID string) string {
-	return redisKeyPrefix + contextID
-}
-
-// ToHashFields converts the CallContext to a map suitable for Redis HSET.
-func (cc *CallContext) ToHashFields() map[string]string {
-	fields := map[string]string{
-		"context_id":            cc.ContextID,
-		"assistant_id":          strconv.FormatUint(cc.AssistantID, 10),
-		"conversation_id":       strconv.FormatUint(cc.ConversationID, 10),
-		"project_id":            strconv.FormatUint(cc.ProjectID, 10),
-		"organization_id":       strconv.FormatUint(cc.OrganizationID, 10),
-		"auth_token":            cc.AuthToken,
-		"auth_type":             cc.AuthType,
-		"provider":              cc.Provider,
-		"direction":             cc.Direction,
-		"caller_number":         cc.CallerNumber,
-		"callee_number":         cc.CalleeNumber,
-		"from_number":           cc.FromNumber,
-		"status":                cc.Status,
-		"assistant_provider_id": strconv.FormatUint(cc.AssistantProviderId, 10),
-		"channel_uuid":          cc.ChannelUUID,
+func (cc *CallContext) BeforeCreate(tx *gorm.DB) (err error) {
+	if cc.Id <= 0 {
+		cc.Id = gorm_generator.ID()
 	}
-	return fields
-}
-
-// fromHashFields reconstructs a CallContext from a Redis HGETALL map[string]string result.
-// This is the inverse of ToHashFields and avoids the fragile generic Cmd→ResultStruct pipeline.
-func fromHashFields(fields map[string]string) (*CallContext, error) {
-	cc := &CallContext{
-		ContextID:    fields["context_id"],
-		AuthToken:    fields["auth_token"],
-		AuthType:     fields["auth_type"],
-		Provider:     fields["provider"],
-		Direction:    fields["direction"],
-		CallerNumber: fields["caller_number"],
-		CalleeNumber: fields["callee_number"],
-		FromNumber:   fields["from_number"],
-		Status:       fields["status"],
-		ChannelUUID:  fields["channel_uuid"],
+	if cc.CreatedDate.IsZero() {
+		cc.CreatedDate = time.Now()
 	}
-
-	if cc.ContextID == "" {
-		return nil, fmt.Errorf("call context has empty context_id")
-	}
-
-	if v := fields["assistant_id"]; v != "" {
-		n, err := strconv.ParseUint(v, 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("invalid assistant_id %q: %w", v, err)
-		}
-		cc.AssistantID = n
-	}
-	if v := fields["conversation_id"]; v != "" {
-		n, err := strconv.ParseUint(v, 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("invalid conversation_id %q: %w", v, err)
-		}
-		cc.ConversationID = n
-	}
-	if v := fields["project_id"]; v != "" {
-		n, err := strconv.ParseUint(v, 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("invalid project_id %q: %w", v, err)
-		}
-		cc.ProjectID = n
-	}
-	if v := fields["organization_id"]; v != "" {
-		n, err := strconv.ParseUint(v, 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("invalid organization_id %q: %w", v, err)
-		}
-		cc.OrganizationID = n
-	}
-	if v := fields["assistant_provider_id"]; v != "" {
-		n, err := strconv.ParseUint(v, 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("invalid assistant_provider_id %q: %w", v, err)
-		}
-		cc.AssistantProviderId = n
-	}
-
-	return cc, nil
+	return nil
 }
 
 // ToAuth converts the CallContext into a SimplePrinciple for use in service calls.
@@ -147,6 +84,16 @@ func (cc *CallContext) ToAuth() types.SimplePrinciple {
 		auth.OrganizationId = utils.Ptr(cc.OrganizationID)
 	}
 	return auth
+}
+
+// IsPending returns true if the context has not yet been claimed.
+func (cc *CallContext) IsPending() bool {
+	return cc.Status == StatusPending
+}
+
+// IsClaimed returns true if the context has been claimed by a media connection.
+func (cc *CallContext) IsClaimed() bool {
+	return cc.Status == StatusClaimed
 }
 
 // ExtractChannelUUID extracts the provider call UUID from telemetry metadata.

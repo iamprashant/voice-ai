@@ -60,9 +60,8 @@ func (d *OutboundDispatcher) Dispatch(ctx context.Context, contextID string) err
 
 	if err := d.performOutbound(ctx, cc); err != nil {
 		d.logger.Errorf("outbound dispatcher[%s]: call failed for contextId=%s: %v", cc.Provider, contextID, err)
-		cc.Status = "failed"
-		if _, saveErr := d.store.Save(ctx, cc); saveErr != nil {
-			d.logger.Errorf("outbound dispatcher[%s]: failed to update status for %s: %v", cc.Provider, contextID, saveErr)
+		if updateErr := d.store.UpdateField(ctx, contextID, "status", callcontext.StatusFailed); updateErr != nil {
+			d.logger.Errorf("outbound dispatcher[%s]: failed to update status for %s: %v", cc.Provider, contextID, updateErr)
 		}
 		return err
 	}

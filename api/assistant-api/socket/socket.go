@@ -47,14 +47,14 @@ type audioSocketEngine struct {
 }
 
 // NewAudioSocketEngine creates a new AudioSocket engine.
-// Internally builds an InboundDispatcher for call-context resolution (Redis
-// lookup + parallel entity loading). The engine only manages TCP + streamer.
+// Internally builds an InboundDispatcher for call-context resolution (Postgres
+// lookup + atomic claiming). The engine only manages TCP + streamer.
 func NewAudioSocketEngine(config *config.AssistantConfig, logger commons.Logger,
 	postgres connectors.PostgresConnector,
 	redis connectors.RedisConnector,
 	opensearch connectors.OpenSearchConnector,
 ) *audioSocketEngine {
-	store := callcontext.NewStore(redis, logger)
+	store := callcontext.NewStore(postgres, logger)
 	vaultClient := web_client.NewVaultClientGRPC(&config.AppConfig, logger, redis)
 	fileStorage := storage_files.NewStorage(config.AssetStoreConfig, logger)
 	assistantService := internal_assistant_service.NewAssistantService(config, logger, postgres, opensearch)
@@ -143,7 +143,7 @@ func (m *audioSocketEngine) handleConnection(ctx context.Context, conn net.Conn)
 	m.logger.Infof("AudioSocket connection received with contextId=%s", contextID)
 
 	// Step 2: Resolve call context — delegates to InboundDispatcher which handles
-	// Redis lookup, context deletion, and parallel entity loading.
+	// Postgres lookup, atomic claiming, and parallel entity loading.
 	cc, vaultCred, err := m.inboundDispatcher.ResolveCallSessionByContext(connCtx, contextID)
 	if err != nil {
 		m.logger.Warnw("AudioSocket session resolution failed", "contextId", contextID, "error", err)
@@ -184,6 +184,9 @@ func (m *audioSocketEngine) handleConnection(ctx context.Context, conn net.Conn)
 	if err := talker.Talk(connCtx, cc.ToAuth()); err != nil {
 		m.logger.Warnw("AudioSocket talker exited", "contextId", contextID, "error", err)
 	}
+
+	// Mark call context as completed now that the call has ended
+	m.inboundDispatcher.CompleteCallSession(connCtx, contextID)
 }
 
 // readContextID reads the initial UUID frame from the AudioSocket connection.

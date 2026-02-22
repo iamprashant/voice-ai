@@ -17,77 +17,74 @@ import (
 	"github.com/rapidaai/pkg/connectors"
 )
 
-const (
-	// DefaultTTL is the default time-to-live for call context entries.
-	// Call contexts are ephemeral — they bridge the gap between the HTTP call-setup
-	// request and the AudioSocket/WebSocket connection that follows within seconds.
-	DefaultTTL = 5 * time.Minute
-)
-
-// Store provides operations to save and retrieve call contexts from Redis.
+// Store provides operations to save and retrieve call contexts from Postgres.
+//
+// Call contexts are session-scoped records that live for the entire duration of a call.
+// Telephony providers (Twilio, Vonage, Exotel, etc.) send event/status callbacks
+// asynchronously — these can arrive at any time, including after the media stream
+// has disconnected and the context has been marked "completed". Therefore, the
+// row is never deleted during the call lifecycle; it is only transitioned through
+// statuses: pending/queued → claimed → completed/failed.
 type Store interface {
-	// Save stores a call context in Redis with a generated contextId (UUID).
+	// Save stores a call context with a generated contextId (UUID).
 	// Returns the generated contextId.
 	Save(ctx context.Context, cc *CallContext) (string, error)
 
-	// Get retrieves a call context by contextId.
-	// Returns nil if not found or expired.
+	// Get retrieves a call context by contextId regardless of its current status
+	// (pending, queued, claimed, completed, or failed). This is intentional:
+	// event/status callbacks from upstream telephony providers are asynchronous
+	// and may arrive after the call has already ended (status="completed").
+	// The row must remain readable for the full lifetime of the context.
 	Get(ctx context.Context, contextID string) (*CallContext, error)
 
-	// GetAndDelete atomically retrieves and deletes a call context in a single
-	// Redis operation (Lua script). This prevents race conditions where two
-	// concurrent media connections could both claim the same call context.
-	// Returns the CallContext or an error if not found/expired.
-	GetAndDelete(ctx context.Context, contextID string) (*CallContext, error)
+	// Claim atomically transitions a call context from "pending" or "queued"
+	// to "claimed". Inbound contexts start as "pending"; outbound contexts
+	// start as "queued" (set by the outbound call creator). Only one concurrent
+	// media connection can win the claim — subsequent callers get an error
+	// because the row is no longer in a claimable status.
+	// Returns the CallContext or an error if not found or already claimed.
+	Claim(ctx context.Context, contextID string) (*CallContext, error)
 
-	// Delete removes a call context (called after successful resolution).
+	// Delete removes a call context row. This is only intended for cleanup
+	// (e.g. TTL-based garbage collection), NOT during active call flows,
+	// because async event callbacks may still reference the contextId.
 	Delete(ctx context.Context, contextID string) error
 
-	// UpdateField sets a single field on an existing call context hash.
+	// Complete marks a call context as completed. Called when the call/session
+	// ends. The row remains in the database so that late-arriving async event
+	// callbacks from the telephony provider can still resolve the context.
+	Complete(ctx context.Context, contextID string) error
+
+	// UpdateField sets a single column on an existing call context.
 	// Used to patch the channel UUID after the telephony provider returns it.
 	UpdateField(ctx context.Context, contextID, field, value string) error
 }
 
-type redisStore struct {
-	redis  connectors.RedisConnector
-	logger commons.Logger
-	ttl    time.Duration
+type postgresStore struct {
+	postgres connectors.PostgresConnector
+	logger   commons.Logger
 }
 
-// NewStore creates a new call context store backed by Redis.
-func NewStore(redis connectors.RedisConnector, logger commons.Logger) Store {
-	return &redisStore{
-		redis:  redis,
-		logger: logger,
-		ttl:    DefaultTTL,
+// NewStore creates a new call context store backed by Postgres.
+func NewStore(postgres connectors.PostgresConnector, logger commons.Logger) Store {
+	return &postgresStore{
+		postgres: postgres,
+		logger:   logger,
 	}
 }
 
-// Save stores a call context in Redis with a generated UUID as the contextId.
-// The context is stored as a Redis hash and expires after DefaultTTL.
-func (s *redisStore) Save(ctx context.Context, cc *CallContext) (string, error) {
-	// Generate a UUID for the contextId if not already set
+// Save stores a call context in Postgres with a generated UUID as the contextId.
+func (s *postgresStore) Save(ctx context.Context, cc *CallContext) (string, error) {
 	if cc.ContextID == "" {
 		cc.ContextID = uuid.New().String()
 	}
-
-	key := cc.RedisKey()
-	client := s.redis.GetConnection()
-
-	// Store as hash using HSET with all fields
-	fields := cc.ToHashFields()
-	args := make([]interface{}, 0, len(fields)*2)
-	for k, v := range fields {
-		args = append(args, k, v)
+	if cc.Status == "" {
+		cc.Status = StatusPending
 	}
 
-	if err := client.HSet(ctx, key, args...).Err(); err != nil {
+	db := s.postgres.DB(ctx)
+	if err := db.Create(cc).Error; err != nil {
 		return "", fmt.Errorf("failed to save call context %s: %w", cc.ContextID, err)
-	}
-
-	// Set TTL on the hash
-	if err := client.Expire(ctx, key, s.ttl).Err(); err != nil {
-		s.logger.Warnf("failed to set TTL on call context %s: %v", cc.ContextID, err)
 	}
 
 	s.logger.Infof("saved call context: contextId=%s, assistant=%d, conversation=%d, direction=%s",
@@ -96,76 +93,62 @@ func (s *redisStore) Save(ctx context.Context, cc *CallContext) (string, error) 
 	return cc.ContextID, nil
 }
 
-// Get retrieves a call context by contextId.
-func (s *redisStore) Get(ctx context.Context, contextID string) (*CallContext, error) {
-	key := RedisKey(contextID)
-	client := s.redis.GetConnection()
-
-	result, err := client.HGetAll(ctx, key).Result()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get call context %s: %w", contextID, err)
-	}
-	if len(result) == 0 {
-		return nil, fmt.Errorf("call context not found (key does not exist): %s", contextID)
-	}
-
-	cc, err := fromHashFields(result)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse call context %s: %w", contextID, err)
+// Get retrieves a call context by contextId regardless of its status.
+// Used by event/status callbacks which need the context throughout the call.
+// This deliberately reads any status (pending, queued, claimed, completed, failed)
+// because upstream telephony providers fire event webhooks asynchronously — a
+// "completed" callback from Twilio can arrive well after the media stream ends.
+func (s *postgresStore) Get(ctx context.Context, contextID string) (*CallContext, error) {
+	db := s.postgres.DB(ctx)
+	var cc CallContext
+	if err := db.Where("context_id = ?", contextID).First(&cc).Error; err != nil {
+		return nil, fmt.Errorf("call context not found: %s: %w", contextID, err)
 	}
 
-	s.logger.Debugf("resolved call context: contextId=%s, assistant=%d, conversation=%d",
-		cc.ContextID, cc.AssistantID, cc.ConversationID)
+	s.logger.Debugf("resolved call context: contextId=%s, assistant=%d, conversation=%d, status=%s",
+		cc.ContextID, cc.AssistantID, cc.ConversationID, cc.Status)
 
-	return cc, nil
+	return &cc, nil
 }
 
-// GetAndDelete atomically retrieves and deletes a call context using a Lua script.
-// Only one caller can claim a given context — subsequent calls get an empty result.
-func (s *redisStore) GetAndDelete(ctx context.Context, contextID string) (*CallContext, error) {
-	key := RedisKey(contextID)
-	client := s.redis.GetConnection()
+// Claim atomically transitions a call context from "pending" or "queued" to "claimed"
+// using an atomic UPDATE ... WHERE status IN ('pending','queued'). Only one concurrent
+// caller can win. The context remains in the database so event callbacks can still read it.
+// Both "pending" (inbound) and "queued" (outbound) are valid pre-claim states.
+func (s *postgresStore) Claim(ctx context.Context, contextID string) (*CallContext, error) {
+	db := s.postgres.DB(ctx)
 
-	// Lua script: HGETALL + DEL in a single atomic operation.
-	// Returns the flat array of field-value pairs from HGETALL.
-	script := `local d=redis.call('HGETALL',KEYS[1]) if #d>0 then redis.call('DEL',KEYS[1]) end return d`
-	raw, err := client.Eval(ctx, script, []string{key}).Result()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get-and-delete call context %s: %w", contextID, err)
+	// Atomic update: only succeeds if status is still "pending" or "queued"
+	result := db.Model(&CallContext{}).
+		Where("context_id = ? AND status IN ?", contextID, []string{StatusPending, StatusQueued}).
+		Updates(map[string]interface{}{
+			"status":       StatusClaimed,
+			"updated_date": time.Now(),
+		})
+
+	if result.Error != nil {
+		return nil, fmt.Errorf("failed to claim call context %s: %w", contextID, result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return nil, fmt.Errorf("call context %s not found or already claimed", contextID)
 	}
 
-	// Eval returns []interface{} for the flat HGETALL array
-	pairs, ok := raw.([]interface{})
-	if !ok || len(pairs) == 0 {
-		return nil, fmt.Errorf("call context not found (key does not exist): %s", contextID)
+	// Fetch the full row after claiming
+	var cc CallContext
+	if err := db.Where("context_id = ?", contextID).First(&cc).Error; err != nil {
+		return nil, fmt.Errorf("failed to fetch claimed call context %s: %w", contextID, err)
 	}
 
-	// Convert flat pairs to map[string]string
-	result := make(map[string]string, len(pairs)/2)
-	for i := 0; i < len(pairs); i += 2 {
-		k, _ := pairs[i].(string)
-		v, _ := pairs[i+1].(string)
-		result[k] = v
-	}
-
-	cc, err := fromHashFields(result)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse call context %s: %w", contextID, err)
-	}
-
-	s.logger.Debugf("resolved and deleted call context: contextId=%s, assistant=%d, conversation=%d",
+	s.logger.Debugf("claimed call context: contextId=%s, assistant=%d, conversation=%d",
 		cc.ContextID, cc.AssistantID, cc.ConversationID)
 
-	return cc, nil
+	return &cc, nil
 }
 
-// Delete removes a call context from Redis.
-// Should be called after the AudioSocket/WebSocket connection has successfully resolved the context.
-func (s *redisStore) Delete(ctx context.Context, contextID string) error {
-	key := RedisKey(contextID)
-	client := s.redis.GetConnection()
-
-	if err := client.Del(ctx, key).Err(); err != nil {
+// Delete removes a call context from Postgres.
+func (s *postgresStore) Delete(ctx context.Context, contextID string) error {
+	db := s.postgres.DB(ctx)
+	if err := db.Where("context_id = ?", contextID).Delete(&CallContext{}).Error; err != nil {
 		return fmt.Errorf("failed to delete call context %s: %w", contextID, err)
 	}
 
@@ -173,13 +156,44 @@ func (s *redisStore) Delete(ctx context.Context, contextID string) error {
 	return nil
 }
 
-// UpdateField sets a single field on an existing call context hash in Redis.
-func (s *redisStore) UpdateField(ctx context.Context, contextID, field, value string) error {
-	key := RedisKey(contextID)
-	client := s.redis.GetConnection()
+// Complete marks a call context as completed. Called when the call/session ends.
+func (s *postgresStore) Complete(ctx context.Context, contextID string) error {
+	db := s.postgres.DB(ctx)
+	result := db.Model(&CallContext{}).
+		Where("context_id = ?", contextID).
+		Updates(map[string]interface{}{
+			"status":       StatusCompleted,
+			"updated_date": time.Now(),
+		})
 
-	if err := client.HSet(ctx, key, field, value).Err(); err != nil {
-		return fmt.Errorf("failed to update field %s on call context %s: %w", field, contextID, err)
+	if result.Error != nil {
+		return fmt.Errorf("failed to complete call context %s: %w", contextID, result.Error)
+	}
+
+	s.logger.Debugf("completed call context: contextId=%s", contextID)
+	return nil
+}
+
+// UpdateField sets a single column on an existing call context row.
+func (s *postgresStore) UpdateField(ctx context.Context, contextID, field, value string) error {
+	db := s.postgres.DB(ctx)
+
+	// Allowlist of updatable fields to prevent SQL injection
+	allowed := map[string]bool{
+		"channel_uuid": true,
+		"status":       true,
+		"provider":     true,
+	}
+	if !allowed[field] {
+		return fmt.Errorf("field %q is not updatable on call context", field)
+	}
+
+	result := db.Model(&CallContext{}).
+		Where("context_id = ?", contextID).
+		Update(field, value)
+
+	if result.Error != nil {
+		return fmt.Errorf("failed to update field %s on call context %s: %w", field, contextID, result.Error)
 	}
 
 	s.logger.Debugf("updated call context field: contextId=%s, %s=%s", contextID, field, value)

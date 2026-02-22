@@ -91,10 +91,10 @@ func TalkCallbackApiRoute(
 		apiv1.GET("/:telephony/event/:assistantId", talkRpcApi.UnviersalCallback)
 		apiv1.POST("/:telephony/event/:assistantId", talkRpcApi.UnviersalCallback)
 
-		// inbound call receiver — webhook from telephony provider, saves call context to Redis
+		// inbound call receiver — webhook from telephony provider, saves call context to Postgres
 		apiv1.GET("/:telephony/call/:assistantId", talkRpcApi.CallReciever)
 
-		// contextId-based routes — all auth, assistant, conversation resolved from Redis call context
+		// contextId-based routes — all auth, assistant, conversation resolved from Postgres call context
 		// Used by all telephony providers (Twilio, Exotel, Vonage, Asterisk, SIP)
 		apiv1.GET("/:telephony/ctx/:contextId", talkRpcApi.CallTalkerByContext)
 		apiv1.GET("/:telephony/ctx/:contextId/event", talkRpcApi.CallbackByContext)

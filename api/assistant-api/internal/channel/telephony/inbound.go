@@ -82,9 +82,10 @@ func (d *InboundDispatcher) HandleStatusCallback(c *gin.Context, provider string
 	return nil
 }
 
-// HandleStatusCallbackByContext resolves a call context from Redis using the contextId and
-// processes the status callback. Unlike ResolveCallSessionByContext, this does NOT delete
-// the context since status callbacks can fire multiple times during a call.
+// HandleStatusCallbackByContext resolves a call context from Postgres using the contextId and
+// processes the status callback. Unlike ResolveCallSessionByContext, this reads the context
+// without changing its status, since status callbacks can fire multiple times during a call
+// and may arrive asynchronously even after the call has ended (status="completed").
 func (d *InboundDispatcher) HandleStatusCallbackByContext(c *gin.Context, contextID string) error {
 	cc, err := d.store.Get(c, contextID)
 	if err != nil {
@@ -97,7 +98,7 @@ func (d *InboundDispatcher) HandleStatusCallbackByContext(c *gin.Context, contex
 }
 
 // HandleReceiveCall processes an inbound call webhook. It resolves the telephony provider,
-// receives the call, creates a conversation, saves a CallContext in Redis, applies telemetry,
+// receives the call, creates a conversation, saves a CallContext in Postgres, applies telemetry,
 // and instructs the provider to answer the call.
 // Returns the contextID for AudioSocket/WebSocket resolution.
 func (d *InboundDispatcher) HandleReceiveCall(c *gin.Context, provider string, auth types.SimplePrinciple, assistantId uint64) (string, error) {
@@ -171,7 +172,7 @@ func (d *InboundDispatcher) HandleReceiveCall(c *gin.Context, provider string, a
 		return "", fmt.Errorf("failed to process call telemetry: %w", err)
 	}
 
-	// Store call context in Redis for AudioSocket/WebSocket resolution.
+	// Store call context in Postgres for AudioSocket/WebSocket resolution.
 	// ChannelUUID comes directly from CallInfo — no need to scan metadata.
 	cc := &callcontext.CallContext{
 		AssistantID:         assistant.Id,
@@ -233,16 +234,17 @@ func (d *InboundDispatcher) ResolveVaultCredential(ctx context.Context, auth typ
 }
 
 // ResolveCallSessionByContext resolves a call context and vault credential using
-// a contextId stored in Redis. The call context is atomically retrieved and
-// deleted in a single Redis operation (Lua script) to prevent race conditions
-// where two concurrent media connections could both claim the same context.
+// a contextId stored in Postgres. The call context is atomically claimed by
+// transitioning its status from "pending" to "claimed". Only one media connection
+// can claim a given context — subsequent callers get an error.
+// The context remains in Postgres so that event/status callbacks can still read it.
 // Returns the CallContext (which contains all IDs and auth info) plus the vault
 // credential needed for the streamer.
 func (d *InboundDispatcher) ResolveCallSessionByContext(ctx context.Context, contextID string) (*callcontext.CallContext, *protos.VaultCredential, error) {
-	cc, err := d.store.GetAndDelete(ctx, contextID)
+	cc, err := d.store.Claim(ctx, contextID)
 	if err != nil {
 		d.logger.Errorf("failed to resolve call context %s: %v", contextID, err)
-		return nil, nil, fmt.Errorf("call context not found or expired: %w", err)
+		return nil, nil, fmt.Errorf("call context not found or already claimed: %w", err)
 	}
 
 	auth := cc.ToAuth()
@@ -251,4 +253,12 @@ func (d *InboundDispatcher) ResolveCallSessionByContext(ctx context.Context, con
 		return nil, nil, err
 	}
 	return cc, vaultCred, nil
+}
+
+// CompleteCallSession marks a call context as completed. Should be called
+// when the call/session ends (talker exits).
+func (d *InboundDispatcher) CompleteCallSession(ctx context.Context, contextID string) {
+	if err := d.store.Complete(ctx, contextID); err != nil {
+		d.logger.Warnf("failed to complete call context %s: %v", contextID, err)
+	}
 }

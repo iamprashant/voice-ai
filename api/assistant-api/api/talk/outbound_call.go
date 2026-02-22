@@ -97,7 +97,7 @@ func (cApi *ConversationGrpcApi) CreatePhoneCall(ctx context.Context, ir *protos
 		}
 	}
 
-	// Store call context in Redis for async worker resolution
+	// Store call context in Postgres for async worker resolution
 	cc := &callcontext.CallContext{
 		AssistantID:         assistant.Id,
 		ConversationID:      conversation.Id,

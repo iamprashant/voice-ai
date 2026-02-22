@@ -281,7 +281,7 @@ func (apt *asteriskTelephony) OutboundCall(
 
 // InboundCall handles inbound call setup for Asterisk.
 // Returns the contextId as plain text — Asterisk dialplan uses this as the AudioSocket UUID
-// so the AudioSocket server can resolve the full call context from Redis.
+// so the AudioSocket server can resolve the full call context from Postgres.
 //
 // For AudioSocket: same = n,AudioSocket(${CURL(https://api.rapida.ai/v1/talk/asterisk/call/${ASSISTANT_ID})},host:port)
 // For chan_websocket: the contextId is used in the WS URL path: wss://host/v1/talk/asterisk/ctx/${contextId}
@@ -292,7 +292,7 @@ func (apt *asteriskTelephony) InboundCall(
 	clientNumber string,
 	assistantConversationId uint64,
 ) error {
-	// contextId was set by CallReciever after saving the call context to Redis.
+	// contextId was set by CallReciever after saving the call context to Postgres.
 	// Return it as plain text — Asterisk dialplan uses this as the AudioSocket UUID
 	// or as part of the WebSocket URL path for chan_websocket.
 	contextID, exists := c.Get("contextId")
