@@ -20,10 +20,12 @@ import (
 
 const (
 	// Redis key for the set of available RTP ports
-	rtpAvailableKey = "rtp:ports:available"
+	// Uses hash tag {rtp:ports} to ensure all RTP keys hash to the same Redis Cluster slot
+	rtpAvailableKey = "{rtp:ports}:available"
 
 	// Redis key prefix for per-instance allocated ports (for crash recovery)
-	rtpAllocatedPrefix = "rtp:ports:allocated:"
+	// Uses hash tag {rtp:ports} to ensure all RTP keys hash to the same Redis Cluster slot
+	rtpAllocatedPrefix = "{rtp:ports}:allocated:"
 
 	// TTL for per-instance allocated port tracking (crash recovery)
 	rtpAllocatedTTL = 10 * time.Minute
