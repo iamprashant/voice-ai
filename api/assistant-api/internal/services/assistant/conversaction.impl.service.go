@@ -164,12 +164,18 @@ func (conversationService *assistantConversationService) Get(
 				assistantConversation.Recordings = make([]*internal_conversation_entity.AssistantConversationRecording, 0)
 				// updating all to public url
 				for _, recording := range assistantConversationRecording {
-					pUrl, err := conversationService.GetRecordingPublicUrl(ctx, recording.RecordingUrl)
+					assistantUrl, err := conversationService.GetRecordingPublicUrl(ctx, recording.AssistantRecordingUrl)
 					if err != nil {
-						conversationService.logger.Warnf("unable to get public url %+v", tx.Error)
+						conversationService.logger.Warnf("unable to get assistant public url %+v", err)
 						continue
 					}
-					recording.RecordingUrl = *pUrl
+					userUrl, err := conversationService.GetRecordingPublicUrl(ctx, recording.UserRecordingUrl)
+					if err != nil {
+						conversationService.logger.Warnf("unable to get user public url %+v", err)
+						continue
+					}
+					recording.AssistantRecordingUrl = *assistantUrl
+					recording.UserRecordingUrl = *userUrl
 					assistantConversation.Recordings = append(assistantConversation.Recordings, recording)
 				}
 			})
@@ -537,11 +543,11 @@ func (conversationService *assistantConversationService) CreateConversationRecor
 	s3Prefix := conversationService.ObjectPrefix(*auth.GetCurrentOrganizationId(), *auth.GetCurrentProjectId())
 	recordingId := gorm_generator.ID()
 
-	key := conversationService.ObjectKey(s3Prefix, assistantConversationId, fmt.Sprintf("user-%d.wav", recordingId))
-	conversationService.storage.Store(ctx, key, user)
+	userKey := conversationService.ObjectKey(s3Prefix, assistantConversationId, fmt.Sprintf("user-%d.wav", recordingId))
+	conversationService.storage.Store(ctx, userKey, user)
 
-	key = conversationService.ObjectKey(s3Prefix, assistantConversationId, fmt.Sprintf("assistant-%d.wav", recordingId))
-	conversationService.storage.Store(ctx, key, assistant)
+	assistantKey := conversationService.ObjectKey(s3Prefix, assistantConversationId, fmt.Sprintf("assistant-%d.wav", recordingId))
+	conversationService.storage.Store(ctx, assistantKey, assistant)
 
 	conversationRecording := &internal_conversation_entity.AssistantConversationRecording{
 		Audited: gorm_models.Audited{
@@ -553,7 +559,8 @@ func (conversationService *assistantConversationService) CreateConversationRecor
 		},
 		AssistantId:             assistantId,
 		AssistantConversationId: assistantConversationId,
-		RecordingUrl:            fmt.Sprintf("%s/%d/", s3Prefix, assistantConversationId),
+		AssistantRecordingUrl:   assistantKey,
+		UserRecordingUrl:        userKey,
 	}
 	if auth.GetUserId() != nil {
 		conversationRecording.Mutable.CreatedBy = *auth.GetUserId()

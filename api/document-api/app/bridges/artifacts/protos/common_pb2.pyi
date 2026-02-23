@@ -386,12 +386,14 @@ class AssistantConversationContext(_message.Message):
     def __init__(self, id: _Optional[int] = ..., metadata: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., result: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ..., query: _Optional[_Union[_struct_pb2.Struct, _Mapping]] = ...) -> None: ...
 
 class AssistantConversationRecording(_message.Message):
-    __slots__ = ("id", "recordingUrl")
+    __slots__ = ("id", "assistantRecordingUrl", "userRecordingUrl")
     ID_FIELD_NUMBER: _ClassVar[int]
-    RECORDINGURL_FIELD_NUMBER: _ClassVar[int]
+    ASSISTANTRECORDINGURL_FIELD_NUMBER: _ClassVar[int]
+    USERRECORDINGURL_FIELD_NUMBER: _ClassVar[int]
     id: int
-    recordingUrl: str
-    def __init__(self, id: _Optional[int] = ..., recordingUrl: _Optional[str] = ...) -> None: ...
+    assistantRecordingUrl: str
+    userRecordingUrl: str
+    def __init__(self, id: _Optional[int] = ..., assistantRecordingUrl: _Optional[str] = ..., userRecordingUrl: _Optional[str] = ...) -> None: ...
 
 class AssistantConversationTelephonyEvent(_message.Message):
     __slots__ = ("id", "assistantConversationId", "provider", "eventType", "payload", "createdDate", "updatedDate")

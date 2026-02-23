@@ -67,5 +67,6 @@ type AssistantConversationRecording struct {
 	gorm_model.Organizational
 	AssistantId             uint64 `json:"assistantId" gorm:"type:bigint;not null"`
 	AssistantConversationId uint64 `json:"assistantConversationId" gorm:"type:bigint;not null"`
-	RecordingUrl            string `json:"recordingUrl" gorm:"type:string;not null"`
+	AssistantRecordingUrl   string `json:"assistantRecordingUrl" gorm:"type:string;not null"`
+	UserRecordingUrl        string `json:"userRecordingUrl" gorm:"type:string;not null"`
 }

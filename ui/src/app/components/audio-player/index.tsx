@@ -56,10 +56,8 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
   const [bothReady, setBothReady] = useState<boolean>(false);
   const readyCount = useRef<number>(0);
 
-  const baseUrl = recording.getRecordingurl();
-  const recordingId = recording.getId();
-  const assistantSrc = `${baseUrl}/assistant-${recordingId}.wav`;
-  const userSrc = `${baseUrl}/user-${recordingId}.wav`;
+  const assistantSrc = recording.getAssistantrecordingurl();
+  const userSrc = recording.getUserrecordingurl();
 
   useEffect(() => {
     if (!sharedAudioContext.current) {
