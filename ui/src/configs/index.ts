@@ -40,6 +40,8 @@ export interface RapidaConfig {
     assistant: string;
     web: string;
     endpoint: string;
+    sip?: string;
+    socket?: string;
   };
   analytics?: SentryAnalyticsConfig;
   workspace: WorkspaceConfig;
