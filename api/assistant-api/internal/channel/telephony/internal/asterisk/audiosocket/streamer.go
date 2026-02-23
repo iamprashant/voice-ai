@@ -188,7 +188,6 @@ func (as *Streamer) Send(response internal_type.Stream) error {
 		}
 	case *protos.ConversationInterruption:
 		if data.GetType() == protos.ConversationInterruption_INTERRUPTION_TYPE_WORD {
-			as.audioProcessor.ClearInputBuffer()
 			as.audioProcessor.ClearOutputBuffer()
 		}
 	case *protos.ConversationDirective:

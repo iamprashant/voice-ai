@@ -192,9 +192,7 @@ func (aws *asteriskWebsocketStreamer) Send(response internal_type.Stream) error 
 	case *protos.ConversationInterruption:
 		if data.Type == protos.ConversationInterruption_INTERRUPTION_TYPE_WORD {
 			// Clear both input and output buffers
-			aws.audioProcessor.ClearInputBuffer()
 			aws.audioProcessor.ClearOutputBuffer()
-
 			// No direct "clear" command in Asterisk media WebSocket,
 			// but we can stop buffering if active
 			if aws.isMediaBuffering() {
