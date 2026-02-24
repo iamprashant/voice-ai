@@ -127,7 +127,7 @@ class ModelManager:
             request = build_embedding_input(
                 credential=Credential(id=self.credential.id, value=credential),
                 parameters=self.model_parameters,
-                contents=(OrderedDict((i, s) for i, s in enumerate(texts)),),
+                contents=OrderedDict((i, s) for i, s in enumerate(texts)),
                 additional_data=self.__references,
             )
 

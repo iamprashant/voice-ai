@@ -59,7 +59,8 @@ class IntegrationBridge(GRPCBridge):
             "voyageai": integration_api_pb2_grpc.VoyageAiServiceStub,
             "bedrock": integration_api_pb2_grpc.BedrockServiceStub,
             "azure-openai": integration_api_pb2_grpc.AzureServiceStub,
-            "google": integration_api_pb2_grpc.GoogleServiceStub
+            "google": integration_api_pb2_grpc.GeminiServiceStub,
+            "vertex-ai": integration_api_pb2_grpc.VertexAiServiceStub,
         }
 
         # Fetch the correct service stub for the provider

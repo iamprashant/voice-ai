@@ -18,10 +18,7 @@ def get_url_from_request(request: Request) -> HttpUrl:
     :param: request current request with context
     :return HttpUrl
     """
-    return HttpUrl(
-        scheme=request.url.scheme,
-        url=get_absolute_url(request),
-    )
+    return HttpUrl(get_absolute_url(request))
 
 
 def get_absolute_url(request: Request) -> str:

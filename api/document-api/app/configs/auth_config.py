@@ -47,3 +47,26 @@ class AuthenticationConfig(BaseModel):
     type: Optional[str]
 
     config: Optional[Union[TokenAuthenticationConfig, JwtAuthenticationConfig]]
+
+
+class TokenConfig(BaseModel):
+    """Token-based auth config used by TokenAuthorizationMiddleware."""
+
+    strict: bool = False
+    enable: bool = True
+    header_key: str = "Authorization"
+    auth_host: Optional[str] = Field(default=None)
+
+
+class JwtConfig(BaseModel):
+    """JWT auth config used by JwtAuthorizationMiddleware."""
+
+    strict: bool = False
+    enable: bool = True
+    secret_key: SecretStr
+    algorithms: Set = frozenset({"HS256"})
+    header_key: str = "Authorization"
+
+    class Config:
+        case_sensitive = True
+        env_file_encoding = "utf-8"

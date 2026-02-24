@@ -47,9 +47,9 @@ class AuthBridge(GRPCBridge):
 
         response = await self.fetch(
             stub=web_api_pb2_grpc.AuthenticationServiceStub,
-            attr="Invoke",
-            message_type=web_api_pb2.AuthorizeRequest(),
+            attr="ScopeAuthorize",
+            message_type=web_api_pb2.ScopeAuthorizeRequest(),
             preserving_proto_field_name=True,
             metadata=_metadata
         )
-        return ParseDict(response, web_api_pb2.AuthenticateResponse())
+        return ParseDict(response, web_api_pb2.ScopedAuthenticationResponse())

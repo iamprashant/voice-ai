@@ -13,7 +13,6 @@ from typing import Dict
 
 from app.bridges.bridge_factory import (
     get_me_integration_client,
-    get_me_provider_client,
     get_me_vault_service_client,
 )
 from app.celery_worker import celery_app
@@ -41,9 +40,8 @@ async def __index_document(request, data: Dict):
         postgres = await get_me_postgres(request)
         elastic_search = await get_me_elastic_search(request)
         storage = await get_me_storage(request)
-        integration_client = get_me_integration_client(get_settings())
-        vault_client = get_me_vault_service_client(get_settings())
-        provider_client = get_me_provider_client(get_settings())
+        integration_client = get_me_integration_client(get_settings().internal_service.integration_host)
+        vault_client = get_me_vault_service_client(get_settings().internal_service.web_host)
 
         org_id = data.get("organization_id")
         project_id = data.get("project_id")
@@ -104,7 +102,6 @@ async def __index_document(request, data: Dict):
                 knowledge=knowledge_service.get_knowledge(document.knowledge_id),
                 knowledge_document=document,
                 integration_client=integration_client,
-                provider_client=provider_client,
                 vault_client=vault_client,
                 index_type="paragraph-index",
             ).run()

@@ -11,7 +11,7 @@ import app.bridges.artifacts.protos.assistant_tool_pb2 as assistant__tool__pb2
 import app.bridges.artifacts.protos.assistant_webhook_pb2 as assistant__webhook__pb2
 import app.bridges.artifacts.protos.common_pb2 as common__pb2
 
-GRPC_GENERATED_VERSION = '1.78.0'
+GRPC_GENERATED_VERSION = '1.78.1'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 

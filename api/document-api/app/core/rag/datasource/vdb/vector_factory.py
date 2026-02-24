@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 import logging
-from app.bridges.artifacts.protos.knowledge_api_pb2 import KnowledgeDocument
+from app.models.knowledge_model import KnowledgeDocument
 from app.core.embedding.embedding import Embedder
 from app.core.rag.datasource.vdb.vector_base import BaseVector
 from app.core.rag.models.document import Document

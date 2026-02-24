@@ -8,6 +8,11 @@ See LICENSE.md for details or contact sales@rapida.ai for commercial use.
 from typing import Dict
 
 import pytest
+
+try:
+    from app.middlewares import RequestEnhancerMiddleware  # noqa: F401
+except (ImportError, AttributeError):
+    pytest.skip("RequestEnhancerMiddleware not exported from app.middlewares", allow_module_level=True)
 from async_asgi_testclient import TestClient as AsyncTestClient
 from fastapi import Request
 

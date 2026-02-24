@@ -12,9 +12,6 @@ from typing import Type, TypeVar
 from fastapi import Depends
 
 from app.bridges import GRPCBridge
-from app.bridges.internals.auth_bridge import (
-    AuthBridge,
-)
 from app.bridges.internals.integration_bridge import IntegrationBridge
 from app.bridges.internals.vault_bridge import VaultBridge
 from app.config import ApplicationSettings, get_settings
@@ -38,20 +35,6 @@ def service_grpc_client(bridge: Type[GRPC_T], service_url: str) -> GRPC_T:
             "Configuration error: service_url is not set for dependable bridge."
         )
     return bridge(service_url=service_url)
-
-
-def get_me_user_service_client(
-        settings: ApplicationSettings = Depends(get_settings),
-) -> AuthBridge:
-    """
-    Dependable function returns user Bridge
-    :param settings: application settings to get user_service url
-    :return: user service client wrapper to initiate any rpc call
-    :rtype: RPCBridge -> UserBridge
-    """
-    return service_grpc_client(
-        bridge=AuthBridge, service_url=settings.lomotif_user_service_url
-    )
 
 
 def get_vault_service_client(

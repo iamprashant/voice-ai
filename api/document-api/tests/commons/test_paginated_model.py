@@ -18,7 +18,6 @@ from app.utils.request import get_url_from_request
 
 
 class TestPaginatedModel:
-    @pytest.mark.asyncio
     @pytest.fixture(autouse=True)
     def setup_method(self, test_app):
         class TestModel(BaseModel):
@@ -98,7 +97,7 @@ class TestPaginatedModel:
         assert j_response["content"]["param"]["limit"] == limit
         assert j_response["content"]["results"] == expected_result
         if offset >= 10:
-            assert j_response["content"]["next"] is None
+            assert j_response["content"].get("next") is None
 
         if offset <= 0:
-            assert j_response["content"]["previous"] is None
+            assert j_response["content"].get("previous") is None

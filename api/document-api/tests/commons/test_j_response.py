@@ -13,7 +13,6 @@ from app.commons.j_response import JResponse
 
 
 class TestJResponse:
-    @pytest.mark.asyncio
     @pytest.fixture(autouse=True)
     def setup_method(self, test_app):
         class TestModel(BaseModel):
