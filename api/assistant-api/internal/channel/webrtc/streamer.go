@@ -731,7 +731,6 @@ func (s *webrtcStreamer) Send(response internal_type.Stream) error {
 		s.PushOutput(data)
 	case *protos.ConversationInterruption:
 		if data.Type == protos.ConversationInterruption_INTERRUPTION_TYPE_WORD {
-			s.ClearInputBuffer()
 			s.ClearOutputBuffer()
 			s.sendClear()
 		}

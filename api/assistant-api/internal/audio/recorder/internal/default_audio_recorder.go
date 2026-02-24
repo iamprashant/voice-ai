@@ -11,6 +11,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"sync"
+	"time"
 
 	internal_audio "github.com/rapidaai/api/assistant-api/internal/audio"
 	internal_type "github.com/rapidaai/api/assistant-api/internal/type"
@@ -25,30 +26,65 @@ const (
 
 var audioConfig = internal_audio.RAPIDA_INTERNAL_AUDIO_CONFIG
 
-type trackKind int
-
-const (
-	trackUser trackKind = iota
-	trackSystem
-)
-
+// chunk is a recorded audio fragment placed at a specific position on the
+// timeline. ByteOffset is the byte position relative to Start().
 type chunk struct {
-	Data  []byte
-	Track trackKind
+	ByteOffset int
+	Data       []byte
+	Track      int // trackUser or trackSystem
 }
 
+const (
+	trackUser   = 0
+	trackSystem = 1
+)
+
 type audioRecorder struct {
-	logger commons.Logger
-	mu     sync.Mutex
-	chunks []chunk
+	logger    commons.Logger
+	mu        sync.Mutex
+	startTime time.Time
+	started   bool
+	chunks    []chunk
+	// Per-track cursor: the byte position just past the last written byte on
+	// each track. For user track wall-clock placement is used. For system
+	// (TTS) track the cursor paces audio at the playback rate — only the
+	// first chunk after a gap uses wall-clock to anchor position.
+	cursor [2]int
+	// clock is injectable for testing; defaults to time.Now.
+	clock func() time.Time
 }
 
 func NewDefaultAudioRecorder(logger commons.Logger) (internal_type.Recorder, error) {
-	return &audioRecorder{logger: logger}, nil
+	return &audioRecorder{
+		logger: logger,
+		clock:  time.Now,
+	}, nil
 }
 
-// Record appends audio data. Mutex-guarded so safe to call from goroutines.
-// TTS delivers chunks sequentially, so arrival order is preserved.
+// Start begins the recording session. Both tracks share this start time.
+// Audio is placed on the timeline based on when it arrives relative to
+// this moment.
+func (r *audioRecorder) Start() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.startTime = r.clock()
+	r.started = true
+}
+
+func bytesPerSecond() int {
+	return int(audioConfig.SampleRate) * int(audioConfig.Channels) * AudioBytesPerSample
+}
+
+// durationBytes converts a wall-clock duration to a frame-aligned byte count.
+func durationBytes(d time.Duration) int {
+	raw := int(d.Seconds() * float64(bytesPerSecond()))
+	frameSize := AudioBytesPerSample * int(audioConfig.Channels)
+	return (raw / frameSize) * frameSize
+}
+
+// Record places audio on the appropriate track at the current wall-clock
+// position. Each chunk is positioned based on WHEN it arrives, not just
+// appended. Both tracks share the same timeline (Start → Persist).
 func (r *audioRecorder) Record(ctx context.Context, p internal_type.Packet) error {
 	switch vl := p.(type) {
 	case internal_type.UserAudioPacket:
@@ -59,25 +95,67 @@ func (r *audioRecorder) Record(ctx context.Context, p internal_type.Packet) erro
 	return nil
 }
 
-func (r *audioRecorder) push(data []byte, track trackKind) error {
+func (r *audioRecorder) push(data []byte, track int) error {
 	if len(data) == 0 {
 		return nil
 	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	// Compute wall-clock byte offset.
+	wallOffset := 0
+	if r.started {
+		wallOffset = durationBytes(r.clock().Sub(r.startTime))
+	}
+
+	var offset int
+	switch track {
+	case trackUser:
+		// User (mic) audio: wall-clock placement. Mic delivers at real-time
+		// rate, so wall-clock offset is the correct timeline position.
+		offset = wallOffset
+		if r.cursor[track] > offset {
+			offset = r.cursor[track]
+		}
+
+	case trackSystem:
+		// TTS audio: PACING. TTS delivers audio in bursts (faster than
+		// real-time). We pace it at the playback rate on the timeline:
+		//
+		//   - First chunk after silence (cursor <= wallOffset): anchor at
+		//     wall-clock offset.
+		//   - Subsequent burst chunks (cursor > wallOffset): place at cursor
+		//     so audio is continuous at the playback rate with no gaps.
+		//
+		// This avoids "audio breaking" that happened when wall-clock was used
+		// for every chunk — variable delivery timing introduced tiny gaps or
+		// overlaps between TTS chunks.
+		if r.cursor[track] > wallOffset {
+			// Burst continuation: pace from cursor.
+			offset = r.cursor[track]
+		} else {
+			// New TTS segment: anchor at wall-clock.
+			offset = wallOffset
+		}
+	}
+
+	// Copy to avoid caller mutations.
 	buf := make([]byte, len(data))
 	copy(buf, data)
-	r.chunks = append(r.chunks, chunk{Data: buf, Track: track})
+
+	r.chunks = append(r.chunks, chunk{
+		ByteOffset: offset,
+		Data:       buf,
+		Track:      track,
+	})
+	// Advance cursor past this chunk.
+	r.cursor[track] = offset + len(buf)
 	return nil
 }
 
-func bytesPerSecond() int {
-	return int(audioConfig.SampleRate) * int(audioConfig.Channels) * AudioBytesPerSample
-}
-
-// Persist renders two time-aligned WAV files (user + system).
-// Consecutive same-track chunks are merged; the other track gets silence.
+// Persist renders two WAV files — one per track. Both WAVs span the full
+// session duration (Start → Persist). Audio chunks are placed at their
+// recorded timeline positions; gaps are silence.
 func (r *audioRecorder) Persist() ([]byte, []byte, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -86,25 +164,50 @@ func (r *audioRecorder) Persist() ([]byte, []byte, error) {
 		return nil, nil, fmt.Errorf("no audio chunks to persist")
 	}
 
-	// Build two PCM buffers in one pass over chunks.
-	var userPCM, systemPCM bytes.Buffer
+	// Total session duration in bytes.
+	sessionBytes := 0
+	if r.started {
+		sessionBytes = durationBytes(r.clock().Sub(r.startTime))
+	}
+
+	// Determine the minimum buffer size: max(sessionBytes, furthest chunk end).
+	totalLen := sessionBytes
 	for _, c := range r.chunks {
-		silence := make([]byte, len(c.Data))
-		switch c.Track {
-		case trackUser:
-			userPCM.Write(c.Data)
-			systemPCM.Write(silence)
-		case trackSystem:
-			userPCM.Write(silence)
-			systemPCM.Write(c.Data)
+		end := c.ByteOffset + len(c.Data)
+		if end > totalLen {
+			totalLen = end
 		}
 	}
 
-	r.logger.Info(fmt.Sprintf("Audio timeline: totalBytes=%d, duration=%.2fs, chunks=%d",
-		userPCM.Len(), float64(userPCM.Len())/float64(bytesPerSecond()), len(r.chunks)))
+	// Allocate zero-filled (silence) buffers for each track.
+	userPCM := make([]byte, totalLen)
+	systemPCM := make([]byte, totalLen)
 
-	userWAV, _ := createWAVFile(userPCM.Bytes())
-	systemWAV, _ := createWAVFile(systemPCM.Bytes())
+	// Paint each chunk onto its track buffer.
+	userAudioBytes := 0
+	systemAudioBytes := 0
+	for _, c := range r.chunks {
+		var dst []byte
+		if c.Track == trackUser {
+			dst = userPCM
+			userAudioBytes += len(c.Data)
+		} else {
+			dst = systemPCM
+			systemAudioBytes += len(c.Data)
+		}
+		copy(dst[c.ByteOffset:], c.Data)
+	}
+
+	r.logger.Info(fmt.Sprintf(
+		"Audio persist: userAudio=%d (%.2fs), systemAudio=%d (%.2fs), totalLen=%d (%.2fs), chunks=%d",
+		userAudioBytes, float64(userAudioBytes)/float64(bytesPerSecond()),
+		systemAudioBytes, float64(systemAudioBytes)/float64(bytesPerSecond()),
+		totalLen, float64(totalLen)/float64(bytesPerSecond()),
+		len(r.chunks),
+	))
+
+	userWAV, _ := createWAVFile(userPCM)
+	systemWAV, _ := createWAVFile(systemPCM)
 	return userWAV, systemWAV, nil
 }
 
