@@ -8,7 +8,7 @@ import {
   CreateKnowledgeDocumentType,
 } from '@/types/types.create-knowledge-document';
 import { create } from 'zustand';
-import { Content } from '@rapidaai/react';
+import { DocumentContent } from '@rapidaai/react';
 import { ServiceError } from '@rapidaai/react';
 import {
   RapidaDocumentPreProcessing,
@@ -186,7 +186,7 @@ export const useCreateKnowledgeDocumentPageStore =
       knowledgeId: string,
       documentSource: RapidaDocumentSource,
       datasource: string,
-      contents: Array<Content>,
+      contents: Array<DocumentContent>,
       projectId: string,
       token: string,
       userId: string,
@@ -246,7 +246,7 @@ export const useCreateKnowledgeDocumentPageStore =
       onSuccess: (d: KnowledgeDocument[]) => void,
       onError: (e: string) => void,
     ) => {
-      const contents: Array<Content> = [];
+      const contents: Array<DocumentContent> = [];
       switch (get().documentSource) {
         default:
           onError('Please select requested document source.');
@@ -262,7 +262,7 @@ export const useCreateKnowledgeDocumentPageStore =
                 return;
               }
               kd.forEach(x => {
-                const cntn = new Content();
+                const cntn = new DocumentContent();
                 cntn.setContent(x.file);
                 cntn.setName(x.name);
                 cntn.setContenttype(x.type);
@@ -278,7 +278,7 @@ export const useCreateKnowledgeDocumentPageStore =
                 return;
               }
 
-              const cntn = new Content();
+              const cntn = new DocumentContent();
               cntn.setContent(new TextEncoder().encode(weburl));
               cntn.setName(weburl);
               cntn.setContentformat('url');

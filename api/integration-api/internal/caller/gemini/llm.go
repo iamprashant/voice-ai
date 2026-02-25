@@ -281,8 +281,7 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 	contents := make([]string, 0)
 	toolCalls := make([]*protos.ToolCall, 0)
 	contentBuilders := make([]strings.Builder, 0)
-	var textTokenBuffer []string // Buffer to hold text tokens temporarily
-	hasToolCalls := false        // Flag to track if response contains tool calls
+	hasToolCalls := false // Flag to track if response contains tool calls
 	accumlator := &GoogleChatCompletionAccumulator{}
 	for resp, err := range chat.SendMessageStream(ctx, current) {
 		if err != nil {
@@ -321,8 +320,25 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 							contentBuilders = append(contentBuilders, strings.Builder{})
 						}
 						contentBuilders[int(choice.Index)].WriteString(part.Text)
-						// Buffer the token instead of streaming immediately
-						textTokenBuffer = append(textTokenBuffer, part.Text)
+
+						// Stream in real-time when no tool calls
+						if !hasToolCalls {
+							if firstTokenTime == nil {
+								now := time.Now()
+								firstTokenTime = &now
+							}
+							tokenMsg := &protos.Message{
+								Role: "assistant",
+								Message: &protos.Message_Assistant{
+									Assistant: &protos.AssistantMessage{
+										Contents: []string{part.Text},
+									},
+								},
+							}
+							if err := onStream(options.Request.GetRequestId(), tokenMsg); err != nil {
+								llc.logger.Warnf("error streaming token: %v", err)
+							}
+						}
 					}
 				}
 			}
@@ -351,30 +367,6 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 				ToolCalls: filteredToolCalls,
 			},
 		},
-	}
-
-	// Stream text tokens only if no tool calls in response
-	if !hasToolCalls {
-		for _, token := range textTokenBuffer {
-			if token != "" {
-				// Record first token received time
-				if firstTokenTime == nil {
-					now := time.Now()
-					firstTokenTime = &now
-				}
-				tokenMsg := &protos.Message{
-					Role: "assistant",
-					Message: &protos.Message_Assistant{
-						Assistant: &protos.AssistantMessage{
-							Contents: []string{token},
-						},
-					},
-				}
-				if err := onStream(options.Request.GetRequestId(), tokenMsg); err != nil {
-					llc.logger.Warnf("error streaming token: %v", err)
-				}
-			}
-		}
 	}
 
 	// Add first token time metric if tokens were streamed

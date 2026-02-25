@@ -43,11 +43,9 @@ func (talking *genericRequestor) callTextAggregator(ctx context.Context, vl inte
 
 func (talking *genericRequestor) callRecording(ctx context.Context, vl internal_type.Packet) error {
 	if talking.recorder != nil {
-		utils.Go(ctx, func() {
-			if err := talking.recorder.Record(ctx, vl); err != nil {
-				talking.logger.Errorf("recorder error: %v", err)
-			}
-		})
+		if err := talking.recorder.Record(ctx, vl); err != nil {
+			talking.logger.Errorf("recorder error: %v", err)
+		}
 		return nil
 	}
 	return nil
@@ -266,19 +264,26 @@ func (talking *genericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 					talking.logger.Errorf("end of speech error: %v", err)
 				}
 
+				if err := talking.messaging.Transition(internal_adapter_request_customizers.Interrupted); err != nil {
+					continue
+				}
+
+				// Truncate system audio in the recorder to mirror the streamer's
+				// ClearOutputBuffer — audio buffered beyond this moment was never
+				// heard by the user.
+				if err := talking.callRecording(ctx, vl); err != nil {
+					talking.logger.Errorf("recorder interruption error: %v", err)
+				}
 				// let all the providers know about interruption
 				if err := talking.interruptAllProvider(ctx, vl); err != nil {
 					talking.logger.Errorf("interrupt all provider error: %v", err)
 				}
 				//
-				if err := talking.messaging.Transition(internal_adapter_request_customizers.Interrupted); err != nil {
-					continue
-				}
-
 				// notify interruption without waiting
 				utils.Go(ctx, func() {
 					talking.Notify(ctx, &protos.ConversationInterruption{Type: protos.ConversationInterruption_INTERRUPTION_TYPE_WORD, Time: timestamppb.Now()})
 				})
+
 				continue
 			default:
 				// might be noise at first
@@ -292,14 +297,14 @@ func (talking *genericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 				}
 				//
 
-				// let all the providers know about interruption
-				if err := talking.interruptAllProvider(ctx, vl); err != nil {
-					talking.logger.Errorf("interrupt all provider error: %v", err)
-				}
-
 				span.AddAttributes(ctx, internal_telemetry.KV{K: "activity_type", V: internal_telemetry.StringValue("vad_interrupt")})
 				if err := talking.messaging.Transition(internal_adapter_request_customizers.Interrupt); err != nil {
 					continue
+				}
+
+				// let all the providers know about interruption
+				if err := talking.interruptAllProvider(ctx, vl); err != nil {
+					talking.logger.Errorf("interrupt all provider error: %v", err)
 				}
 
 				// notify interruption without waiting

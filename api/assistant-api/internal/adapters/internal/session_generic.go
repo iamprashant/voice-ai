@@ -283,7 +283,9 @@ func (r *genericRequestor) resumeSession(
 			r.logger.Tracef(ctx, "failed to initialize audio recorder: %+v", err)
 			return
 		}
+
 		r.recorder = rc
+		r.recorder.Start()
 	})
 
 	// Establish speech-to-text listener connection
@@ -387,6 +389,8 @@ func (r *genericRequestor) createSession(
 			return
 		}
 		r.recorder = rc
+		r.recorder.Start()
+
 	})
 
 	utils.Go(ctx, func() {

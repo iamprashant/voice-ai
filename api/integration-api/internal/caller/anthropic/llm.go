@@ -144,7 +144,6 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 	completeMessage := &protos.AssistantMessage{}
 	var currentToolCall *protos.ToolCall
 	var currentContent string
-	var textTokenBuffer []string // Buffer to hold text tokens temporarily
 	isToolCall := false
 	hasToolCalls := false // Flag to track if response contains tool calls
 	for stream.Next() {
@@ -179,8 +178,25 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 				content := event.Delta.Text
 				if content != "" && !isToolCall {
 					currentContent += content
-					// Buffer the token instead of streaming immediately
-					textTokenBuffer = append(textTokenBuffer, content)
+
+					// Stream in real-time when no tool calls
+					if !hasToolCalls {
+						if firstTokenTime == nil {
+							now := time.Now()
+							firstTokenTime = &now
+						}
+						tokenMsg := &protos.Message{
+							Role: "assistant",
+							Message: &protos.Message_Assistant{
+								Assistant: &protos.AssistantMessage{
+									Contents: []string{content},
+								},
+							},
+						}
+						if err := onStream(options.Request.GetRequestId(), tokenMsg); err != nil {
+							llc.logger.Warnf("error streaming token: %v", err)
+						}
+					}
 				}
 			case "input_json_delta":
 				if currentToolCall != nil {
@@ -206,29 +222,6 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 				Message: &protos.Message_Assistant{
 					Assistant: completeMessage,
 				},
-			}
-			// Stream text tokens only if no tool calls in response
-			if !hasToolCalls {
-				for _, token := range textTokenBuffer {
-					if token != "" {
-						// Record first token received time
-						if firstTokenTime == nil {
-							now := time.Now()
-							firstTokenTime = &now
-						}
-						tokenMsg := &protos.Message{
-							Role: "assistant",
-							Message: &protos.Message_Assistant{
-								Assistant: &protos.AssistantMessage{
-									Contents: []string{token},
-								},
-							},
-						}
-						if err := onStream(options.Request.GetRequestId(), tokenMsg); err != nil {
-							llc.logger.Warnf("error streaming token: %v", err)
-						}
-					}
-				}
 			}
 			// Add first token time metric if tokens were streamed
 			if firstTokenTime != nil {

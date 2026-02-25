@@ -22,7 +22,7 @@ const (
 	OutputChannelSize    = 1500 // Buffered channel for outgoing messages (~30s of 20ms audio frames)
 	RTPBufferSize        = 1500 // Max RTP packet size (MTU)
 	MaxConsecutiveErrors = 50   // Max read errors before stopping
-	InputBufferThreshold = 3200 // 100ms at 16kHz (32 bytes/ms * 100ms) — larger chunks = fewer channel writes
+	InputBufferThreshold = 1920 // 60ms at 16kHz (32 bytes/ms * 60ms) — consistent with telephony streamers
 
 	// OutputBufferThreshold triggers flushing accumulated 48kHz PCM into
 	// Opus-encoded frames. Must be >= OpusFrameBytes so at least one full

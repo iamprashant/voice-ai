@@ -494,7 +494,7 @@ export const VoiceAgentDebugger: FC<{
                               <div className="text-sm font-mono tracking-wider lowercase">
                                 Listen.Provider
                               </div>
-                              <div className="font-medium mt-1">
+                              <div className="font-medium mt-1 font-mono">
                                 {assistant
                                   .getDebuggerdeployment()
                                   ?.getOutputaudio()
@@ -515,7 +515,7 @@ export const VoiceAgentDebugger: FC<{
                                   <div className="text-sm font-mono tracking-wider lowercase">
                                     {detail.getKey()}
                                   </div>
-                                  <div className="font-medium">
+                                  <div className="font-medium font-mono">
                                     {detail.getValue()}
                                   </div>
                                 </div>

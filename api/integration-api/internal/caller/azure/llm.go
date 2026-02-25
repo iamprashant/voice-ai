@@ -148,68 +148,13 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 		Contents:  make([]string, 0),
 		ToolCalls: make([]*protos.ToolCall, 0),
 	}
-	contentBuffer := make([]string, 0) // Buffer for accumulating content per choice
-	hasToolCalls := false              // Flag to track if response contains tool calls
+	contentBuffer := make([]string, 0)
+	hasToolCalls := false
 
 	accumulate := openai.ChatCompletionAccumulator{}
 	for resp.Next() {
 		chatCompletions := resp.Current()
 		accumulate.AddChunk(chatCompletions)
-
-		if _, ok := accumulate.JustFinishedContent(); ok {
-			metrics.OnAddMetrics(llc.GetComplitionUsages(accumulate.Usage)...)
-
-			// Finalize content from buffer
-			assistantMsg.Contents = contentBuffer
-			protoMsg := &protos.Message{
-				Role: "assistant",
-				Message: &protos.Message_Assistant{
-					Assistant: assistantMsg,
-				},
-			}
-			// Stream tokens only if no tool calls in response
-			if !hasToolCalls {
-				for _, content := range contentBuffer {
-					if content != "" {
-						// Record first token received time
-						if firstTokenTime == nil {
-							now := time.Now()
-							firstTokenTime = &now
-						}
-						tokenMsg := &protos.Message{
-							Role: "assistant",
-							Message: &protos.Message_Assistant{
-								Assistant: &protos.AssistantMessage{
-									Contents: []string{content},
-								},
-							},
-						}
-						if err := onStream(options.Request.GetRequestId(), tokenMsg); err != nil {
-							llc.logger.Warnf("error streaming token: %v", err)
-						}
-					}
-				}
-			}
-			// Add first token time metric if tokens were streamed
-			if firstTokenTime != nil {
-				metrics.OnAddMetrics(&protos.Metric{
-					Name:        "FIRST_TOKEN_RECIEVED_TIME",
-					Value:       fmt.Sprintf("%d", firstTokenTime.Sub(start)),
-					Description: "Time to receive first token from LLM",
-				})
-			}
-			// Update time taken and status
-			metrics.OnSuccess()
-			// Send metrics with complete message
-			onMetrics(options.Request.GetRequestId(), protoMsg, metrics.Build())
-
-			// Call PostHook after metrics for each message end
-			options.PostHook(map[string]interface{}{
-				"result": utils.ToJson(accumulate),
-			}, metrics.Build())
-
-			return nil
-		}
 
 		if tool, ok := accumulate.JustFinishedToolCall(); ok {
 			hasToolCalls = true
@@ -220,43 +165,75 @@ func (llc *largeLanguageCaller) StreamChatCompletion(
 					Arguments: tool.Arguments,
 				},
 			})
-			metrics.OnAddMetrics(llc.GetComplitionUsages(accumulate.Usage)...)
-			metrics.OnSuccess()
-
-			// Don't stream if tool calls are present
-			assistantMsg.Contents = contentBuffer
-			protoMsg := &protos.Message{
-				Role: "assistant",
-				Message: &protos.Message_Assistant{
-					Assistant: assistantMsg,
-				},
-			}
-			onMetrics(options.Request.GetRequestId(), protoMsg, metrics.Build())
-
-			// Call PostHook only at the end of response
-			options.PostHook(map[string]interface{}{
-				"result": utils.ToJson(accumulate),
-			}, metrics.Build())
-			return nil
 		}
 
-		// Accumulate content but don't stream yet - check if tool calls will come
+		// Accumulate content and stream deltas while no tool call is present.
 		for i, choice := range chatCompletions.Choices {
+			if len(choice.Delta.ToolCalls) > 0 {
+				hasToolCalls = true
+			}
+
 			content := choice.Delta.Content
 			if content != "" {
-				// Accumulate content per choice index
 				if len(contentBuffer) <= i {
 					contentBuffer = append(contentBuffer, content)
 				} else {
 					contentBuffer[i] += content
 				}
-			}
-			// Check if this chunk has tool calls
-			if len(choice.Delta.ToolCalls) > 0 {
-				hasToolCalls = true
+
+				if !hasToolCalls {
+					if firstTokenTime == nil {
+						now := time.Now()
+						firstTokenTime = &now
+					}
+					tokenMsg := &protos.Message{
+						Role: "assistant",
+						Message: &protos.Message_Assistant{
+							Assistant: &protos.AssistantMessage{
+								Contents: []string{content},
+							},
+						},
+					}
+					if err := onStream(options.Request.GetRequestId(), tokenMsg); err != nil {
+						llc.logger.Warnf("error streaming token: %v", err)
+					}
+				}
 			}
 		}
 	}
+
+	if resp.Err() != nil {
+		llc.logger.Errorf("Failed while reading chat completions stream: %v", resp.Err())
+		options.PostHook(map[string]interface{}{
+			"result": utils.ToJson(resp),
+			"error":  resp.Err(),
+		}, metrics.OnFailure().Build())
+		onError(options.Request.GetRequestId(), resp.Err())
+		return resp.Err()
+	}
+
+	assistantMsg.Contents = contentBuffer
+	protoMsg := &protos.Message{
+		Role: "assistant",
+		Message: &protos.Message_Assistant{
+			Assistant: assistantMsg,
+		},
+	}
+
+	metrics.OnAddMetrics(llc.GetComplitionUsages(accumulate.Usage)...)
+
+	if firstTokenTime != nil {
+		metrics.OnAddMetrics(&protos.Metric{
+			Name:        "FIRST_TOKEN_RECIEVED_TIME",
+			Value:       fmt.Sprintf("%d", firstTokenTime.Sub(start)),
+			Description: "Time to receive first token from LLM",
+		})
+	}
+	metrics.OnSuccess()
+	onMetrics(options.Request.GetRequestId(), protoMsg, metrics.Build())
+	options.PostHook(map[string]interface{}{
+		"result": utils.ToJson(accumulate),
+	}, metrics.Build())
 
 	return nil
 }
