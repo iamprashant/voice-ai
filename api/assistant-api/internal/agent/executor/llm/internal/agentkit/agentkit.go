@@ -75,9 +75,9 @@ func (e *agentkitExecutor) Initialize(ctx context.Context, comm internal_type.Co
 		}
 	})
 
-	// Send initial configuration
-	if err := e.sendConfiguration(provider.AssistantId, provider.Id, comm.Conversation().Id, cfg); err != nil {
-		return fmt.Errorf("failed to send configuration: %w", err)
+	// Send initialization as the first message (mirrors the WebTalk flow)
+	if err := e.sendInitialization(provider.AssistantId, provider.Id, comm.Conversation().Id, cfg); err != nil {
+		return fmt.Errorf("failed to send initialization: %w", err)
 	}
 	return nil
 }
@@ -154,8 +154,9 @@ func (e *agentkitExecutor) send(req *protos.TalkInput) error {
 	return e.talker.Send(req)
 }
 
-// sendConfiguration sends the initial configuration.
-func (e *agentkitExecutor) sendConfiguration(assistantId uint64, assistantProviderID uint64, ConversationID uint64, cfg *protos.ConversationInitialization) error {
+// sendInitialization sends ConversationInitialization as the first message on the stream,
+// mirroring the WebTalk flow where initialization is always the first message.
+func (e *agentkitExecutor) sendInitialization(assistantId uint64, assistantProviderID uint64, ConversationID uint64, cfg *protos.ConversationInitialization) error {
 	return e.send(&protos.TalkInput{
 		Request: &protos.TalkInput_Initialization{
 			Initialization: &protos.ConversationInitialization{
@@ -210,6 +211,10 @@ func (e *agentkitExecutor) listen(ctx context.Context, onPacket func(ctx context
 // handleResponse processes a single response from the server.
 func (e *agentkitExecutor) handleResponse(ctx context.Context, resp *protos.TalkOutput, onPacket func(ctx context.Context, packet ...internal_type.Packet) error) {
 	switch data := resp.GetData().(type) {
+	case *protos.TalkOutput_Initialization:
+		// External agent acknowledged ConversationInitialization (mirrors WebTalk ack flow).
+		e.logger.Debugf("AgentKit initialization acknowledged, conversationId=%d", data.Initialization.GetAssistantConversationId())
+
 	case *protos.TalkOutput_Interruption:
 		onPacket(ctx, internal_type.InterruptionPacket{ContextID: data.Interruption.Id, Source: internal_type.InterruptionSourceWord})
 
@@ -227,6 +232,22 @@ func (e *agentkitExecutor) handleResponse(ctx context.Context, resp *protos.Talk
 		case *protos.ConversationAssistantMessage_Audio:
 			e.logger.Debugf("Received audio message (not implemented)")
 		}
+
+	case *protos.TalkOutput_Tool:
+		// External agent notifying Rapida of an in-progress tool call (observability only).
+		e.logger.Debugf("AgentKit tool call: id=%s toolId=%s name=%s", data.Tool.GetId(), data.Tool.GetToolId(), data.Tool.GetName())
+
+	case *protos.TalkOutput_ToolResult:
+		// External agent notifying Rapida of a completed tool result (observability only).
+		e.logger.Debugf("AgentKit tool result: id=%s toolId=%s name=%s success=%v", data.ToolResult.GetId(), data.ToolResult.GetToolId(), data.ToolResult.GetName(), data.ToolResult.GetSuccess())
+
+	case *protos.TalkOutput_Error:
+		// External agent sent an error — end the conversation.
+		e.logger.Errorf("AgentKit agent error: code=%d message=%s", data.Error.GetErrorCode(), data.Error.GetErrorMessage())
+		onPacket(ctx, internal_type.DirectivePacket{
+			Directive: protos.ConversationDirective_END_CONVERSATION,
+			Arguments: map[string]interface{}{"reason": data.Error.GetErrorMessage()},
+		})
 
 	case *protos.TalkOutput_Directive:
 		args, _ := utils.AnyMapToInterfaceMap(data.Directive.GetArgs())
