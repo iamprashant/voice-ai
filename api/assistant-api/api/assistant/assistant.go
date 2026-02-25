@@ -43,6 +43,10 @@ func NewAssistantGRPCApi(config *config.AssistantConfig, logger commons.Logger,
 	vectordb connectors.VectorConnector,
 
 ) protos.AssistantServiceServer {
+	var knowledgeDocSvc internal_services.KnowledgeDocumentService
+	if opensearch != nil {
+		knowledgeDocSvc = internal_knowledge_service.NewKnowledgeDocumentService(config, logger, postgres, opensearch)
+	}
 	return &assistantGrpcApi{
 		assistantApi{
 			cfg:                       config,
@@ -52,7 +56,7 @@ func NewAssistantGRPCApi(config *config.AssistantConfig, logger commons.Logger,
 			opensearch:                opensearch,
 			vectordb:                  vectordb,
 			assistantService:          internal_assistant_service.NewAssistantService(config, logger, postgres, opensearch),
-			knowledgeDocumentService:  internal_knowledge_service.NewKnowledgeDocumentService(config, logger, postgres, opensearch),
+			knowledgeDocumentService:  knowledgeDocSvc,
 			conversactionService:      internal_assistant_service.NewAssistantConversationService(logger, postgres, storage_files.NewStorage(config.AssetStoreConfig, logger)),
 			assistantWebhookService:   internal_assistant_service.NewAssistantWebhookService(logger, postgres, storage_files.NewStorage(config.AssetStoreConfig, logger)),
 			assistantAnalysisService:  internal_assistant_service.NewAssistantAnalysisService(logger, postgres),

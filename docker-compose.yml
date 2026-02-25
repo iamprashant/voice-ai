@@ -36,8 +36,9 @@ services:
       timeout: 5s
       retries: 5
 
-  # OpenSearch
+  # OpenSearch (only needed for knowledge base features)
   opensearch:
+    profiles: [knowledge]
     image: opensearchproject/opensearch:2.11.1
     container_name: opensearch
     environment:
@@ -146,8 +147,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      opensearch:
-        condition: service_healthy
 
     volumes:
       - ./docker/assistant-api/.assistant.env:/opt/apps/env/.assistant.env:ro
@@ -224,6 +223,7 @@ services:
       retries: 3
 
   document-api:
+    profiles: [knowledge]
     build:
       context: .
       dockerfile: docker/document-api/Dockerfile

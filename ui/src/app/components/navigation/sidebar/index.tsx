@@ -53,7 +53,7 @@ export function SidebarNavigation(props: {}) {
         <ul className="space-y-1">
           <Dashboard />
           <Deployment />
-          <Knowledge />
+          {workspace.features?.knowledge !== false && <Knowledge />}
         </ul>
         <div className="space-y-3">
           <SidebarLabel

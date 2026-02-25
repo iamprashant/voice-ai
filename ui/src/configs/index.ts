@@ -32,6 +32,9 @@ export interface WorkspaceConfig {
       requireSpecialChar?: boolean;
     };
   };
+  features?: {
+    knowledge?: boolean;
+  };
 }
 
 export interface RapidaConfig {

@@ -13,6 +13,7 @@ import React from 'react';
 import { StaticPageNotFoundPage } from '@/app/pages/static-pages';
 import { AuthProvider } from '@/context/auth-context';
 import { Helmet } from '@/app/components/helmet';
+import { CONFIG } from '@/configs';
 
 /**
  * Main app containers
@@ -27,7 +28,9 @@ export function App() {
           <GA />
           <Routes>
             <Route index path="/auth/*" element={<WebRoutes.AuthRoute />} />
-            <Route path="/knowledge/*" element={<WebRoutes.KnowledgeRoute />} />
+            {CONFIG.workspace.features?.knowledge !== false && (
+              <Route path="/knowledge/*" element={<WebRoutes.KnowledgeRoute />} />
+            )}
             <Route
               path="/onboarding/*"
               element={<WebRoutes.OnbaordingRoute />}
@@ -53,10 +56,12 @@ export function App() {
               path="/connect-common/*"
               element={<WebRoutes.CommonConnectRoute />}
             />
-            <Route
-              path="/connect-knowledge/*"
-              element={<WebRoutes.ConnectKnowledgeRoute />}
-            />
+            {CONFIG.workspace.features?.knowledge !== false && (
+              <Route
+                path="/connect-knowledge/*"
+                element={<WebRoutes.ConnectKnowledgeRoute />}
+              />
+            )}
 
             <Route
               path="/connect-crm/*"

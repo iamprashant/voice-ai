@@ -1,8 +1,8 @@
 .PHONY: help up down build rebuild logs clean restart ps shell db-shell \
-        up-all up-web up-integration up-endpoint up-db up-redis up-opensearch \
+        up-all up-all-with-knowledge up-web up-integration up-endpoint up-db up-redis up-opensearch \
         down-all down-web down-integration down-endpoint down-db down-redis down-opensearch \
-        build-all build-web build-integration build-endpoint \
-        rebuild-all rebuild-web rebuild-integration rebuild-endpoint \
+        build-all build-all-with-knowledge build-web build-integration build-endpoint \
+        rebuild-all rebuild-all-with-knowledge rebuild-web rebuild-integration rebuild-endpoint \
         logs-all logs-web logs-integration logs-endpoint logs-db logs-redis logs-opensearch \
         restart-all restart-web restart-integration restart-endpoint \
         ps-all shell-web shell-integration shell-endpoint db-shell
@@ -16,14 +16,21 @@ help:
 	@echo "╚════════════════════════════════════════════════════════════════╝"
 	@echo ""
 	@echo "STARTUP COMMANDS:"
-	@echo "  make up-all              - Start all services"
-	@echo "  make up-web              - Start web-api only"
-	@echo "  make up-integration      - Start integration-api only"
-	@echo "  make up-endpoint         - Start endpoint-api only"
-	@echo "  make up-db               - Start PostgreSQL only"
-	@echo "  make up-redis            - Start Redis only"
-	@echo "  make up-opensearch       - Start OpenSearch only"
-	@echo "  make up-nginx       - Start nginx only"
+	@echo "  make up-all                    - Start core services (no knowledge base)"
+	@echo "  make up-all-with-knowledge     - Start all services including knowledge base"
+	@echo "  make up-web                    - Start web-api only"
+	@echo "  make up-integration            - Start integration-api only"
+	@echo "  make up-endpoint               - Start endpoint-api only"
+	@echo "  make up-db                     - Start PostgreSQL only"
+	@echo "  make up-redis                  - Start Redis only"
+	@echo "  make up-opensearch             - Start OpenSearch only"
+	@echo "  make up-nginx                  - Start nginx only"
+	@echo ""
+	@echo "KNOWLEDGE BASE (OpenSearch + document-api):"
+	@echo "  make up-all-with-knowledge     - Start all services including knowledge"
+	@echo "  make build-all-with-knowledge  - Build all images including document-api"
+	@echo "  make rebuild-all-with-knowledge- Rebuild all including document-api (no cache)"
+	@echo "  Note: Set OPENSEARCH__* vars in .assistant.env to enable knowledge features"
 	@echo ""
 	@echo "SHUTDOWN COMMANDS:"
 	@echo "  make down-all            - Stop all services"
@@ -36,14 +43,16 @@ help:
 	@echo "  make down-nginx       	  - Stop nginx only"
 	@echo ""
 	@echo "BUILD COMMANDS:"
-	@echo "  make build-all           - Build all services"
-	@echo "  make build-web           - Build web-api image"
-	@echo "  make build-integration   - Build integration-api image"
-	@echo "  make build-endpoint      - Build endpoint-api image"
-	@echo "  make rebuild-all         - Rebuild all (no cache)"
-	@echo "  make rebuild-web         - Rebuild web-api (no cache)"
-	@echo "  make rebuild-integration - Rebuild integration-api (no cache)"
-	@echo "  make rebuild-endpoint    - Rebuild endpoint-api (no cache)"
+	@echo "  make build-all                 - Build core services (no document-api)"
+	@echo "  make build-all-with-knowledge  - Build all services including document-api"
+	@echo "  make build-web                 - Build web-api image"
+	@echo "  make build-integration         - Build integration-api image"
+	@echo "  make build-endpoint            - Build endpoint-api image"
+	@echo "  make rebuild-all               - Rebuild core services (no cache)"
+	@echo "  make rebuild-all-with-knowledge- Rebuild all including document-api (no cache)"
+	@echo "  make rebuild-web               - Rebuild web-api (no cache)"
+	@echo "  make rebuild-integration       - Rebuild integration-api (no cache)"
+	@echo "  make rebuild-endpoint          - Rebuild endpoint-api (no cache)"
 	@echo ""
 	@echo "MONITORING COMMANDS:"
 	@echo "  make logs-all            - View all service logs"
@@ -92,9 +101,16 @@ setup-local:
 
 
 up-all:
-	@echo "Starting all services..."
+	@echo "Starting core services (without knowledge base)..."
 	$(COMPOSE) up -d
-	@echo "✓ All services started"
+	@echo "✓ Core services started (knowledge base excluded)"
+	@echo "  Run 'make up-all-with-knowledge' to include OpenSearch + document-api"
+	@$(MAKE) status
+
+up-all-with-knowledge:
+	@echo "Starting all services including knowledge base..."
+	COMPOSE_PROFILES=knowledge $(COMPOSE) up -d
+	@echo "✓ All services started (with knowledge base)"
 	@$(MAKE) status
 
 up-ui:
@@ -217,9 +233,14 @@ down: down-all
 # ============================================================================
 
 build-all:
-	@echo "Building all services..."
-	$(COMPOSE) build ui web-api integration-api endpoint-api document-api assistant-api
-	@echo "✓ All services built"
+	@echo "Building core services (without document-api)..."
+	$(COMPOSE) build ui web-api integration-api endpoint-api assistant-api
+	@echo "✓ Core services built"
+
+build-all-with-knowledge:
+	@echo "Building all services including document-api..."
+	COMPOSE_PROFILES=knowledge $(COMPOSE) build ui web-api integration-api endpoint-api assistant-api document-api
+	@echo "✓ All services built (with knowledge base)"
 
 build-ui:
 	@echo "Building ui..."
@@ -252,9 +273,14 @@ build-endpoint:
 	@echo "✓ endpoint-api built"
 
 rebuild-all:
-	@echo "Rebuilding all services (no cache)..."
-	$(COMPOSE) build --no-cache ui web-api integration-api endpoint-api document-api assistant-api
-	@echo "✓ All services rebuilt"
+	@echo "Rebuilding core services (no cache, without document-api)..."
+	$(COMPOSE) build --no-cache ui web-api integration-api endpoint-api assistant-api
+	@echo "✓ Core services rebuilt"
+
+rebuild-all-with-knowledge:
+	@echo "Rebuilding all services including document-api (no cache)..."
+	COMPOSE_PROFILES=knowledge $(COMPOSE) build --no-cache ui web-api integration-api endpoint-api assistant-api document-api
+	@echo "✓ All services rebuilt (with knowledge base)"
 
 rebuild-web:
 	@echo "Rebuilding web-api (no cache)..."

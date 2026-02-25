@@ -225,7 +225,9 @@ func (app *AppRunner) Logging() error {
 func (g *AppRunner) AllConnectors() {
 	g.Postgres = connectors.NewPostgresConnector(&g.Cfg.PostgresConfig, g.Logger)
 	g.Redis = connectors.NewRedisConnector(&g.Cfg.RedisConfig, g.Logger)
-	g.Opensearch = connectors.NewOpenSearchConnector(&g.Cfg.OpenSearchConfig, g.Logger)
+	if g.Cfg.OpenSearchConfig != nil {
+		g.Opensearch = connectors.NewOpenSearchConnector(g.Cfg.OpenSearchConfig, g.Logger)
+	}
 	// g.Weaviate = vdb_connectors.NewWeaviateConnector(&g.Cfg.WeaviateConfig, g.Logger)
 }
 
@@ -268,13 +270,14 @@ func (app *AppRunner) Init(ctx context.Context) error {
 		return err
 	}
 
-	err = app.Opensearch.Connect(ctx)
-	if err != nil {
-		app.Logger.Error("error while connecting to opensearch.", err)
-		return err
+	if app.Opensearch != nil {
+		err = app.Opensearch.Connect(ctx)
+		if err != nil {
+			app.Logger.Error("error while connecting to opensearch.", err)
+			return err
+		}
+		app.Closeable = append(app.Closeable, app.Opensearch.Disconnect)
 	}
-
-	app.Closeable = append(app.Closeable, app.Opensearch.Disconnect)
 	app.Closeable = append(app.Closeable, app.Postgres.Disconnect)
 	app.Closeable = append(app.Closeable, app.Redis.Disconnect)
 
@@ -298,8 +301,10 @@ func (app *AppRunner) Close(ctx context.Context) {
 func (g *AppRunner) AllRouters(ctx context.Context) error {
 	router.AssistantApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis, g.Opensearch)
 	router.HealthCheckRoutes(g.Cfg, g.E, g.Logger, g.Postgres)
-	router.KnowledgeApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis, g.Opensearch)
-	router.DocumentApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis, g.Opensearch)
+	if g.Opensearch != nil {
+		router.KnowledgeApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis, g.Opensearch)
+		router.DocumentApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis, g.Opensearch)
+	}
 	router.AssistantConversationApiRoute(g.Cfg, g.S, g.Logger, g.Postgres, g.Redis, g.Opensearch, g.SIP)
 	router.AssistantDeploymentApiRoute(g.Cfg, g.S, g.Logger, g.Postgres)
 	router.TalkCallbackApiRoute(g.Cfg, g.E, g.Logger, g.Postgres, g.Redis, g.Opensearch, g.SIP)

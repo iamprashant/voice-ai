@@ -4,6 +4,7 @@ import { Dropdown } from '@/app/components/dropdown';
 import { FieldSet } from '@/app/components/form/fieldset';
 import { FormLabel } from '@/app/components/form-label';
 import { cn } from '@/utils';
+import { CONFIG } from '@/configs';
 import { ConfigureAPIRequest } from '@/app/components/tools/api-request';
 import {
   GetAPIRequestDefaultOptions,
@@ -270,9 +271,17 @@ export const BuildinTool: FC<{
     [config, onChangeConfig],
   );
 
+  const availableTools = useMemo(
+    () =>
+      CONFIG.workspace.features?.knowledge !== false
+        ? BUILDIN_TOOLS
+        : BUILDIN_TOOLS.filter(tool => tool.code !== 'knowledge_retrieval'),
+    [],
+  );
+
   const currentTool = useMemo(
-    () => BUILDIN_TOOLS.find(tool => tool.code === config.code),
-    [config.code],
+    () => availableTools.find(tool => tool.code === config.code),
+    [config.code, availableTools],
   );
 
   const renderOption = useCallback(
@@ -291,7 +300,7 @@ export const BuildinTool: FC<{
             className={cn('bg-light-background dark:bg-gray-950', inputClass)}
             currentValue={currentTool}
             setValue={tool => onChangeBuildinTool(tool.code)}
-            allValue={BUILDIN_TOOLS}
+            allValue={availableTools}
             placeholder="Select provider"
             option={renderOption}
             label={renderOption}
