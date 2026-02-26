@@ -1,5 +1,5 @@
 .PHONY: help up down build rebuild logs clean restart ps shell db-shell \
-        up-all up-all-with-knowledge up-web up-integration up-endpoint up-db up-redis up-opensearch \
+        up-all up-all-with-knowledge up-web up-integration up-endpoint up-db up-redis up-opensearch deps deps-knowledge \
         down-all down-web down-integration down-endpoint down-db down-redis down-opensearch \
         build-all build-all-with-knowledge build-web build-integration build-endpoint \
         rebuild-all rebuild-all-with-knowledge rebuild-web rebuild-integration rebuild-endpoint \
@@ -16,8 +16,8 @@ help:
 	@echo "╚════════════════════════════════════════════════════════════════╝"
 	@echo ""
 	@echo "STARTUP COMMANDS:"
-	@echo "  make up-all                    - Start core services (no knowledge base)"
-	@echo "  make up-all-with-knowledge     - Start all services including knowledge base"
+	@echo "  make up-all                    - Start all services (no opensearch/document-api)"
+	@echo "  make up-all-with-knowledge     - Start all services including opensearch and document-api"
 	@echo "  make up-web                    - Start web-api only"
 	@echo "  make up-integration            - Start integration-api only"
 	@echo "  make up-endpoint               - Start endpoint-api only"
@@ -43,12 +43,12 @@ help:
 	@echo "  make down-nginx       	  - Stop nginx only"
 	@echo ""
 	@echo "BUILD COMMANDS:"
-	@echo "  make build-all                 - Build core services (no document-api)"
+	@echo "  make build-all                 - Build all services (no document-api)"
 	@echo "  make build-all-with-knowledge  - Build all services including document-api"
 	@echo "  make build-web                 - Build web-api image"
 	@echo "  make build-integration         - Build integration-api image"
 	@echo "  make build-endpoint            - Build endpoint-api image"
-	@echo "  make rebuild-all               - Rebuild core services (no cache)"
+	@echo "  make rebuild-all               - Rebuild all services (no cache, no document-api)"
 	@echo "  make rebuild-all-with-knowledge- Rebuild all including document-api (no cache)"
 	@echo "  make rebuild-web               - Rebuild web-api (no cache)"
 	@echo "  make rebuild-integration       - Rebuild integration-api (no cache)"
@@ -101,10 +101,10 @@ setup-local:
 
 
 up-all:
-	@echo "Starting core services (without knowledge base)..."
+	@echo "Starting all services (without opensearch/document-api)..."
 	$(COMPOSE) up -d
-	@echo "✓ Core services started (knowledge base excluded)"
-	@echo "  Run 'make up-all-with-knowledge' to include OpenSearch + document-api"
+	@echo "✓ All services started"
+	@echo "  Run 'make up-all-with-knowledge' to include opensearch + document-api"
 	@$(MAKE) status
 
 up-all-with-knowledge:
@@ -120,8 +120,8 @@ up-ui:
 
 up-document:
 	@echo "Starting document-api..."
-	$(COMPOSE) up -d document-api
-	@echo "✓ web-api started on port 9010"
+	COMPOSE_PROFILES=knowledge $(COMPOSE) up -d document-api
+	@echo "✓ document-api started on port 9010"
 
 up-web:
 	@echo "Starting web-api..."
@@ -151,7 +151,7 @@ up-db:
 up-nginx:
 	@echo "Starting nginx..."
 	$(COMPOSE) up -d nginx
-	@echo "✓ nginx started on port 6379"
+	@echo "✓ nginx started on port 8080"
 
 up-redis:
 	@echo "Starting Redis..."
@@ -160,7 +160,7 @@ up-redis:
 
 up-opensearch:
 	@echo "Starting OpenSearch..."
-	$(COMPOSE) up -d opensearch
+	COMPOSE_PROFILES=knowledge $(COMPOSE) up -d opensearch
 	@echo "✓ OpenSearch started on port 9200"
 
 # Legacy aliases
@@ -172,7 +172,7 @@ up: up-all
 
 down-all:
 	@echo "Stopping all services..."
-	$(COMPOSE) down
+	COMPOSE_PROFILES=knowledge $(COMPOSE) down
 	@echo "✓ All services stopped"
 
 down-ui:
@@ -187,7 +187,7 @@ down-web:
 
 down-document:
 	@echo "Stopping document-api..."
-	$(COMPOSE) stop document-api
+	COMPOSE_PROFILES=knowledge $(COMPOSE) stop document-api
 	@echo "✓ document-api stopped"
 
 down-assistant:
@@ -222,7 +222,7 @@ down-nginx:
 
 down-opensearch:
 	@echo "Stopping OpenSearch..."
-	$(COMPOSE) stop opensearch
+	COMPOSE_PROFILES=knowledge $(COMPOSE) stop opensearch
 	@echo "✓ OpenSearch stopped"
 
 # Legacy alias
@@ -233,9 +233,9 @@ down: down-all
 # ============================================================================
 
 build-all:
-	@echo "Building core services (without document-api)..."
+	@echo "Building all services (without document-api/opensearch)..."
 	$(COMPOSE) build ui web-api integration-api endpoint-api assistant-api
-	@echo "✓ Core services built"
+	@echo "✓ All services built"
 
 build-all-with-knowledge:
 	@echo "Building all services including document-api..."
@@ -254,7 +254,7 @@ build-web:
 
 build-document:
 	@echo "Building document-api..."
-	$(COMPOSE) build document-api
+	COMPOSE_PROFILES=knowledge $(COMPOSE) build document-api
 	@echo "✓ document-api built"
 
 build-assistant:
@@ -273,9 +273,9 @@ build-endpoint:
 	@echo "✓ endpoint-api built"
 
 rebuild-all:
-	@echo "Rebuilding core services (no cache, without document-api)..."
+	@echo "Rebuilding all services (no cache, without document-api/opensearch)..."
 	$(COMPOSE) build --no-cache ui web-api integration-api endpoint-api assistant-api
-	@echo "✓ Core services rebuilt"
+	@echo "✓ All services rebuilt"
 
 rebuild-all-with-knowledge:
 	@echo "Rebuilding all services including document-api (no cache)..."
@@ -294,7 +294,7 @@ rebuild-nginx:
 	
 rebuild-document:
 	@echo "Rebuilding document-api (no cache)..."
-	$(COMPOSE) build --no-cache document-api
+	COMPOSE_PROFILES=knowledge $(COMPOSE) build --no-cache document-api
 	@echo "✓ document-api rebuilt"
 
 
@@ -327,7 +327,7 @@ rebuild: rebuild-web
 # ============================================================================
 
 logs-all:
-	$(COMPOSE) logs -f
+	COMPOSE_PROFILES=knowledge $(COMPOSE) logs -f
 
 logs-ui:
 	$(COMPOSE) logs -f ui
@@ -337,7 +337,7 @@ logs-web:
 
 
 logs-document:
-	$(COMPOSE) logs -f document-api
+	COMPOSE_PROFILES=knowledge $(COMPOSE) logs -f document-api
 
 
 logs-assistant:
@@ -356,7 +356,7 @@ logs-redis:
 	$(COMPOSE) logs -f redis
 
 logs-opensearch:
-	$(COMPOSE) logs -f opensearch
+	COMPOSE_PROFILES=knowledge $(COMPOSE) logs -f opensearch
 
 # Legacy alias
 logs: logs-all
@@ -367,7 +367,7 @@ logs: logs-all
 
 restart-all:
 	@echo "Restarting all services..."
-	$(COMPOSE) restart
+	COMPOSE_PROFILES=knowledge $(COMPOSE) restart
 	@echo "✓ All services restarted"
 
 restart-nginx:
@@ -387,7 +387,7 @@ restart-web:
 
 restart-document:
 	@echo "Restarting document-api..."
-	$(COMPOSE) restart document-api
+	COMPOSE_PROFILES=knowledge $(COMPOSE) restart document-api
 	@echo "✓ document-api restarted"
 
 
@@ -448,7 +448,7 @@ shell-assistant:
 	$(COMPOSE) exec assistant-api sh
 
 shell-document:
-	$(COMPOSE) exec document-api sh
+	COMPOSE_PROFILES=knowledge $(COMPOSE) exec document-api sh
 
 shell-web:
 	$(COMPOSE) exec web-api sh
@@ -471,25 +471,31 @@ shell: shell-web
 
 clean-volumes:
 	@echo "Removing volumes..."
-	$(COMPOSE) down -v
+	COMPOSE_PROFILES=knowledge $(COMPOSE) down -v
 	@echo "✓ Volumes removed"
 
 clean:
 	@echo "Cleaning up Docker resources..."
-	$(COMPOSE) down -v
+	COMPOSE_PROFILES=knowledge $(COMPOSE) down -v
 	@echo "Removing built images..."
-	docker rmi $$(docker images | grep -E '(web-api|integration-api|endpoint-api)' | awk '{print $$3}') 2>/dev/null || true
+	docker rmi $$(docker images | grep -E '(web-api|integration-api|endpoint-api|assistant-api|document-api|ui)' | awk '{print $$3}') 2>/dev/null || true
 	@echo "✓ Cleanup complete"
 
 # ============================================================================
 # QUICK DEVELOPMENT COMMANDS
 # ============================================================================
 
-# Start all dependencies (db, redis, opensearch) without APIs
+# Start core dependencies (db, redis) without APIs
 deps:
-	@echo "Starting dependencies only..."
-	$(COMPOSE) up -d postgres redis opensearch
+	@echo "Starting core dependencies only..."
+	$(COMPOSE) up -d postgres redis
 	@echo "✓ Dependencies started"
+
+# Start all dependencies including opensearch (for knowledge base)
+deps-knowledge:
+	@echo "Starting all dependencies including opensearch..."
+	COMPOSE_PROFILES=knowledge $(COMPOSE) up -d postgres redis opensearch
+	@echo "✓ Dependencies started (with OpenSearch)"
 
 # Start full stack with UI
 full: build-all up-all
