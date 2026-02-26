@@ -16,9 +16,10 @@ services:
       - api-network
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U rapida_user -d web_db && pg_isready -U rapida_user -d assistant_db && pg_isready -U rapida_user -d integration_db && pg_isready -U rapida_user -d endpoint_db" ]
-      interval: 5s
-      timeout: 10s
-      retries: 3
+      interval: 3s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   # Redis Cache
   redis:
@@ -32,9 +33,10 @@ services:
       - api-network
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
-      interval: 10s
-      timeout: 5s
+      interval: 3s
+      timeout: 3s
       retries: 5
+      start_period: 3s
 
 
   nginx:
@@ -63,10 +65,6 @@ services:
     container_name: ui
     ports:
       - "3000:3000"
-    depends_on:
-      - web-api
-      - integration-api
-      - endpoint-api
     networks:
       - api-network
 
@@ -95,9 +93,10 @@ services:
 
     healthcheck:
       test: [ "CMD", "wget", "--quiet", "--tries=1", "--method=GET", "-O", "/dev/null",  "http://localhost:9001/readiness/" ]
-      interval: 30s
+      interval: 10s
       timeout: 3s
       retries: 3
+      start_period: 10s
 
   # Assistant API Service
   assistant-api:
@@ -129,9 +128,10 @@ services:
 
     healthcheck:
       test: [ "CMD", "wget", "--quiet", "--tries=1", "--method=GET", "-O", "/dev/null",  "http://localhost:9007/readiness/" ]
-      interval: 30s
+      interval: 10s
       timeout: 3s
       retries: 3
+      start_period: 10s
 
   # Integration API Service
   integration-api:
@@ -159,9 +159,10 @@ services:
 
     healthcheck:
       test: [ "CMD", "wget", "--quiet", "--tries=1", "--method=GET", "-O", "/dev/null",  "http://localhost:9004/readiness/" ]
-      interval: 30s
+      interval: 10s
       timeout: 3s
       retries: 3
+      start_period: 10s
 
   # Endpoint API Service
   endpoint-api:
@@ -189,9 +190,10 @@ services:
 
     healthcheck:
       test: [ "CMD", "wget", "--quiet", "--tries=1", "--method=GET", "-O", "/dev/null",  "http://localhost:9005/readiness/" ]
-      interval: 30s
+      interval: 10s
       timeout: 3s
       retries: 3
+      start_period: 10s
 
 
 networks:
