@@ -7,10 +7,12 @@ import { useLocation } from 'react-router-dom';
 
 import { Activity, Database, MessageSquareIcon, Webhook } from 'lucide-react';
 import { ToolIcon } from '@/app/components/Icon/tool';
+import { useWorkspace } from '@/workspace';
 
 export const Observability = memo(() => {
   const location = useLocation();
   const { pathname } = location;
+  const { workspace } = useWorkspace();
 
   return (
     <li>
@@ -42,15 +44,17 @@ export const Observability = memo(() => {
         </SidebarIconWrapper>
         <SidebarLabel>Webhook logs</SidebarLabel>
       </SidebarSimpleListItem>
-      <SidebarSimpleListItem
-        active={pathname.includes('/logs/knowledge')}
-        navigate="/logs/knowledge"
-      >
-        <SidebarIconWrapper>
-          <Database className={cn('w-5 h-5 opacity-75')} strokeWidth={1.5} />
-        </SidebarIconWrapper>
-        <SidebarLabel>Knowledge logs</SidebarLabel>
-      </SidebarSimpleListItem>
+      {workspace.features?.knowledge !== false && (
+        <SidebarSimpleListItem
+          active={pathname.includes('/logs/knowledge')}
+          navigate="/logs/knowledge"
+        >
+          <SidebarIconWrapper>
+            <Database className={cn('w-5 h-5 opacity-75')} strokeWidth={1.5} />
+          </SidebarIconWrapper>
+          <SidebarLabel>Knowledge logs</SidebarLabel>
+        </SidebarSimpleListItem>
+      )}
       <SidebarSimpleListItem
         active={pathname.includes('/logs/conversation')}
         navigate="/logs/conversation"

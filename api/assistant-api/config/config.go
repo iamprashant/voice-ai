@@ -74,8 +74,9 @@ func GetApplicationConfig(v *viper.Viper) (*AssistantConfig, error) {
 		log.Printf("%+v\n", err)
 		return nil, err
 	}
-	// If OpenSearch config was partially populated but has no host, treat as not configured
-	if config.OpenSearchConfig != nil && config.OpenSearchConfig.Host == "" {
+	// If OpenSearch config is missing any required connection field, treat as not configured
+	if config.OpenSearchConfig != nil &&
+		(config.OpenSearchConfig.Host == "" || config.OpenSearchConfig.Schema == "") {
 		config.OpenSearchConfig = nil
 	}
 	// valdating the app config

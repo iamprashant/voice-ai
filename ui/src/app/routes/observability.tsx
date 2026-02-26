@@ -8,6 +8,7 @@ import {
   WebhookActivityListingPage,
 } from '@/app/pages/activities';
 import { Routes, Route, Outlet } from 'react-router-dom';
+import { CONFIG } from '@/configs';
 
 export function ObservabilityRoute() {
   return (
@@ -28,11 +29,13 @@ export function ObservabilityRoute() {
           path="/webhook"
           element={<WebhookActivityListingPage />}
         />
-        <Route
-          key="knowledge-logs"
-          path="/knowledge"
-          element={<KnowledgeActivityListingPage />}
-        />
+        {CONFIG.workspace.features?.knowledge !== false && (
+          <Route
+            key="knowledge-logs"
+            path="/knowledge"
+            element={<KnowledgeActivityListingPage />}
+          />
+        )}
         <Route
           key="tool-logs"
           path="/tool"
