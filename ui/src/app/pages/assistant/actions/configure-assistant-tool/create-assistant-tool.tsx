@@ -1,4 +1,5 @@
 import React, { FC, useState } from 'react';
+import { CONFIG } from '@/configs';
 import { useConfirmDialog } from '@/app/pages/assistant/actions/hooks/use-confirmation';
 import { useGlobalNavigation } from '@/hooks/use-global-navigator';
 import {
@@ -30,15 +31,19 @@ export const CreateTool: FC<{ assistantId: string }> = ({ assistantId }) => {
   /**
    * buildin tools
    */
+  const defaultToolCode =
+    CONFIG.workspace.features?.knowledge !== false
+      ? 'knowledge_retrieval'
+      : 'endpoint';
   const [buildinToolConfig, setBuildinToolConfig] = useState<BuildinToolConfig>(
     {
-      code: 'knowledge_retrieval',
-      parameters: GetDefaultToolConfigIfInvalid('knowledge_retrieval', []),
+      code: defaultToolCode,
+      parameters: GetDefaultToolConfigIfInvalid(defaultToolCode, []),
     },
   );
 
   const [toolDefinition, setToolDefinition] = useState(
-    GetDefaultToolDefintion('knowledge_retrieval', {
+    GetDefaultToolDefintion(defaultToolCode, {
       name: '',
       description: '',
       parameters: '',

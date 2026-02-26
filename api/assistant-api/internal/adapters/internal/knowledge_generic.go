@@ -65,6 +65,9 @@ func (kr *genericRequestor) RetrieveToolKnowledge(ctx context.Context, knowledge
 }
 
 func (kr *genericRequestor) retrieve(ctx context.Context, knowledge *internal_knowledge_gorm.Knowledge, query string, filter map[string]interface{}, kc *internal_type.KnowledgeRetrieveOption) ([]internal_type.KnowledgeContextResult, error) {
+	if kr.vectordb == nil {
+		return nil, fmt.Errorf("knowledge retrieval is not available: vector database is not configured")
+	}
 	topK := int(defaultTopK)
 	if kc.TopK != 0 {
 		topK = int(kc.TopK)

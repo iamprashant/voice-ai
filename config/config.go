@@ -15,7 +15,7 @@ type AppConfig struct {
 	EndpointHost    string `mapstructure:"endpoint_host" validate:"required"`
 	AssistantHost   string `mapstructure:"assistant_host" validate:"required"`
 	WebHost         string `mapstructure:"web_host" validate:"required"`
-	DocumentHost    string `mapstructure:"document_host" validate:"required"`
+	DocumentHost    string `mapstructure:"document_host"`
 
 	// utility
 	UiHost string `mapstructure:"ui_host" validate:"required"`

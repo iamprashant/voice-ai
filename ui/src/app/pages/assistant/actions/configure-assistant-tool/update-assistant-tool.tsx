@@ -1,4 +1,5 @@
 import React, { FC, useEffect, useState } from 'react';
+import { CONFIG } from '@/configs';
 import { useConfirmDialog } from '@/app/pages/assistant/actions/hooks/use-confirmation';
 import { useGlobalNavigation } from '@/hooks/use-global-navigator';
 import { IBlueBGButton, ICancelButton } from '@/app/components/form/button';
@@ -29,10 +30,14 @@ export const UpdateTool: FC<{ assistantId: string }> = ({ assistantId }) => {
   /**
    * buildin tools
    */
+  const defaultToolCode =
+    CONFIG.workspace.features?.knowledge !== false
+      ? 'knowledge_retrieval'
+      : 'endpoint';
   const [buildinToolConfig, setBuildinToolConfig] = useState<BuildinToolConfig>(
     {
-      code: 'knowledge_retrieval',
-      parameters: GetDefaultToolConfigIfInvalid('knowledge_retrieval', []),
+      code: defaultToolCode,
+      parameters: GetDefaultToolConfigIfInvalid(defaultToolCode, []),
     },
   );
 

@@ -141,7 +141,12 @@ func NewGenericRequestor(
 		vaultClient:       web_client.NewVaultClientGRPC(&config.AppConfig, logger, redis),
 
 		//
-		tracer:            internal_assistant_telemetry.NewInMemoryTracer(logger, internal_assistant_telemetry_exporters.NewOpensearchAssistantTraceExporter(logger, &config.AppConfig, opensearch)),
+		tracer: func() internal_telemetry.VoiceAgentTracer {
+			if opensearch != nil {
+				return internal_assistant_telemetry.NewInMemoryTracer(logger, internal_assistant_telemetry_exporters.NewOpensearchAssistantTraceExporter(logger, &config.AppConfig, opensearch))
+			}
+			return internal_assistant_telemetry.NewInMemoryTracer(logger)
+		}(),
 		messaging:         internal_adapter_request_customizers.NewMessaging(logger),
 		assistantExecutor: internal_agent_executor_llm.NewAssistantExecutor(logger),
 

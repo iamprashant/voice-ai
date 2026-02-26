@@ -29,6 +29,9 @@
                     "github": false
                 }
             }
+        },
+        "features": {
+            "knowledge": false
         }
     }
 }

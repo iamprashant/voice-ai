@@ -34,7 +34,7 @@ type AssistantConfig struct {
 	config.AppConfig    `mapstructure:",squash"`
 	PostgresConfig      configs.PostgresConfig   `mapstructure:"postgres" validate:"required"`
 	RedisConfig         configs.RedisConfig      `mapstructure:"redis" validate:"required"`
-	OpenSearchConfig    configs.OpenSearchConfig `mapstructure:"opensearch" validate:"required"`
+	OpenSearchConfig    *configs.OpenSearchConfig `mapstructure:"opensearch"`
 	WeaviateConfig      configs.WeaviateConfig   `mapstructure:"weaviate"`
 	AssetStoreConfig    configs.AssetStoreConfig `mapstructure:"asset_store" validate:"required"`
 	PublicAssistantHost string                   `mapstructure:"public_assistant_host" validate:"required"`
@@ -73,6 +73,10 @@ func GetApplicationConfig(v *viper.Viper) (*AssistantConfig, error) {
 	if err != nil {
 		log.Printf("%+v\n", err)
 		return nil, err
+	}
+	// If OpenSearch config was partially populated but has no host, treat as not configured
+	if config.OpenSearchConfig != nil && config.OpenSearchConfig.Host == "" {
+		config.OpenSearchConfig = nil
 	}
 	// valdating the app config
 	validate := validator.New()

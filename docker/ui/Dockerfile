@@ -5,7 +5,9 @@ RUN apk add --no-cache curl
 
 # Copy package files and install dependencies
 COPY ui/package.json ui/yarn.lock ./
-RUN yarn install --frozen-lockfile --cache-folder .yarn-cache && \
+RUN yarn config set network-timeout 300000 && \
+    yarn config set network-concurrency 1 && \
+    yarn install --frozen-lockfile --cache-folder .yarn-cache && \
     rm -rf .yarn-cache
 
 # Copy all necessary source files
