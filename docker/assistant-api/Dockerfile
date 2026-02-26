@@ -43,10 +43,6 @@ COPY --from=builder /usr/local/lib /usr/local/lib
 COPY api/assistant-api/migrations/ ./api/assistant-api/migrations/
 COPY docker/assistant-api/.assistant.env ./env/.assistant.env
 
-# Create required directories
-RUN mkdir -p /opt/apps/assets /var/log/go-app && \
-    chown -R rapida-app:rapida-app /opt/apps /var/log/go-app
-
 USER rapida-app
 
 ENV LD_LIBRARY_PATH="/usr/local/lib:/opt/onnxruntime/lib:/opt/azure-speech-sdk/lib/x64"

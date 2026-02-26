@@ -10,3 +10,6 @@ RUN apk --no-cache add ca-certificates wget netcat-openbsd && \
     adduser -D -u 1000 -G rapida-app rapida-app
 
 WORKDIR /opt/apps
+
+RUN mkdir -p /opt/apps/assets /var/log/go-app && \
+    chown -R rapida-app:rapida-app /opt/apps /var/log/go-app

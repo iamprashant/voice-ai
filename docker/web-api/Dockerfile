@@ -35,10 +35,6 @@ COPY api/web-api/migrations/ ./api/web-api/migrations/
 # Copy environment file from docker/web-api
 COPY docker/web-api/.web.env ./env/.web.env
 
-# Create directories and set ownership
-RUN mkdir -p /opt/apps/assets /var/log/go-app && \
-    chown -R rapida-app:rapida-app /opt/apps /var/log/go-app
-
 # Switch to rapida-app user
 USER rapida-app
 

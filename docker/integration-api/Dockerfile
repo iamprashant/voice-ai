@@ -35,10 +35,6 @@ COPY api/integration-api/migrations/ ./api/integration-api/migrations/
 # Copy environment file from docker/integration-api
 COPY docker/integration-api/.integration.env ./env/.integration.env
 
-# Create directories and set ownership
-RUN mkdir -p /opt/apps/assets /var/log/go-app && \
-    chown -R rapida-app:rapida-app /opt/apps /var/log/go-app
-
 # Switch to rapida-app user
 USER rapida-app
 

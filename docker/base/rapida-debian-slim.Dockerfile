@@ -13,3 +13,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 RUN groupadd -g 1000 rapida-app && useradd -m -u 1000 -g rapida-app rapida-app
 
 WORKDIR /opt/apps
+
+RUN mkdir -p /opt/apps/assets /var/log/go-app && \
+    chown -R rapida-app:rapida-app /opt/apps /var/log/go-app

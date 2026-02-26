@@ -35,10 +35,6 @@ COPY api/endpoint-api/migrations/ ./api/endpoint-api/migrations/
 # Copy environment file from docker/endpoint-api
 COPY docker/endpoint-api/.endpoint.env ./env/.endpoint.env
 
-# Create directories and set ownership
-RUN mkdir -p /opt/apps/assets /var/log/go-app && \
-    chown -R rapida-app:rapida-app /opt/apps /var/log/go-app
-
 # Switch to rapida-app user
 USER rapida-app
 
