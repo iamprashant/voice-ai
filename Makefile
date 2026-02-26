@@ -10,8 +10,8 @@
         push-rapida-golang-bookworm push-rapida-golang-alpine push-rapida-alpine \
         push-rapida-debian-slim push-rapida-node-alpine push-rapida-python
 
-COMPOSE           := DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 docker compose -f docker-compose.yml
-COMPOSE_KNOWLEDGE := DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 docker compose -f docker-compose.yml -f docker-compose.knowledge.yml
+COMPOSE           := DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_DEFAULT_PLATFORM=linux/amd64 docker compose -f docker-compose.yml
+COMPOSE_KNOWLEDGE := DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_DEFAULT_PLATFORM=linux/amd64 docker compose -f docker-compose.yml -f docker-compose.knowledge.yml
 
 help:
 	@echo ""

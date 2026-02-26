@@ -107,6 +107,7 @@ jobs:
           context: .
           file: ./docker/base/rapida-golang-bookworm.Dockerfile
           push: true
+          platforms: linux/amd64
           tags: ${{ env.REGISTRY }}/rapida-golang:1.25.7-bookworm
           cache-from: type=gha,scope=rapida-golang-bookworm
           cache-to: type=gha,scope=rapida-golang-bookworm,mode=max
@@ -133,6 +134,7 @@ jobs:
           context: .
           file: ./docker/base/rapida-golang-alpine.Dockerfile
           push: true
+          platforms: linux/amd64
           tags: ${{ env.REGISTRY }}/rapida-golang:1.25.7-alpine
           cache-from: type=gha,scope=rapida-golang-alpine
           cache-to: type=gha,scope=rapida-golang-alpine,mode=max
@@ -159,6 +161,7 @@ jobs:
           context: .
           file: ./docker/base/rapida-alpine.Dockerfile
           push: true
+          platforms: linux/amd64
           tags: ${{ env.REGISTRY }}/rapida-alpine:3.21
           cache-from: type=gha,scope=rapida-alpine
           cache-to: type=gha,scope=rapida-alpine,mode=max
@@ -185,6 +188,7 @@ jobs:
           context: .
           file: ./docker/base/rapida-debian-slim.Dockerfile
           push: true
+          platforms: linux/amd64
           tags: ${{ env.REGISTRY }}/rapida-debian:bookworm-slim
           cache-from: type=gha,scope=rapida-debian-slim
           cache-to: type=gha,scope=rapida-debian-slim,mode=max
@@ -211,6 +215,7 @@ jobs:
           context: .
           file: ./docker/base/rapida-node-alpine.Dockerfile
           push: true
+          platforms: linux/amd64
           tags: ${{ env.REGISTRY }}/rapida-node:22-alpine
           cache-from: type=gha,scope=rapida-node-alpine
           cache-to: type=gha,scope=rapida-node-alpine,mode=max
@@ -237,6 +242,7 @@ jobs:
           context: .
           file: ./docker/base/rapida-python.Dockerfile
           push: true
+          platforms: linux/amd64
           tags: ${{ env.REGISTRY }}/rapida-python:3.11
           cache-from: type=gha,scope=rapida-python
           cache-to: type=gha,scope=rapida-python,mode=max
