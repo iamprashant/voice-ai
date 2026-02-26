@@ -75,7 +75,10 @@ func (aS *auditService) CreateMetadata(c context.Context, auditId uint64, metada
 				Value:           v,
 			})
 		}
-		tx := db.Create(&_metadata)
+		tx := db.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "external_audit_id"}, {Name: "key"}},
+			DoUpdates: clause.AssignmentColumns([]string{"value"}),
+		}).Create(&_metadata)
 		if tx.Error != nil {
 			aS.logger.Errorf("error while updating model parameter %v", tx.Error)
 			return nil, tx.Error

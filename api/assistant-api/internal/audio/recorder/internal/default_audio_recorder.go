@@ -266,7 +266,7 @@ func (r *audioRecorder) Persist() (userWAV, systemWAV []byte, err error) {
 	userInfo := internal_audio.GetAudioInfo(trackPCM[trackUser][:audioBytes[trackUser]], audioConfig)
 	systemInfo := internal_audio.GetAudioInfo(trackPCM[trackSystem][:audioBytes[trackSystem]], audioConfig)
 	totalInfo := internal_audio.GetAudioInfo(trackPCM[trackUser], audioConfig)
-	r.logger.Info(fmt.Sprintf(
+	r.logger.Infow(fmt.Sprintf(
 		"Audio persist: userAudio=%d (%.2fms), systemAudio=%d (%.2fms), totalLen=%d (%.2fms), chunks=%d",
 		audioBytes[trackUser], userInfo.DurationMs,
 		audioBytes[trackSystem], systemInfo.DurationMs,

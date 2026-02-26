@@ -281,8 +281,13 @@ export const SARVAM_SPEECH_TO_TEXT_MODEL = () => {
   return require('./sarvam/speech-to-text-models.json');
 };
 
-export const SARVAM_VOICE = () => {
-  return require('./sarvam/voices.json');
+export const SARVAM_VOICE = (model?: string) => {
+  const voices = require('./sarvam/voices.json');
+  if (model && voices[model]) {
+    return voices[model];
+  }
+  // Default: return all voices flattened
+  return Object.values(voices).flat();
 };
 
 /**

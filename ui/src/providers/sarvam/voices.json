@@ -1,30 +1,238 @@
-[
-    {
-        "id": "anushka",
-        "name": "Anushka"
-    },
-    {
-        "id": "abhilash",
-        "name": "Abhilash"
-    },
-    {
-        "id": "manisha",
-        "name": "Manisha"
-    },
-    {
-        "id": "vidya",
-        "name": "Vidya"
-    },
-    {
-        "id": "arya",
-        "name": "Arya"
-    },
-    {
-        "id": "karun",
-        "name": "Karun"
-    },
-    {
-        "id": "hitesh",
-        "name": "Hitesh"
-    }
-]
+{
+    "bulbul:v3": [
+        {
+            "id": "shubh",
+            "name": "Shubh",
+            "gender": "male",
+            "default": true
+        },
+        {
+            "id": "aditya",
+            "name": "Aditya",
+            "gender": "male"
+        },
+        {
+            "id": "rahul",
+            "name": "Rahul",
+            "gender": "male"
+        },
+        {
+            "id": "rohan",
+            "name": "Rohan",
+            "gender": "male"
+        },
+        {
+            "id": "amit",
+            "name": "Amit",
+            "gender": "male"
+        },
+        {
+            "id": "dev",
+            "name": "Dev",
+            "gender": "male"
+        },
+        {
+            "id": "ratan",
+            "name": "Ratan",
+            "gender": "male"
+        },
+        {
+            "id": "varun",
+            "name": "Varun",
+            "gender": "male"
+        },
+        {
+            "id": "manan",
+            "name": "Manan",
+            "gender": "male"
+        },
+        {
+            "id": "sumit",
+            "name": "Sumit",
+            "gender": "male"
+        },
+        {
+            "id": "kabir",
+            "name": "Kabir",
+            "gender": "male"
+        },
+        {
+            "id": "aayan",
+            "name": "Aayan",
+            "gender": "male"
+        },
+        {
+            "id": "ashutosh",
+            "name": "Ashutosh",
+            "gender": "male"
+        },
+        {
+            "id": "advait",
+            "name": "Advait",
+            "gender": "male"
+        },
+        {
+            "id": "anand",
+            "name": "Anand",
+            "gender": "male"
+        },
+        {
+            "id": "tarun",
+            "name": "Tarun",
+            "gender": "male"
+        },
+        {
+            "id": "sunny",
+            "name": "Sunny",
+            "gender": "male"
+        },
+        {
+            "id": "mani",
+            "name": "Mani",
+            "gender": "male"
+        },
+        {
+            "id": "gokul",
+            "name": "Gokul",
+            "gender": "male"
+        },
+        {
+            "id": "vijay",
+            "name": "Vijay",
+            "gender": "male"
+        },
+        {
+            "id": "mohit",
+            "name": "Mohit",
+            "gender": "male"
+        },
+        {
+            "id": "rehan",
+            "name": "Rehan",
+            "gender": "male"
+        },
+        {
+            "id": "soham",
+            "name": "Soham",
+            "gender": "male"
+        },
+        {
+            "id": "ritu",
+            "name": "Ritu",
+            "gender": "female"
+        },
+        {
+            "id": "priya",
+            "name": "Priya",
+            "gender": "female"
+        },
+        {
+            "id": "neha",
+            "name": "Neha",
+            "gender": "female"
+        },
+        {
+            "id": "pooja",
+            "name": "Pooja",
+            "gender": "female"
+        },
+        {
+            "id": "simran",
+            "name": "Simran",
+            "gender": "female"
+        },
+        {
+            "id": "kavya",
+            "name": "Kavya",
+            "gender": "female"
+        },
+        {
+            "id": "ishita",
+            "name": "Ishita",
+            "gender": "female"
+        },
+        {
+            "id": "shreya",
+            "name": "Shreya",
+            "gender": "female"
+        },
+        {
+            "id": "roopa",
+            "name": "Roopa",
+            "gender": "female"
+        },
+        {
+            "id": "amelia",
+            "name": "Amelia",
+            "gender": "female"
+        },
+        {
+            "id": "sophia",
+            "name": "Sophia",
+            "gender": "female"
+        },
+        {
+            "id": "tanya",
+            "name": "Tanya",
+            "gender": "female"
+        },
+        {
+            "id": "shruti",
+            "name": "Shruti",
+            "gender": "female"
+        },
+        {
+            "id": "suhani",
+            "name": "Suhani",
+            "gender": "female"
+        },
+        {
+            "id": "kavitha",
+            "name": "Kavitha",
+            "gender": "female"
+        },
+        {
+            "id": "rupali",
+            "name": "Rupali",
+            "gender": "female"
+        }
+    ],
+    "bulbul:v2": [
+        {
+            "id": "anushka",
+            "name": "Anushka",
+            "gender": "female",
+            "default": true
+        },
+        {
+            "id": "manisha",
+            "name": "Manisha",
+            "gender": "female"
+        },
+        {
+            "id": "vidya",
+            "name": "Vidya",
+            "gender": "female"
+        },
+        {
+            "id": "arya",
+            "name": "Arya",
+            "gender": "female"
+        },
+        {
+            "id": "abhilash",
+            "name": "Abhilash",
+            "gender": "male"
+        },
+        {
+            "id": "karun",
+            "name": "Karun",
+            "gender": "male"
+        },
+        {
+            "id": "hitesh",
+            "name": "Hitesh",
+            "gender": "male"
+        }
+    ]
+}

@@ -315,9 +315,8 @@ func (r *genericRequestor) resumeSession(
 		}
 	})
 
-	r.notifyConfiguration(ctx, config, conversation, assistant)
-
 	err = errGroup.Wait()
+	r.notifyConfiguration(ctx, config, conversation, assistant)
 	r.initializeBehavior(ctx)
 	return err
 }
@@ -421,8 +420,8 @@ func (r *genericRequestor) createSession(
 			r.logger.Errorf("failed to execute begin conversation hooks: %+v", err)
 		}
 	})
-	r.notifyConfiguration(ctx, config, conversation, assistant)
 	err = errGroup.Wait()
+	r.notifyConfiguration(ctx, config, conversation, assistant)
 	r.initializeBehavior(ctx)
 	return err
 }

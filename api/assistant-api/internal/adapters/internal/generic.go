@@ -185,7 +185,6 @@ func (gr *genericRequestor) GetAssistantConversation(ctx context.Context, auth t
 }
 
 func (r *genericRequestor) identifier(config *protos.ConversationInitialization) string {
-	r.logger.Debugf("testing -> %+v", config.GetUserIdentity())
 	switch identity := config.GetUserIdentity().(type) {
 	case *protos.ConversationInitialization_Phone:
 		return identity.Phone.GetPhoneNumber()
@@ -197,7 +196,6 @@ func (r *genericRequestor) identifier(config *protos.ConversationInitialization)
 }
 
 func (talking *genericRequestor) BeginConversation(ctx context.Context, assistant *internal_assistant_entity.Assistant, direction type_enums.ConversationDirection, config *protos.ConversationInitialization) (*internal_conversation_entity.AssistantConversation, error) {
-	talking.logger.Debugf("testing -> %+v", talking.identifier(config))
 	talking.assistant = assistant
 	conversation, err := talking.conversationService.CreateConversation(ctx, talking.Auth(), talking.identifier(config), assistant.Id, assistant.AssistantProviderId, direction, talking.Source())
 	if err != nil {

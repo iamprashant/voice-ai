@@ -224,7 +224,7 @@ export const AudioMessagingAction: FC<AudioMessagingActionProps> = ({
             {isConnecting ? (
               <>
                 <Spinner className="w-4 h-4 !border-white" />
-                <span className="max-w-0 group-hover:max-w-xs transition-all duration-200 origin-left scale-x-0 group-hover:scale-x-100 group-hover:opacity-100 opacity-0 whitespace-nowrap text-sm overflow-hidden group-hover:ml-2 font-medium">
+                <span className="ml-2 whitespace-nowrap text-sm font-medium">
                   Connecting
                 </span>
               </>

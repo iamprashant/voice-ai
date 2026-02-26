@@ -26,8 +26,6 @@ type Callback interface {
 * - GetArgs: Returns a map of arguments as protocol buffer Any messages.
 * - GetMetadata: Returns a map of metadata as protocol buffer Any messages.
 * - GetOptions: Returns a map of options as protocol buffer Any messages.
-* - GetAgentTemplate: Returns an AgentPromptTemplate, which is used for
-*   customizing agent prompts.
 *
 * Implementations of this interface can provide specific logic for how these
 * customization elements are stored and retrieved, allowing for different

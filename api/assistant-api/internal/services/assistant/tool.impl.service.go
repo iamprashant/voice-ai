@@ -343,10 +343,8 @@ func (eService *assistantToolService) UpdateLog(
 ) (*internal_assistant_entity.AssistantToolLog, error) {
 	start := time.Now()
 	db := eService.postgres.DB(ctx)
-
 	var toolLog internal_assistant_entity.AssistantToolLog
 	if tx := db.Where("tool_call_id = ? AND assistant_conversation_id = ?", toolCallId, conversationId).First(&toolLog); tx.Error != nil {
-		eService.logger.Errorf("error finding tool log for tool_call_id %s: %v", toolCallId, tx.Error)
 		return nil, tx.Error
 	}
 
@@ -378,8 +376,6 @@ func (eService *assistantToolService) GetLog(
 	var wkg *internal_assistant_entity.AssistantToolLog
 	tx := db.
 		Where("id = ? AND organization_id = ? AND project_id = ?", toolLogId, *auth.GetCurrentOrganizationId(), projectId).
-		Preload("AssistantTool").
-		Preload("AssistantTool.ExecutionOptions").
 		First(&wkg)
 	if tx.Error != nil {
 		eService.logger.Benchmark("ToolService.GetLog", time.Since(start))

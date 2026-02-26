@@ -63,6 +63,10 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
     if (!sharedAudioContext.current) {
       sharedAudioContext.current = new AudioContext();
     }
+    return () => {
+      sharedAudioContext.current?.close();
+      sharedAudioContext.current = null;
+    };
   }, []);
 
   const createWaveSurferOptions = (
@@ -159,8 +163,12 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
     }
 
     return () => {
+      assistantWavesurfer.current?.pause();
+      userWavesurfer.current?.pause();
       assistantWavesurfer.current?.destroy();
       userWavesurfer.current?.destroy();
+      assistantWavesurfer.current = null;
+      userWavesurfer.current = null;
     };
   }, [
     assistantSrc,

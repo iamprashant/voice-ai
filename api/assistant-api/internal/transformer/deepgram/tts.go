@@ -155,8 +155,7 @@ func (t *deepgramTTS) Transform(ctx context.Context, in internal_type.LLMPacket)
 
 	switch input := in.(type) {
 	case internal_type.InterruptionPacket:
-		// only stop speaking on word-level interruptions
-		if input.Source == internal_type.InterruptionSourceWord && currentCtx != "" {
+		if currentCtx != "" {
 			_ = conn.WriteJSON(map[string]interface{}{
 				"type": "Clear",
 			})

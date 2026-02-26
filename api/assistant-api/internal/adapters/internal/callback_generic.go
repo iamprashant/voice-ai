@@ -300,11 +300,6 @@ func (talking *genericRequestor) OnPacket(ctx context.Context, pkts ...internal_
 					continue
 				}
 
-				// let all the providers know about interruption
-				if err := talking.interruptAllProvider(ctx, vl); err != nil {
-					talking.logger.Errorf("interrupt all provider error: %v", err)
-				}
-
 				// notify interruption without waiting
 				utils.Go(ctx, func() {
 					talking.Notify(ctx, &protos.ConversationInterruption{Type: protos.ConversationInterruption_INTERRUPTION_TYPE_VAD, Time: timestamppb.Now()})

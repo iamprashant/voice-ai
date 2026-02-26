@@ -161,10 +161,7 @@ func (rt *sarvamTextToSpeech) Transform(ctx context.Context, in internal_type.LL
 
 	switch input := in.(type) {
 	case internal_type.InterruptionPacket:
-		// only stop speaking on word-level interruptions
-		if input.Source == internal_type.InterruptionSourceWord {
-			// no way to cancel ongoing synthesis in sarvam tts
-		}
+		// no way to cancel ongoing synthesis in sarvam tts
 		return nil
 	case internal_type.LLMResponseDeltaPacket:
 		if err := connection.WriteJSON(map[string]interface{}{

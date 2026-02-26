@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
@@ -62,6 +63,13 @@ type webrtcStreamer struct {
 	audioWg     sync.WaitGroup // Tracks audio goroutines for clean shutdown
 
 	currentMode protos.StreamMode
+
+	// peerConnected is set to true when the WebRTC peer connection reaches
+	// Connected state. runOutputWriter gates audio writes on this flag
+	// to prevent WriteSample from silently dropping frames before the
+	// SRTP session is established. Uses atomic for lock-free access from
+	// runOutputWriter's hot loop.
+	peerConnected atomic.Bool
 }
 
 // NewWebRTCStreamer creates a new WebRTC streamer with gRPC signaling.
@@ -97,6 +105,7 @@ func NewWebRTCStreamer(
 		resampler:   resampler,
 		opusCodec:   opusCodec,
 		currentMode: protos.StreamMode_STREAM_MODE_TEXT,
+		// peerConnected zero-value is false — correct: not connected yet
 	}
 
 	// Start background loops
@@ -131,6 +140,7 @@ func (s *webrtcStreamer) createPeerConnection() error {
 	s.Mu.Lock()
 	s.audioCtx, s.audioCancel = context.WithCancel(s.Ctx)
 	s.Mu.Unlock()
+	s.peerConnected.Store(false) // reset for new connection cycle
 
 	mediaEngine := &pionwebrtc.MediaEngine{}
 	if err := mediaEngine.RegisterCodec(pionwebrtc.RTPCodecParameters{
@@ -223,6 +233,8 @@ func (s *webrtcStreamer) setupPeerEventHandlers() {
 		// Perform channel / lifecycle operations outside the lock.
 		switch state {
 		case pionwebrtc.PeerConnectionStateConnected:
+			// Unblock runOutputWriter so buffered greeting audio can drain.
+			s.peerConnected.Store(true)
 			s.sendReady()
 
 		case pionwebrtc.PeerConnectionStateFailed:
@@ -388,7 +400,10 @@ func (s *webrtcStreamer) runOutputWriter() {
 
 		case <-ticker.C:
 			// Encode and send one paced audio frame per tick (20ms real-time).
-			if len(pendingAudio) > 0 {
+			// Only write when the peer connection is established — before that,
+			// Pion silently drops WriteSample (no SRTP session). Frames stay
+			// buffered in pendingAudio and drain once connected.
+			if len(pendingAudio) > 0 && s.peerConnected.Load() {
 				encoded, err := s.opusCodec.Encode(pendingAudio[0])
 				if err != nil {
 					s.Logger.Debugw("Opus encode failed", "error", err)
@@ -654,6 +669,7 @@ func (s *webrtcStreamer) resetAudioSession() {
 	}
 	s.localTrack = nil
 	s.currentMode = protos.StreamMode_STREAM_MODE_TEXT
+	s.peerConnected.Store(false)
 }
 
 // setupAudioAndHandshake tears down any stale peer connection, creates a fresh

@@ -141,8 +141,7 @@ func (azure *azureTextToSpeech) Transform(ctx context.Context, in internal_type.
 
 	switch input := in.(type) {
 	case internal_type.InterruptionPacket:
-		// only stop speaking on word-level interruptions
-		if input.Source == internal_type.InterruptionSourceWord && currentCtx != "" {
+		if currentCtx != "" {
 			<-cl.StopSpeakingAsync()
 		}
 		return nil

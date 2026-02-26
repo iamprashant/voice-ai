@@ -7,7 +7,7 @@ import {
   SARVAM_TEXT_TO_SPEECH_MODEL,
   SARVAM_VOICE,
 } from '@/providers';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { CustomValueDropdown } from '@/app/components/dropdown/custom-value-dropdown';
 export { GetSarvamDefaultOptions, ValidateSarvamOptions } from './constant';
 
@@ -25,7 +25,16 @@ export const ConfigureSarvamTextToSpeech: React.FC<{
   /**
    *
    */
-  const [filteredVoices, setFilteredVoices] = useState(SARVAM_VOICE());
+  const selectedModel =
+    parameters?.find(p => p.getKey() === 'speak.model')?.getValue() ?? '';
+  const [filteredVoices, setFilteredVoices] = useState(
+    SARVAM_VOICE(selectedModel || undefined),
+  );
+
+  // Sync filteredVoices when selectedModel changes (e.g. loading saved config)
+  useEffect(() => {
+    setFilteredVoices(SARVAM_VOICE(selectedModel || undefined));
+  }, [selectedModel]);
 
   /**
    *
@@ -51,6 +60,25 @@ export const ConfigureSarvamTextToSpeech: React.FC<{
     onParameterChange(updatedParams);
   };
 
+  const handleModelChange = (model: { model_id: string }) => {
+    const modelVoices = SARVAM_VOICE(model.model_id);
+    setFilteredVoices(modelVoices);
+
+    // Batch both model and voice reset into a single update
+    const updatedParams = [...(parameters || [])];
+    const setParam = (key: string, value: string) => {
+      const idx = updatedParams.findIndex(p => p.getKey() === key);
+      const param = new Metadata();
+      param.setKey(key);
+      param.setValue(value);
+      if (idx >= 0) updatedParams[idx] = param;
+      else updatedParams.push(param);
+    };
+    setParam('speak.model', model.model_id);
+    setParam('speak.voice.id', '');
+    onParameterChange(updatedParams);
+  };
+
   return (
     <>
       <FieldSet className="col-span-1">
@@ -60,9 +88,7 @@ export const ConfigureSarvamTextToSpeech: React.FC<{
           currentValue={SARVAM_TEXT_TO_SPEECH_MODEL().find(
             x => x.model_id === getParamValue('speak.model'),
           )}
-          setValue={v => {
-            updateParameter('speak.model', v.model_id);
-          }}
+          setValue={handleModelChange}
           allValue={SARVAM_TEXT_TO_SPEECH_MODEL()}
           placeholder={`Select model`}
           option={renderOption}
@@ -74,7 +100,7 @@ export const ConfigureSarvamTextToSpeech: React.FC<{
         <CustomValueDropdown
           searchable
           className="bg-light-background max-w-full dark:bg-gray-950"
-          currentValue={SARVAM_VOICE().find(
+          currentValue={filteredVoices.find(
             x => x.id === getParamValue('speak.voice.id'),
           )}
           setValue={(v: { id: string }) => {
@@ -86,7 +112,7 @@ export const ConfigureSarvamTextToSpeech: React.FC<{
           label={renderOption}
           customValue
           onSearching={t => {
-            const voices = SARVAM_VOICE();
+            const voices = SARVAM_VOICE(selectedModel || undefined);
             const v = t.target.value;
             if (v.length > 0) {
               setFilteredVoices(
@@ -102,6 +128,7 @@ export const ConfigureSarvamTextToSpeech: React.FC<{
             setFilteredVoices(voices);
           }}
           onAddCustomValue={vl => {
+            setFilteredVoices(prev => [...prev, { id: vl, name: vl }]);
             updateParameter('speak.voice.id', vl);
           }}
         />

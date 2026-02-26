@@ -125,8 +125,7 @@ func (google *googleTextToSpeech) Transform(ctx context.Context, in internal_typ
 
 	switch input := in.(type) {
 	case internal_type.InterruptionPacket:
-		// only stop speaking on word-level interruptions
-		if input.Source == internal_type.InterruptionSourceWord && currentCtx != "" {
+		if currentCtx != "" {
 			if err := google.Initialize(); err != nil {
 				return fmt.Errorf("failed to reinitialize stream on context change: %w", err)
 			}

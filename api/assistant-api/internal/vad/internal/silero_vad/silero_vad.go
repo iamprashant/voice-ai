@@ -188,6 +188,7 @@ func createDetector(options utils.Option) (*speech.Detector, error) {
 		Threshold:            float32(threshold),
 		MinSilenceDurationMs: defaultMinSilenceDurationMs,
 		SpeechPadMs:          defaultSpeechPadMs,
+		LogLevel:             speech.LogLevelError, // Suppress ONNX Runtime warnings about unused model initializers
 	}
 	return speech.NewDetector(config)
 }

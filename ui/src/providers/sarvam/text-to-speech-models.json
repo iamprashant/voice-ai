@@ -2,5 +2,9 @@
     {
         "model_id": "bulbul:v2",
         "name": "bulbul:v2"
+    },
+    {
+        "model_id": "bulbul:v3",
+        "name": "bulbul:v3"
     }
 ]
