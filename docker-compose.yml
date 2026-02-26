@@ -7,8 +7,8 @@ services:
       POSTGRES_USER: rapida_user
       POSTGRES_PASSWORD: rapida_db_password
       POSTGRES_DB: web_db
-    ports:
-      - "5432:5432"
+    # ports:
+    #   - "5432:5432"
     volumes:
       - ${HOME}/rapida-data/assets/db:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -24,8 +24,8 @@ services:
   redis:
     image: redis:7-alpine
     container_name: redis
-    ports:
-      - "6379:6379"
+    # ports:
+    #   - "6379:6379"
     volumes:
       - ${HOME}/rapida-data/assets/redis:/data
     networks:
@@ -108,7 +108,9 @@ services:
     container_name: assistant-api
     ports:
       - "9007:9007"
-      - "4573:4573"  # AudioSocket for Asterisk integration
+      - "4573:4573"                          # AudioSocket for Asterisk integration
+      - "5090:5090/udp"                      # SIP signaling
+      - "10000-10199:10000-10199/udp"        # RTP media (100 concurrent calls)
     env_file:
       - ./docker/assistant-api/.assistant.env
     depends_on:

@@ -176,7 +176,7 @@ export function ProjectCredentialPage() {
         </a>
       </YellowNoticeBlock>
       {ourKeys && ourKeys.length > 0 ? (
-        <div className="grid grid-cols-3 gap-3 px-4 py-4 flex-1 overflow-auto">
+        <div className="grid sm:grid-cols-3 gap-3 px-4 py-4 flex-1 overflow-auto">
           {ourKeys.map((pc, idx) => {
             return (
               <div key={idx}>

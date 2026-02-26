@@ -169,10 +169,10 @@ func NewRTPHandler(ctx context.Context, config *RTPConfig) (*RTPHandler, error) 
 
 	// Set buffer sizes
 	if err := conn.SetReadBuffer(rtpReadBufferSize); err != nil && config.Logger != nil {
-		config.Logger.Warn("Failed to set RTP read buffer size", "error", err)
+		config.Logger.Warnw("Failed to set RTP read buffer size", "error", err)
 	}
 	if err := conn.SetWriteBuffer(rtpWriteBufferSize); err != nil && config.Logger != nil {
-		config.Logger.Warn("Failed to set RTP write buffer size", "error", err)
+		config.Logger.Warnw("Failed to set RTP write buffer size", "error", err)
 	}
 
 	localAddr := conn.LocalAddr().(*net.UDPAddr)
@@ -239,7 +239,7 @@ func (h *RTPHandler) sendInitialSilence() {
 
 	if remoteAddr == nil {
 		if h.logger != nil {
-			h.logger.Warn("sendInitialSilence: remoteAddr is nil — no RTP will be sent until remote address is set")
+			h.logger.Warnw("sendInitialSilence: remoteAddr is nil — no RTP will be sent until remote address is set")
 		}
 		return
 	}
@@ -407,7 +407,7 @@ func (h *RTPHandler) SetRemoteAddr(ip string, port int) {
 		if !ok {
 			rawConn.Close()
 			if h.logger != nil {
-				h.logger.Warn("RTP: DialContext returned non-UDP connection, falling back to unconnected writes")
+				h.logger.Warnw("RTP: DialContext returned non-UDP connection, falling back to unconnected writes")
 			}
 		} else {
 			// Apply same buffer sizes as the receive socket
@@ -504,7 +504,7 @@ func (h *RTPHandler) receiveLoop() {
 	defer func() {
 		if r := recover(); r != nil {
 			if h.logger != nil {
-				h.logger.Warn("RTP receiveLoop recovered from panic", "panic", r)
+				h.logger.Warnw("RTP receiveLoop recovered from panic", "panic", r)
 			}
 		}
 	}()
@@ -587,14 +587,14 @@ func (h *RTPHandler) receiveLoop() {
 			}
 			// Connection closed or other error
 			if h.running.Load() && h.logger != nil {
-				h.logger.Warn("RTP receive error", "error", err, "from_send_conn", sendConn != nil)
+				h.logger.Warnw("RTP receive error", "error", err, "from_send_conn", sendConn != nil)
 			}
 			continue
 		}
 
 		if n < rtpHeaderSize {
 			if h.logger != nil {
-				h.logger.Warn("RTP packet too small", "size", n)
+				h.logger.Warnw("RTP packet too small", "size", n)
 			}
 			continue
 		}
@@ -602,7 +602,7 @@ func (h *RTPHandler) receiveLoop() {
 		packet, err := h.parseRTPPacket(buf[:n])
 		if err != nil {
 			if h.logger != nil {
-				h.logger.Warn("Failed to parse RTP packet", "error", err)
+				h.logger.Warnw("Failed to parse RTP packet", "error", err)
 			}
 			continue
 		}
@@ -633,7 +633,7 @@ func (h *RTPHandler) receiveLoop() {
 			// Successfully sent to channel
 		default:
 			if h.logger != nil {
-				h.logger.Warn("RTP: Audio input channel full, dropping packet", "seq", packet.SequenceNumber)
+				h.logger.Warnw("RTP: Audio input channel full, dropping packet", "seq", packet.SequenceNumber)
 			}
 		}
 	}

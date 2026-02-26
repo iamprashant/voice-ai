@@ -12,7 +12,7 @@ import { useWorkspace } from '@/workspace';
 export const Observability = memo(() => {
   const location = useLocation();
   const { pathname } = location;
-  const { workspace } = useWorkspace();
+  const workspace = useWorkspace();
 
   return (
     <li>

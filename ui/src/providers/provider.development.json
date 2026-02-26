@@ -122,7 +122,7 @@
         "code": "sip",
         "name": "SIP Trunk",
         "description": "Direct SIP trunk connection for voice calls. Connect any SIP-compatible PBX or carrier.",
-        "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQzN1nHTrkeb3jFRiW-hP31P6jhRbg9AjlamQ&s",
+        "image": "https://cdn-01.rapida.ai/partners/tools/sip.png",
         "featureList": [
             "telephony",
             "external"

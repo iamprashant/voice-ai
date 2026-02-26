@@ -171,7 +171,7 @@ func (s *Session) SetState(state CallState) {
 	// Validate state transitions
 	if !s.isValidTransition(previousState, state) {
 		if s.logger != nil {
-			s.logger.Warn("Invalid state transition",
+			s.logger.Warnw("Invalid state transition",
 				"call_id", s.info.CallID,
 				"from", previousState,
 				"to", state)
@@ -199,7 +199,7 @@ func (s *Session) SetState(state CallState) {
 	}
 
 	if s.logger != nil {
-		s.logger.Debug("Session state changed",
+		s.logger.Debugw("Session state changed",
 			"call_id", s.info.CallID,
 			"from", previousState,
 			"to", state)
@@ -491,7 +491,7 @@ func (s *Session) End() {
 
 	if rtpHandler != nil {
 		if err := rtpHandler.Stop(); err != nil && s.logger != nil {
-			s.logger.Warn("Error stopping RTP handler", "error", err, "call_id", s.info.CallID)
+			s.logger.Warnw("Error stopping RTP handler", "error", err, "call_id", s.info.CallID)
 		}
 	}
 

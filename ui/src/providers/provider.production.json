@@ -144,7 +144,7 @@
         "code": "sip",
         "name": "SIP Trunk",
         "description": "Direct SIP trunk connection for voice calls. Connect any SIP-compatible PBX or carrier.",
-        "image": "https://cdn-01.rapida.ai/partners/sip.png",
+        "image": "https://cdn-01.rapida.ai/partners/tools/sip.png",
         "featureList": [
             "telephony",
             "external"

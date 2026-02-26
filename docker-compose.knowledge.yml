@@ -27,9 +27,6 @@ services:
         hard: 65536
     volumes:
       - ${HOME}/rapida-data/assets/opensearch:/usr/share/opensearch/data
-    ports:
-      - "9200:9200"
-      - "9600:9600"
     networks:
       - api-network
     healthcheck:

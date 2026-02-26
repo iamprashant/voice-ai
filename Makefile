@@ -428,9 +428,11 @@ status: ps-all
 	@echo "  Web-API:          http://localhost:9001"
 	@echo "  Integration-API:  http://localhost:9004"
 	@echo "  Endpoint-API:     http://localhost:9005"
-	@echo "  PostgreSQL:       localhost:5432"
-	@echo "  Redis:            localhost:6379"
-	@echo "  OpenSearch:       https://localhost:9200"
+	@echo "  Assistant-API:    http://localhost:9007"
+	@echo "  SIP:              udp://localhost:5090"
+	@echo "  PostgreSQL:       internal only (no host port)"
+	@echo "  Redis:            internal only (no host port)"
+	@echo "  OpenSearch:       internal only (no host port)"
 	@echo ""
 
 ps: ps-all
