@@ -1,0 +1,63 @@
+# Git
+.git
+.gitignore
+.gitmodules
+.github
+
+# Documentation
+docs/
+README.md
+CLAUDE.md
+CONTRIBUTING.md
+SECURITY.md
+LICENSE.md
+
+# SDKs (not needed for service builds)
+sdks/
+
+# UI node_modules (huge — only ui/Dockerfile needs ui/ sources)
+ui/node_modules/
+ui/.yarn-cache
+ui/build/
+ui/coverage/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# CI/CD
+amplify.yml
+commitlint.config.js
+
+# Build artifacts
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test files
+**/*_test.go
+**/tests/
+**/__pycache__/
+**/*.pyc
+
+# Examples
+examples/
+
+# Git hooks
+githooks/
+
+# Misc
+*.md
+!api/**/migrations/**
+docker-compose*.yml
+Makefile
+buf.yaml
